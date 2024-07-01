@@ -1,0 +1,14 @@
+plugins:
+  - "dummy"
+rules:
+  "dummy/my-rule-1":
+    - 2 # Also testing that we users can specify number values and things won't blow up
+  "dummy/my-rule-2":
+    - 1
+  "dummy/my-rule-3":
+    - "error"
+  "dummy/my-rule-5":
+    - "error"
+
+# Note we aren't selecting my-rule-4 and so our tests should act like this rule doesn't even exist and can't be selected
+# and note that my-rule-5 has no metadata and so it too should act like it doesn't even exist and can't be selected
