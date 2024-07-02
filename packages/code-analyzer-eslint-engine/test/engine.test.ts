@@ -39,8 +39,26 @@ describe('Tests for the ESLintEngine', () => {
         expect(engine.getName()).toEqual('eslint');
     });
 
-    async function testFromCwdWithoutWorkspaceDescribeRules(caseParentFolder: string, caseName: string): Promise<void> {
-        const caseFolder: string = path.resolve(__dirname, 'test-data', caseParentFolder, caseName);
+    const cases: {description: string, parentFolder: string, folder: string}[] = [
+        {
+            description: 'with no customizations',
+            parentFolder: 'legacyConfigCases',
+            folder: '1_NoCustomization'
+        },
+        {
+            description: 'with config that modifies existing rules',
+            parentFolder: 'legacyConfigCases',
+            folder: '2_CustomizationOfExistingRules'
+        },
+        {
+            description: 'with config that adds a new plugin and rules',
+            parentFolder: 'legacyConfigCases',
+            folder: '3_CustomizationWithNewRules'
+        },
+    ]
+
+    it.each(cases)('When describing rules while cwd is folder $description, then return expected', async (caseObj) => {
+        const caseFolder: string = path.resolve(__dirname, 'test-data', caseObj.parentFolder, caseObj.folder);
 
         const origWorkingDir: string = process.cwd();
         process.chdir(caseFolder);
@@ -54,40 +72,16 @@ describe('Tests for the ESLintEngine', () => {
         } finally {
             process.chdir(origWorkingDir);
         }
-    }
-
-    it('When describing rules while cwd is folder with no customizations, then return expected', async () => {
-        await testFromCwdWithoutWorkspaceDescribeRules('legacyConfigCases', '1_NoCustomization');
     });
 
-    it('When describing rules while cwd is folder with config that modifies existing rules, then return expected', async () => {
-        await testFromCwdWithoutWorkspaceDescribeRules('legacyConfigCases', '2_CustomizationOfExistingRules');
-    });
-
-    it('When describing rules while cwd is folder with config that adds a new plugin and rules, then return expected', async () => {
-        await testFromCwdWithoutWorkspaceDescribeRules('legacyConfigCases', '3_CustomizationWithNewRules');
-    });
-
-    async function testNotFromCwdWithWorkspaceDescribeRules(caseParentFolder: string, caseName: string): Promise<void> {
-        const caseFolder: string = path.resolve(__dirname, 'test-data', caseParentFolder, caseName);
+    it.each(cases)('When describing rules while from a workspace $description, then return expected', async (caseObj) => {
+        const caseFolder: string = path.resolve(__dirname, 'test-data', caseObj.parentFolder, caseObj.folder);
         const ruleDescriptions: RuleDescription[] = await engine.describeRules({workspace: testTools.createWorkspace([caseFolder])});
         const actualRuleDescriptionsJsonString: string = JSON.stringify(ruleDescriptions, undefined, 2);
         const expectedRuleDescriptionsJsonString: string = fs.readFileSync(
             path.join(caseFolder, 'expectedRuleDescriptions.json'), 'utf8')
             .replaceAll('\r',''); // Remove carriage return characters from files in windows
         expect(actualRuleDescriptionsJsonString).toEqual(expectedRuleDescriptionsJsonString);
-    }
-
-    it('When describing rules while from a workspace with no customizations, then return expected', async () => {
-        await testNotFromCwdWithWorkspaceDescribeRules('legacyConfigCases', '1_NoCustomization');
-    });
-
-    it('When describing rules while from a workspace with config that modifies existing rules, then return expected', async () => {
-        await testNotFromCwdWithWorkspaceDescribeRules('legacyConfigCases', '2_CustomizationOfExistingRules');
-    });
-
-    it('When describing rules while from a workspace with config that adds a new plugin and rules, then return expected', async () => {
-        await testNotFromCwdWithWorkspaceDescribeRules('legacyConfigCases', '3_CustomizationWithNewRules');
     });
 
     it('When describing rules from a workspace with no javascript files, then no javascript rules should return', async () => {

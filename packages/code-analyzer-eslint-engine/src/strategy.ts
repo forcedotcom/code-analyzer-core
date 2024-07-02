@@ -123,9 +123,14 @@ async function getAllRuleModules(legacyESLint: ESLint): Promise<Map<string, Rule
 
 function getRuleStatusFromRuleEntry(ruleEntry: Linter.RuleEntry): ESLintRuleStatus {
     if (typeof ruleEntry === "number") {
-        return ruleEntry === 2 ? ESLintRuleStatus.ERROR : ruleEntry === 1 ? ESLintRuleStatus.WARN : ESLintRuleStatus.OFF;
+        return ruleEntry === 2 ? ESLintRuleStatus.ERROR :
+            ruleEntry === 1 ? ESLintRuleStatus.WARN : ESLintRuleStatus.OFF;
     } else if (typeof ruleEntry === "string") {
-        return ruleEntry === "error" ? ESLintRuleStatus.ERROR : ruleEntry === "warn" ? ESLintRuleStatus.WARN : ESLintRuleStatus.OFF;
+        return ruleEntry.toLowerCase() === "error" ? ESLintRuleStatus.ERROR :
+            ruleEntry.toLowerCase() === "warn" ? ESLintRuleStatus.WARN : ESLintRuleStatus.OFF;
     }
+
+    // Rules are typically defined with an array of options where the first option is the severity status of the rule.
+    // So this is actually the default case:
     return getRuleStatusFromRuleEntry(ruleEntry[0]);
 }

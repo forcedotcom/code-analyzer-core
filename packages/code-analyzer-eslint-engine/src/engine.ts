@@ -49,7 +49,7 @@ export class ESLintEngine extends Engine {
     }
 
     async describeRules(describeOptions: DescribeOptions): Promise<RuleDescription[]> {
-        const workspace: ESLintWorkspace = describeOptions.workspace?
+        const workspace: ESLintWorkspace = describeOptions.workspace ?
             new PresentESLintWorkspace(describeOptions.workspace, this.javascriptExtensions, this.typescriptExtensions) :
             new MissingESLintWorkspace(this.javascriptExtensions, this.typescriptExtensions);
 
