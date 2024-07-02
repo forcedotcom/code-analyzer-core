@@ -1,0 +1,7 @@
+{
+  "name": "customization-with-new-rules-example",
+  "version": "0.1.0",
+  "dependencies": {
+    "eslint-plugin-dummy": "0.1.0"
+  }
+}

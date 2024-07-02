@@ -1,0 +1,4008 @@
+[
+  {
+    "name": "@lwc/lwc/no-deprecated",
+    "severityLevel": 3,
+    "type": "Standard",
+    "tags": [
+      "Recommended"
+    ],
+    "description": "disallow usage of deprecated LWC APIs",
+    "resourceUrls": [
+      "https://github.com/salesforce/eslint-plugin-lwc/blob/v1.8.2/docs/rules/no-deprecated.md"
+    ]
+  },
+  {
+    "name": "@lwc/lwc/no-disallowed-lwc-imports",
+    "severityLevel": 3,
+    "type": "Standard",
+    "tags": [
+      "Recommended"
+    ],
+    "description": "restrict unexpected imports from the lwc package",
+    "resourceUrls": [
+      "https://github.com/salesforce/eslint-plugin-lwc/blob/v1.8.2/docs/rules/no-disallowed-lwc-imports.md"
+    ]
+  },
+  {
+    "name": "@lwc/lwc/no-unexpected-wire-adapter-usages",
+    "severityLevel": 3,
+    "type": "Standard",
+    "tags": [
+      "Recommended"
+    ],
+    "description": "restrict unexpected wire adapter usages",
+    "resourceUrls": [
+      "https://github.com/salesforce/eslint-plugin-lwc/blob/v1.8.2/docs/rules/no-unexpected-wire-adapter-usages.md"
+    ]
+  },
+  {
+    "name": "@lwc/lwc/no-unknown-wire-adapters",
+    "severityLevel": 3,
+    "type": "Standard",
+    "tags": [
+      "Recommended"
+    ],
+    "description": "restrict usage of unknown wire adapters",
+    "resourceUrls": [
+      "https://github.com/salesforce/eslint-plugin-lwc/blob/v1.8.2/docs/rules/no-unknown-wire-adapters.md"
+    ]
+  },
+  {
+    "name": "@lwc/lwc/valid-api",
+    "severityLevel": 3,
+    "type": "Standard",
+    "tags": [
+      "Recommended"
+    ],
+    "description": "validate api decorator usage",
+    "resourceUrls": [
+      "https://github.com/salesforce/eslint-plugin-lwc/blob/v1.8.2/docs/rules/valid-api.md"
+    ]
+  },
+  {
+    "name": "@lwc/lwc/valid-track",
+    "severityLevel": 3,
+    "type": "Standard",
+    "tags": [
+      "Recommended"
+    ],
+    "description": "validate track decorator usage",
+    "resourceUrls": [
+      "https://github.com/salesforce/eslint-plugin-lwc/blob/v1.8.2/docs/rules/valid-track.md"
+    ]
+  },
+  {
+    "name": "@lwc/lwc/valid-wire",
+    "severityLevel": 3,
+    "type": "Standard",
+    "tags": [
+      "Recommended"
+    ],
+    "description": "validate wire decorator usage",
+    "resourceUrls": [
+      "https://github.com/salesforce/eslint-plugin-lwc/blob/v1.8.2/docs/rules/valid-wire.md"
+    ]
+  },
+  {
+    "name": "@typescript-eslint/adjacent-overload-signatures",
+    "severityLevel": 3,
+    "type": "Standard",
+    "tags": [
+      "suggestion"
+    ],
+    "description": "Require that function overload signatures be consecutive",
+    "resourceUrls": [
+      "https://typescript-eslint.io/rules/adjacent-overload-signatures"
+    ]
+  },
+  {
+    "name": "@typescript-eslint/array-type",
+    "severityLevel": 3,
+    "type": "Standard",
+    "tags": [
+      "suggestion"
+    ],
+    "description": "Require consistently using either `T[]` or `Array<T>` for arrays",
+    "resourceUrls": [
+      "https://typescript-eslint.io/rules/array-type"
+    ]
+  },
+  {
+    "name": "@typescript-eslint/await-thenable",
+    "severityLevel": 2,
+    "type": "Standard",
+    "tags": [
+      "problem"
+    ],
+    "description": "Disallow awaiting a value that is not a Thenable",
+    "resourceUrls": [
+      "https://typescript-eslint.io/rules/await-thenable"
+    ]
+  },
+  {
+    "name": "@typescript-eslint/ban-ts-comment",
+    "severityLevel": 2,
+    "type": "Standard",
+    "tags": [
+      "Recommended",
+      "problem"
+    ],
+    "description": "Disallow `@ts-<directive>` comments or require descriptions after directives",
+    "resourceUrls": [
+      "https://typescript-eslint.io/rules/ban-ts-comment"
+    ]
+  },
+  {
+    "name": "@typescript-eslint/ban-tslint-comment",
+    "severityLevel": 3,
+    "type": "Standard",
+    "tags": [
+      "suggestion"
+    ],
+    "description": "Disallow `// tslint:<rule-flag>` comments",
+    "resourceUrls": [
+      "https://typescript-eslint.io/rules/ban-tslint-comment"
+    ]
+  },
+  {
+    "name": "@typescript-eslint/ban-types",
+    "severityLevel": 3,
+    "type": "Standard",
+    "tags": [
+      "Recommended",
+      "suggestion"
+    ],
+    "description": "Disallow certain types",
+    "resourceUrls": [
+      "https://typescript-eslint.io/rules/ban-types"
+    ]
+  },
+  {
+    "name": "@typescript-eslint/class-literal-property-style",
+    "severityLevel": 2,
+    "type": "Standard",
+    "tags": [
+      "problem"
+    ],
+    "description": "Enforce that literals on classes are exposed in a consistent style",
+    "resourceUrls": [
+      "https://typescript-eslint.io/rules/class-literal-property-style"
+    ]
+  },
+  {
+    "name": "@typescript-eslint/class-methods-use-this",
+    "severityLevel": 3,
+    "type": "Standard",
+    "tags": [
+      "suggestion"
+    ],
+    "description": "Enforce that class methods utilize `this`",
+    "resourceUrls": [
+      "https://typescript-eslint.io/rules/class-methods-use-this"
+    ]
+  },
+  {
+    "name": "@typescript-eslint/consistent-generic-constructors",
+    "severityLevel": 3,
+    "type": "Standard",
+    "tags": [
+      "suggestion"
+    ],
+    "description": "Enforce specifying generic type arguments on type annotation or constructor name of a constructor call",
+    "resourceUrls": [
+      "https://typescript-eslint.io/rules/consistent-generic-constructors"
+    ]
+  },
+  {
+    "name": "@typescript-eslint/consistent-indexed-object-style",
+    "severityLevel": 3,
+    "type": "Standard",
+    "tags": [
+      "suggestion"
+    ],
+    "description": "Require or disallow the `Record` type",
+    "resourceUrls": [
+      "https://typescript-eslint.io/rules/consistent-indexed-object-style"
+    ]
+  },
+  {
+    "name": "@typescript-eslint/consistent-return",
+    "severityLevel": 3,
+    "type": "Standard",
+    "tags": [
+      "suggestion"
+    ],
+    "description": "Require `return` statements to either always or never specify values",
+    "resourceUrls": [
+      "https://typescript-eslint.io/rules/consistent-return"
+    ]
+  },
+  {
+    "name": "@typescript-eslint/consistent-type-assertions",
+    "severityLevel": 3,
+    "type": "Standard",
+    "tags": [
+      "suggestion"
+    ],
+    "description": "Enforce consistent usage of type assertions",
+    "resourceUrls": [
+      "https://typescript-eslint.io/rules/consistent-type-assertions"
+    ]
+  },
+  {
+    "name": "@typescript-eslint/consistent-type-definitions",
+    "severityLevel": 3,
+    "type": "Standard",
+    "tags": [
+      "suggestion"
+    ],
+    "description": "Enforce type definitions to consistently use either `interface` or `type`",
+    "resourceUrls": [
+      "https://typescript-eslint.io/rules/consistent-type-definitions"
+    ]
+  },
+  {
+    "name": "@typescript-eslint/consistent-type-exports",
+    "severityLevel": 3,
+    "type": "Standard",
+    "tags": [
+      "suggestion"
+    ],
+    "description": "Enforce consistent usage of type exports",
+    "resourceUrls": [
+      "https://typescript-eslint.io/rules/consistent-type-exports"
+    ]
+  },
+  {
+    "name": "@typescript-eslint/consistent-type-imports",
+    "severityLevel": 3,
+    "type": "Standard",
+    "tags": [
+      "suggestion"
+    ],
+    "description": "Enforce consistent usage of type imports",
+    "resourceUrls": [
+      "https://typescript-eslint.io/rules/consistent-type-imports"
+    ]
+  },
+  {
+    "name": "@typescript-eslint/default-param-last",
+    "severityLevel": 3,
+    "type": "Standard",
+    "tags": [
+      "suggestion"
+    ],
+    "description": "Enforce default parameters to be last",
+    "resourceUrls": [
+      "https://typescript-eslint.io/rules/default-param-last"
+    ]
+  },
+  {
+    "name": "@typescript-eslint/dot-notation",
+    "severityLevel": 3,
+    "type": "Standard",
+    "tags": [
+      "suggestion"
+    ],
+    "description": "Enforce dot notation whenever possible",
+    "resourceUrls": [
+      "https://typescript-eslint.io/rules/dot-notation"
+    ]
+  },
+  {
+    "name": "@typescript-eslint/explicit-function-return-type",
+    "severityLevel": 2,
+    "type": "Standard",
+    "tags": [
+      "problem"
+    ],
+    "description": "Require explicit return types on functions and class methods",
+    "resourceUrls": [
+      "https://typescript-eslint.io/rules/explicit-function-return-type"
+    ]
+  },
+  {
+    "name": "@typescript-eslint/explicit-member-accessibility",
+    "severityLevel": 2,
+    "type": "Standard",
+    "tags": [
+      "problem"
+    ],
+    "description": "Require explicit accessibility modifiers on class properties and methods",
+    "resourceUrls": [
+      "https://typescript-eslint.io/rules/explicit-member-accessibility"
+    ]
+  },
+  {
+    "name": "@typescript-eslint/explicit-module-boundary-types",
+    "severityLevel": 2,
+    "type": "Standard",
+    "tags": [
+      "problem"
+    ],
+    "description": "Require explicit return and argument types on exported functions' and classes' public class methods",
+    "resourceUrls": [
+      "https://typescript-eslint.io/rules/explicit-module-boundary-types"
+    ]
+  },
+  {
+    "name": "@typescript-eslint/init-declarations",
+    "severityLevel": 3,
+    "type": "Standard",
+    "tags": [
+      "suggestion"
+    ],
+    "description": "Require or disallow initialization in variable declarations",
+    "resourceUrls": [
+      "https://typescript-eslint.io/rules/init-declarations"
+    ]
+  },
+  {
+    "name": "@typescript-eslint/max-params",
+    "severityLevel": 3,
+    "type": "Standard",
+    "tags": [
+      "suggestion"
+    ],
+    "description": "Enforce a maximum number of parameters in function definitions",
+    "resourceUrls": [
+      "https://typescript-eslint.io/rules/max-params"
+    ]
+  },
+  {
+    "name": "@typescript-eslint/member-ordering",
+    "severityLevel": 3,
+    "type": "Standard",
+    "tags": [
+      "suggestion"
+    ],
+    "description": "Require a consistent member declaration order",
+    "resourceUrls": [
+      "https://typescript-eslint.io/rules/member-ordering"
+    ]
+  },
+  {
+    "name": "@typescript-eslint/method-signature-style",
+    "severityLevel": 3,
+    "type": "Standard",
+    "tags": [
+      "suggestion"
+    ],
+    "description": "Enforce using a particular method signature syntax",
+    "resourceUrls": [
+      "https://typescript-eslint.io/rules/method-signature-style"
+    ]
+  },
+  {
+    "name": "@typescript-eslint/naming-convention",
+    "severityLevel": 3,
+    "type": "Standard",
+    "tags": [
+      "suggestion"
+    ],
+    "description": "Enforce naming conventions for everything across a codebase",
+    "resourceUrls": [
+      "https://typescript-eslint.io/rules/naming-convention"
+    ]
+  },
+  {
+    "name": "@typescript-eslint/no-array-constructor",
+    "severityLevel": 3,
+    "type": "Standard",
+    "tags": [
+      "Recommended",
+      "suggestion"
+    ],
+    "description": "Disallow generic `Array` constructors",
+    "resourceUrls": [
+      "https://typescript-eslint.io/rules/no-array-constructor"
+    ]
+  },
+  {
+    "name": "@typescript-eslint/no-array-delete",
+    "severityLevel": 2,
+    "type": "Standard",
+    "tags": [
+      "problem"
+    ],
+    "description": "Disallow using the `delete` operator on array values",
+    "resourceUrls": [
+      "https://typescript-eslint.io/rules/no-array-delete"
+    ]
+  },
+  {
+    "name": "@typescript-eslint/no-base-to-string",
+    "severityLevel": 3,
+    "type": "Standard",
+    "tags": [
+      "suggestion"
+    ],
+    "description": "Require `.toString()` to only be called on objects which provide useful information when stringified",
+    "resourceUrls": [
+      "https://typescript-eslint.io/rules/no-base-to-string"
+    ]
+  },
+  {
+    "name": "@typescript-eslint/no-confusing-non-null-assertion",
+    "severityLevel": 2,
+    "type": "Standard",
+    "tags": [
+      "problem"
+    ],
+    "description": "Disallow non-null assertion in locations that may be confusing",
+    "resourceUrls": [
+      "https://typescript-eslint.io/rules/no-confusing-non-null-assertion"
+    ]
+  },
+  {
+    "name": "@typescript-eslint/no-confusing-void-expression",
+    "severityLevel": 2,
+    "type": "Standard",
+    "tags": [
+      "problem"
+    ],
+    "description": "Require expressions of type void to appear in statement position",
+    "resourceUrls": [
+      "https://typescript-eslint.io/rules/no-confusing-void-expression"
+    ]
+  },
+  {
+    "name": "@typescript-eslint/no-dupe-class-members",
+    "severityLevel": 2,
+    "type": "Standard",
+    "tags": [
+      "problem"
+    ],
+    "description": "Disallow duplicate class members",
+    "resourceUrls": [
+      "https://typescript-eslint.io/rules/no-dupe-class-members"
+    ]
+  },
+  {
+    "name": "@typescript-eslint/no-duplicate-enum-values",
+    "severityLevel": 2,
+    "type": "Standard",
+    "tags": [
+      "Recommended",
+      "problem"
+    ],
+    "description": "Disallow duplicate enum member values",
+    "resourceUrls": [
+      "https://typescript-eslint.io/rules/no-duplicate-enum-values"
+    ]
+  },
+  {
+    "name": "@typescript-eslint/no-duplicate-type-constituents",
+    "severityLevel": 3,
+    "type": "Standard",
+    "tags": [
+      "suggestion"
+    ],
+    "description": "Disallow duplicate constituents of union or intersection types",
+    "resourceUrls": [
+      "https://typescript-eslint.io/rules/no-duplicate-type-constituents"
+    ]
+  },
+  {
+    "name": "@typescript-eslint/no-dynamic-delete",
+    "severityLevel": 3,
+    "type": "Standard",
+    "tags": [
+      "suggestion"
+    ],
+    "description": "Disallow using the `delete` operator on computed key expressions",
+    "resourceUrls": [
+      "https://typescript-eslint.io/rules/no-dynamic-delete"
+    ]
+  },
+  {
+    "name": "@typescript-eslint/no-empty-function",
+    "severityLevel": 3,
+    "type": "Standard",
+    "tags": [
+      "suggestion"
+    ],
+    "description": "Disallow empty functions",
+    "resourceUrls": [
+      "https://typescript-eslint.io/rules/no-empty-function"
+    ]
+  },
+  {
+    "name": "@typescript-eslint/no-empty-interface",
+    "severityLevel": 3,
+    "type": "Standard",
+    "tags": [
+      "suggestion"
+    ],
+    "description": "Disallow the declaration of empty interfaces",
+    "resourceUrls": [
+      "https://typescript-eslint.io/rules/no-empty-interface"
+    ]
+  },
+  {
+    "name": "@typescript-eslint/no-explicit-any",
+    "severityLevel": 3,
+    "type": "Standard",
+    "tags": [
+      "Recommended",
+      "suggestion"
+    ],
+    "description": "Disallow the `any` type",
+    "resourceUrls": [
+      "https://typescript-eslint.io/rules/no-explicit-any"
+    ]
+  },
+  {
+    "name": "@typescript-eslint/no-extra-non-null-assertion",
+    "severityLevel": 2,
+    "type": "Standard",
+    "tags": [
+      "Recommended",
+      "problem"
+    ],
+    "description": "Disallow extra non-null assertions",
+    "resourceUrls": [
+      "https://typescript-eslint.io/rules/no-extra-non-null-assertion"
+    ]
+  },
+  {
+    "name": "@typescript-eslint/no-extraneous-class",
+    "severityLevel": 3,
+    "type": "Standard",
+    "tags": [
+      "suggestion"
+    ],
+    "description": "Disallow classes used as namespaces",
+    "resourceUrls": [
+      "https://typescript-eslint.io/rules/no-extraneous-class"
+    ]
+  },
+  {
+    "name": "@typescript-eslint/no-floating-promises",
+    "severityLevel": 2,
+    "type": "Standard",
+    "tags": [
+      "problem"
+    ],
+    "description": "Require Promise-like statements to be handled appropriately",
+    "resourceUrls": [
+      "https://typescript-eslint.io/rules/no-floating-promises"
+    ]
+  },
+  {
+    "name": "@typescript-eslint/no-for-in-array",
+    "severityLevel": 2,
+    "type": "Standard",
+    "tags": [
+      "problem"
+    ],
+    "description": "Disallow iterating over an array with a for-in loop",
+    "resourceUrls": [
+      "https://typescript-eslint.io/rules/no-for-in-array"
+    ]
+  },
+  {
+    "name": "@typescript-eslint/no-implied-eval",
+    "severityLevel": 3,
+    "type": "Standard",
+    "tags": [
+      "suggestion"
+    ],
+    "description": "Disallow the use of `eval()`-like methods",
+    "resourceUrls": [
+      "https://typescript-eslint.io/rules/no-implied-eval"
+    ]
+  },
+  {
+    "name": "@typescript-eslint/no-import-type-side-effects",
+    "severityLevel": 2,
+    "type": "Standard",
+    "tags": [
+      "problem"
+    ],
+    "description": "Enforce the use of top-level import type qualifier when an import only has specifiers with inline type qualifiers",
+    "resourceUrls": [
+      "https://typescript-eslint.io/rules/no-import-type-side-effects"
+    ]
+  },
+  {
+    "name": "@typescript-eslint/no-inferrable-types",
+    "severityLevel": 3,
+    "type": "Standard",
+    "tags": [
+      "suggestion"
+    ],
+    "description": "Disallow explicit type declarations for variables or parameters initialized to a number, string, or boolean",
+    "resourceUrls": [
+      "https://typescript-eslint.io/rules/no-inferrable-types"
+    ]
+  },
+  {
+    "name": "@typescript-eslint/no-invalid-this",
+    "severityLevel": 3,
+    "type": "Standard",
+    "tags": [
+      "suggestion"
+    ],
+    "description": "Disallow `this` keywords outside of classes or class-like objects",
+    "resourceUrls": [
+      "https://typescript-eslint.io/rules/no-invalid-this"
+    ]
+  },
+  {
+    "name": "@typescript-eslint/no-invalid-void-type",
+    "severityLevel": 2,
+    "type": "Standard",
+    "tags": [
+      "problem"
+    ],
+    "description": "Disallow `void` type outside of generic or return types",
+    "resourceUrls": [
+      "https://typescript-eslint.io/rules/no-invalid-void-type"
+    ]
+  },
+  {
+    "name": "@typescript-eslint/no-loop-func",
+    "severityLevel": 3,
+    "type": "Standard",
+    "tags": [
+      "suggestion"
+    ],
+    "description": "Disallow function declarations that contain unsafe references inside loop statements",
+    "resourceUrls": [
+      "https://typescript-eslint.io/rules/no-loop-func"
+    ]
+  },
+  {
+    "name": "@typescript-eslint/no-loss-of-precision",
+    "severityLevel": 2,
+    "type": "Standard",
+    "tags": [
+      "Recommended",
+      "problem"
+    ],
+    "description": "Disallow literal numbers that lose precision",
+    "resourceUrls": [
+      "https://typescript-eslint.io/rules/no-loss-of-precision"
+    ]
+  },
+  {
+    "name": "@typescript-eslint/no-magic-numbers",
+    "severityLevel": 3,
+    "type": "Standard",
+    "tags": [
+      "suggestion"
+    ],
+    "description": "Disallow magic numbers",
+    "resourceUrls": [
+      "https://typescript-eslint.io/rules/no-magic-numbers"
+    ]
+  },
+  {
+    "name": "@typescript-eslint/no-meaningless-void-operator",
+    "severityLevel": 3,
+    "type": "Standard",
+    "tags": [
+      "suggestion"
+    ],
+    "description": "Disallow the `void` operator except when used to discard a value",
+    "resourceUrls": [
+      "https://typescript-eslint.io/rules/no-meaningless-void-operator"
+    ]
+  },
+  {
+    "name": "@typescript-eslint/no-misused-new",
+    "severityLevel": 2,
+    "type": "Standard",
+    "tags": [
+      "Recommended",
+      "problem"
+    ],
+    "description": "Enforce valid definition of `new` and `constructor`",
+    "resourceUrls": [
+      "https://typescript-eslint.io/rules/no-misused-new"
+    ]
+  },
+  {
+    "name": "@typescript-eslint/no-misused-promises",
+    "severityLevel": 2,
+    "type": "Standard",
+    "tags": [
+      "problem"
+    ],
+    "description": "Disallow Promises in places not designed to handle them",
+    "resourceUrls": [
+      "https://typescript-eslint.io/rules/no-misused-promises"
+    ]
+  },
+  {
+    "name": "@typescript-eslint/no-mixed-enums",
+    "severityLevel": 2,
+    "type": "Standard",
+    "tags": [
+      "problem"
+    ],
+    "description": "Disallow enums from having both number and string members",
+    "resourceUrls": [
+      "https://typescript-eslint.io/rules/no-mixed-enums"
+    ]
+  },
+  {
+    "name": "@typescript-eslint/no-namespace",
+    "severityLevel": 3,
+    "type": "Standard",
+    "tags": [
+      "Recommended",
+      "suggestion"
+    ],
+    "description": "Disallow TypeScript namespaces",
+    "resourceUrls": [
+      "https://typescript-eslint.io/rules/no-namespace"
+    ]
+  },
+  {
+    "name": "@typescript-eslint/no-non-null-asserted-nullish-coalescing",
+    "severityLevel": 2,
+    "type": "Standard",
+    "tags": [
+      "problem"
+    ],
+    "description": "Disallow non-null assertions in the left operand of a nullish coalescing operator",
+    "resourceUrls": [
+      "https://typescript-eslint.io/rules/no-non-null-asserted-nullish-coalescing"
+    ]
+  },
+  {
+    "name": "@typescript-eslint/no-non-null-asserted-optional-chain",
+    "severityLevel": 2,
+    "type": "Standard",
+    "tags": [
+      "Recommended",
+      "problem"
+    ],
+    "description": "Disallow non-null assertions after an optional chain expression",
+    "resourceUrls": [
+      "https://typescript-eslint.io/rules/no-non-null-asserted-optional-chain"
+    ]
+  },
+  {
+    "name": "@typescript-eslint/no-non-null-assertion",
+    "severityLevel": 2,
+    "type": "Standard",
+    "tags": [
+      "problem"
+    ],
+    "description": "Disallow non-null assertions using the `!` postfix operator",
+    "resourceUrls": [
+      "https://typescript-eslint.io/rules/no-non-null-assertion"
+    ]
+  },
+  {
+    "name": "@typescript-eslint/no-redeclare",
+    "severityLevel": 3,
+    "type": "Standard",
+    "tags": [
+      "suggestion"
+    ],
+    "description": "Disallow variable redeclaration",
+    "resourceUrls": [
+      "https://typescript-eslint.io/rules/no-redeclare"
+    ]
+  },
+  {
+    "name": "@typescript-eslint/no-redundant-type-constituents",
+    "severityLevel": 3,
+    "type": "Standard",
+    "tags": [
+      "suggestion"
+    ],
+    "description": "Disallow members of unions and intersections that do nothing or override type information",
+    "resourceUrls": [
+      "https://typescript-eslint.io/rules/no-redundant-type-constituents"
+    ]
+  },
+  {
+    "name": "@typescript-eslint/no-require-imports",
+    "severityLevel": 2,
+    "type": "Standard",
+    "tags": [
+      "problem"
+    ],
+    "description": "Disallow invocation of `require()`",
+    "resourceUrls": [
+      "https://typescript-eslint.io/rules/no-require-imports"
+    ]
+  },
+  {
+    "name": "@typescript-eslint/no-restricted-imports",
+    "severityLevel": 3,
+    "type": "Standard",
+    "tags": [
+      "suggestion"
+    ],
+    "description": "Disallow specified modules when loaded by `import`",
+    "resourceUrls": [
+      "https://typescript-eslint.io/rules/no-restricted-imports"
+    ]
+  },
+  {
+    "name": "@typescript-eslint/no-shadow",
+    "severityLevel": 3,
+    "type": "Standard",
+    "tags": [
+      "suggestion"
+    ],
+    "description": "Disallow variable declarations from shadowing variables declared in the outer scope",
+    "resourceUrls": [
+      "https://typescript-eslint.io/rules/no-shadow"
+    ]
+  },
+  {
+    "name": "@typescript-eslint/no-this-alias",
+    "severityLevel": 3,
+    "type": "Standard",
+    "tags": [
+      "Recommended",
+      "suggestion"
+    ],
+    "description": "Disallow aliasing `this`",
+    "resourceUrls": [
+      "https://typescript-eslint.io/rules/no-this-alias"
+    ]
+  },
+  {
+    "name": "@typescript-eslint/no-unnecessary-boolean-literal-compare",
+    "severityLevel": 3,
+    "type": "Standard",
+    "tags": [
+      "suggestion"
+    ],
+    "description": "Disallow unnecessary equality comparisons against boolean literals",
+    "resourceUrls": [
+      "https://typescript-eslint.io/rules/no-unnecessary-boolean-literal-compare"
+    ]
+  },
+  {
+    "name": "@typescript-eslint/no-unnecessary-condition",
+    "severityLevel": 3,
+    "type": "Standard",
+    "tags": [
+      "suggestion"
+    ],
+    "description": "Disallow conditionals where the type is always truthy or always falsy",
+    "resourceUrls": [
+      "https://typescript-eslint.io/rules/no-unnecessary-condition"
+    ]
+  },
+  {
+    "name": "@typescript-eslint/no-unnecessary-qualifier",
+    "severityLevel": 3,
+    "type": "Standard",
+    "tags": [
+      "suggestion"
+    ],
+    "description": "Disallow unnecessary namespace qualifiers",
+    "resourceUrls": [
+      "https://typescript-eslint.io/rules/no-unnecessary-qualifier"
+    ]
+  },
+  {
+    "name": "@typescript-eslint/no-unnecessary-template-expression",
+    "severityLevel": 3,
+    "type": "Standard",
+    "tags": [
+      "suggestion"
+    ],
+    "description": "Disallow unnecessary template expressions",
+    "resourceUrls": [
+      "https://typescript-eslint.io/rules/no-unnecessary-template-expression"
+    ]
+  },
+  {
+    "name": "@typescript-eslint/no-unnecessary-type-arguments",
+    "severityLevel": 3,
+    "type": "Standard",
+    "tags": [
+      "suggestion"
+    ],
+    "description": "Disallow type arguments that are equal to the default",
+    "resourceUrls": [
+      "https://typescript-eslint.io/rules/no-unnecessary-type-arguments"
+    ]
+  },
+  {
+    "name": "@typescript-eslint/no-unnecessary-type-assertion",
+    "severityLevel": 3,
+    "type": "Standard",
+    "tags": [
+      "suggestion"
+    ],
+    "description": "Disallow type assertions that do not change the type of an expression",
+    "resourceUrls": [
+      "https://typescript-eslint.io/rules/no-unnecessary-type-assertion"
+    ]
+  },
+  {
+    "name": "@typescript-eslint/no-unnecessary-type-constraint",
+    "severityLevel": 3,
+    "type": "Standard",
+    "tags": [
+      "Recommended",
+      "suggestion"
+    ],
+    "description": "Disallow unnecessary constraints on generic types",
+    "resourceUrls": [
+      "https://typescript-eslint.io/rules/no-unnecessary-type-constraint"
+    ]
+  },
+  {
+    "name": "@typescript-eslint/no-unsafe-argument",
+    "severityLevel": 2,
+    "type": "Standard",
+    "tags": [
+      "problem"
+    ],
+    "description": "Disallow calling a function with a value with type `any`",
+    "resourceUrls": [
+      "https://typescript-eslint.io/rules/no-unsafe-argument"
+    ]
+  },
+  {
+    "name": "@typescript-eslint/no-unsafe-assignment",
+    "severityLevel": 2,
+    "type": "Standard",
+    "tags": [
+      "problem"
+    ],
+    "description": "Disallow assigning a value with type `any` to variables and properties",
+    "resourceUrls": [
+      "https://typescript-eslint.io/rules/no-unsafe-assignment"
+    ]
+  },
+  {
+    "name": "@typescript-eslint/no-unsafe-call",
+    "severityLevel": 2,
+    "type": "Standard",
+    "tags": [
+      "problem"
+    ],
+    "description": "Disallow calling a value with type `any`",
+    "resourceUrls": [
+      "https://typescript-eslint.io/rules/no-unsafe-call"
+    ]
+  },
+  {
+    "name": "@typescript-eslint/no-unsafe-declaration-merging",
+    "severityLevel": 2,
+    "type": "Standard",
+    "tags": [
+      "Recommended",
+      "problem"
+    ],
+    "description": "Disallow unsafe declaration merging",
+    "resourceUrls": [
+      "https://typescript-eslint.io/rules/no-unsafe-declaration-merging"
+    ]
+  },
+  {
+    "name": "@typescript-eslint/no-unsafe-enum-comparison",
+    "severityLevel": 3,
+    "type": "Standard",
+    "tags": [
+      "suggestion"
+    ],
+    "description": "Disallow comparing an enum value with a non-enum value",
+    "resourceUrls": [
+      "https://typescript-eslint.io/rules/no-unsafe-enum-comparison"
+    ]
+  },
+  {
+    "name": "@typescript-eslint/no-unsafe-member-access",
+    "severityLevel": 2,
+    "type": "Standard",
+    "tags": [
+      "problem"
+    ],
+    "description": "Disallow member access on a value with type `any`",
+    "resourceUrls": [
+      "https://typescript-eslint.io/rules/no-unsafe-member-access"
+    ]
+  },
+  {
+    "name": "@typescript-eslint/no-unsafe-return",
+    "severityLevel": 2,
+    "type": "Standard",
+    "tags": [
+      "problem"
+    ],
+    "description": "Disallow returning a value with type `any` from a function",
+    "resourceUrls": [
+      "https://typescript-eslint.io/rules/no-unsafe-return"
+    ]
+  },
+  {
+    "name": "@typescript-eslint/no-unsafe-unary-minus",
+    "severityLevel": 2,
+    "type": "Standard",
+    "tags": [
+      "problem"
+    ],
+    "description": "Require unary negation to take a number",
+    "resourceUrls": [
+      "https://typescript-eslint.io/rules/no-unsafe-unary-minus"
+    ]
+  },
+  {
+    "name": "@typescript-eslint/no-unused-expressions",
+    "severityLevel": 3,
+    "type": "Standard",
+    "tags": [
+      "suggestion"
+    ],
+    "description": "Disallow unused expressions",
+    "resourceUrls": [
+      "https://typescript-eslint.io/rules/no-unused-expressions"
+    ]
+  },
+  {
+    "name": "@typescript-eslint/no-unused-vars",
+    "severityLevel": 2,
+    "type": "Standard",
+    "tags": [
+      "Recommended",
+      "problem"
+    ],
+    "description": "Disallow unused variables",
+    "resourceUrls": [
+      "https://typescript-eslint.io/rules/no-unused-vars"
+    ]
+  },
+  {
+    "name": "@typescript-eslint/no-use-before-define",
+    "severityLevel": 2,
+    "type": "Standard",
+    "tags": [
+      "problem"
+    ],
+    "description": "Disallow the use of variables before they are defined",
+    "resourceUrls": [
+      "https://typescript-eslint.io/rules/no-use-before-define"
+    ]
+  },
+  {
+    "name": "@typescript-eslint/no-useless-constructor",
+    "severityLevel": 2,
+    "type": "Standard",
+    "tags": [
+      "problem"
+    ],
+    "description": "Disallow unnecessary constructors",
+    "resourceUrls": [
+      "https://typescript-eslint.io/rules/no-useless-constructor"
+    ]
+  },
+  {
+    "name": "@typescript-eslint/no-useless-empty-export",
+    "severityLevel": 3,
+    "type": "Standard",
+    "tags": [
+      "suggestion"
+    ],
+    "description": "Disallow empty exports that don't change anything in a module file",
+    "resourceUrls": [
+      "https://typescript-eslint.io/rules/no-useless-empty-export"
+    ]
+  },
+  {
+    "name": "@typescript-eslint/no-var-requires",
+    "severityLevel": 2,
+    "type": "Standard",
+    "tags": [
+      "Recommended",
+      "problem"
+    ],
+    "description": "Disallow `require` statements except in import statements",
+    "resourceUrls": [
+      "https://typescript-eslint.io/rules/no-var-requires"
+    ]
+  },
+  {
+    "name": "@typescript-eslint/non-nullable-type-assertion-style",
+    "severityLevel": 3,
+    "type": "Standard",
+    "tags": [
+      "suggestion"
+    ],
+    "description": "Enforce non-null assertions over explicit type casts",
+    "resourceUrls": [
+      "https://typescript-eslint.io/rules/non-nullable-type-assertion-style"
+    ]
+  },
+  {
+    "name": "@typescript-eslint/only-throw-error",
+    "severityLevel": 2,
+    "type": "Standard",
+    "tags": [
+      "problem"
+    ],
+    "description": "Disallow throwing non-`Error` values as exceptions",
+    "resourceUrls": [
+      "https://typescript-eslint.io/rules/only-throw-error"
+    ]
+  },
+  {
+    "name": "@typescript-eslint/parameter-properties",
+    "severityLevel": 2,
+    "type": "Standard",
+    "tags": [
+      "problem"
+    ],
+    "description": "Require or disallow parameter properties in class constructors",
+    "resourceUrls": [
+      "https://typescript-eslint.io/rules/parameter-properties"
+    ]
+  },
+  {
+    "name": "@typescript-eslint/prefer-as-const",
+    "severityLevel": 3,
+    "type": "Standard",
+    "tags": [
+      "Recommended",
+      "suggestion"
+    ],
+    "description": "Enforce the use of `as const` over literal type",
+    "resourceUrls": [
+      "https://typescript-eslint.io/rules/prefer-as-const"
+    ]
+  },
+  {
+    "name": "@typescript-eslint/prefer-destructuring",
+    "severityLevel": 3,
+    "type": "Standard",
+    "tags": [
+      "suggestion"
+    ],
+    "description": "Require destructuring from arrays and/or objects",
+    "resourceUrls": [
+      "https://typescript-eslint.io/rules/prefer-destructuring"
+    ]
+  },
+  {
+    "name": "@typescript-eslint/prefer-enum-initializers",
+    "severityLevel": 3,
+    "type": "Standard",
+    "tags": [
+      "suggestion"
+    ],
+    "description": "Require each enum member value to be explicitly initialized",
+    "resourceUrls": [
+      "https://typescript-eslint.io/rules/prefer-enum-initializers"
+    ]
+  },
+  {
+    "name": "@typescript-eslint/prefer-find",
+    "severityLevel": 3,
+    "type": "Standard",
+    "tags": [
+      "suggestion"
+    ],
+    "description": "Enforce the use of Array.prototype.find() over Array.prototype.filter() followed by [0] when looking for a single result",
+    "resourceUrls": [
+      "https://typescript-eslint.io/rules/prefer-find"
+    ]
+  },
+  {
+    "name": "@typescript-eslint/prefer-for-of",
+    "severityLevel": 3,
+    "type": "Standard",
+    "tags": [
+      "suggestion"
+    ],
+    "description": "Enforce the use of `for-of` loop over the standard `for` loop where possible",
+    "resourceUrls": [
+      "https://typescript-eslint.io/rules/prefer-for-of"
+    ]
+  },
+  {
+    "name": "@typescript-eslint/prefer-function-type",
+    "severityLevel": 3,
+    "type": "Standard",
+    "tags": [
+      "suggestion"
+    ],
+    "description": "Enforce using function types instead of interfaces with call signatures",
+    "resourceUrls": [
+      "https://typescript-eslint.io/rules/prefer-function-type"
+    ]
+  },
+  {
+    "name": "@typescript-eslint/prefer-includes",
+    "severityLevel": 3,
+    "type": "Standard",
+    "tags": [
+      "suggestion"
+    ],
+    "description": "Enforce `includes` method over `indexOf` method",
+    "resourceUrls": [
+      "https://typescript-eslint.io/rules/prefer-includes"
+    ]
+  },
+  {
+    "name": "@typescript-eslint/prefer-literal-enum-member",
+    "severityLevel": 3,
+    "type": "Standard",
+    "tags": [
+      "suggestion"
+    ],
+    "description": "Require all enum members to be literal values",
+    "resourceUrls": [
+      "https://typescript-eslint.io/rules/prefer-literal-enum-member"
+    ]
+  },
+  {
+    "name": "@typescript-eslint/prefer-namespace-keyword",
+    "severityLevel": 3,
+    "type": "Standard",
+    "tags": [
+      "suggestion"
+    ],
+    "description": "Require using `namespace` keyword over `module` keyword to declare custom TypeScript modules",
+    "resourceUrls": [
+      "https://typescript-eslint.io/rules/prefer-namespace-keyword"
+    ]
+  },
+  {
+    "name": "@typescript-eslint/prefer-nullish-coalescing",
+    "severityLevel": 3,
+    "type": "Standard",
+    "tags": [
+      "suggestion"
+    ],
+    "description": "Enforce using the nullish coalescing operator instead of logical assignments or chaining",
+    "resourceUrls": [
+      "https://typescript-eslint.io/rules/prefer-nullish-coalescing"
+    ]
+  },
+  {
+    "name": "@typescript-eslint/prefer-optional-chain",
+    "severityLevel": 3,
+    "type": "Standard",
+    "tags": [
+      "suggestion"
+    ],
+    "description": "Enforce using concise optional chain expressions instead of chained logical ands, negated logical ors, or empty objects",
+    "resourceUrls": [
+      "https://typescript-eslint.io/rules/prefer-optional-chain"
+    ]
+  },
+  {
+    "name": "@typescript-eslint/prefer-promise-reject-errors",
+    "severityLevel": 3,
+    "type": "Standard",
+    "tags": [
+      "suggestion"
+    ],
+    "description": "Require using Error objects as Promise rejection reasons",
+    "resourceUrls": [
+      "https://typescript-eslint.io/rules/prefer-promise-reject-errors"
+    ]
+  },
+  {
+    "name": "@typescript-eslint/prefer-readonly",
+    "severityLevel": 3,
+    "type": "Standard",
+    "tags": [
+      "suggestion"
+    ],
+    "description": "Require private members to be marked as `readonly` if they're never modified outside of the constructor",
+    "resourceUrls": [
+      "https://typescript-eslint.io/rules/prefer-readonly"
+    ]
+  },
+  {
+    "name": "@typescript-eslint/prefer-readonly-parameter-types",
+    "severityLevel": 3,
+    "type": "Standard",
+    "tags": [
+      "suggestion"
+    ],
+    "description": "Require function parameters to be typed as `readonly` to prevent accidental mutation of inputs",
+    "resourceUrls": [
+      "https://typescript-eslint.io/rules/prefer-readonly-parameter-types"
+    ]
+  },
+  {
+    "name": "@typescript-eslint/prefer-reduce-type-parameter",
+    "severityLevel": 2,
+    "type": "Standard",
+    "tags": [
+      "problem"
+    ],
+    "description": "Enforce using type parameter when calling `Array#reduce` instead of casting",
+    "resourceUrls": [
+      "https://typescript-eslint.io/rules/prefer-reduce-type-parameter"
+    ]
+  },
+  {
+    "name": "@typescript-eslint/prefer-regexp-exec",
+    "severityLevel": 3,
+    "type": "Standard",
+    "tags": [
+      "suggestion"
+    ],
+    "description": "Enforce `RegExp#exec` over `String#match` if no global flag is provided",
+    "resourceUrls": [
+      "https://typescript-eslint.io/rules/prefer-regexp-exec"
+    ]
+  },
+  {
+    "name": "@typescript-eslint/prefer-return-this-type",
+    "severityLevel": 3,
+    "type": "Standard",
+    "tags": [
+      "suggestion"
+    ],
+    "description": "Enforce that `this` is used when only `this` type is returned",
+    "resourceUrls": [
+      "https://typescript-eslint.io/rules/prefer-return-this-type"
+    ]
+  },
+  {
+    "name": "@typescript-eslint/prefer-string-starts-ends-with",
+    "severityLevel": 3,
+    "type": "Standard",
+    "tags": [
+      "suggestion"
+    ],
+    "description": "Enforce using `String#startsWith` and `String#endsWith` over other equivalent methods of checking substrings",
+    "resourceUrls": [
+      "https://typescript-eslint.io/rules/prefer-string-starts-ends-with"
+    ]
+  },
+  {
+    "name": "@typescript-eslint/promise-function-async",
+    "severityLevel": 3,
+    "type": "Standard",
+    "tags": [
+      "suggestion"
+    ],
+    "description": "Require any function or method that returns a Promise to be marked async",
+    "resourceUrls": [
+      "https://typescript-eslint.io/rules/promise-function-async"
+    ]
+  },
+  {
+    "name": "@typescript-eslint/require-array-sort-compare",
+    "severityLevel": 2,
+    "type": "Standard",
+    "tags": [
+      "problem"
+    ],
+    "description": "Require `Array#sort` and `Array#toSorted` calls to always provide a `compareFunction`",
+    "resourceUrls": [
+      "https://typescript-eslint.io/rules/require-array-sort-compare"
+    ]
+  },
+  {
+    "name": "@typescript-eslint/require-await",
+    "severityLevel": 3,
+    "type": "Standard",
+    "tags": [
+      "suggestion"
+    ],
+    "description": "Disallow async functions which do not return promises and have no `await` expression",
+    "resourceUrls": [
+      "https://typescript-eslint.io/rules/require-await"
+    ]
+  },
+  {
+    "name": "@typescript-eslint/restrict-plus-operands",
+    "severityLevel": 2,
+    "type": "Standard",
+    "tags": [
+      "problem"
+    ],
+    "description": "Require both operands of addition to be the same type and be `bigint`, `number`, or `string`",
+    "resourceUrls": [
+      "https://typescript-eslint.io/rules/restrict-plus-operands"
+    ]
+  },
+  {
+    "name": "@typescript-eslint/restrict-template-expressions",
+    "severityLevel": 2,
+    "type": "Standard",
+    "tags": [
+      "problem"
+    ],
+    "description": "Enforce template literal expressions to be of `string` type",
+    "resourceUrls": [
+      "https://typescript-eslint.io/rules/restrict-template-expressions"
+    ]
+  },
+  {
+    "name": "@typescript-eslint/return-await",
+    "severityLevel": 2,
+    "type": "Standard",
+    "tags": [
+      "problem"
+    ],
+    "description": "Enforce consistent awaiting of returned promises",
+    "resourceUrls": [
+      "https://typescript-eslint.io/rules/return-await"
+    ]
+  },
+  {
+    "name": "@typescript-eslint/strict-boolean-expressions",
+    "severityLevel": 3,
+    "type": "Standard",
+    "tags": [
+      "suggestion"
+    ],
+    "description": "Disallow certain types in boolean expressions",
+    "resourceUrls": [
+      "https://typescript-eslint.io/rules/strict-boolean-expressions"
+    ]
+  },
+  {
+    "name": "@typescript-eslint/switch-exhaustiveness-check",
+    "severityLevel": 3,
+    "type": "Standard",
+    "tags": [
+      "suggestion"
+    ],
+    "description": "Require switch-case statements to be exhaustive",
+    "resourceUrls": [
+      "https://typescript-eslint.io/rules/switch-exhaustiveness-check"
+    ]
+  },
+  {
+    "name": "@typescript-eslint/triple-slash-reference",
+    "severityLevel": 3,
+    "type": "Standard",
+    "tags": [
+      "Recommended",
+      "suggestion"
+    ],
+    "description": "Disallow certain triple slash directives in favor of ES6-style import declarations",
+    "resourceUrls": [
+      "https://typescript-eslint.io/rules/triple-slash-reference"
+    ]
+  },
+  {
+    "name": "@typescript-eslint/typedef",
+    "severityLevel": 3,
+    "type": "Standard",
+    "tags": [
+      "suggestion"
+    ],
+    "description": "Require type annotations in certain places",
+    "resourceUrls": [
+      "https://typescript-eslint.io/rules/typedef"
+    ]
+  },
+  {
+    "name": "@typescript-eslint/unbound-method",
+    "severityLevel": 2,
+    "type": "Standard",
+    "tags": [
+      "problem"
+    ],
+    "description": "Enforce unbound methods are called with their expected scope",
+    "resourceUrls": [
+      "https://typescript-eslint.io/rules/unbound-method"
+    ]
+  },
+  {
+    "name": "@typescript-eslint/unified-signatures",
+    "severityLevel": 3,
+    "type": "Standard",
+    "tags": [
+      "suggestion"
+    ],
+    "description": "Disallow two overloads that could be unified into one with a union or an optional/rest parameter",
+    "resourceUrls": [
+      "https://typescript-eslint.io/rules/unified-signatures"
+    ]
+  },
+  {
+    "name": "@typescript-eslint/use-unknown-in-catch-callback-variable",
+    "severityLevel": 3,
+    "type": "Standard",
+    "tags": [
+      "suggestion"
+    ],
+    "description": "Enforce typing arguments in `.catch()` callbacks as `unknown`",
+    "resourceUrls": [
+      "https://typescript-eslint.io/rules/use-unknown-in-catch-callback-variable"
+    ]
+  },
+  {
+    "name": "accessor-pairs",
+    "severityLevel": 3,
+    "type": "Standard",
+    "tags": [
+      "suggestion"
+    ],
+    "description": "Enforce getter and setter pairs in objects and classes",
+    "resourceUrls": [
+      "https://eslint.org/docs/latest/rules/accessor-pairs"
+    ]
+  },
+  {
+    "name": "array-callback-return",
+    "severityLevel": 2,
+    "type": "Standard",
+    "tags": [
+      "problem"
+    ],
+    "description": "Enforce `return` statements in callbacks of array methods",
+    "resourceUrls": [
+      "https://eslint.org/docs/latest/rules/array-callback-return"
+    ]
+  },
+  {
+    "name": "arrow-body-style",
+    "severityLevel": 3,
+    "type": "Standard",
+    "tags": [
+      "suggestion"
+    ],
+    "description": "Require braces around arrow function bodies",
+    "resourceUrls": [
+      "https://eslint.org/docs/latest/rules/arrow-body-style"
+    ]
+  },
+  {
+    "name": "block-scoped-var",
+    "severityLevel": 3,
+    "type": "Standard",
+    "tags": [
+      "suggestion"
+    ],
+    "description": "Enforce the use of variables within the scope they are defined",
+    "resourceUrls": [
+      "https://eslint.org/docs/latest/rules/block-scoped-var"
+    ]
+  },
+  {
+    "name": "camelcase",
+    "severityLevel": 3,
+    "type": "Standard",
+    "tags": [
+      "suggestion"
+    ],
+    "description": "Enforce camelcase naming convention",
+    "resourceUrls": [
+      "https://eslint.org/docs/latest/rules/camelcase"
+    ]
+  },
+  {
+    "name": "capitalized-comments",
+    "severityLevel": 3,
+    "type": "Standard",
+    "tags": [
+      "suggestion"
+    ],
+    "description": "Enforce or disallow capitalization of the first letter of a comment",
+    "resourceUrls": [
+      "https://eslint.org/docs/latest/rules/capitalized-comments"
+    ]
+  },
+  {
+    "name": "class-methods-use-this",
+    "severityLevel": 3,
+    "type": "Standard",
+    "tags": [
+      "suggestion"
+    ],
+    "description": "Enforce that class methods utilize `this`",
+    "resourceUrls": [
+      "https://eslint.org/docs/latest/rules/class-methods-use-this"
+    ]
+  },
+  {
+    "name": "complexity",
+    "severityLevel": 3,
+    "type": "Standard",
+    "tags": [
+      "suggestion"
+    ],
+    "description": "Enforce a maximum cyclomatic complexity allowed in a program",
+    "resourceUrls": [
+      "https://eslint.org/docs/latest/rules/complexity"
+    ]
+  },
+  {
+    "name": "consistent-return",
+    "severityLevel": 3,
+    "type": "Standard",
+    "tags": [
+      "suggestion"
+    ],
+    "description": "Require `return` statements to either always or never specify values",
+    "resourceUrls": [
+      "https://eslint.org/docs/latest/rules/consistent-return"
+    ]
+  },
+  {
+    "name": "consistent-this",
+    "severityLevel": 3,
+    "type": "Standard",
+    "tags": [
+      "suggestion"
+    ],
+    "description": "Enforce consistent naming when capturing the current execution context",
+    "resourceUrls": [
+      "https://eslint.org/docs/latest/rules/consistent-this"
+    ]
+  },
+  {
+    "name": "constructor-super",
+    "severityLevel": 2,
+    "type": "Standard",
+    "tags": [
+      "Recommended",
+      "problem"
+    ],
+    "description": "Require `super()` calls in constructors",
+    "resourceUrls": [
+      "https://eslint.org/docs/latest/rules/constructor-super"
+    ]
+  },
+  {
+    "name": "curly",
+    "severityLevel": 3,
+    "type": "Standard",
+    "tags": [
+      "suggestion"
+    ],
+    "description": "Enforce consistent brace style for all control statements",
+    "resourceUrls": [
+      "https://eslint.org/docs/latest/rules/curly"
+    ]
+  },
+  {
+    "name": "default-case",
+    "severityLevel": 3,
+    "type": "Standard",
+    "tags": [
+      "suggestion"
+    ],
+    "description": "Require `default` cases in `switch` statements",
+    "resourceUrls": [
+      "https://eslint.org/docs/latest/rules/default-case"
+    ]
+  },
+  {
+    "name": "default-case-last",
+    "severityLevel": 3,
+    "type": "Standard",
+    "tags": [
+      "suggestion"
+    ],
+    "description": "Enforce default clauses in switch statements to be last",
+    "resourceUrls": [
+      "https://eslint.org/docs/latest/rules/default-case-last"
+    ]
+  },
+  {
+    "name": "default-param-last",
+    "severityLevel": 3,
+    "type": "Standard",
+    "tags": [
+      "suggestion"
+    ],
+    "description": "Enforce default parameters to be last",
+    "resourceUrls": [
+      "https://eslint.org/docs/latest/rules/default-param-last"
+    ]
+  },
+  {
+    "name": "dot-notation",
+    "severityLevel": 3,
+    "type": "Standard",
+    "tags": [
+      "suggestion"
+    ],
+    "description": "Enforce dot notation whenever possible",
+    "resourceUrls": [
+      "https://eslint.org/docs/latest/rules/dot-notation"
+    ]
+  },
+  {
+    "name": "dummy/my-rule-1",
+    "severityLevel": 3,
+    "type": "Standard",
+    "tags": [
+      "Recommended",
+      "suggestion"
+    ],
+    "description": "My description of my-rule-1",
+    "resourceUrls": [
+      "https://example.com/my-rule-1"
+    ]
+  },
+  {
+    "name": "dummy/my-rule-2",
+    "severityLevel": 5,
+    "type": "Standard",
+    "tags": [
+      "Recommended",
+      "problem"
+    ],
+    "description": "",
+    "resourceUrls": [
+      "https://example.com/my-rule-2"
+    ]
+  },
+  {
+    "name": "dummy/my-rule-3",
+    "severityLevel": 4,
+    "type": "Standard",
+    "tags": [
+      "Recommended",
+      "layout"
+    ],
+    "description": "My description of my-rule-3",
+    "resourceUrls": []
+  },
+  {
+    "name": "eqeqeq",
+    "severityLevel": 3,
+    "type": "Standard",
+    "tags": [
+      "suggestion"
+    ],
+    "description": "Require the use of `===` and `!==`",
+    "resourceUrls": [
+      "https://eslint.org/docs/latest/rules/eqeqeq"
+    ]
+  },
+  {
+    "name": "for-direction",
+    "severityLevel": 2,
+    "type": "Standard",
+    "tags": [
+      "Recommended",
+      "problem"
+    ],
+    "description": "Enforce \"for\" loop update clause moving the counter in the right direction",
+    "resourceUrls": [
+      "https://eslint.org/docs/latest/rules/for-direction"
+    ]
+  },
+  {
+    "name": "func-name-matching",
+    "severityLevel": 3,
+    "type": "Standard",
+    "tags": [
+      "suggestion"
+    ],
+    "description": "Require function names to match the name of the variable or property to which they are assigned",
+    "resourceUrls": [
+      "https://eslint.org/docs/latest/rules/func-name-matching"
+    ]
+  },
+  {
+    "name": "func-names",
+    "severityLevel": 3,
+    "type": "Standard",
+    "tags": [
+      "suggestion"
+    ],
+    "description": "Require or disallow named `function` expressions",
+    "resourceUrls": [
+      "https://eslint.org/docs/latest/rules/func-names"
+    ]
+  },
+  {
+    "name": "func-style",
+    "severityLevel": 3,
+    "type": "Standard",
+    "tags": [
+      "suggestion"
+    ],
+    "description": "Enforce the consistent use of either `function` declarations or expressions",
+    "resourceUrls": [
+      "https://eslint.org/docs/latest/rules/func-style"
+    ]
+  },
+  {
+    "name": "getter-return",
+    "severityLevel": 2,
+    "type": "Standard",
+    "tags": [
+      "Recommended",
+      "problem"
+    ],
+    "description": "Enforce `return` statements in getters",
+    "resourceUrls": [
+      "https://eslint.org/docs/latest/rules/getter-return"
+    ]
+  },
+  {
+    "name": "grouped-accessor-pairs",
+    "severityLevel": 3,
+    "type": "Standard",
+    "tags": [
+      "suggestion"
+    ],
+    "description": "Require grouped accessor pairs in object literals and classes",
+    "resourceUrls": [
+      "https://eslint.org/docs/latest/rules/grouped-accessor-pairs"
+    ]
+  },
+  {
+    "name": "guard-for-in",
+    "severityLevel": 3,
+    "type": "Standard",
+    "tags": [
+      "suggestion"
+    ],
+    "description": "Require `for-in` loops to include an `if` statement",
+    "resourceUrls": [
+      "https://eslint.org/docs/latest/rules/guard-for-in"
+    ]
+  },
+  {
+    "name": "id-denylist",
+    "severityLevel": 3,
+    "type": "Standard",
+    "tags": [
+      "suggestion"
+    ],
+    "description": "Disallow specified identifiers",
+    "resourceUrls": [
+      "https://eslint.org/docs/latest/rules/id-denylist"
+    ]
+  },
+  {
+    "name": "id-length",
+    "severityLevel": 3,
+    "type": "Standard",
+    "tags": [
+      "suggestion"
+    ],
+    "description": "Enforce minimum and maximum identifier lengths",
+    "resourceUrls": [
+      "https://eslint.org/docs/latest/rules/id-length"
+    ]
+  },
+  {
+    "name": "id-match",
+    "severityLevel": 3,
+    "type": "Standard",
+    "tags": [
+      "suggestion"
+    ],
+    "description": "Require identifiers to match a specified regular expression",
+    "resourceUrls": [
+      "https://eslint.org/docs/latest/rules/id-match"
+    ]
+  },
+  {
+    "name": "init-declarations",
+    "severityLevel": 3,
+    "type": "Standard",
+    "tags": [
+      "suggestion"
+    ],
+    "description": "Require or disallow initialization in variable declarations",
+    "resourceUrls": [
+      "https://eslint.org/docs/latest/rules/init-declarations"
+    ]
+  },
+  {
+    "name": "line-comment-position",
+    "severityLevel": 4,
+    "type": "Standard",
+    "tags": [
+      "layout"
+    ],
+    "description": "Enforce position of line comments",
+    "resourceUrls": [
+      "https://eslint.org/docs/latest/rules/line-comment-position"
+    ]
+  },
+  {
+    "name": "logical-assignment-operators",
+    "severityLevel": 3,
+    "type": "Standard",
+    "tags": [
+      "suggestion"
+    ],
+    "description": "Require or disallow logical assignment operator shorthand",
+    "resourceUrls": [
+      "https://eslint.org/docs/latest/rules/logical-assignment-operators"
+    ]
+  },
+  {
+    "name": "max-classes-per-file",
+    "severityLevel": 3,
+    "type": "Standard",
+    "tags": [
+      "suggestion"
+    ],
+    "description": "Enforce a maximum number of classes per file",
+    "resourceUrls": [
+      "https://eslint.org/docs/latest/rules/max-classes-per-file"
+    ]
+  },
+  {
+    "name": "max-depth",
+    "severityLevel": 3,
+    "type": "Standard",
+    "tags": [
+      "suggestion"
+    ],
+    "description": "Enforce a maximum depth that blocks can be nested",
+    "resourceUrls": [
+      "https://eslint.org/docs/latest/rules/max-depth"
+    ]
+  },
+  {
+    "name": "max-lines",
+    "severityLevel": 3,
+    "type": "Standard",
+    "tags": [
+      "suggestion"
+    ],
+    "description": "Enforce a maximum number of lines per file",
+    "resourceUrls": [
+      "https://eslint.org/docs/latest/rules/max-lines"
+    ]
+  },
+  {
+    "name": "max-lines-per-function",
+    "severityLevel": 3,
+    "type": "Standard",
+    "tags": [
+      "suggestion"
+    ],
+    "description": "Enforce a maximum number of lines of code in a function",
+    "resourceUrls": [
+      "https://eslint.org/docs/latest/rules/max-lines-per-function"
+    ]
+  },
+  {
+    "name": "max-nested-callbacks",
+    "severityLevel": 3,
+    "type": "Standard",
+    "tags": [
+      "suggestion"
+    ],
+    "description": "Enforce a maximum depth that callbacks can be nested",
+    "resourceUrls": [
+      "https://eslint.org/docs/latest/rules/max-nested-callbacks"
+    ]
+  },
+  {
+    "name": "max-params",
+    "severityLevel": 3,
+    "type": "Standard",
+    "tags": [
+      "suggestion"
+    ],
+    "description": "Enforce a maximum number of parameters in function definitions",
+    "resourceUrls": [
+      "https://eslint.org/docs/latest/rules/max-params"
+    ]
+  },
+  {
+    "name": "max-statements",
+    "severityLevel": 3,
+    "type": "Standard",
+    "tags": [
+      "suggestion"
+    ],
+    "description": "Enforce a maximum number of statements allowed in function blocks",
+    "resourceUrls": [
+      "https://eslint.org/docs/latest/rules/max-statements"
+    ]
+  },
+  {
+    "name": "multiline-comment-style",
+    "severityLevel": 3,
+    "type": "Standard",
+    "tags": [
+      "suggestion"
+    ],
+    "description": "Enforce a particular style for multiline comments",
+    "resourceUrls": [
+      "https://eslint.org/docs/latest/rules/multiline-comment-style"
+    ]
+  },
+  {
+    "name": "new-cap",
+    "severityLevel": 3,
+    "type": "Standard",
+    "tags": [
+      "suggestion"
+    ],
+    "description": "Require constructor names to begin with a capital letter",
+    "resourceUrls": [
+      "https://eslint.org/docs/latest/rules/new-cap"
+    ]
+  },
+  {
+    "name": "no-alert",
+    "severityLevel": 3,
+    "type": "Standard",
+    "tags": [
+      "suggestion"
+    ],
+    "description": "Disallow the use of `alert`, `confirm`, and `prompt`",
+    "resourceUrls": [
+      "https://eslint.org/docs/latest/rules/no-alert"
+    ]
+  },
+  {
+    "name": "no-array-constructor",
+    "severityLevel": 3,
+    "type": "Standard",
+    "tags": [
+      "suggestion"
+    ],
+    "description": "Disallow `Array` constructors",
+    "resourceUrls": [
+      "https://eslint.org/docs/latest/rules/no-array-constructor"
+    ]
+  },
+  {
+    "name": "no-async-promise-executor",
+    "severityLevel": 2,
+    "type": "Standard",
+    "tags": [
+      "Recommended",
+      "problem"
+    ],
+    "description": "Disallow using an async function as a Promise executor",
+    "resourceUrls": [
+      "https://eslint.org/docs/latest/rules/no-async-promise-executor"
+    ]
+  },
+  {
+    "name": "no-await-in-loop",
+    "severityLevel": 2,
+    "type": "Standard",
+    "tags": [
+      "problem"
+    ],
+    "description": "Disallow `await` inside of loops",
+    "resourceUrls": [
+      "https://eslint.org/docs/latest/rules/no-await-in-loop"
+    ]
+  },
+  {
+    "name": "no-bitwise",
+    "severityLevel": 3,
+    "type": "Standard",
+    "tags": [
+      "suggestion"
+    ],
+    "description": "Disallow bitwise operators",
+    "resourceUrls": [
+      "https://eslint.org/docs/latest/rules/no-bitwise"
+    ]
+  },
+  {
+    "name": "no-caller",
+    "severityLevel": 3,
+    "type": "Standard",
+    "tags": [
+      "suggestion"
+    ],
+    "description": "Disallow the use of `arguments.caller` or `arguments.callee`",
+    "resourceUrls": [
+      "https://eslint.org/docs/latest/rules/no-caller"
+    ]
+  },
+  {
+    "name": "no-case-declarations",
+    "severityLevel": 3,
+    "type": "Standard",
+    "tags": [
+      "Recommended",
+      "suggestion"
+    ],
+    "description": "Disallow lexical declarations in case clauses",
+    "resourceUrls": [
+      "https://eslint.org/docs/latest/rules/no-case-declarations"
+    ]
+  },
+  {
+    "name": "no-class-assign",
+    "severityLevel": 2,
+    "type": "Standard",
+    "tags": [
+      "Recommended",
+      "problem"
+    ],
+    "description": "Disallow reassigning class members",
+    "resourceUrls": [
+      "https://eslint.org/docs/latest/rules/no-class-assign"
+    ]
+  },
+  {
+    "name": "no-compare-neg-zero",
+    "severityLevel": 2,
+    "type": "Standard",
+    "tags": [
+      "Recommended",
+      "problem"
+    ],
+    "description": "Disallow comparing against -0",
+    "resourceUrls": [
+      "https://eslint.org/docs/latest/rules/no-compare-neg-zero"
+    ]
+  },
+  {
+    "name": "no-cond-assign",
+    "severityLevel": 2,
+    "type": "Standard",
+    "tags": [
+      "Recommended",
+      "problem"
+    ],
+    "description": "Disallow assignment operators in conditional expressions",
+    "resourceUrls": [
+      "https://eslint.org/docs/latest/rules/no-cond-assign"
+    ]
+  },
+  {
+    "name": "no-console",
+    "severityLevel": 3,
+    "type": "Standard",
+    "tags": [
+      "suggestion"
+    ],
+    "description": "Disallow the use of `console`",
+    "resourceUrls": [
+      "https://eslint.org/docs/latest/rules/no-console"
+    ]
+  },
+  {
+    "name": "no-const-assign",
+    "severityLevel": 2,
+    "type": "Standard",
+    "tags": [
+      "Recommended",
+      "problem"
+    ],
+    "description": "Disallow reassigning `const` variables",
+    "resourceUrls": [
+      "https://eslint.org/docs/latest/rules/no-const-assign"
+    ]
+  },
+  {
+    "name": "no-constant-binary-expression",
+    "severityLevel": 2,
+    "type": "Standard",
+    "tags": [
+      "problem"
+    ],
+    "description": "Disallow expressions where the operation doesn't affect the value",
+    "resourceUrls": [
+      "https://eslint.org/docs/latest/rules/no-constant-binary-expression"
+    ]
+  },
+  {
+    "name": "no-constant-condition",
+    "severityLevel": 2,
+    "type": "Standard",
+    "tags": [
+      "Recommended",
+      "problem"
+    ],
+    "description": "Disallow constant expressions in conditions",
+    "resourceUrls": [
+      "https://eslint.org/docs/latest/rules/no-constant-condition"
+    ]
+  },
+  {
+    "name": "no-constructor-return",
+    "severityLevel": 2,
+    "type": "Standard",
+    "tags": [
+      "problem"
+    ],
+    "description": "Disallow returning value from constructor",
+    "resourceUrls": [
+      "https://eslint.org/docs/latest/rules/no-constructor-return"
+    ]
+  },
+  {
+    "name": "no-continue",
+    "severityLevel": 3,
+    "type": "Standard",
+    "tags": [
+      "suggestion"
+    ],
+    "description": "Disallow `continue` statements",
+    "resourceUrls": [
+      "https://eslint.org/docs/latest/rules/no-continue"
+    ]
+  },
+  {
+    "name": "no-control-regex",
+    "severityLevel": 2,
+    "type": "Standard",
+    "tags": [
+      "Recommended",
+      "problem"
+    ],
+    "description": "Disallow control characters in regular expressions",
+    "resourceUrls": [
+      "https://eslint.org/docs/latest/rules/no-control-regex"
+    ]
+  },
+  {
+    "name": "no-debugger",
+    "severityLevel": 2,
+    "type": "Standard",
+    "tags": [
+      "Recommended",
+      "problem"
+    ],
+    "description": "Disallow the use of `debugger`",
+    "resourceUrls": [
+      "https://eslint.org/docs/latest/rules/no-debugger"
+    ]
+  },
+  {
+    "name": "no-delete-var",
+    "severityLevel": 3,
+    "type": "Standard",
+    "tags": [
+      "Recommended",
+      "suggestion"
+    ],
+    "description": "Disallow deleting variables",
+    "resourceUrls": [
+      "https://eslint.org/docs/latest/rules/no-delete-var"
+    ]
+  },
+  {
+    "name": "no-div-regex",
+    "severityLevel": 3,
+    "type": "Standard",
+    "tags": [
+      "suggestion"
+    ],
+    "description": "Disallow equal signs explicitly at the beginning of regular expressions",
+    "resourceUrls": [
+      "https://eslint.org/docs/latest/rules/no-div-regex"
+    ]
+  },
+  {
+    "name": "no-dupe-args",
+    "severityLevel": 2,
+    "type": "Standard",
+    "tags": [
+      "Recommended",
+      "problem"
+    ],
+    "description": "Disallow duplicate arguments in `function` definitions",
+    "resourceUrls": [
+      "https://eslint.org/docs/latest/rules/no-dupe-args"
+    ]
+  },
+  {
+    "name": "no-dupe-class-members",
+    "severityLevel": 2,
+    "type": "Standard",
+    "tags": [
+      "Recommended",
+      "problem"
+    ],
+    "description": "Disallow duplicate class members",
+    "resourceUrls": [
+      "https://eslint.org/docs/latest/rules/no-dupe-class-members"
+    ]
+  },
+  {
+    "name": "no-dupe-else-if",
+    "severityLevel": 2,
+    "type": "Standard",
+    "tags": [
+      "Recommended",
+      "problem"
+    ],
+    "description": "Disallow duplicate conditions in if-else-if chains",
+    "resourceUrls": [
+      "https://eslint.org/docs/latest/rules/no-dupe-else-if"
+    ]
+  },
+  {
+    "name": "no-dupe-keys",
+    "severityLevel": 2,
+    "type": "Standard",
+    "tags": [
+      "Recommended",
+      "problem"
+    ],
+    "description": "Disallow duplicate keys in object literals",
+    "resourceUrls": [
+      "https://eslint.org/docs/latest/rules/no-dupe-keys"
+    ]
+  },
+  {
+    "name": "no-duplicate-case",
+    "severityLevel": 2,
+    "type": "Standard",
+    "tags": [
+      "Recommended",
+      "problem"
+    ],
+    "description": "Disallow duplicate case labels",
+    "resourceUrls": [
+      "https://eslint.org/docs/latest/rules/no-duplicate-case"
+    ]
+  },
+  {
+    "name": "no-duplicate-imports",
+    "severityLevel": 2,
+    "type": "Standard",
+    "tags": [
+      "problem"
+    ],
+    "description": "Disallow duplicate module imports",
+    "resourceUrls": [
+      "https://eslint.org/docs/latest/rules/no-duplicate-imports"
+    ]
+  },
+  {
+    "name": "no-else-return",
+    "severityLevel": 3,
+    "type": "Standard",
+    "tags": [
+      "suggestion"
+    ],
+    "description": "Disallow `else` blocks after `return` statements in `if` statements",
+    "resourceUrls": [
+      "https://eslint.org/docs/latest/rules/no-else-return"
+    ]
+  },
+  {
+    "name": "no-empty",
+    "severityLevel": 3,
+    "type": "Standard",
+    "tags": [
+      "Recommended",
+      "suggestion"
+    ],
+    "description": "Disallow empty block statements",
+    "resourceUrls": [
+      "https://eslint.org/docs/latest/rules/no-empty"
+    ]
+  },
+  {
+    "name": "no-empty-character-class",
+    "severityLevel": 2,
+    "type": "Standard",
+    "tags": [
+      "Recommended",
+      "problem"
+    ],
+    "description": "Disallow empty character classes in regular expressions",
+    "resourceUrls": [
+      "https://eslint.org/docs/latest/rules/no-empty-character-class"
+    ]
+  },
+  {
+    "name": "no-empty-function",
+    "severityLevel": 3,
+    "type": "Standard",
+    "tags": [
+      "suggestion"
+    ],
+    "description": "Disallow empty functions",
+    "resourceUrls": [
+      "https://eslint.org/docs/latest/rules/no-empty-function"
+    ]
+  },
+  {
+    "name": "no-empty-pattern",
+    "severityLevel": 2,
+    "type": "Standard",
+    "tags": [
+      "Recommended",
+      "problem"
+    ],
+    "description": "Disallow empty destructuring patterns",
+    "resourceUrls": [
+      "https://eslint.org/docs/latest/rules/no-empty-pattern"
+    ]
+  },
+  {
+    "name": "no-empty-static-block",
+    "severityLevel": 3,
+    "type": "Standard",
+    "tags": [
+      "suggestion"
+    ],
+    "description": "Disallow empty static blocks",
+    "resourceUrls": [
+      "https://eslint.org/docs/latest/rules/no-empty-static-block"
+    ]
+  },
+  {
+    "name": "no-eq-null",
+    "severityLevel": 3,
+    "type": "Standard",
+    "tags": [
+      "suggestion"
+    ],
+    "description": "Disallow `null` comparisons without type-checking operators",
+    "resourceUrls": [
+      "https://eslint.org/docs/latest/rules/no-eq-null"
+    ]
+  },
+  {
+    "name": "no-eval",
+    "severityLevel": 3,
+    "type": "Standard",
+    "tags": [
+      "suggestion"
+    ],
+    "description": "Disallow the use of `eval()`",
+    "resourceUrls": [
+      "https://eslint.org/docs/latest/rules/no-eval"
+    ]
+  },
+  {
+    "name": "no-ex-assign",
+    "severityLevel": 2,
+    "type": "Standard",
+    "tags": [
+      "Recommended",
+      "problem"
+    ],
+    "description": "Disallow reassigning exceptions in `catch` clauses",
+    "resourceUrls": [
+      "https://eslint.org/docs/latest/rules/no-ex-assign"
+    ]
+  },
+  {
+    "name": "no-extend-native",
+    "severityLevel": 3,
+    "type": "Standard",
+    "tags": [
+      "suggestion"
+    ],
+    "description": "Disallow extending native types",
+    "resourceUrls": [
+      "https://eslint.org/docs/latest/rules/no-extend-native"
+    ]
+  },
+  {
+    "name": "no-extra-bind",
+    "severityLevel": 3,
+    "type": "Standard",
+    "tags": [
+      "suggestion"
+    ],
+    "description": "Disallow unnecessary calls to `.bind()`",
+    "resourceUrls": [
+      "https://eslint.org/docs/latest/rules/no-extra-bind"
+    ]
+  },
+  {
+    "name": "no-extra-boolean-cast",
+    "severityLevel": 3,
+    "type": "Standard",
+    "tags": [
+      "Recommended",
+      "suggestion"
+    ],
+    "description": "Disallow unnecessary boolean casts",
+    "resourceUrls": [
+      "https://eslint.org/docs/latest/rules/no-extra-boolean-cast"
+    ]
+  },
+  {
+    "name": "no-extra-label",
+    "severityLevel": 3,
+    "type": "Standard",
+    "tags": [
+      "suggestion"
+    ],
+    "description": "Disallow unnecessary labels",
+    "resourceUrls": [
+      "https://eslint.org/docs/latest/rules/no-extra-label"
+    ]
+  },
+  {
+    "name": "no-fallthrough",
+    "severityLevel": 2,
+    "type": "Standard",
+    "tags": [
+      "Recommended",
+      "problem"
+    ],
+    "description": "Disallow fallthrough of `case` statements",
+    "resourceUrls": [
+      "https://eslint.org/docs/latest/rules/no-fallthrough"
+    ]
+  },
+  {
+    "name": "no-func-assign",
+    "severityLevel": 2,
+    "type": "Standard",
+    "tags": [
+      "Recommended",
+      "problem"
+    ],
+    "description": "Disallow reassigning `function` declarations",
+    "resourceUrls": [
+      "https://eslint.org/docs/latest/rules/no-func-assign"
+    ]
+  },
+  {
+    "name": "no-global-assign",
+    "severityLevel": 3,
+    "type": "Standard",
+    "tags": [
+      "Recommended",
+      "suggestion"
+    ],
+    "description": "Disallow assignments to native objects or read-only global variables",
+    "resourceUrls": [
+      "https://eslint.org/docs/latest/rules/no-global-assign"
+    ]
+  },
+  {
+    "name": "no-implicit-coercion",
+    "severityLevel": 3,
+    "type": "Standard",
+    "tags": [
+      "suggestion"
+    ],
+    "description": "Disallow shorthand type conversions",
+    "resourceUrls": [
+      "https://eslint.org/docs/latest/rules/no-implicit-coercion"
+    ]
+  },
+  {
+    "name": "no-implicit-globals",
+    "severityLevel": 3,
+    "type": "Standard",
+    "tags": [
+      "suggestion"
+    ],
+    "description": "Disallow declarations in the global scope",
+    "resourceUrls": [
+      "https://eslint.org/docs/latest/rules/no-implicit-globals"
+    ]
+  },
+  {
+    "name": "no-implied-eval",
+    "severityLevel": 3,
+    "type": "Standard",
+    "tags": [
+      "suggestion"
+    ],
+    "description": "Disallow the use of `eval()`-like methods",
+    "resourceUrls": [
+      "https://eslint.org/docs/latest/rules/no-implied-eval"
+    ]
+  },
+  {
+    "name": "no-import-assign",
+    "severityLevel": 2,
+    "type": "Standard",
+    "tags": [
+      "Recommended",
+      "problem"
+    ],
+    "description": "Disallow assigning to imported bindings",
+    "resourceUrls": [
+      "https://eslint.org/docs/latest/rules/no-import-assign"
+    ]
+  },
+  {
+    "name": "no-inline-comments",
+    "severityLevel": 3,
+    "type": "Standard",
+    "tags": [
+      "suggestion"
+    ],
+    "description": "Disallow inline comments after code",
+    "resourceUrls": [
+      "https://eslint.org/docs/latest/rules/no-inline-comments"
+    ]
+  },
+  {
+    "name": "no-inner-declarations",
+    "severityLevel": 2,
+    "type": "Standard",
+    "tags": [
+      "Recommended",
+      "problem"
+    ],
+    "description": "Disallow variable or `function` declarations in nested blocks",
+    "resourceUrls": [
+      "https://eslint.org/docs/latest/rules/no-inner-declarations"
+    ]
+  },
+  {
+    "name": "no-invalid-regexp",
+    "severityLevel": 2,
+    "type": "Standard",
+    "tags": [
+      "Recommended",
+      "problem"
+    ],
+    "description": "Disallow invalid regular expression strings in `RegExp` constructors",
+    "resourceUrls": [
+      "https://eslint.org/docs/latest/rules/no-invalid-regexp"
+    ]
+  },
+  {
+    "name": "no-invalid-this",
+    "severityLevel": 3,
+    "type": "Standard",
+    "tags": [
+      "suggestion"
+    ],
+    "description": "Disallow use of `this` in contexts where the value of `this` is `undefined`",
+    "resourceUrls": [
+      "https://eslint.org/docs/latest/rules/no-invalid-this"
+    ]
+  },
+  {
+    "name": "no-irregular-whitespace",
+    "severityLevel": 2,
+    "type": "Standard",
+    "tags": [
+      "Recommended",
+      "problem"
+    ],
+    "description": "Disallow irregular whitespace",
+    "resourceUrls": [
+      "https://eslint.org/docs/latest/rules/no-irregular-whitespace"
+    ]
+  },
+  {
+    "name": "no-iterator",
+    "severityLevel": 3,
+    "type": "Standard",
+    "tags": [
+      "suggestion"
+    ],
+    "description": "Disallow the use of the `__iterator__` property",
+    "resourceUrls": [
+      "https://eslint.org/docs/latest/rules/no-iterator"
+    ]
+  },
+  {
+    "name": "no-label-var",
+    "severityLevel": 3,
+    "type": "Standard",
+    "tags": [
+      "suggestion"
+    ],
+    "description": "Disallow labels that share a name with a variable",
+    "resourceUrls": [
+      "https://eslint.org/docs/latest/rules/no-label-var"
+    ]
+  },
+  {
+    "name": "no-labels",
+    "severityLevel": 3,
+    "type": "Standard",
+    "tags": [
+      "suggestion"
+    ],
+    "description": "Disallow labeled statements",
+    "resourceUrls": [
+      "https://eslint.org/docs/latest/rules/no-labels"
+    ]
+  },
+  {
+    "name": "no-lone-blocks",
+    "severityLevel": 3,
+    "type": "Standard",
+    "tags": [
+      "suggestion"
+    ],
+    "description": "Disallow unnecessary nested blocks",
+    "resourceUrls": [
+      "https://eslint.org/docs/latest/rules/no-lone-blocks"
+    ]
+  },
+  {
+    "name": "no-lonely-if",
+    "severityLevel": 3,
+    "type": "Standard",
+    "tags": [
+      "suggestion"
+    ],
+    "description": "Disallow `if` statements as the only statement in `else` blocks",
+    "resourceUrls": [
+      "https://eslint.org/docs/latest/rules/no-lonely-if"
+    ]
+  },
+  {
+    "name": "no-loop-func",
+    "severityLevel": 3,
+    "type": "Standard",
+    "tags": [
+      "suggestion"
+    ],
+    "description": "Disallow function declarations that contain unsafe references inside loop statements",
+    "resourceUrls": [
+      "https://eslint.org/docs/latest/rules/no-loop-func"
+    ]
+  },
+  {
+    "name": "no-loss-of-precision",
+    "severityLevel": 2,
+    "type": "Standard",
+    "tags": [
+      "Recommended",
+      "problem"
+    ],
+    "description": "Disallow literal numbers that lose precision",
+    "resourceUrls": [
+      "https://eslint.org/docs/latest/rules/no-loss-of-precision"
+    ]
+  },
+  {
+    "name": "no-magic-numbers",
+    "severityLevel": 3,
+    "type": "Standard",
+    "tags": [
+      "suggestion"
+    ],
+    "description": "Disallow magic numbers",
+    "resourceUrls": [
+      "https://eslint.org/docs/latest/rules/no-magic-numbers"
+    ]
+  },
+  {
+    "name": "no-misleading-character-class",
+    "severityLevel": 2,
+    "type": "Standard",
+    "tags": [
+      "Recommended",
+      "problem"
+    ],
+    "description": "Disallow characters which are made with multiple code points in character class syntax",
+    "resourceUrls": [
+      "https://eslint.org/docs/latest/rules/no-misleading-character-class"
+    ]
+  },
+  {
+    "name": "no-multi-assign",
+    "severityLevel": 3,
+    "type": "Standard",
+    "tags": [
+      "suggestion"
+    ],
+    "description": "Disallow use of chained assignment expressions",
+    "resourceUrls": [
+      "https://eslint.org/docs/latest/rules/no-multi-assign"
+    ]
+  },
+  {
+    "name": "no-multi-str",
+    "severityLevel": 3,
+    "type": "Standard",
+    "tags": [
+      "suggestion"
+    ],
+    "description": "Disallow multiline strings",
+    "resourceUrls": [
+      "https://eslint.org/docs/latest/rules/no-multi-str"
+    ]
+  },
+  {
+    "name": "no-negated-condition",
+    "severityLevel": 3,
+    "type": "Standard",
+    "tags": [
+      "suggestion"
+    ],
+    "description": "Disallow negated conditions",
+    "resourceUrls": [
+      "https://eslint.org/docs/latest/rules/no-negated-condition"
+    ]
+  },
+  {
+    "name": "no-nested-ternary",
+    "severityLevel": 3,
+    "type": "Standard",
+    "tags": [
+      "suggestion"
+    ],
+    "description": "Disallow nested ternary expressions",
+    "resourceUrls": [
+      "https://eslint.org/docs/latest/rules/no-nested-ternary"
+    ]
+  },
+  {
+    "name": "no-new",
+    "severityLevel": 3,
+    "type": "Standard",
+    "tags": [
+      "suggestion"
+    ],
+    "description": "Disallow `new` operators outside of assignments or comparisons",
+    "resourceUrls": [
+      "https://eslint.org/docs/latest/rules/no-new"
+    ]
+  },
+  {
+    "name": "no-new-func",
+    "severityLevel": 3,
+    "type": "Standard",
+    "tags": [
+      "suggestion"
+    ],
+    "description": "Disallow `new` operators with the `Function` object",
+    "resourceUrls": [
+      "https://eslint.org/docs/latest/rules/no-new-func"
+    ]
+  },
+  {
+    "name": "no-new-native-nonconstructor",
+    "severityLevel": 2,
+    "type": "Standard",
+    "tags": [
+      "problem"
+    ],
+    "description": "Disallow `new` operators with global non-constructor functions",
+    "resourceUrls": [
+      "https://eslint.org/docs/latest/rules/no-new-native-nonconstructor"
+    ]
+  },
+  {
+    "name": "no-new-symbol",
+    "severityLevel": 2,
+    "type": "Standard",
+    "tags": [
+      "Recommended",
+      "problem"
+    ],
+    "description": "Disallow `new` operators with the `Symbol` object",
+    "resourceUrls": [
+      "https://eslint.org/docs/latest/rules/no-new-symbol"
+    ]
+  },
+  {
+    "name": "no-new-wrappers",
+    "severityLevel": 3,
+    "type": "Standard",
+    "tags": [
+      "suggestion"
+    ],
+    "description": "Disallow `new` operators with the `String`, `Number`, and `Boolean` objects",
+    "resourceUrls": [
+      "https://eslint.org/docs/latest/rules/no-new-wrappers"
+    ]
+  },
+  {
+    "name": "no-nonoctal-decimal-escape",
+    "severityLevel": 3,
+    "type": "Standard",
+    "tags": [
+      "Recommended",
+      "suggestion"
+    ],
+    "description": "Disallow `\\8` and `\\9` escape sequences in string literals",
+    "resourceUrls": [
+      "https://eslint.org/docs/latest/rules/no-nonoctal-decimal-escape"
+    ]
+  },
+  {
+    "name": "no-obj-calls",
+    "severityLevel": 2,
+    "type": "Standard",
+    "tags": [
+      "Recommended",
+      "problem"
+    ],
+    "description": "Disallow calling global object properties as functions",
+    "resourceUrls": [
+      "https://eslint.org/docs/latest/rules/no-obj-calls"
+    ]
+  },
+  {
+    "name": "no-object-constructor",
+    "severityLevel": 3,
+    "type": "Standard",
+    "tags": [
+      "suggestion"
+    ],
+    "description": "Disallow calls to the `Object` constructor without an argument",
+    "resourceUrls": [
+      "https://eslint.org/docs/latest/rules/no-object-constructor"
+    ]
+  },
+  {
+    "name": "no-octal",
+    "severityLevel": 3,
+    "type": "Standard",
+    "tags": [
+      "Recommended",
+      "suggestion"
+    ],
+    "description": "Disallow octal literals",
+    "resourceUrls": [
+      "https://eslint.org/docs/latest/rules/no-octal"
+    ]
+  },
+  {
+    "name": "no-octal-escape",
+    "severityLevel": 3,
+    "type": "Standard",
+    "tags": [
+      "suggestion"
+    ],
+    "description": "Disallow octal escape sequences in string literals",
+    "resourceUrls": [
+      "https://eslint.org/docs/latest/rules/no-octal-escape"
+    ]
+  },
+  {
+    "name": "no-param-reassign",
+    "severityLevel": 3,
+    "type": "Standard",
+    "tags": [
+      "suggestion"
+    ],
+    "description": "Disallow reassigning `function` parameters",
+    "resourceUrls": [
+      "https://eslint.org/docs/latest/rules/no-param-reassign"
+    ]
+  },
+  {
+    "name": "no-plusplus",
+    "severityLevel": 3,
+    "type": "Standard",
+    "tags": [
+      "suggestion"
+    ],
+    "description": "Disallow the unary operators `++` and `--`",
+    "resourceUrls": [
+      "https://eslint.org/docs/latest/rules/no-plusplus"
+    ]
+  },
+  {
+    "name": "no-promise-executor-return",
+    "severityLevel": 2,
+    "type": "Standard",
+    "tags": [
+      "problem"
+    ],
+    "description": "Disallow returning values from Promise executor functions",
+    "resourceUrls": [
+      "https://eslint.org/docs/latest/rules/no-promise-executor-return"
+    ]
+  },
+  {
+    "name": "no-proto",
+    "severityLevel": 3,
+    "type": "Standard",
+    "tags": [
+      "suggestion"
+    ],
+    "description": "Disallow the use of the `__proto__` property",
+    "resourceUrls": [
+      "https://eslint.org/docs/latest/rules/no-proto"
+    ]
+  },
+  {
+    "name": "no-prototype-builtins",
+    "severityLevel": 2,
+    "type": "Standard",
+    "tags": [
+      "Recommended",
+      "problem"
+    ],
+    "description": "Disallow calling some `Object.prototype` methods directly on objects",
+    "resourceUrls": [
+      "https://eslint.org/docs/latest/rules/no-prototype-builtins"
+    ]
+  },
+  {
+    "name": "no-redeclare",
+    "severityLevel": 3,
+    "type": "Standard",
+    "tags": [
+      "Recommended",
+      "suggestion"
+    ],
+    "description": "Disallow variable redeclaration",
+    "resourceUrls": [
+      "https://eslint.org/docs/latest/rules/no-redeclare"
+    ]
+  },
+  {
+    "name": "no-regex-spaces",
+    "severityLevel": 3,
+    "type": "Standard",
+    "tags": [
+      "Recommended",
+      "suggestion"
+    ],
+    "description": "Disallow multiple spaces in regular expressions",
+    "resourceUrls": [
+      "https://eslint.org/docs/latest/rules/no-regex-spaces"
+    ]
+  },
+  {
+    "name": "no-restricted-exports",
+    "severityLevel": 3,
+    "type": "Standard",
+    "tags": [
+      "suggestion"
+    ],
+    "description": "Disallow specified names in exports",
+    "resourceUrls": [
+      "https://eslint.org/docs/latest/rules/no-restricted-exports"
+    ]
+  },
+  {
+    "name": "no-restricted-globals",
+    "severityLevel": 3,
+    "type": "Standard",
+    "tags": [
+      "suggestion"
+    ],
+    "description": "Disallow specified global variables",
+    "resourceUrls": [
+      "https://eslint.org/docs/latest/rules/no-restricted-globals"
+    ]
+  },
+  {
+    "name": "no-restricted-imports",
+    "severityLevel": 3,
+    "type": "Standard",
+    "tags": [
+      "Recommended",
+      "suggestion"
+    ],
+    "description": "Disallow specified modules when loaded by `import`",
+    "resourceUrls": [
+      "https://eslint.org/docs/latest/rules/no-restricted-imports"
+    ]
+  },
+  {
+    "name": "no-restricted-properties",
+    "severityLevel": 3,
+    "type": "Standard",
+    "tags": [
+      "suggestion"
+    ],
+    "description": "Disallow certain properties on certain objects",
+    "resourceUrls": [
+      "https://eslint.org/docs/latest/rules/no-restricted-properties"
+    ]
+  },
+  {
+    "name": "no-restricted-syntax",
+    "severityLevel": 3,
+    "type": "Standard",
+    "tags": [
+      "suggestion"
+    ],
+    "description": "Disallow specified syntax",
+    "resourceUrls": [
+      "https://eslint.org/docs/latest/rules/no-restricted-syntax"
+    ]
+  },
+  {
+    "name": "no-return-assign",
+    "severityLevel": 3,
+    "type": "Standard",
+    "tags": [
+      "suggestion"
+    ],
+    "description": "Disallow assignment operators in `return` statements",
+    "resourceUrls": [
+      "https://eslint.org/docs/latest/rules/no-return-assign"
+    ]
+  },
+  {
+    "name": "no-script-url",
+    "severityLevel": 3,
+    "type": "Standard",
+    "tags": [
+      "suggestion"
+    ],
+    "description": "Disallow `javascript:` urls",
+    "resourceUrls": [
+      "https://eslint.org/docs/latest/rules/no-script-url"
+    ]
+  },
+  {
+    "name": "no-self-assign",
+    "severityLevel": 2,
+    "type": "Standard",
+    "tags": [
+      "Recommended",
+      "problem"
+    ],
+    "description": "Disallow assignments where both sides are exactly the same",
+    "resourceUrls": [
+      "https://eslint.org/docs/latest/rules/no-self-assign"
+    ]
+  },
+  {
+    "name": "no-self-compare",
+    "severityLevel": 2,
+    "type": "Standard",
+    "tags": [
+      "problem"
+    ],
+    "description": "Disallow comparisons where both sides are exactly the same",
+    "resourceUrls": [
+      "https://eslint.org/docs/latest/rules/no-self-compare"
+    ]
+  },
+  {
+    "name": "no-sequences",
+    "severityLevel": 3,
+    "type": "Standard",
+    "tags": [
+      "suggestion"
+    ],
+    "description": "Disallow comma operators",
+    "resourceUrls": [
+      "https://eslint.org/docs/latest/rules/no-sequences"
+    ]
+  },
+  {
+    "name": "no-setter-return",
+    "severityLevel": 2,
+    "type": "Standard",
+    "tags": [
+      "Recommended",
+      "problem"
+    ],
+    "description": "Disallow returning values from setters",
+    "resourceUrls": [
+      "https://eslint.org/docs/latest/rules/no-setter-return"
+    ]
+  },
+  {
+    "name": "no-shadow",
+    "severityLevel": 3,
+    "type": "Standard",
+    "tags": [
+      "suggestion"
+    ],
+    "description": "Disallow variable declarations from shadowing variables declared in the outer scope",
+    "resourceUrls": [
+      "https://eslint.org/docs/latest/rules/no-shadow"
+    ]
+  },
+  {
+    "name": "no-shadow-restricted-names",
+    "severityLevel": 3,
+    "type": "Standard",
+    "tags": [
+      "Recommended",
+      "suggestion"
+    ],
+    "description": "Disallow identifiers from shadowing restricted names",
+    "resourceUrls": [
+      "https://eslint.org/docs/latest/rules/no-shadow-restricted-names"
+    ]
+  },
+  {
+    "name": "no-sparse-arrays",
+    "severityLevel": 2,
+    "type": "Standard",
+    "tags": [
+      "Recommended",
+      "problem"
+    ],
+    "description": "Disallow sparse arrays",
+    "resourceUrls": [
+      "https://eslint.org/docs/latest/rules/no-sparse-arrays"
+    ]
+  },
+  {
+    "name": "no-template-curly-in-string",
+    "severityLevel": 2,
+    "type": "Standard",
+    "tags": [
+      "problem"
+    ],
+    "description": "Disallow template literal placeholder syntax in regular strings",
+    "resourceUrls": [
+      "https://eslint.org/docs/latest/rules/no-template-curly-in-string"
+    ]
+  },
+  {
+    "name": "no-ternary",
+    "severityLevel": 3,
+    "type": "Standard",
+    "tags": [
+      "suggestion"
+    ],
+    "description": "Disallow ternary operators",
+    "resourceUrls": [
+      "https://eslint.org/docs/latest/rules/no-ternary"
+    ]
+  },
+  {
+    "name": "no-this-before-super",
+    "severityLevel": 2,
+    "type": "Standard",
+    "tags": [
+      "Recommended",
+      "problem"
+    ],
+    "description": "Disallow `this`/`super` before calling `super()` in constructors",
+    "resourceUrls": [
+      "https://eslint.org/docs/latest/rules/no-this-before-super"
+    ]
+  },
+  {
+    "name": "no-throw-literal",
+    "severityLevel": 3,
+    "type": "Standard",
+    "tags": [
+      "suggestion"
+    ],
+    "description": "Disallow throwing literals as exceptions",
+    "resourceUrls": [
+      "https://eslint.org/docs/latest/rules/no-throw-literal"
+    ]
+  },
+  {
+    "name": "no-undef",
+    "severityLevel": 2,
+    "type": "Standard",
+    "tags": [
+      "Recommended",
+      "problem"
+    ],
+    "description": "Disallow the use of undeclared variables unless mentioned in `/*global */` comments",
+    "resourceUrls": [
+      "https://eslint.org/docs/latest/rules/no-undef"
+    ]
+  },
+  {
+    "name": "no-undef-init",
+    "severityLevel": 3,
+    "type": "Standard",
+    "tags": [
+      "suggestion"
+    ],
+    "description": "Disallow initializing variables to `undefined`",
+    "resourceUrls": [
+      "https://eslint.org/docs/latest/rules/no-undef-init"
+    ]
+  },
+  {
+    "name": "no-undefined",
+    "severityLevel": 3,
+    "type": "Standard",
+    "tags": [
+      "suggestion"
+    ],
+    "description": "Disallow the use of `undefined` as an identifier",
+    "resourceUrls": [
+      "https://eslint.org/docs/latest/rules/no-undefined"
+    ]
+  },
+  {
+    "name": "no-underscore-dangle",
+    "severityLevel": 3,
+    "type": "Standard",
+    "tags": [
+      "suggestion"
+    ],
+    "description": "Disallow dangling underscores in identifiers",
+    "resourceUrls": [
+      "https://eslint.org/docs/latest/rules/no-underscore-dangle"
+    ]
+  },
+  {
+    "name": "no-unexpected-multiline",
+    "severityLevel": 2,
+    "type": "Standard",
+    "tags": [
+      "Recommended",
+      "problem"
+    ],
+    "description": "Disallow confusing multiline expressions",
+    "resourceUrls": [
+      "https://eslint.org/docs/latest/rules/no-unexpected-multiline"
+    ]
+  },
+  {
+    "name": "no-unmodified-loop-condition",
+    "severityLevel": 2,
+    "type": "Standard",
+    "tags": [
+      "problem"
+    ],
+    "description": "Disallow unmodified loop conditions",
+    "resourceUrls": [
+      "https://eslint.org/docs/latest/rules/no-unmodified-loop-condition"
+    ]
+  },
+  {
+    "name": "no-unneeded-ternary",
+    "severityLevel": 3,
+    "type": "Standard",
+    "tags": [
+      "suggestion"
+    ],
+    "description": "Disallow ternary operators when simpler alternatives exist",
+    "resourceUrls": [
+      "https://eslint.org/docs/latest/rules/no-unneeded-ternary"
+    ]
+  },
+  {
+    "name": "no-unreachable",
+    "severityLevel": 2,
+    "type": "Standard",
+    "tags": [
+      "Recommended",
+      "problem"
+    ],
+    "description": "Disallow unreachable code after `return`, `throw`, `continue`, and `break` statements",
+    "resourceUrls": [
+      "https://eslint.org/docs/latest/rules/no-unreachable"
+    ]
+  },
+  {
+    "name": "no-unreachable-loop",
+    "severityLevel": 2,
+    "type": "Standard",
+    "tags": [
+      "problem"
+    ],
+    "description": "Disallow loops with a body that allows only one iteration",
+    "resourceUrls": [
+      "https://eslint.org/docs/latest/rules/no-unreachable-loop"
+    ]
+  },
+  {
+    "name": "no-unsafe-finally",
+    "severityLevel": 2,
+    "type": "Standard",
+    "tags": [
+      "Recommended",
+      "problem"
+    ],
+    "description": "Disallow control flow statements in `finally` blocks",
+    "resourceUrls": [
+      "https://eslint.org/docs/latest/rules/no-unsafe-finally"
+    ]
+  },
+  {
+    "name": "no-unsafe-negation",
+    "severityLevel": 2,
+    "type": "Standard",
+    "tags": [
+      "Recommended",
+      "problem"
+    ],
+    "description": "Disallow negating the left operand of relational operators",
+    "resourceUrls": [
+      "https://eslint.org/docs/latest/rules/no-unsafe-negation"
+    ]
+  },
+  {
+    "name": "no-unsafe-optional-chaining",
+    "severityLevel": 2,
+    "type": "Standard",
+    "tags": [
+      "Recommended",
+      "problem"
+    ],
+    "description": "Disallow use of optional chaining in contexts where the `undefined` value is not allowed",
+    "resourceUrls": [
+      "https://eslint.org/docs/latest/rules/no-unsafe-optional-chaining"
+    ]
+  },
+  {
+    "name": "no-unused-expressions",
+    "severityLevel": 3,
+    "type": "Standard",
+    "tags": [
+      "suggestion"
+    ],
+    "description": "Disallow unused expressions",
+    "resourceUrls": [
+      "https://eslint.org/docs/latest/rules/no-unused-expressions"
+    ]
+  },
+  {
+    "name": "no-unused-labels",
+    "severityLevel": 3,
+    "type": "Standard",
+    "tags": [
+      "Recommended",
+      "suggestion"
+    ],
+    "description": "Disallow unused labels",
+    "resourceUrls": [
+      "https://eslint.org/docs/latest/rules/no-unused-labels"
+    ]
+  },
+  {
+    "name": "no-unused-private-class-members",
+    "severityLevel": 2,
+    "type": "Standard",
+    "tags": [
+      "problem"
+    ],
+    "description": "Disallow unused private class members",
+    "resourceUrls": [
+      "https://eslint.org/docs/latest/rules/no-unused-private-class-members"
+    ]
+  },
+  {
+    "name": "no-unused-vars",
+    "severityLevel": 2,
+    "type": "Standard",
+    "tags": [
+      "Recommended",
+      "problem"
+    ],
+    "description": "Disallow unused variables",
+    "resourceUrls": [
+      "https://eslint.org/docs/latest/rules/no-unused-vars"
+    ]
+  },
+  {
+    "name": "no-use-before-define",
+    "severityLevel": 2,
+    "type": "Standard",
+    "tags": [
+      "problem"
+    ],
+    "description": "Disallow the use of variables before they are defined",
+    "resourceUrls": [
+      "https://eslint.org/docs/latest/rules/no-use-before-define"
+    ]
+  },
+  {
+    "name": "no-useless-backreference",
+    "severityLevel": 2,
+    "type": "Standard",
+    "tags": [
+      "Recommended",
+      "problem"
+    ],
+    "description": "Disallow useless backreferences in regular expressions",
+    "resourceUrls": [
+      "https://eslint.org/docs/latest/rules/no-useless-backreference"
+    ]
+  },
+  {
+    "name": "no-useless-call",
+    "severityLevel": 3,
+    "type": "Standard",
+    "tags": [
+      "suggestion"
+    ],
+    "description": "Disallow unnecessary calls to `.call()` and `.apply()`",
+    "resourceUrls": [
+      "https://eslint.org/docs/latest/rules/no-useless-call"
+    ]
+  },
+  {
+    "name": "no-useless-catch",
+    "severityLevel": 3,
+    "type": "Standard",
+    "tags": [
+      "Recommended",
+      "suggestion"
+    ],
+    "description": "Disallow unnecessary `catch` clauses",
+    "resourceUrls": [
+      "https://eslint.org/docs/latest/rules/no-useless-catch"
+    ]
+  },
+  {
+    "name": "no-useless-computed-key",
+    "severityLevel": 3,
+    "type": "Standard",
+    "tags": [
+      "suggestion"
+    ],
+    "description": "Disallow unnecessary computed property keys in objects and classes",
+    "resourceUrls": [
+      "https://eslint.org/docs/latest/rules/no-useless-computed-key"
+    ]
+  },
+  {
+    "name": "no-useless-concat",
+    "severityLevel": 3,
+    "type": "Standard",
+    "tags": [
+      "suggestion"
+    ],
+    "description": "Disallow unnecessary concatenation of literals or template literals",
+    "resourceUrls": [
+      "https://eslint.org/docs/latest/rules/no-useless-concat"
+    ]
+  },
+  {
+    "name": "no-useless-constructor",
+    "severityLevel": 3,
+    "type": "Standard",
+    "tags": [
+      "suggestion"
+    ],
+    "description": "Disallow unnecessary constructors",
+    "resourceUrls": [
+      "https://eslint.org/docs/latest/rules/no-useless-constructor"
+    ]
+  },
+  {
+    "name": "no-useless-escape",
+    "severityLevel": 3,
+    "type": "Standard",
+    "tags": [
+      "Recommended",
+      "suggestion"
+    ],
+    "description": "Disallow unnecessary escape characters",
+    "resourceUrls": [
+      "https://eslint.org/docs/latest/rules/no-useless-escape"
+    ]
+  },
+  {
+    "name": "no-useless-rename",
+    "severityLevel": 3,
+    "type": "Standard",
+    "tags": [
+      "suggestion"
+    ],
+    "description": "Disallow renaming import, export, and destructured assignments to the same name",
+    "resourceUrls": [
+      "https://eslint.org/docs/latest/rules/no-useless-rename"
+    ]
+  },
+  {
+    "name": "no-useless-return",
+    "severityLevel": 3,
+    "type": "Standard",
+    "tags": [
+      "suggestion"
+    ],
+    "description": "Disallow redundant return statements",
+    "resourceUrls": [
+      "https://eslint.org/docs/latest/rules/no-useless-return"
+    ]
+  },
+  {
+    "name": "no-var",
+    "severityLevel": 3,
+    "type": "Standard",
+    "tags": [
+      "Recommended",
+      "suggestion"
+    ],
+    "description": "Require `let` or `const` instead of `var`",
+    "resourceUrls": [
+      "https://eslint.org/docs/latest/rules/no-var"
+    ]
+  },
+  {
+    "name": "no-void",
+    "severityLevel": 3,
+    "type": "Standard",
+    "tags": [
+      "suggestion"
+    ],
+    "description": "Disallow `void` operators",
+    "resourceUrls": [
+      "https://eslint.org/docs/latest/rules/no-void"
+    ]
+  },
+  {
+    "name": "no-warning-comments",
+    "severityLevel": 3,
+    "type": "Standard",
+    "tags": [
+      "suggestion"
+    ],
+    "description": "Disallow specified warning terms in comments",
+    "resourceUrls": [
+      "https://eslint.org/docs/latest/rules/no-warning-comments"
+    ]
+  },
+  {
+    "name": "no-with",
+    "severityLevel": 3,
+    "type": "Standard",
+    "tags": [
+      "Recommended",
+      "suggestion"
+    ],
+    "description": "Disallow `with` statements",
+    "resourceUrls": [
+      "https://eslint.org/docs/latest/rules/no-with"
+    ]
+  },
+  {
+    "name": "object-shorthand",
+    "severityLevel": 3,
+    "type": "Standard",
+    "tags": [
+      "suggestion"
+    ],
+    "description": "Require or disallow method and property shorthand syntax for object literals",
+    "resourceUrls": [
+      "https://eslint.org/docs/latest/rules/object-shorthand"
+    ]
+  },
+  {
+    "name": "one-var",
+    "severityLevel": 3,
+    "type": "Standard",
+    "tags": [
+      "suggestion"
+    ],
+    "description": "Enforce variables to be declared either together or separately in functions",
+    "resourceUrls": [
+      "https://eslint.org/docs/latest/rules/one-var"
+    ]
+  },
+  {
+    "name": "operator-assignment",
+    "severityLevel": 3,
+    "type": "Standard",
+    "tags": [
+      "suggestion"
+    ],
+    "description": "Require or disallow assignment operator shorthand where possible",
+    "resourceUrls": [
+      "https://eslint.org/docs/latest/rules/operator-assignment"
+    ]
+  },
+  {
+    "name": "prefer-arrow-callback",
+    "severityLevel": 3,
+    "type": "Standard",
+    "tags": [
+      "suggestion"
+    ],
+    "description": "Require using arrow functions for callbacks",
+    "resourceUrls": [
+      "https://eslint.org/docs/latest/rules/prefer-arrow-callback"
+    ]
+  },
+  {
+    "name": "prefer-const",
+    "severityLevel": 3,
+    "type": "Standard",
+    "tags": [
+      "Recommended",
+      "suggestion"
+    ],
+    "description": "Require `const` declarations for variables that are never reassigned after declared",
+    "resourceUrls": [
+      "https://eslint.org/docs/latest/rules/prefer-const"
+    ]
+  },
+  {
+    "name": "prefer-destructuring",
+    "severityLevel": 3,
+    "type": "Standard",
+    "tags": [
+      "suggestion"
+    ],
+    "description": "Require destructuring from arrays and/or objects",
+    "resourceUrls": [
+      "https://eslint.org/docs/latest/rules/prefer-destructuring"
+    ]
+  },
+  {
+    "name": "prefer-exponentiation-operator",
+    "severityLevel": 3,
+    "type": "Standard",
+    "tags": [
+      "suggestion"
+    ],
+    "description": "Disallow the use of `Math.pow` in favor of the `**` operator",
+    "resourceUrls": [
+      "https://eslint.org/docs/latest/rules/prefer-exponentiation-operator"
+    ]
+  },
+  {
+    "name": "prefer-named-capture-group",
+    "severityLevel": 3,
+    "type": "Standard",
+    "tags": [
+      "suggestion"
+    ],
+    "description": "Enforce using named capture group in regular expression",
+    "resourceUrls": [
+      "https://eslint.org/docs/latest/rules/prefer-named-capture-group"
+    ]
+  },
+  {
+    "name": "prefer-numeric-literals",
+    "severityLevel": 3,
+    "type": "Standard",
+    "tags": [
+      "suggestion"
+    ],
+    "description": "Disallow `parseInt()` and `Number.parseInt()` in favor of binary, octal, and hexadecimal literals",
+    "resourceUrls": [
+      "https://eslint.org/docs/latest/rules/prefer-numeric-literals"
+    ]
+  },
+  {
+    "name": "prefer-object-has-own",
+    "severityLevel": 3,
+    "type": "Standard",
+    "tags": [
+      "suggestion"
+    ],
+    "description": "Disallow use of `Object.prototype.hasOwnProperty.call()` and prefer use of `Object.hasOwn()`",
+    "resourceUrls": [
+      "https://eslint.org/docs/latest/rules/prefer-object-has-own"
+    ]
+  },
+  {
+    "name": "prefer-object-spread",
+    "severityLevel": 3,
+    "type": "Standard",
+    "tags": [
+      "suggestion"
+    ],
+    "description": "Disallow using Object.assign with an object literal as the first argument and prefer the use of object spread instead",
+    "resourceUrls": [
+      "https://eslint.org/docs/latest/rules/prefer-object-spread"
+    ]
+  },
+  {
+    "name": "prefer-promise-reject-errors",
+    "severityLevel": 3,
+    "type": "Standard",
+    "tags": [
+      "suggestion"
+    ],
+    "description": "Require using Error objects as Promise rejection reasons",
+    "resourceUrls": [
+      "https://eslint.org/docs/latest/rules/prefer-promise-reject-errors"
+    ]
+  },
+  {
+    "name": "prefer-regex-literals",
+    "severityLevel": 3,
+    "type": "Standard",
+    "tags": [
+      "suggestion"
+    ],
+    "description": "Disallow use of the `RegExp` constructor in favor of regular expression literals",
+    "resourceUrls": [
+      "https://eslint.org/docs/latest/rules/prefer-regex-literals"
+    ]
+  },
+  {
+    "name": "prefer-rest-params",
+    "severityLevel": 3,
+    "type": "Standard",
+    "tags": [
+      "Recommended",
+      "suggestion"
+    ],
+    "description": "Require rest parameters instead of `arguments`",
+    "resourceUrls": [
+      "https://eslint.org/docs/latest/rules/prefer-rest-params"
+    ]
+  },
+  {
+    "name": "prefer-spread",
+    "severityLevel": 3,
+    "type": "Standard",
+    "tags": [
+      "Recommended",
+      "suggestion"
+    ],
+    "description": "Require spread operators instead of `.apply()`",
+    "resourceUrls": [
+      "https://eslint.org/docs/latest/rules/prefer-spread"
+    ]
+  },
+  {
+    "name": "prefer-template",
+    "severityLevel": 3,
+    "type": "Standard",
+    "tags": [
+      "suggestion"
+    ],
+    "description": "Require template literals instead of string concatenation",
+    "resourceUrls": [
+      "https://eslint.org/docs/latest/rules/prefer-template"
+    ]
+  },
+  {
+    "name": "radix",
+    "severityLevel": 3,
+    "type": "Standard",
+    "tags": [
+      "suggestion"
+    ],
+    "description": "Enforce the consistent use of the radix argument when using `parseInt()`",
+    "resourceUrls": [
+      "https://eslint.org/docs/latest/rules/radix"
+    ]
+  },
+  {
+    "name": "require-atomic-updates",
+    "severityLevel": 2,
+    "type": "Standard",
+    "tags": [
+      "problem"
+    ],
+    "description": "Disallow assignments that can lead to race conditions due to usage of `await` or `yield`",
+    "resourceUrls": [
+      "https://eslint.org/docs/latest/rules/require-atomic-updates"
+    ]
+  },
+  {
+    "name": "require-await",
+    "severityLevel": 3,
+    "type": "Standard",
+    "tags": [
+      "suggestion"
+    ],
+    "description": "Disallow async functions which have no `await` expression",
+    "resourceUrls": [
+      "https://eslint.org/docs/latest/rules/require-await"
+    ]
+  },
+  {
+    "name": "require-unicode-regexp",
+    "severityLevel": 3,
+    "type": "Standard",
+    "tags": [
+      "suggestion"
+    ],
+    "description": "Enforce the use of `u` or `v` flag on RegExp",
+    "resourceUrls": [
+      "https://eslint.org/docs/latest/rules/require-unicode-regexp"
+    ]
+  },
+  {
+    "name": "require-yield",
+    "severityLevel": 3,
+    "type": "Standard",
+    "tags": [
+      "Recommended",
+      "suggestion"
+    ],
+    "description": "Require generator functions to contain `yield`",
+    "resourceUrls": [
+      "https://eslint.org/docs/latest/rules/require-yield"
+    ]
+  },
+  {
+    "name": "sort-imports",
+    "severityLevel": 3,
+    "type": "Standard",
+    "tags": [
+      "suggestion"
+    ],
+    "description": "Enforce sorted import declarations within modules",
+    "resourceUrls": [
+      "https://eslint.org/docs/latest/rules/sort-imports"
+    ]
+  },
+  {
+    "name": "sort-keys",
+    "severityLevel": 3,
+    "type": "Standard",
+    "tags": [
+      "suggestion"
+    ],
+    "description": "Require object keys to be sorted",
+    "resourceUrls": [
+      "https://eslint.org/docs/latest/rules/sort-keys"
+    ]
+  },
+  {
+    "name": "sort-vars",
+    "severityLevel": 3,
+    "type": "Standard",
+    "tags": [
+      "suggestion"
+    ],
+    "description": "Require variables within the same declaration block to be sorted",
+    "resourceUrls": [
+      "https://eslint.org/docs/latest/rules/sort-vars"
+    ]
+  },
+  {
+    "name": "strict",
+    "severityLevel": 3,
+    "type": "Standard",
+    "tags": [
+      "suggestion"
+    ],
+    "description": "Require or disallow strict mode directives",
+    "resourceUrls": [
+      "https://eslint.org/docs/latest/rules/strict"
+    ]
+  },
+  {
+    "name": "symbol-description",
+    "severityLevel": 3,
+    "type": "Standard",
+    "tags": [
+      "suggestion"
+    ],
+    "description": "Require symbol descriptions",
+    "resourceUrls": [
+      "https://eslint.org/docs/latest/rules/symbol-description"
+    ]
+  },
+  {
+    "name": "unicode-bom",
+    "severityLevel": 4,
+    "type": "Standard",
+    "tags": [
+      "layout"
+    ],
+    "description": "Require or disallow Unicode byte order mark (BOM)",
+    "resourceUrls": [
+      "https://eslint.org/docs/latest/rules/unicode-bom"
+    ]
+  },
+  {
+    "name": "use-isnan",
+    "severityLevel": 2,
+    "type": "Standard",
+    "tags": [
+      "Recommended",
+      "problem"
+    ],
+    "description": "Require calls to `isNaN()` when checking for `NaN`",
+    "resourceUrls": [
+      "https://eslint.org/docs/latest/rules/use-isnan"
+    ]
+  },
+  {
+    "name": "valid-typeof",
+    "severityLevel": 2,
+    "type": "Standard",
+    "tags": [
+      "Recommended",
+      "problem"
+    ],
+    "description": "Enforce comparing `typeof` expressions against valid strings",
+    "resourceUrls": [
+      "https://eslint.org/docs/latest/rules/valid-typeof"
+    ]
+  },
+  {
+    "name": "vars-on-top",
+    "severityLevel": 3,
+    "type": "Standard",
+    "tags": [
+      "suggestion"
+    ],
+    "description": "Require `var` declarations be placed at the top of their containing scope",
+    "resourceUrls": [
+      "https://eslint.org/docs/latest/rules/vars-on-top"
+    ]
+  },
+  {
+    "name": "yoda",
+    "severityLevel": 3,
+    "type": "Standard",
+    "tags": [
+      "suggestion"
+    ],
+    "description": "Require or disallow \"Yoda\" conditions",
+    "resourceUrls": [
+      "https://eslint.org/docs/latest/rules/yoda"
+    ]
+  }
+]
