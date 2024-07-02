@@ -109,6 +109,8 @@ function toSeverityLevel(metadata: Rule.RuleMetaData, status: ESLintRuleStatus |
 function toTags(metadata: Rule.RuleMetaData, status: ESLintRuleStatus | undefined): string[] {
     const tags: string[] = [];
     if (status === ESLintRuleStatus.ERROR || status === ESLintRuleStatus.WARN) {
+        // Any rule that base config or the user's config has turned on, should be marked as 'Recommended'
+        // so that code analyzer will run these rules by default just as eslint runs these rules.
         tags.push('Recommended');
     }
     if (metadata.type) {

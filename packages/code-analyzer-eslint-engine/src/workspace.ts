@@ -2,7 +2,7 @@ import {Workspace} from "@salesforce/code-analyzer-engine-api";
 import fs from "node:fs";
 import path from "node:path";
 
-export interface ESLintWorkspace extends Workspace {
+export interface ESLintWorkspace {
     getJavascriptFiles(): Promise<string[]>
     getTypescriptFiles(): Promise<string[]>
     getCandidateFilesForBaseConfig(): Promise<string[]>
@@ -23,26 +23,12 @@ export class MissingESLintWorkspace implements ESLintWorkspace {
         this.workspaceRoot = process.cwd();
     }
 
-    getWorkspaceId(): string {
-        return this.workspaceRoot;
-    }
-
-    /* istanbul ignore next */
-    getFilesAndFolders(): string[] {
-        throw new Error("This method should never be called");
-    }
-
-    /* istanbul ignore next */
-    async getExpandedFiles(): Promise<string[]> {
-        throw new Error("This method should never be called");
-    }
-
     async getJavascriptFiles(): Promise<string[]> {
-        return this.javascriptExtensions.map(ext => `${this.workspaceRoot}${path.sep}someJavascriptFile${ext}`);
+        return this.javascriptExtensions.map(ext => `${this.workspaceRoot}${path.sep}placeholderJavascriptFile${ext}`);
     }
 
     async getTypescriptFiles(): Promise<string[]> {
-        return this.typescriptExtensions.map(ext => `${this.workspaceRoot}${path.sep}someTypescriptFile${ext}`);
+        return this.typescriptExtensions.map(ext => `${this.workspaceRoot}${path.sep}placeholderTypescriptFile${ext}`);
     }
 
     async getCandidateFilesForBaseConfig(): Promise<string[]> {
@@ -70,18 +56,6 @@ export class PresentESLintWorkspace implements ESLintWorkspace {
         this.typescriptExtensions = typescriptExtensions;
     }
 
-    getWorkspaceId(): string {
-        return this.delegateWorkspace.getWorkspaceId();
-    }
-
-    getFilesAndFolders(): string[] {
-        return this.delegateWorkspace.getFilesAndFolders();
-    }
-
-    async getExpandedFiles(): Promise<string[]> {
-        return this.delegateWorkspace.getExpandedFiles();
-    }
-
     /**
      * Gets the top most common parent folder that contains all the files in the workspace.
      * Note: We may consider moving this inside of the core module if other engines need it.
@@ -94,10 +68,10 @@ export class PresentESLintWorkspace implements ESLintWorkspace {
     }
 
     private setWorkspaceRoot(): void {
-        if (this.getFilesAndFolders().length == 0) {
+        if (this.delegateWorkspace.getFilesAndFolders().length == 0) {
             this.workspaceRoot = process.cwd();
         } else {
-            const longestCommonStr: string = getLongestCommonPrefix(this.getFilesAndFolders());
+            const longestCommonStr: string = getLongestCommonPrefix(this.delegateWorkspace.getFilesAndFolders());
             this.workspaceRoot = fs.existsSync(longestCommonStr) && fs.statSync(longestCommonStr).isDirectory() ?
                 longestCommonStr : path.dirname(longestCommonStr);
         }
@@ -108,7 +82,7 @@ export class PresentESLintWorkspace implements ESLintWorkspace {
      */
     async getJavascriptFiles(): Promise<string[]> {
         if (!this.javascriptFiles) {
-            this.javascriptFiles = (await this.getExpandedFiles())
+            this.javascriptFiles = (await this.delegateWorkspace.getExpandedFiles())
                 .filter(file => this.javascriptExtensions.includes(path.extname(file).toLowerCase()));
         }
         return this.javascriptFiles;
@@ -116,7 +90,7 @@ export class PresentESLintWorkspace implements ESLintWorkspace {
 
     async getTypescriptFiles(): Promise<string[]> {
         if (!this.typescriptFiles) {
-            this.typescriptFiles = (await this.getExpandedFiles())
+            this.typescriptFiles = (await this.delegateWorkspace.getExpandedFiles())
                 .filter(file => this.typescriptExtensions.includes(path.extname(file).toLowerCase()));
         }
         return this.typescriptFiles;

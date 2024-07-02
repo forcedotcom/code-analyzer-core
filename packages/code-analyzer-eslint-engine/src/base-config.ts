@@ -1,10 +1,15 @@
 import {Linter} from "eslint";
 
-export function createJavascriptPlusLwcBaseConfig(allOrRecommended: string): Linter.ConfigOverride {
+export enum RULESET_SELECTION {
+    ALL = "all",
+    RECOMMENDED = "recommended"
+}
+
+export function createJavascriptPlusLwcBaseConfig(rulesetSelection: RULESET_SELECTION): Linter.ConfigOverride {
     return {
         files: ["*.js", "*.mjs", "*.cjs"],
         extends: [
-            `eslint:${allOrRecommended}`,
+            `eslint:${rulesetSelection}`,
             "@salesforce/eslint-config-lwc/base" // Always using base for now. all and recommended both require additional plugins
         ],
         plugins: [
@@ -25,12 +30,12 @@ export function createJavascriptPlusLwcBaseConfig(allOrRecommended: string): Lin
     }
 }
 
-export function createTypescriptBaseConfig(allOrRecommended: string): Linter.ConfigOverride {
+export function createTypescriptBaseConfig(rulesetSelection: RULESET_SELECTION): Linter.ConfigOverride {
     return {
         files: ["*.ts"],
         extends: [
-            `eslint:${allOrRecommended}`,
-            `plugin:@typescript-eslint/${allOrRecommended}`,
+            `eslint:${rulesetSelection}`,
+            `plugin:@typescript-eslint/${rulesetSelection}`,
         ],
         plugins: [
             "@typescript-eslint"
