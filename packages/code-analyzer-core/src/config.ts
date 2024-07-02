@@ -8,6 +8,7 @@ import {toAbsolutePath} from "./utils"
 import {SeverityLevel} from "./rules";
 
 export const FIELDS = {
+    CONFIG_FOLDER: 'config_folder',
     LOG_FOLDER: 'log_folder',
     CUSTOM_ENGINE_PLUGIN_MODULES: 'custom_engine_plugin_modules',
     RULES: 'rules',
@@ -22,13 +23,26 @@ export type RuleOverride = {
 }
 
 type TopLevelConfig = {
+    // The absolute folder path where other paths values in the config may be relative to.
+    // Default: The location of the config file if supplied and the current working directory otherwise.
+    config_folder: string
+
+    // Folder where the user would like to store log files. May be relative to config_folder.
+    // Default: The default temporary directory on the user's machine.
     log_folder: string
+
+    // List of EnginePlugin modules to be dynamically added. Paths may be relative to the config_folder.
     custom_engine_plugin_modules: string[]
+
+    // Rule override entries of the format rules.<engine_name>.<rule_name>.<property_name> = <override_value>
     rules: Record<string, Record<string, RuleOverride>>
+
+    // Engine specific configuration entries of the format engines.<engine_name>.<engine_specific_property> = <value>
     engines: Record<string, engApi.ConfigObject>
 }
 
 const DEFAULT_CONFIG: TopLevelConfig = {
+    config_folder: process.cwd(),
     log_folder: os.tmpdir(),
     custom_engine_plugin_modules: [],
     rules: {},
@@ -52,27 +66,29 @@ export class CodeAnalyzerConfig {
         const fileExt : string = path.extname(file).toLowerCase();
 
         if (fileExt == '.json') {
-            return CodeAnalyzerConfig.fromJsonString(fileContents);
+            return CodeAnalyzerConfig.fromJsonString(fileContents, path.dirname(file));
         }  else if (fileExt == '.yaml' || fileExt == '.yml') {
-            return CodeAnalyzerConfig.fromYamlString(fileContents);
+            return CodeAnalyzerConfig.fromYamlString(fileContents, path.dirname(file));
         } else {
             throw new Error(getMessage('ConfigFileExtensionUnsupported', file, 'json,yaml,yml'))
         }
     }
 
-    public static fromJsonString(jsonString: string): CodeAnalyzerConfig {
+    public static fromJsonString(jsonString: string, configFolder?: string): CodeAnalyzerConfig {
         const data: object = parseAndValidate(() => JSON.parse(jsonString));
-        return CodeAnalyzerConfig.fromObject(data);
+        return CodeAnalyzerConfig.fromObject(data, configFolder);
     }
 
-    public static fromYamlString(yamlString: string): CodeAnalyzerConfig {
+    public static fromYamlString(yamlString: string, configFolder?: string): CodeAnalyzerConfig {
         const data: object = parseAndValidate(() => yaml.load(yamlString));
-        return CodeAnalyzerConfig.fromObject(data);
+        return CodeAnalyzerConfig.fromObject(data, configFolder);
     }
 
-    public static fromObject(data: object): CodeAnalyzerConfig {
+    public static fromObject(data: object, configFolder?: string): CodeAnalyzerConfig {
+        configFolder = extractConfigFolderValue(data, configFolder);
         const config: TopLevelConfig = {
-            log_folder: extractLogFolderValue(data),
+            config_folder: configFolder,
+            log_folder: extractLogFolderValue(data, configFolder),
             custom_engine_plugin_modules: extractCustomEnginePluginModules(data),
             rules: extractRulesValue(data),
             engines: extractEnginesValue(data)
@@ -88,6 +104,10 @@ export class CodeAnalyzerConfig {
         return this.config.log_folder;
     }
 
+    public getConfigFolder(): string {
+        return this.config.config_folder;
+    }
+
     public getCustomEnginePluginModules(): string[] {
         return this.config.custom_engine_plugin_modules;
     }
@@ -101,18 +121,43 @@ export class CodeAnalyzerConfig {
     }
 
     public getEngineConfigFor(engineName: string): engApi.ConfigObject {
-        return this.config.engines[engineName] || {};
+        // Each engine should have access to the config folder location and its own engine specific config, so that it
+        // can resolve any relative paths in its engine specific config with this location. Thus, we always add the
+        // config folder to the engine specific config.
+        const configToGiveToEngine: engApi.ConfigObject = this.config.engines[engineName] || {};
+        configToGiveToEngine.config_folder = this.getConfigFolder();
+        return configToGiveToEngine;
     }
 }
 
-function extractLogFolderValue(data: object): string {
+function extractConfigFolderValue(data: object, configFolder?: string): string {
+    if (!(FIELDS.CONFIG_FOLDER in data)) {
+        return configFolder || DEFAULT_CONFIG.config_folder;
+    }
+    configFolder = toAbsolutePath(validateType('string', data[FIELDS.CONFIG_FOLDER], FIELDS.CONFIG_FOLDER));
+    if (!fs.existsSync(configFolder)) {
+        throw new Error(getMessage('ConfigValueFolderMustExist', FIELDS.CONFIG_FOLDER, configFolder));
+    } else if (!fs.statSync(configFolder).isDirectory()) {
+        throw new Error(getMessage('ConfigValueMustBeFolder', FIELDS.CONFIG_FOLDER, configFolder));
+    } else if (data[FIELDS.CONFIG_FOLDER] !== configFolder) {
+        throw new Error(getMessage('ConfigValueMustBeAbsolutePath', FIELDS.CONFIG_FOLDER, configFolder));
+    }
+    return configFolder;
+}
+
+function extractLogFolderValue(data: object, configFolder: string): string {
     if (!(FIELDS.LOG_FOLDER in data)) {
         return DEFAULT_CONFIG.log_folder;
     }
-    const logFolder: string = toAbsolutePath(validateType('string', data[FIELDS.LOG_FOLDER], FIELDS.LOG_FOLDER));
+    const rawLogFolder: string = validateType('string', data[FIELDS.LOG_FOLDER], FIELDS.LOG_FOLDER);
+    let logFolder: string = toAbsolutePath(rawLogFolder, configFolder); // First assume it is relative to the config folder
     if (!fs.existsSync(logFolder)) {
-        throw new Error(getMessage('ConfigValueFolderMustExist', FIELDS.LOG_FOLDER, logFolder));
-    } else if (!fs.statSync(logFolder).isDirectory()) {
+        logFolder = toAbsolutePath(rawLogFolder); // Otherwise just try to resolve without config folder
+        if (!fs.existsSync(logFolder)) {
+            throw new Error(getMessage('ConfigValueFolderMustExist', FIELDS.LOG_FOLDER, logFolder));
+        }
+    }
+    if (!fs.statSync(logFolder).isDirectory()) {
         throw new Error(getMessage('ConfigValueMustBeFolder', FIELDS.LOG_FOLDER, logFolder));
     }
     return logFolder;

@@ -1,8 +1,12 @@
 import path from "node:path";
 
-export function toAbsolutePath(fileOrFolder: string): string {
+export function toAbsolutePath(fileOrFolder: string, parentFolder?: string): string {
     // Convert slashes to platform specific slashes and then convert to absolute path
-    return path.resolve(fileOrFolder.replace(/[\\/]/g, path.sep));
+    fileOrFolder = fileOrFolder.replace(/[\\/]/g, path.sep);
+    if (!parentFolder) {
+        return path.resolve(fileOrFolder);
+    }
+    return fileOrFolder.startsWith(parentFolder) ? fileOrFolder : path.join(parentFolder, fileOrFolder);
 }
 
 export interface Clock {

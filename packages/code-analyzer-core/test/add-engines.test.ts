@@ -7,6 +7,8 @@ import {StubEngine1, StubEngine2} from "./stubs";
 
 changeWorkingDirectoryToPackageRoot();
 
+const DEFAULT_CONFIG_FOLDER: string = process.cwd();
+
 describe("Tests for adding engines to Code Analyzer", () => {
     let codeAnalyzer: CodeAnalyzer;
     let logEvents: LogEvent[];
@@ -24,14 +26,15 @@ describe("Tests for adding engines to Code Analyzer", () => {
         expect(codeAnalyzer.getEngineNames().sort()).toEqual(["stubEngine1","stubEngine2"]);
         const stubEngine1: StubEngine1 = stubEnginePlugin.getCreatedEngine('stubEngine1') as StubEngine1;
         expect(stubEngine1.getName()).toEqual('stubEngine1');
-        expect(stubEngine1.config).toEqual({});
+        expect(stubEngine1.config).toEqual({config_folder: DEFAULT_CONFIG_FOLDER});
         const stubEngine2: StubEngine2 = stubEnginePlugin.getCreatedEngine('stubEngine2') as StubEngine2;
         expect(stubEngine2.getName()).toEqual('stubEngine2');
-        expect(stubEngine2.config).toEqual({});
+        expect(stubEngine2.config).toEqual({config_folder: DEFAULT_CONFIG_FOLDER});
     });
 
     it('When adding engine plugin using non-default config then engines are correctly added with engine specific configurations', async () => {
-        codeAnalyzer = new CodeAnalyzer(CodeAnalyzerConfig.fromFile(path.resolve(__dirname, 'test-data', 'sample-config-02.Yml')));
+        const testDataFolder: string= path.resolve(__dirname, 'test-data');
+        codeAnalyzer = new CodeAnalyzer(CodeAnalyzerConfig.fromFile(path.join(testDataFolder, 'sample-config-02.Yml')));
 
         const stubEnginePlugin: stubs.StubEnginePlugin = new stubs.StubEnginePlugin();
         await codeAnalyzer.addEnginePlugin(stubEnginePlugin);
@@ -40,6 +43,7 @@ describe("Tests for adding engines to Code Analyzer", () => {
         const stubEngine1: StubEngine1 = stubEnginePlugin.getCreatedEngine('stubEngine1') as StubEngine1;
         expect(stubEngine1.getName()).toEqual('stubEngine1');
         expect(stubEngine1.config).toEqual({
+            config_folder: testDataFolder,
             miscSetting1: true,
             miscSetting2: {
                 miscSetting2A: 3,
@@ -48,7 +52,7 @@ describe("Tests for adding engines to Code Analyzer", () => {
         });
         const stubEngine2: StubEngine2 = stubEnginePlugin.getCreatedEngine('stubEngine2') as StubEngine2;
         expect(stubEngine2.getName()).toEqual('stubEngine2');
-        expect(stubEngine2.config).toEqual({});
+        expect(stubEngine2.config).toEqual({config_folder: testDataFolder});
     });
 
     it('(Forward Compatibility) When addEnginePlugin receives a plugin with a future api version then cast down to current api version', async () => {

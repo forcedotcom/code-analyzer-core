@@ -1,4 +1,4 @@
-log_folder: test\test-data\sampleLogFolder
+log_folder: sampleLogFolder
 
 rules:
   stubEngine1:

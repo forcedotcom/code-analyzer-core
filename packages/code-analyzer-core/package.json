@@ -1,7 +1,7 @@
 {
   "name": "@salesforce/code-analyzer-core",
   "description": "Core Package for the Salesforce Code Analyzer",
-  "version": "0.6.0",
+  "version": "0.7.0",
   "author": "The Salesforce Code Analyzer Team",
   "license": "BSD-3-Clause license",
   "homepage": "https://developer.salesforce.com/docs/platform/salesforce-code-analyzer/overview",

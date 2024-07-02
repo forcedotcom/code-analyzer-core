@@ -58,6 +58,9 @@ const messageCatalog : { [key: string]: string } = {
     ConfigValueMustBeFolder:
         'The %s configuration value is not a folder: %s',
 
+    ConfigValueMustBeAbsolutePath:
+        'The %s configuration value must be provided as an absolute path location. Please change the value to: %s',
+
     RulePropertyOverridden:
         'The %s value of rule "%s" of engine "%s" was overridden according to the specified configuration. The old value of %s was replaced with the new value of %s.',
 

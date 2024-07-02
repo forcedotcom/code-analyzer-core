@@ -6,16 +6,20 @@ import {changeWorkingDirectoryToPackageRoot} from "./test-helpers";
 
 changeWorkingDirectoryToPackageRoot();
 
+const DEFAULT_CONFIG_FOLDER: string = process.cwd();
+const TEST_DATA_DIR: string = path.resolve(__dirname, 'test-data');
+
 describe("Tests for creating and accessing configuration values", () => {
     it("When constructing config withDefaults then default values are returned", () => {
         const conf: CodeAnalyzerConfig = CodeAnalyzerConfig.withDefaults();
 
+        expect(conf.getConfigFolder()).toEqual(DEFAULT_CONFIG_FOLDER);
         expect(conf.getLogFolder()).toEqual(os.tmpdir());
         expect(conf.getCustomEnginePluginModules()).toEqual([]);
         expect(conf.getRuleOverridesFor("stubEngine1")).toEqual({});
-        expect(conf.getEngineConfigFor("stubEngine1")).toEqual({});
+        expect(conf.getEngineConfigFor("stubEngine1")).toEqual({config_folder: DEFAULT_CONFIG_FOLDER});
         expect(conf.getRuleOverridesFor("stubEngine2")).toEqual({});
-        expect(conf.getEngineConfigFor("stubEngine2")).toEqual({});
+        expect(conf.getEngineConfigFor("stubEngine2")).toEqual({config_folder: DEFAULT_CONFIG_FOLDER});
     });
 
     it("When configuration file does not exist, then throw an error", () => {
@@ -34,8 +38,9 @@ describe("Tests for creating and accessing configuration values", () => {
     });
 
     it("When constructing config from yaml file then values from file are parsed correctly", () => {
-        const conf: CodeAnalyzerConfig = CodeAnalyzerConfig.fromFile(path.resolve(__dirname, 'test-data', 'sample-config-01.yaml'));
-        expect(conf.getLogFolder()).toEqual(path.resolve(__dirname, 'test-data', 'sampleLogFolder'));
+        const conf: CodeAnalyzerConfig = CodeAnalyzerConfig.fromFile(path.join(TEST_DATA_DIR, 'sample-config-01.yaml'));
+        expect(conf.getConfigFolder()).toEqual(TEST_DATA_DIR);
+        expect(conf.getLogFolder()).toEqual(path.join(TEST_DATA_DIR, 'sampleLogFolder'));
         expect(conf.getRuleOverridesFor('stubEngine1')).toEqual({
             stub1RuleB: {
                 severity: SeverityLevel.Critical
@@ -50,13 +55,13 @@ describe("Tests for creating and accessing configuration values", () => {
                 tags: ['Security', "SomeNewTag"]
             }
         });
-        expect(conf.getEngineConfigFor('stubEngine1')).toEqual({});
-        expect(conf.getEngineConfigFor('stubEngine2')).toEqual({});
+        expect(conf.getEngineConfigFor('stubEngine1')).toEqual({config_folder: TEST_DATA_DIR});
+        expect(conf.getEngineConfigFor('stubEngine2')).toEqual({config_folder: TEST_DATA_DIR});
     });
 
     it("When constructing config from file with yml extension then it is parsed as a yaml file", () => {
         // Also note that Yml should work just like yml. Case doesn't matter.
-        const conf: CodeAnalyzerConfig = CodeAnalyzerConfig.fromFile(path.resolve(__dirname, 'test-data', 'sample-config-02.Yml'));
+        const conf: CodeAnalyzerConfig = CodeAnalyzerConfig.fromFile(path.join(TEST_DATA_DIR, 'sample-config-02.Yml'));
         expect(conf.getLogFolder()).toEqual(os.tmpdir());
         expect(conf.getCustomEnginePluginModules()).toEqual(['dummy_plugin_module_path']);
         expect(conf.getRuleOverridesFor('stubEngine1')).toEqual({});
@@ -66,23 +71,24 @@ describe("Tests for creating and accessing configuration values", () => {
             }
         });
         expect(conf.getEngineConfigFor('stubEngine1')).toEqual({
+            config_folder: TEST_DATA_DIR,
             miscSetting1: true,
             miscSetting2: {
                 miscSetting2A: 3,
                 miscSetting2B: ["hello", "world"]
             }
         });
-        expect(conf.getEngineConfigFor('stubEngine2')).toEqual({});
+        expect(conf.getEngineConfigFor('stubEngine2')).toEqual({config_folder: TEST_DATA_DIR});
     });
 
     it("When constructing config from json file then values from file are parsed correctly", () => {
-        const conf: CodeAnalyzerConfig = CodeAnalyzerConfig.fromFile(path.resolve(__dirname, 'test-data', 'sample-config-03.json'));
-        expect(conf.getLogFolder()).toEqual(path.resolve(__dirname, 'test-data', 'sampleLogFolder'));
+        const conf: CodeAnalyzerConfig = CodeAnalyzerConfig.fromFile(path.join(TEST_DATA_DIR, 'sample-config-03.json'));
+        expect(conf.getLogFolder()).toEqual(path.join(TEST_DATA_DIR, 'sampleLogFolder'));
         expect(conf.getCustomEnginePluginModules()).toEqual([]);
         expect(conf.getRuleOverridesFor('stubEngine1')).toEqual({});
         expect(conf.getRuleOverridesFor('stubEngine2')).toEqual({});
-        expect(conf.getEngineConfigFor('stubEngine1')).toEqual({});
-        expect(conf.getEngineConfigFor('stubEngine2')).toEqual({miscSetting: "miscValue"});
+        expect(conf.getEngineConfigFor('stubEngine1')).toEqual({config_folder: TEST_DATA_DIR});
+        expect(conf.getEngineConfigFor('stubEngine2')).toEqual({config_folder: TEST_DATA_DIR, miscSetting: "miscValue"});
     });
 
     it("When constructing config from invalid yaml string then we throw an error", () => {
@@ -201,5 +207,26 @@ describe("Tests for creating and accessing configuration values", () => {
 
         expect(() => CodeAnalyzerConfig.fromObject({custom_engine_plugin_modules: 'oops'})).toThrow(
             getMessage('ConfigValueNotAValidStringArray','custom_engine_plugin_modules', '"oops"'));
+    });
+
+    it("When supplied config_folder path is a valid absolute path, then we use it", () => {
+        const configFolderValue: string = path.join(TEST_DATA_DIR, 'sampleWorkspace');
+        const conf: CodeAnalyzerConfig = CodeAnalyzerConfig.fromObject({config_folder: configFolderValue});
+        expect(conf.getConfigFolder()).toEqual(configFolderValue);
+    });
+
+    it("When supplied config_folder path does not exist, then we error", () => {
+        expect(() => CodeAnalyzerConfig.fromObject({config_folder: path.resolve('doesNotExist')})).toThrow(
+            getMessage('ConfigValueFolderMustExist','config_folder', path.resolve('doesNotExist')));
+    });
+
+    it("When supplied config_folder path is a file instead of a folder, then we error", () => {
+        expect(() => CodeAnalyzerConfig.fromObject({config_folder: path.resolve('package.json')})).toThrow(
+            getMessage('ConfigValueMustBeFolder','config_folder', path.resolve('package.json')));
+    });
+
+    it("When supplied config_folder path is a relative folder, then we error", () => {
+        expect(() => CodeAnalyzerConfig.fromObject({config_folder: 'test/test-data'})).toThrow(
+            getMessage('ConfigValueMustBeAbsolutePath','config_folder', path.resolve('test','test-data')));
     });
 });
