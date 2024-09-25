@@ -1,0 +1,92 @@
+[
+    {
+        "query_id": "FlowSecurity.SystemModeWithoutSharing.recordCreates.data",
+        "query_name": "Flow: SystemModeWithoutSharing recordCreates data",
+        "severity": "Flow_Moderate_Severity",
+        "query_description": "User controlled data flows into recordCreates element data in run mode: SystemModeWithoutSharing",
+        "help_url": "None",
+        "query_version": "0",
+        "is_security": "True"
+    },
+    {
+        "query_id": "FlowSecurity.SystemModeWithoutSharing.recordDeletes.selector",
+        "query_name": "Flow: SystemModeWithoutSharing recordDeletes selector",
+        "severity": "Flow_High_Severity",
+        "query_description": "User controlled data flows into recordDeletes element selector in run mode: SystemModeWithoutSharing",
+        "help_url": "None",
+        "query_version": "0",
+        "is_security": "True"
+    },
+    {
+        "query_id": "FlowSecurity.SystemModeWithoutSharing.recordLookups.selector",
+        "query_name": "Flow: SystemModeWithoutSharing recordLookups selector",
+        "severity": "Flow_Moderate_Severity",
+        "query_description": "User controlled data flows into recordLookups element selector in run mode: SystemModeWithoutSharing",
+        "help_url": "None",
+        "query_version": "0",
+        "is_security": "True"
+    },
+    {
+        "query_id": "FlowSecurity.SystemModeWithoutSharing.recordUpdates.data",
+        "query_name": "Flow: SystemModeWithoutSharing recordUpdates data",
+        "severity": "Flow_High_Severity",
+        "query_description": "User controlled data flows into recordUpdates element data in run mode: SystemModeWithoutSharing",
+        "help_url": "None",
+        "query_version": "0",
+        "is_security": "True"
+    },
+    {
+        "query_id": "FlowSecurity.SystemModeWithoutSharing.recordUpdates.selector",
+        "query_name": "Flow: SystemModeWithoutSharing recordUpdates selector",
+        "severity": "Flow_High_Severity",
+        "query_description": "User controlled data flows into recordUpdates element selector in run mode: SystemModeWithoutSharing",
+        "help_url": "None",
+        "query_version": "0",
+        "is_security": "True"
+    },
+    {
+        "query_id": "FlowSecurity.SystemModeWithSharing.recordCreates.data",
+        "query_name": "Flow: SystemModeWithSharing recordCreates data",
+        "severity": "Flow_Low_Severity",
+        "query_description": "User controlled data flows into recordCreates element data in run mode: SystemModeWithSharing",
+        "help_url": "None",
+        "query_version": "0",
+        "is_security": "True"
+    },
+    {
+        "query_id": "FlowSecurity.SystemModeWithSharing.recordDeletes.selector",
+        "query_name": "Flow: SystemModeWithSharing recordDeletes selector",
+        "severity": "Flow_Low_Severity",
+        "query_description": "User controlled data flows into recordDeletes element selector in run mode: SystemModeWithSharing",
+        "help_url": "None",
+        "query_version": "0",
+        "is_security": "True"
+    },
+    {
+        "query_id": "FlowSecurity.SystemModeWithSharing.recordLookups.selector",
+        "query_name": "Flow: SystemModeWithSharing recordLookups selector",
+        "severity": "Flow_Low_Severity",
+        "query_description": "User controlled data flows into recordLookups element selector in run mode: SystemModeWithSharing",
+        "help_url": "None",
+        "query_version": "0",
+        "is_security": "True"
+    },
+    {
+        "query_id": "FlowSecurity.SystemModeWithSharing.recordUpdates.data",
+        "query_name": "Flow: SystemModeWithSharing recordUpdates data",
+        "severity": "Flow_Low_Severity",
+        "query_description": "User controlled data flows into recordUpdates element data in run mode: SystemModeWithSharing",
+        "help_url": "None",
+        "query_version": "0",
+        "is_security": "True"
+    },
+    {
+        "query_id": "FlowSecurity.SystemModeWithSharing.recordUpdates.selector",
+        "query_name": "Flow: SystemModeWithSharing recordUpdates selector",
+        "severity": "Flow_Low_Severity",
+        "query_description": "User controlled data flows into recordUpdates element selector in run mode: SystemModeWithSharing",
+        "help_url": "None",
+        "query_version": "0",
+        "is_security": "True"
+    }
+]

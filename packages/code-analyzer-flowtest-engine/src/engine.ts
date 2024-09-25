@@ -2,19 +2,20 @@ import {
     DescribeOptions,
     Engine,
     EngineRunResults,
-    LogLevel,
     RuleDescription,
-    RunOptions
+    RuleType,
+    RunOptions,
+    SeverityLevel
 } from "@salesforce/code-analyzer-engine-api";
-import {FlowTestConfig} from "./config";
+import {FlowTestCommandWrapper, FlowTestRuleDescriptor} from "./python/FlowTestCommandWrapper";
 
 export class FlowTestEngine extends Engine {
     public static readonly NAME: string = 'flowtest';
-    private readonly config: FlowTestConfig;
+    private readonly commandWrapper: FlowTestCommandWrapper;
 
-    public constructor(config: FlowTestConfig) {
+    public constructor(commandWrapper: FlowTestCommandWrapper) {
         super();
-        this.config = config;
+        this.commandWrapper =  commandWrapper;
     }
 
     public getName(): string {
@@ -23,23 +24,59 @@ export class FlowTestEngine extends Engine {
 
     public async describeRules(_describeOptions: DescribeOptions): Promise<RuleDescription[]> {
         this.emitDescribeRulesProgressEvent(0);
-        const pythonCommand: string = this.config.python_command;
-        this.emitDescribeRulesProgressEvent(10);
-        this.emitLogEvent(LogLevel.Info, `Temporary message: Python command identified as ${pythonCommand}`);
+        const flowTestRules: FlowTestRuleDescriptor[] = await this.commandWrapper.getFlowTestRuleDescriptions();
+        this.emitDescribeRulesProgressEvent(75);
+        const convertedRules = this.convertFlowTestRulesToCodeAnalyzerRules(flowTestRules);
         this.emitRunRulesProgressEvent(100);
-        return [];
+        return convertedRules;
     }
 
     public async runRules(_ruleNames: string[], _runOptions: RunOptions): Promise<EngineRunResults> {
         this.emitRunRulesProgressEvent(0);
-        const pythonCommand = this.config.python_command;
 
         this.emitRunRulesProgressEvent(10);
-        this.emitLogEvent(LogLevel.Info, `Temporary message: Python command identified as ${pythonCommand}`);
         this.emitRunRulesProgressEvent(100);
         return {
             violations: []
         };
+    }
+
+    private convertFlowTestRulesToCodeAnalyzerRules(flowTestRules: FlowTestRuleDescriptor[]): RuleDescription[] {
+        return flowTestRules.map(flowTestRule => {
+            return {
+                // The name maps directly over.
+                name: flowTestRule.query_name,
+                severityLevel: this.convertFlowTestSeverityToCodeAnalyzerSeverity(flowTestRule.severity),
+                // All rules in FlowTest are obviously Flow-type.
+                type: RuleType.Flow,
+                // All rules are Recommended, but not all rules are Security rules.
+                tags: flowTestRule.is_security.toLowerCase() === 'true' ? ['Recommended', 'Security'] : ['Recommended'],
+                // The description maps directly over.
+                description: flowTestRule.query_description,
+                resourceUrls: this.convertHelpUrlToResourceUrls(flowTestRule.help_url)
+            }
+        });
+    }
+
+    private convertFlowTestSeverityToCodeAnalyzerSeverity(flowTestSeverity: string): SeverityLevel {
+        switch (flowTestSeverity) {
+            case 'Flow_High_Severity':
+                return SeverityLevel.High;
+            case 'Flow_Moderate_Severity':
+                return SeverityLevel.Moderate;
+            case 'Flow_Low_Severity':
+                return SeverityLevel.Low
+        }
+        throw new Error(`Developer error: invalid severity level ${flowTestSeverity}`);
+    }
+
+    private convertHelpUrlToResourceUrls(helpUrl: string): string[] {
+        // Treat the hardcoded string "none" as equivalent to an empty string.
+        if (helpUrl.toLowerCase() === 'none' || helpUrl === '') {
+            return [];
+        } else {
+            return [helpUrl];
+        }
     }
 }
 

@@ -3,7 +3,17 @@ import {PythonCommandExecutor} from './PythonCommandExecutor';
 
 
 export interface FlowTestCommandWrapper {
-    getFlowTestHelpText(): Promise<string>;
+    getFlowTestRuleDescriptions(): Promise<FlowTestRuleDescriptor[]>;
+}
+
+export type FlowTestRuleDescriptor = {
+    query_id: string;
+    query_name: string;
+    severity: string;
+    query_description: string;
+    help_url: string;
+    query_version: string;
+    is_security: string;
 }
 
 const PATH_TO_PIPX_PYZ = path.join(__dirname, '..', '..', 'pipx.pyz');
@@ -16,7 +26,7 @@ export class RunTimeFlowTestCommandWrapper implements FlowTestCommandWrapper {
         this.pythonCommandExecutor = new PythonCommandExecutor(pythonCommand);
     }
 
-    public async getFlowTestHelpText(): Promise<string> {
+    public async getFlowTestRuleDescriptions(): Promise<FlowTestRuleDescriptor[]> {
         const pythonArgs: string[] = [
             PATH_TO_PIPX_PYZ,
             'run',
@@ -25,7 +35,7 @@ export class RunTimeFlowTestCommandWrapper implements FlowTestCommandWrapper {
             PATH_TO_FLOWTEST_ROOT,
             '--',
             'flowtest',
-            '-h'
+            '-p'
         ];
 
         let stdout: string = '';
@@ -33,6 +43,6 @@ export class RunTimeFlowTestCommandWrapper implements FlowTestCommandWrapper {
             stdout += stdoutMsg;
         }
         await this.pythonCommandExecutor.exec(pythonArgs, processStdout);
-        return stdout;
+        return (JSON.parse(stdout) as FlowTestRuleDescriptor[]).sort((a, b) => a.query_name.localeCompare(b.query_name));
     }
 }

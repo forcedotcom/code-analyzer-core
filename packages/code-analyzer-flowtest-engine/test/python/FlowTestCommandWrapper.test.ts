@@ -1,20 +1,26 @@
+import * as fsp from 'node:fs/promises';
+import path from 'node:path';
 import {sync} from 'which';
-import {RunTimeFlowTestCommandWrapper} from "../../src/python/FlowTestCommandWrapper";
+import {FlowTestRuleDescriptor, RunTimeFlowTestCommandWrapper} from "../../src/python/FlowTestCommandWrapper";
 
 const PATH_TO_PYTHON_EXE: string = sync('python3');
 
 describe('FlowTestCommandWrapper implementations', () => {
     describe('RunTimeFlowTestCommandWrapper', () => {
-        // TODO: This is a temporary test serving as a proof-of-concept for bundling and invoking the FlowTest engine.
-        //       Once the FlowTest engine's API has stabilized, this test should be removed and replaced with ones that
-        //       interface with that API.
-        it('Help text is properly retrieved', async () => {
-            const wrapper: RunTimeFlowTestCommandWrapper = new RunTimeFlowTestCommandWrapper(PATH_TO_PYTHON_EXE);
+        describe('#getFlowTestRuleDescriptions()', () => {
+            it('Returns valid, well-formed rule descriptions', async () => {
+                const wrapper: RunTimeFlowTestCommandWrapper = new RunTimeFlowTestCommandWrapper(PATH_TO_PYTHON_EXE);
 
-            const helpText: string = await wrapper.getFlowTestHelpText();
+                const rules: FlowTestRuleDescriptor[] = await wrapper.getFlowTestRuleDescriptions();
 
-            expect(helpText).toContain('usage: flowtest');
-        // For the sake of CI/CD, set the timeout to a truly absurd value.
-        }, 30000);
+                const expectedRules: FlowTestRuleDescriptor[] = JSON.parse(await fsp.readFile(
+                    path.join(__dirname, '..', 'test-data', 'goldfiles', 'FlowTestCommandWrapper.test.ts', 'catalog.json'),
+                    {encoding: 'utf-8'}
+                )) as FlowTestRuleDescriptor[];
+
+                expect(rules).toEqual(expectedRules);
+            // For the sake of CI/CD, set the timeout to a truly absurd value.
+            }, 30000);
+        });
     });
 });
