@@ -99,7 +99,7 @@ class VariableType:
     is_output: bool | None = None
 
 
-@dataclass(frozen=True, eq=True)
+@dataclass(frozen=True, eq=True, slots=True)
 class Preset:
     # Publicly displayed in report file.
     preset_name: str
@@ -115,8 +115,11 @@ class Preset:
     # for that query
     queries: {QueryDescription}
 
+    def to_dict(self):
+        return {s: str(getattr(self, s)) for s in self.__slots__}
 
-@dataclass(frozen=True, eq=True)
+
+@dataclass(frozen=True, eq=True, slots=True)
 class QueryDescription:
     # this is the id that occurs in the preset and is not displayed to the user.
     query_id: str
@@ -144,6 +147,9 @@ class QueryDescription:
 
     # Whether this query is for a security or code quality issue
     is_security: bool = True
+
+    def to_dict(self):
+        return {s: str(getattr(self, s)) for s in self.__slots__}
 
 
 @dataclass(frozen=True, eq=True)
@@ -367,6 +373,14 @@ class CrawlStep:
 class InfluenceStatementEncoder(json.JSONEncoder):
     def default(self, obj):
         if isinstance(obj, DataInfluenceStatement):
+            return obj.to_dict()
+        else:
+            return json.JSONEncoder.default(self, obj)
+
+
+class PresetEncoder(json.JSONEncoder):
+    def default(self, obj):
+        if isinstance(obj, Preset) or isinstance(obj, QueryDescription):
             return obj.to_dict()
         else:
             return json.JSONEncoder.default(self, obj)

@@ -1,2 +1,0 @@
-[console_scripts]
-flowtest = flowtest.__main__:main

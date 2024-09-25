@@ -20,7 +20,7 @@ from public.contracts import QueryProcessor, FlowParser, State
 
 logger = logging.getLogger(__name__)
 
-default_preset = 'all'
+default_preset = 'pentest'
 
 presets = {'pentest': {'name': 'Penetration Testing',
                        'owner': 'rsussland@salesforce.com',
@@ -33,8 +33,7 @@ FlowSecurity.SystemModeWithSharing.recordCreates.data
 FlowSecurity.SystemModeWithSharing.recordUpdates.data
 FlowSecurity.SystemModeWithSharing.recordUpdates.selector
 FlowSecurity.SystemModeWithSharing.recordDeletes.selector
-FlowSecurity.SystemModeWithSharing.recordLookups.selector
-"""},
+FlowSecurity.SystemModeWithSharing.recordLookups.selector"""},
            'all': {'name': 'All',
                    'owner': 'rsussland@salesforce.com',
                    'queries': """FlowSecurity.SystemModeWithoutSharing.recordUpdates.data
@@ -55,6 +54,8 @@ FlowSecurity.DefaultMode.recordLookups.selector"""
                    }
            }
 
+QUERY_IDS = []
+
 
 def build_preset(preset_name: str = default_preset):
     if preset_name is None:
@@ -68,7 +69,10 @@ def build_preset(preset_name: str = default_preset):
     pr_owner = preset['owner']
     query_ids = preset['queries'].split("\n")
     query_id_list = [x.strip() for x in query_ids]
-    queries = {build_query_desc_from_id(x) for x in query_id_list}
+    if len(QUERY_IDS) == 0:
+        [QUERY_IDS.append(x.strip()) for x in query_ids if len(x) > 0]
+
+    queries = {build_query_desc_from_id(x) for x in QUERY_IDS}
 
     return Preset(preset_name=pr_name,
                   preset_owner=pr_owner,
@@ -225,6 +229,12 @@ class DefaultQueryProcessor(QueryProcessor):
             else:
                 check_label = "data"
 
+            query_id = build_id(elem_type=elem_type,
+                                check_labels_val=check_label,
+                                run_mode=run_mode.name)
+            if query_id is None:
+                continue
+
             a_field, influencer_var = x
             # surgery that deals with string or dataInfluencePaths happens in get_tainted_flows()
             tainted_flows = state.get_flows_from_sources(influenced_var=influencer_var,
@@ -247,9 +257,7 @@ class DefaultQueryProcessor(QueryProcessor):
                                                    source_text=parse_utils.ET.tounicode(current_elem),
                                                    flow_path=flow_path
                                                    )
-                to_return.append(QueryResult(query_id=build_id(elem_type=elem_type,
-                                                               check_labels_val=check_label,
-                                                               run_mode=run_mode.name),
+                to_return.append(QueryResult(query_id=query_id,
                                              influence_statement=sink_stmt,
                                              paths=tainted_flows))
 
@@ -301,14 +309,18 @@ def build_query_desc_from_id(query_id: str) -> QueryDescription:
     return build_query_description(elem_type=elem_type, check_labels_val=check_val, run_mode=run_mode)
 
 
-def build_id(elem_type, check_labels_val, run_mode) -> str:
-    return f"FlowSecurity.{run_mode}.{elem_type}.{check_labels_val}"
+def build_id(elem_type, check_labels_val, run_mode) -> str | None:
+    str_ = f"FlowSecurity.{run_mode}.{elem_type}.{check_labels_val}"
+    if str_ in QUERY_IDS:
+        return str_
+    else:
+        return None
 
 
 def build_query_description(elem_type, check_labels_val, run_mode):
     query_description = (f"User controlled data flows into {elem_type} element {check_labels_val} in "
                          f"run mode: {run_mode}")
-    query_name = f"Flow Security: User access to {elem_type} {check_labels_val} in mode {run_mode}"
+    query_name = f"Flow: {run_mode} {elem_type} {check_labels_val}"
     query_id = build_id(elem_type, check_labels_val, run_mode)
 
     if (run_mode == "SystemModeWithoutSharing"
