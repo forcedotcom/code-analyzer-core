@@ -209,7 +209,10 @@ def main(argv: list[str] = None) -> str | None:
         # if user has specified a preset, use that or None
         preset_name = args.preset
         preset = default_query.build_preset(preset_name)
-        desc = json.dumps(list(preset.queries), indent=4, cls=PresetEncoder)
+        queries = preset.queries
+        query_info = [x.to_dict() for x in list(queries)]
+        sorted_query_info = sorted(query_info, key=lambda x: x['query_id'])
+        desc = json.dumps(sorted_query_info, indent=4, cls=PresetEncoder)
         # print to stdout so user can redirect or examine
         print(desc)
 

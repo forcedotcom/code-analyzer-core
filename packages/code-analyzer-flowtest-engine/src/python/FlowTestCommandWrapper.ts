@@ -43,6 +43,6 @@ export class RunTimeFlowTestCommandWrapper implements FlowTestCommandWrapper {
             stdout += stdoutMsg;
         }
         await this.pythonCommandExecutor.exec(pythonArgs, processStdout);
-        return (JSON.parse(stdout) as FlowTestRuleDescriptor[]).sort((a, b) => a.query_name.localeCompare(b.query_name));
+        return JSON.parse(stdout) as FlowTestRuleDescriptor[];
     }
 }
