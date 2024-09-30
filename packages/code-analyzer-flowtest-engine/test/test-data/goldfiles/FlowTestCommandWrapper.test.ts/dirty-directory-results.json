@@ -1,0 +1,376 @@
+{
+  "results": {
+    "FlowSecurity.SystemModeWithoutSharing.recordLookups.selector": [
+      {
+        "flow": [
+          {
+            "influenced_var": "curDiagnosticNodeId",
+            "influencer_var": "curDiagnosticNodeId",
+            "element_name": "curDiagnosticNodeId",
+            "comment": "Initialization",
+            "flow_path": "../code-analyzer-core/packages/code-analyzer-flowtest-engine/test/test-data/sample-workspace/Twenty_Questions_Troubleshooter.flow-meta.xml",
+            "line_no": 305,
+            "source_text": "<variables xmlns=\"http://soap.sforce.com/2006/04/metadata\">\n        <name>curDiagnosticNodeId</name>\n        <dataType>String</dataType>\n        <isCollection>false</isCollection>\n        <isInput>true</isInput>\n        <isOutput>false</isOutput>\n        <value>\n            <stringValue>a0lB0000001ulKbIAI</stringValue>\n        </value>\n    </variables>"
+          },
+          {
+            "influenced_var": "Id",
+            "influencer_var": "curDiagnosticNodeId",
+            "element_name": "Load_Current_Node",
+            "comment": "flow into recordLookups via influence over Id in run mode SystemModeWithoutSharing",
+            "flow_path": "../code-analyzer-core/packages/code-analyzer-flowtest-engine/test/test-data/sample-workspace/Twenty_Questions_Troubleshooter.flow-meta.xml",
+            "line_no": 149,
+            "source_text": "<recordLookups xmlns=\"http://soap.sforce.com/2006/04/metadata\">\n        <name>Load_Current_Node</name>\n        <label>Load Current Node</label>\n        <locationX>184</locationX>\n        <locationY>46</locationY>\n        <assignNullValuesIfNoRecordsFound>false</assignNullValuesIfNoRecordsFound>\n        <connector>\n            <targetReference>Next_Node_Found</targetReference>\n        </connector>\n        <filters>\n            <field>Id</field>\n            <operator>EqualTo</operator>\n            <value>\n                <elementReference>curDiagnosticNodeId</elementReference>\n            </value>\n        </filters>\n        <object>DiagnosticNode__c</object>\n        <outputReference>curRecord</outputReference>\n        <queriedFields>Id</queriedFields>\n        <queriedFields>Name</queriedFields>\n        <queriedFields>Node_Content__c</queriedFields>\n        <queriedFields>Use_Knowledge_Article_Content__c</queriedFields>\n        <queriedFields>Knowledge__c</queriedFields>\n    </recordLookups>\n    "
+          }
+        ],
+        "query_name": "Flow: SystemModeWithoutSharing recordLookups selector",
+        "severity": "Flow_Moderate_Severity",
+        "description": "User controlled data flows into recordLookups element selector in run mode: SystemModeWithoutSharing",
+        "counter": 0,
+        "elem": "<recordLookups xmlns=\"http://soap.sforce.com/2006/04/metadata\">\n        <name>Load_Current_Node</name>\n        <label>Load Current Node</label>\n        <locationX>184</locationX>\n        <locationY>46</locationY>\n        <assignNullValuesIfNoRecordsFound>false</assignNullValuesIfNoRecordsFound>\n        <connector>\n            <targetReference>Next_Node_Found</targetReference>\n        </connector>\n        <filters>\n            <field>Id</field>\n            <operator>EqualTo</operator>\n            <value>\n                <elementReference>curDiagnosticNodeId</elementReference>\n            </value>\n        </filters>\n        <object>DiagnosticNode__c</object>\n        <outputReference>curRecord</outputReference>\n        <queriedFields>Id</queriedFields>\n        <queriedFields>Name</queriedFields>\n        <queriedFields>Node_Content__c</queriedFields>\n        <queriedFields>Use_Knowledge_Article_Content__c</queriedFields>\n        <queriedFields>Knowledge__c</queriedFields>\n    </recordLookups>\n    ",
+        "elem_name": "Load_Current_Node",
+        "field": "Id"
+      }
+    ],
+    "FlowSecurity.SystemModeWithoutSharing.recordCreates.data": [
+      {
+        "flow": [
+          {
+            "influenced_var": "Company",
+            "influencer_var": "Company",
+            "element_name": "Company",
+            "comment": "Initialization",
+            "flow_path": "../code-analyzer-core/packages/code-analyzer-flowtest-engine/test/test-data/sample-workspace/example.flow-meta.xml",
+            "line_no": 369,
+            "source_text": "<fields xmlns=\"http://soap.sforce.com/2006/04/metadata\">\n            <name>Company</name>\n            <dataType>String</dataType>\n            <fieldText>Company</fieldText>\n            <fieldType>InputField</fieldType>\n            <isRequired>true</isRequired>\n        </fields>"
+          },
+          {
+            "influenced_var": "Company",
+            "influencer_var": "Company",
+            "element_name": "Create_Lead",
+            "comment": "flow into recordCreates via influence over Company in run mode SystemModeWithoutSharing",
+            "flow_path": "../code-analyzer-core/packages/code-analyzer-flowtest-engine/test/test-data/sample-workspace/example.flow-meta.xml",
+            "line_no": 192,
+            "source_text": "<recordCreates xmlns=\"http://soap.sforce.com/2006/04/metadata\">\n        <description>Creates a lead with user entered data</description>\n        <name>Create_Lead</name>\n        <label>Create Lead</label>\n        <locationX>182</locationX>\n        <locationY>734</locationY>\n        <assignRecordIdToReference>created_id</assignRecordIdToReference>\n        <connector>\n            <targetReference>id_return</targetReference>\n        </connector>\n        <faultConnector>\n            <targetReference>fault_handle</targetReference>\n        </faultConnector>\n        <inputAssignments>\n            <field>Company</field>\n            <value>\n                <elementReference>Company</elementReference>\n            </value>\n        </inputAssignments>\n        <inputAssignments>\n            <field>Description</field>\n            <value>\n                <elementReference>description2</elementReference>\n            </value>\n        </inputAssignments>\n        <inputAssignments>\n            <field>FirstName</field>\n            <value>\n                <elementReference>First_Name</elementReference>\n            </value>\n        </inputAssignments>\n        <inputAssignments>\n            <field>LastName</field>\n            <value>\n                <elementReference>Last_Name</elementReference>\n            </value>\n        </inputAssignments>\n        <inputAssignments>\n            <field>Phone</field>\n            <value>\n                <elementReference>Phone</elementReference>\n            </value>\n        </inputAssignments>\n        <inputAssignments>\n            <field>Title</field>\n            <value>\n                <elementReference>title</elementReference>\n            </value>\n        </inputAssignments>\n        <object>Lead</object>\n    </recordCreates>\n    "
+          }
+        ],
+        "query_name": "Flow: SystemModeWithoutSharing recordCreates data",
+        "severity": "Flow_Moderate_Severity",
+        "description": "User controlled data flows into recordCreates element data in run mode: SystemModeWithoutSharing",
+        "counter": 1,
+        "elem": "<recordCreates xmlns=\"http://soap.sforce.com/2006/04/metadata\">\n        <description>Creates a lead with user entered data</description>\n        <name>Create_Lead</name>\n        <label>Create Lead</label>\n        <locationX>182</locationX>\n        <locationY>734</locationY>\n        <assignRecordIdToReference>created_id</assignRecordIdToReference>\n        <connector>\n            <targetReference>id_return</targetReference>\n        </connector>\n        <faultConnector>\n            <targetReference>fault_handle</targetReference>\n        </faultConnector>\n        <inputAssignments>\n            <field>Company</field>\n            <value>\n                <elementReference>Company</elementReference>\n            </value>\n        </inputAssignments>\n        <inputAssignments>\n            <field>Description</field>\n            <value>\n                <elementReference>description2</elementReference>\n            </value>\n        </inputAssignments>\n        <inputAssignments>\n            <field>FirstName</field>\n            <value>\n                <elementReference>First_Name</elementReference>\n            </value>\n        </inputAssignments>\n        <inputAssignments>\n            <field>LastName</field>\n            <value>\n                <elementReference>Last_Name</elementReference>\n            </value>\n        </inputAssignments>\n        <inputAssignments>\n            <field>Phone</field>\n            <value>\n                <elementReference>Phone</elementReference>\n            </value>\n        </inputAssignments>\n        <inputAssignments>\n            <field>Title</field>\n            <value>\n                <elementReference>title</elementReference>\n            </value>\n        </inputAssignments>\n        <object>Lead</object>\n    </recordCreates>\n    ",
+        "elem_name": "Create_Lead",
+        "field": "Company"
+      },
+      {
+        "flow": [
+          {
+            "influenced_var": "First_Name",
+            "influencer_var": "First_Name",
+            "element_name": "First_Name",
+            "comment": "Initialization",
+            "flow_path": "../code-analyzer-core/packages/code-analyzer-flowtest-engine/test/test-data/sample-workspace/example.flow-meta.xml",
+            "line_no": 355,
+            "source_text": "<fields xmlns=\"http://soap.sforce.com/2006/04/metadata\">\n            <name>First_Name</name>\n            <dataType>String</dataType>\n            <fieldText>First Name</fieldText>\n            <fieldType>InputField</fieldType>\n            <isRequired>true</isRequired>\n        </fields>"
+          },
+          {
+            "influenced_var": "FirstName",
+            "influencer_var": "First_Name",
+            "element_name": "Create_Lead",
+            "comment": "flow into recordCreates via influence over FirstName in run mode SystemModeWithoutSharing",
+            "flow_path": "../code-analyzer-core/packages/code-analyzer-flowtest-engine/test/test-data/sample-workspace/example.flow-meta.xml",
+            "line_no": 192,
+            "source_text": "<recordCreates xmlns=\"http://soap.sforce.com/2006/04/metadata\">\n        <description>Creates a lead with user entered data</description>\n        <name>Create_Lead</name>\n        <label>Create Lead</label>\n        <locationX>182</locationX>\n        <locationY>734</locationY>\n        <assignRecordIdToReference>created_id</assignRecordIdToReference>\n        <connector>\n            <targetReference>id_return</targetReference>\n        </connector>\n        <faultConnector>\n            <targetReference>fault_handle</targetReference>\n        </faultConnector>\n        <inputAssignments>\n            <field>Company</field>\n            <value>\n                <elementReference>Company</elementReference>\n            </value>\n        </inputAssignments>\n        <inputAssignments>\n            <field>Description</field>\n            <value>\n                <elementReference>description2</elementReference>\n            </value>\n        </inputAssignments>\n        <inputAssignments>\n            <field>FirstName</field>\n            <value>\n                <elementReference>First_Name</elementReference>\n            </value>\n        </inputAssignments>\n        <inputAssignments>\n            <field>LastName</field>\n            <value>\n                <elementReference>Last_Name</elementReference>\n            </value>\n        </inputAssignments>\n        <inputAssignments>\n            <field>Phone</field>\n            <value>\n                <elementReference>Phone</elementReference>\n            </value>\n        </inputAssignments>\n        <inputAssignments>\n            <field>Title</field>\n            <value>\n                <elementReference>title</elementReference>\n            </value>\n        </inputAssignments>\n        <object>Lead</object>\n    </recordCreates>\n    "
+          }
+        ],
+        "query_name": "Flow: SystemModeWithoutSharing recordCreates data",
+        "severity": "Flow_Moderate_Severity",
+        "description": "User controlled data flows into recordCreates element data in run mode: SystemModeWithoutSharing",
+        "counter": 2,
+        "elem": "<recordCreates xmlns=\"http://soap.sforce.com/2006/04/metadata\">\n        <description>Creates a lead with user entered data</description>\n        <name>Create_Lead</name>\n        <label>Create Lead</label>\n        <locationX>182</locationX>\n        <locationY>734</locationY>\n        <assignRecordIdToReference>created_id</assignRecordIdToReference>\n        <connector>\n            <targetReference>id_return</targetReference>\n        </connector>\n        <faultConnector>\n            <targetReference>fault_handle</targetReference>\n        </faultConnector>\n        <inputAssignments>\n            <field>Company</field>\n            <value>\n                <elementReference>Company</elementReference>\n            </value>\n        </inputAssignments>\n        <inputAssignments>\n            <field>Description</field>\n            <value>\n                <elementReference>description2</elementReference>\n            </value>\n        </inputAssignments>\n        <inputAssignments>\n            <field>FirstName</field>\n            <value>\n                <elementReference>First_Name</elementReference>\n            </value>\n        </inputAssignments>\n        <inputAssignments>\n            <field>LastName</field>\n            <value>\n                <elementReference>Last_Name</elementReference>\n            </value>\n        </inputAssignments>\n        <inputAssignments>\n            <field>Phone</field>\n            <value>\n                <elementReference>Phone</elementReference>\n            </value>\n        </inputAssignments>\n        <inputAssignments>\n            <field>Title</field>\n            <value>\n                <elementReference>title</elementReference>\n            </value>\n        </inputAssignments>\n        <object>Lead</object>\n    </recordCreates>\n    ",
+        "elem_name": "Create_Lead",
+        "field": "FirstName"
+      },
+      {
+        "flow": [
+          {
+            "influenced_var": "Last_Name",
+            "influencer_var": "Last_Name",
+            "element_name": "Last_Name",
+            "comment": "Initialization",
+            "flow_path": "../code-analyzer-core/packages/code-analyzer-flowtest-engine/test/test-data/sample-workspace/example.flow-meta.xml",
+            "line_no": 362,
+            "source_text": "<fields xmlns=\"http://soap.sforce.com/2006/04/metadata\">\n            <name>Last_Name</name>\n            <dataType>String</dataType>\n            <fieldText>Last Name</fieldText>\n            <fieldType>InputField</fieldType>\n            <isRequired>true</isRequired>\n        </fields>"
+          },
+          {
+            "influenced_var": "LastName",
+            "influencer_var": "Last_Name",
+            "element_name": "Create_Lead",
+            "comment": "flow into recordCreates via influence over LastName in run mode SystemModeWithoutSharing",
+            "flow_path": "../code-analyzer-core/packages/code-analyzer-flowtest-engine/test/test-data/sample-workspace/example.flow-meta.xml",
+            "line_no": 192,
+            "source_text": "<recordCreates xmlns=\"http://soap.sforce.com/2006/04/metadata\">\n        <description>Creates a lead with user entered data</description>\n        <name>Create_Lead</name>\n        <label>Create Lead</label>\n        <locationX>182</locationX>\n        <locationY>734</locationY>\n        <assignRecordIdToReference>created_id</assignRecordIdToReference>\n        <connector>\n            <targetReference>id_return</targetReference>\n        </connector>\n        <faultConnector>\n            <targetReference>fault_handle</targetReference>\n        </faultConnector>\n        <inputAssignments>\n            <field>Company</field>\n            <value>\n                <elementReference>Company</elementReference>\n            </value>\n        </inputAssignments>\n        <inputAssignments>\n            <field>Description</field>\n            <value>\n                <elementReference>description2</elementReference>\n            </value>\n        </inputAssignments>\n        <inputAssignments>\n            <field>FirstName</field>\n            <value>\n                <elementReference>First_Name</elementReference>\n            </value>\n        </inputAssignments>\n        <inputAssignments>\n            <field>LastName</field>\n            <value>\n                <elementReference>Last_Name</elementReference>\n            </value>\n        </inputAssignments>\n        <inputAssignments>\n            <field>Phone</field>\n            <value>\n                <elementReference>Phone</elementReference>\n            </value>\n        </inputAssignments>\n        <inputAssignments>\n            <field>Title</field>\n            <value>\n                <elementReference>title</elementReference>\n            </value>\n        </inputAssignments>\n        <object>Lead</object>\n    </recordCreates>\n    "
+          }
+        ],
+        "query_name": "Flow: SystemModeWithoutSharing recordCreates data",
+        "severity": "Flow_Moderate_Severity",
+        "description": "User controlled data flows into recordCreates element data in run mode: SystemModeWithoutSharing",
+        "counter": 3,
+        "elem": "<recordCreates xmlns=\"http://soap.sforce.com/2006/04/metadata\">\n        <description>Creates a lead with user entered data</description>\n        <name>Create_Lead</name>\n        <label>Create Lead</label>\n        <locationX>182</locationX>\n        <locationY>734</locationY>\n        <assignRecordIdToReference>created_id</assignRecordIdToReference>\n        <connector>\n            <targetReference>id_return</targetReference>\n        </connector>\n        <faultConnector>\n            <targetReference>fault_handle</targetReference>\n        </faultConnector>\n        <inputAssignments>\n            <field>Company</field>\n            <value>\n                <elementReference>Company</elementReference>\n            </value>\n        </inputAssignments>\n        <inputAssignments>\n            <field>Description</field>\n            <value>\n                <elementReference>description2</elementReference>\n            </value>\n        </inputAssignments>\n        <inputAssignments>\n            <field>FirstName</field>\n            <value>\n                <elementReference>First_Name</elementReference>\n            </value>\n        </inputAssignments>\n        <inputAssignments>\n            <field>LastName</field>\n            <value>\n                <elementReference>Last_Name</elementReference>\n            </value>\n        </inputAssignments>\n        <inputAssignments>\n            <field>Phone</field>\n            <value>\n                <elementReference>Phone</elementReference>\n            </value>\n        </inputAssignments>\n        <inputAssignments>\n            <field>Title</field>\n            <value>\n                <elementReference>title</elementReference>\n            </value>\n        </inputAssignments>\n        <object>Lead</object>\n    </recordCreates>\n    ",
+        "elem_name": "Create_Lead",
+        "field": "LastName"
+      },
+      {
+        "flow": [
+          {
+            "influenced_var": "Phone",
+            "influencer_var": "Phone",
+            "element_name": "Phone",
+            "comment": "Initialization",
+            "flow_path": "../code-analyzer-core/packages/code-analyzer-flowtest-engine/test/test-data/sample-workspace/example.flow-meta.xml",
+            "line_no": 376,
+            "source_text": "<fields xmlns=\"http://soap.sforce.com/2006/04/metadata\">\n            <name>Phone</name>\n            <dataType>String</dataType>\n            <fieldText>Phone</fieldText>\n            <fieldType>InputField</fieldType>\n            <isRequired>true</isRequired>\n        </fields>"
+          },
+          {
+            "influenced_var": "Phone",
+            "influencer_var": "Phone",
+            "element_name": "Create_Lead",
+            "comment": "flow into recordCreates via influence over Phone in run mode SystemModeWithoutSharing",
+            "flow_path": "../code-analyzer-core/packages/code-analyzer-flowtest-engine/test/test-data/sample-workspace/example.flow-meta.xml",
+            "line_no": 192,
+            "source_text": "<recordCreates xmlns=\"http://soap.sforce.com/2006/04/metadata\">\n        <description>Creates a lead with user entered data</description>\n        <name>Create_Lead</name>\n        <label>Create Lead</label>\n        <locationX>182</locationX>\n        <locationY>734</locationY>\n        <assignRecordIdToReference>created_id</assignRecordIdToReference>\n        <connector>\n            <targetReference>id_return</targetReference>\n        </connector>\n        <faultConnector>\n            <targetReference>fault_handle</targetReference>\n        </faultConnector>\n        <inputAssignments>\n            <field>Company</field>\n            <value>\n                <elementReference>Company</elementReference>\n            </value>\n        </inputAssignments>\n        <inputAssignments>\n            <field>Description</field>\n            <value>\n                <elementReference>description2</elementReference>\n            </value>\n        </inputAssignments>\n        <inputAssignments>\n            <field>FirstName</field>\n            <value>\n                <elementReference>First_Name</elementReference>\n            </value>\n        </inputAssignments>\n        <inputAssignments>\n            <field>LastName</field>\n            <value>\n                <elementReference>Last_Name</elementReference>\n            </value>\n        </inputAssignments>\n        <inputAssignments>\n            <field>Phone</field>\n            <value>\n                <elementReference>Phone</elementReference>\n            </value>\n        </inputAssignments>\n        <inputAssignments>\n            <field>Title</field>\n            <value>\n                <elementReference>title</elementReference>\n            </value>\n        </inputAssignments>\n        <object>Lead</object>\n    </recordCreates>\n    "
+          }
+        ],
+        "query_name": "Flow: SystemModeWithoutSharing recordCreates data",
+        "severity": "Flow_Moderate_Severity",
+        "description": "User controlled data flows into recordCreates element data in run mode: SystemModeWithoutSharing",
+        "counter": 4,
+        "elem": "<recordCreates xmlns=\"http://soap.sforce.com/2006/04/metadata\">\n        <description>Creates a lead with user entered data</description>\n        <name>Create_Lead</name>\n        <label>Create Lead</label>\n        <locationX>182</locationX>\n        <locationY>734</locationY>\n        <assignRecordIdToReference>created_id</assignRecordIdToReference>\n        <connector>\n            <targetReference>id_return</targetReference>\n        </connector>\n        <faultConnector>\n            <targetReference>fault_handle</targetReference>\n        </faultConnector>\n        <inputAssignments>\n            <field>Company</field>\n            <value>\n                <elementReference>Company</elementReference>\n            </value>\n        </inputAssignments>\n        <inputAssignments>\n            <field>Description</field>\n            <value>\n                <elementReference>description2</elementReference>\n            </value>\n        </inputAssignments>\n        <inputAssignments>\n            <field>FirstName</field>\n            <value>\n                <elementReference>First_Name</elementReference>\n            </value>\n        </inputAssignments>\n        <inputAssignments>\n            <field>LastName</field>\n            <value>\n                <elementReference>Last_Name</elementReference>\n            </value>\n        </inputAssignments>\n        <inputAssignments>\n            <field>Phone</field>\n            <value>\n                <elementReference>Phone</elementReference>\n            </value>\n        </inputAssignments>\n        <inputAssignments>\n            <field>Title</field>\n            <value>\n                <elementReference>title</elementReference>\n            </value>\n        </inputAssignments>\n        <object>Lead</object>\n    </recordCreates>\n    ",
+        "elem_name": "Create_Lead",
+        "field": "Phone"
+      },
+      {
+        "flow": [
+          {
+            "influenced_var": "title",
+            "influencer_var": "title",
+            "element_name": "title",
+            "comment": "Initialization",
+            "flow_path": "../code-analyzer-core/packages/code-analyzer-flowtest-engine/test/test-data/sample-workspace/example.flow-meta.xml",
+            "line_no": 509,
+            "source_text": "<variables xmlns=\"http://soap.sforce.com/2006/04/metadata\">\n        <description>user supplied title for lead</description>\n        <name>title</name>\n        <dataType>String</dataType>\n        <isCollection>false</isCollection>\n        <isInput>true</isInput>\n        <isOutput>false</isOutput>\n        <value>\n            <stringValue>No Title Provided</stringValue>\n        </value>\n    </variables>"
+          },
+          {
+            "influenced_var": "Title",
+            "influencer_var": "title",
+            "element_name": "Create_Lead",
+            "comment": "flow into recordCreates via influence over Title in run mode SystemModeWithoutSharing",
+            "flow_path": "../code-analyzer-core/packages/code-analyzer-flowtest-engine/test/test-data/sample-workspace/example.flow-meta.xml",
+            "line_no": 192,
+            "source_text": "<recordCreates xmlns=\"http://soap.sforce.com/2006/04/metadata\">\n        <description>Creates a lead with user entered data</description>\n        <name>Create_Lead</name>\n        <label>Create Lead</label>\n        <locationX>182</locationX>\n        <locationY>734</locationY>\n        <assignRecordIdToReference>created_id</assignRecordIdToReference>\n        <connector>\n            <targetReference>id_return</targetReference>\n        </connector>\n        <faultConnector>\n            <targetReference>fault_handle</targetReference>\n        </faultConnector>\n        <inputAssignments>\n            <field>Company</field>\n            <value>\n                <elementReference>Company</elementReference>\n            </value>\n        </inputAssignments>\n        <inputAssignments>\n            <field>Description</field>\n            <value>\n                <elementReference>description2</elementReference>\n            </value>\n        </inputAssignments>\n        <inputAssignments>\n            <field>FirstName</field>\n            <value>\n                <elementReference>First_Name</elementReference>\n            </value>\n        </inputAssignments>\n        <inputAssignments>\n            <field>LastName</field>\n            <value>\n                <elementReference>Last_Name</elementReference>\n            </value>\n        </inputAssignments>\n        <inputAssignments>\n            <field>Phone</field>\n            <value>\n                <elementReference>Phone</elementReference>\n            </value>\n        </inputAssignments>\n        <inputAssignments>\n            <field>Title</field>\n            <value>\n                <elementReference>title</elementReference>\n            </value>\n        </inputAssignments>\n        <object>Lead</object>\n    </recordCreates>\n    "
+          }
+        ],
+        "query_name": "Flow: SystemModeWithoutSharing recordCreates data",
+        "severity": "Flow_Moderate_Severity",
+        "description": "User controlled data flows into recordCreates element data in run mode: SystemModeWithoutSharing",
+        "counter": 5,
+        "elem": "<recordCreates xmlns=\"http://soap.sforce.com/2006/04/metadata\">\n        <description>Creates a lead with user entered data</description>\n        <name>Create_Lead</name>\n        <label>Create Lead</label>\n        <locationX>182</locationX>\n        <locationY>734</locationY>\n        <assignRecordIdToReference>created_id</assignRecordIdToReference>\n        <connector>\n            <targetReference>id_return</targetReference>\n        </connector>\n        <faultConnector>\n            <targetReference>fault_handle</targetReference>\n        </faultConnector>\n        <inputAssignments>\n            <field>Company</field>\n            <value>\n                <elementReference>Company</elementReference>\n            </value>\n        </inputAssignments>\n        <inputAssignments>\n            <field>Description</field>\n            <value>\n                <elementReference>description2</elementReference>\n            </value>\n        </inputAssignments>\n        <inputAssignments>\n            <field>FirstName</field>\n            <value>\n                <elementReference>First_Name</elementReference>\n            </value>\n        </inputAssignments>\n        <inputAssignments>\n            <field>LastName</field>\n            <value>\n                <elementReference>Last_Name</elementReference>\n            </value>\n        </inputAssignments>\n        <inputAssignments>\n            <field>Phone</field>\n            <value>\n                <elementReference>Phone</elementReference>\n            </value>\n        </inputAssignments>\n        <inputAssignments>\n            <field>Title</field>\n            <value>\n                <elementReference>title</elementReference>\n            </value>\n        </inputAssignments>\n        <object>Lead</object>\n    </recordCreates>\n    ",
+        "elem_name": "Create_Lead",
+        "field": "Title"
+      },
+      {
+        "flow": [
+          {
+            "influenced_var": "Company",
+            "influencer_var": "Company",
+            "element_name": "Company",
+            "comment": "Initialization",
+            "flow_path": "../code-analyzer-core/packages/code-analyzer-flowtest-engine/test/test-data/sample-workspace/example.flow-meta.xml",
+            "line_no": 369,
+            "source_text": "<fields xmlns=\"http://soap.sforce.com/2006/04/metadata\">\n            <name>Company</name>\n            <dataType>String</dataType>\n            <fieldText>Company</fieldText>\n            <fieldType>InputField</fieldType>\n            <isRequired>true</isRequired>\n        </fields>"
+          },
+          {
+            "influenced_var": "Company",
+            "influencer_var": "Company",
+            "element_name": "Copy_1_of_Create_Lead",
+            "comment": "flow into recordCreates via influence over Company in run mode SystemModeWithoutSharing",
+            "flow_path": "../code-analyzer-core/packages/code-analyzer-flowtest-engine/test/test-data/sample-workspace/example.flow-meta.xml",
+            "line_no": 138,
+            "source_text": "<recordCreates xmlns=\"http://soap.sforce.com/2006/04/metadata\">\n        <description>Creates a lead with user entered data</description>\n        <name>Copy_1_of_Create_Lead</name>\n        <label>Copy 1 of Create Lead</label>\n        <locationX>578</locationX>\n        <locationY>1094</locationY>\n        <assignRecordIdToReference>created_id</assignRecordIdToReference>\n        <connector>\n            <targetReference>Copy_1_of_id_return</targetReference>\n        </connector>\n        <inputAssignments>\n            <field>Company</field>\n            <value>\n                <elementReference>Company</elementReference>\n            </value>\n        </inputAssignments>\n        <inputAssignments>\n            <field>Description</field>\n            <value>\n                <elementReference>description2</elementReference>\n            </value>\n        </inputAssignments>\n        <inputAssignments>\n            <field>FirstName</field>\n            <value>\n                <elementReference>First_Name</elementReference>\n            </value>\n        </inputAssignments>\n        <inputAssignments>\n            <field>LastName</field>\n            <value>\n                <elementReference>fixed_last_name</elementReference>\n            </value>\n        </inputAssignments>\n        <inputAssignments>\n            <field>Phone</field>\n            <value>\n                <elementReference>fixed_phone</elementReference>\n            </value>\n        </inputAssignments>\n        <inputAssignments>\n            <field>Street</field>\n            <value>\n                <elementReference>street</elementReference>\n            </value>\n        </inputAssignments>\n        <inputAssignments>\n            <field>Title</field>\n            <value>\n                <elementReference>title</elementReference>\n            </value>\n        </inputAssignments>\n        <object>Lead</object>\n    </recordCreates>\n    "
+          }
+        ],
+        "query_name": "Flow: SystemModeWithoutSharing recordCreates data",
+        "severity": "Flow_Moderate_Severity",
+        "description": "User controlled data flows into recordCreates element data in run mode: SystemModeWithoutSharing",
+        "counter": 7,
+        "elem": "<recordCreates xmlns=\"http://soap.sforce.com/2006/04/metadata\">\n        <description>Creates a lead with user entered data</description>\n        <name>Copy_1_of_Create_Lead</name>\n        <label>Copy 1 of Create Lead</label>\n        <locationX>578</locationX>\n        <locationY>1094</locationY>\n        <assignRecordIdToReference>created_id</assignRecordIdToReference>\n        <connector>\n            <targetReference>Copy_1_of_id_return</targetReference>\n        </connector>\n        <inputAssignments>\n            <field>Company</field>\n            <value>\n                <elementReference>Company</elementReference>\n            </value>\n        </inputAssignments>\n        <inputAssignments>\n            <field>Description</field>\n            <value>\n                <elementReference>description2</elementReference>\n            </value>\n        </inputAssignments>\n        <inputAssignments>\n            <field>FirstName</field>\n            <value>\n                <elementReference>First_Name</elementReference>\n            </value>\n        </inputAssignments>\n        <inputAssignments>\n            <field>LastName</field>\n            <value>\n                <elementReference>fixed_last_name</elementReference>\n            </value>\n        </inputAssignments>\n        <inputAssignments>\n            <field>Phone</field>\n            <value>\n                <elementReference>fixed_phone</elementReference>\n            </value>\n        </inputAssignments>\n        <inputAssignments>\n            <field>Street</field>\n            <value>\n                <elementReference>street</elementReference>\n            </value>\n        </inputAssignments>\n        <inputAssignments>\n            <field>Title</field>\n            <value>\n                <elementReference>title</elementReference>\n            </value>\n        </inputAssignments>\n        <object>Lead</object>\n    </recordCreates>\n    ",
+        "elem_name": "Copy_1_of_Create_Lead",
+        "field": "Company"
+      },
+      {
+        "flow": [
+          {
+            "influenced_var": "First_Name",
+            "influencer_var": "First_Name",
+            "element_name": "First_Name",
+            "comment": "Initialization",
+            "flow_path": "../code-analyzer-core/packages/code-analyzer-flowtest-engine/test/test-data/sample-workspace/example.flow-meta.xml",
+            "line_no": 355,
+            "source_text": "<fields xmlns=\"http://soap.sforce.com/2006/04/metadata\">\n            <name>First_Name</name>\n            <dataType>String</dataType>\n            <fieldText>First Name</fieldText>\n            <fieldType>InputField</fieldType>\n            <isRequired>true</isRequired>\n        </fields>"
+          },
+          {
+            "influenced_var": "FirstName",
+            "influencer_var": "First_Name",
+            "element_name": "Copy_1_of_Create_Lead",
+            "comment": "flow into recordCreates via influence over FirstName in run mode SystemModeWithoutSharing",
+            "flow_path": "../code-analyzer-core/packages/code-analyzer-flowtest-engine/test/test-data/sample-workspace/example.flow-meta.xml",
+            "line_no": 138,
+            "source_text": "<recordCreates xmlns=\"http://soap.sforce.com/2006/04/metadata\">\n        <description>Creates a lead with user entered data</description>\n        <name>Copy_1_of_Create_Lead</name>\n        <label>Copy 1 of Create Lead</label>\n        <locationX>578</locationX>\n        <locationY>1094</locationY>\n        <assignRecordIdToReference>created_id</assignRecordIdToReference>\n        <connector>\n            <targetReference>Copy_1_of_id_return</targetReference>\n        </connector>\n        <inputAssignments>\n            <field>Company</field>\n            <value>\n                <elementReference>Company</elementReference>\n            </value>\n        </inputAssignments>\n        <inputAssignments>\n            <field>Description</field>\n            <value>\n                <elementReference>description2</elementReference>\n            </value>\n        </inputAssignments>\n        <inputAssignments>\n            <field>FirstName</field>\n            <value>\n                <elementReference>First_Name</elementReference>\n            </value>\n        </inputAssignments>\n        <inputAssignments>\n            <field>LastName</field>\n            <value>\n                <elementReference>fixed_last_name</elementReference>\n            </value>\n        </inputAssignments>\n        <inputAssignments>\n            <field>Phone</field>\n            <value>\n                <elementReference>fixed_phone</elementReference>\n            </value>\n        </inputAssignments>\n        <inputAssignments>\n            <field>Street</field>\n            <value>\n                <elementReference>street</elementReference>\n            </value>\n        </inputAssignments>\n        <inputAssignments>\n            <field>Title</field>\n            <value>\n                <elementReference>title</elementReference>\n            </value>\n        </inputAssignments>\n        <object>Lead</object>\n    </recordCreates>\n    "
+          }
+        ],
+        "query_name": "Flow: SystemModeWithoutSharing recordCreates data",
+        "severity": "Flow_Moderate_Severity",
+        "description": "User controlled data flows into recordCreates element data in run mode: SystemModeWithoutSharing",
+        "counter": 8,
+        "elem": "<recordCreates xmlns=\"http://soap.sforce.com/2006/04/metadata\">\n        <description>Creates a lead with user entered data</description>\n        <name>Copy_1_of_Create_Lead</name>\n        <label>Copy 1 of Create Lead</label>\n        <locationX>578</locationX>\n        <locationY>1094</locationY>\n        <assignRecordIdToReference>created_id</assignRecordIdToReference>\n        <connector>\n            <targetReference>Copy_1_of_id_return</targetReference>\n        </connector>\n        <inputAssignments>\n            <field>Company</field>\n            <value>\n                <elementReference>Company</elementReference>\n            </value>\n        </inputAssignments>\n        <inputAssignments>\n            <field>Description</field>\n            <value>\n                <elementReference>description2</elementReference>\n            </value>\n        </inputAssignments>\n        <inputAssignments>\n            <field>FirstName</field>\n            <value>\n                <elementReference>First_Name</elementReference>\n            </value>\n        </inputAssignments>\n        <inputAssignments>\n            <field>LastName</field>\n            <value>\n                <elementReference>fixed_last_name</elementReference>\n            </value>\n        </inputAssignments>\n        <inputAssignments>\n            <field>Phone</field>\n            <value>\n                <elementReference>fixed_phone</elementReference>\n            </value>\n        </inputAssignments>\n        <inputAssignments>\n            <field>Street</field>\n            <value>\n                <elementReference>street</elementReference>\n            </value>\n        </inputAssignments>\n        <inputAssignments>\n            <field>Title</field>\n            <value>\n                <elementReference>title</elementReference>\n            </value>\n        </inputAssignments>\n        <object>Lead</object>\n    </recordCreates>\n    ",
+        "elem_name": "Copy_1_of_Create_Lead",
+        "field": "FirstName"
+      },
+      {
+        "flow": [
+          {
+            "influenced_var": "Last_Name",
+            "influencer_var": "Last_Name",
+            "element_name": "Last_Name",
+            "comment": "Initialization",
+            "flow_path": "../code-analyzer-core/packages/code-analyzer-flowtest-engine/test/test-data/sample-workspace/example.flow-meta.xml",
+            "line_no": 362,
+            "source_text": "<fields xmlns=\"http://soap.sforce.com/2006/04/metadata\">\n            <name>Last_Name</name>\n            <dataType>String</dataType>\n            <fieldText>Last Name</fieldText>\n            <fieldType>InputField</fieldType>\n            <isRequired>true</isRequired>\n        </fields>"
+          },
+          {
+            "influenced_var": "random_last_name",
+            "influencer_var": "Last_Name",
+            "element_name": "random_last_name",
+            "comment": "Parsed from formulas",
+            "flow_path": "../code-analyzer-core/packages/code-analyzer-flowtest-engine/test/test-data/sample-workspace/example.flow-meta.xml",
+            "line_no": 89,
+            "source_text": "<formulas xmlns=\"http://soap.sforce.com/2006/04/metadata\">\n        <description>randomizes last name via concatenation</description>\n        <name>random_last_name</name>\n        <dataType>String</dataType>\n        <expression>{!Last_Name}&amp;SUBSTITUTE(SUBSTITUTE(TEXT(NOW()),\"-\", \"\"), \":\",\"\")</expression>\n    </formulas>"
+          },
+          {
+            "influenced_var": "fixed_last_name",
+            "influencer_var": "random_last_name",
+            "element_name": "randomize_last_name_and_phone",
+            "comment": "Variable Assignment",
+            "flow_path": "../code-analyzer-core/packages/code-analyzer-flowtest-engine/test/test-data/sample-workspace/example.flow-meta.xml",
+            "line_no": 44,
+            "source_text": "<assignmentItems xmlns=\"http://soap.sforce.com/2006/04/metadata\">\n            <assignToReference>fixed_last_name</assignToReference>\n            <operator>Assign</operator>\n            <value>\n                <elementReference>random_last_name</elementReference>\n            </value>\n        </assignmentItems>"
+          },
+          {
+            "influenced_var": "LastName",
+            "influencer_var": "fixed_last_name",
+            "element_name": "Copy_1_of_Create_Lead",
+            "comment": "flow into recordCreates via influence over LastName in run mode SystemModeWithoutSharing",
+            "flow_path": "../code-analyzer-core/packages/code-analyzer-flowtest-engine/test/test-data/sample-workspace/example.flow-meta.xml",
+            "line_no": 138,
+            "source_text": "<recordCreates xmlns=\"http://soap.sforce.com/2006/04/metadata\">\n        <description>Creates a lead with user entered data</description>\n        <name>Copy_1_of_Create_Lead</name>\n        <label>Copy 1 of Create Lead</label>\n        <locationX>578</locationX>\n        <locationY>1094</locationY>\n        <assignRecordIdToReference>created_id</assignRecordIdToReference>\n        <connector>\n            <targetReference>Copy_1_of_id_return</targetReference>\n        </connector>\n        <inputAssignments>\n            <field>Company</field>\n            <value>\n                <elementReference>Company</elementReference>\n            </value>\n        </inputAssignments>\n        <inputAssignments>\n            <field>Description</field>\n            <value>\n                <elementReference>description2</elementReference>\n            </value>\n        </inputAssignments>\n        <inputAssignments>\n            <field>FirstName</field>\n            <value>\n                <elementReference>First_Name</elementReference>\n            </value>\n        </inputAssignments>\n        <inputAssignments>\n            <field>LastName</field>\n            <value>\n                <elementReference>fixed_last_name</elementReference>\n            </value>\n        </inputAssignments>\n        <inputAssignments>\n            <field>Phone</field>\n            <value>\n                <elementReference>fixed_phone</elementReference>\n            </value>\n        </inputAssignments>\n        <inputAssignments>\n            <field>Street</field>\n            <value>\n                <elementReference>street</elementReference>\n            </value>\n        </inputAssignments>\n        <inputAssignments>\n            <field>Title</field>\n            <value>\n                <elementReference>title</elementReference>\n            </value>\n        </inputAssignments>\n        <object>Lead</object>\n    </recordCreates>\n    "
+          }
+        ],
+        "query_name": "Flow: SystemModeWithoutSharing recordCreates data",
+        "severity": "Flow_Moderate_Severity",
+        "description": "User controlled data flows into recordCreates element data in run mode: SystemModeWithoutSharing",
+        "counter": 9,
+        "elem": "<recordCreates xmlns=\"http://soap.sforce.com/2006/04/metadata\">\n        <description>Creates a lead with user entered data</description>\n        <name>Copy_1_of_Create_Lead</name>\n        <label>Copy 1 of Create Lead</label>\n        <locationX>578</locationX>\n        <locationY>1094</locationY>\n        <assignRecordIdToReference>created_id</assignRecordIdToReference>\n        <connector>\n            <targetReference>Copy_1_of_id_return</targetReference>\n        </connector>\n        <inputAssignments>\n            <field>Company</field>\n            <value>\n                <elementReference>Company</elementReference>\n            </value>\n        </inputAssignments>\n        <inputAssignments>\n            <field>Description</field>\n            <value>\n                <elementReference>description2</elementReference>\n            </value>\n        </inputAssignments>\n        <inputAssignments>\n            <field>FirstName</field>\n            <value>\n                <elementReference>First_Name</elementReference>\n            </value>\n        </inputAssignments>\n        <inputAssignments>\n            <field>LastName</field>\n            <value>\n                <elementReference>fixed_last_name</elementReference>\n            </value>\n        </inputAssignments>\n        <inputAssignments>\n            <field>Phone</field>\n            <value>\n                <elementReference>fixed_phone</elementReference>\n            </value>\n        </inputAssignments>\n        <inputAssignments>\n            <field>Street</field>\n            <value>\n                <elementReference>street</elementReference>\n            </value>\n        </inputAssignments>\n        <inputAssignments>\n            <field>Title</field>\n            <value>\n                <elementReference>title</elementReference>\n            </value>\n        </inputAssignments>\n        <object>Lead</object>\n    </recordCreates>\n    ",
+        "elem_name": "Copy_1_of_Create_Lead",
+        "field": "LastName"
+      },
+      {
+        "flow": [
+          {
+            "influenced_var": "street",
+            "influencer_var": "street",
+            "element_name": "street",
+            "comment": "Initialization",
+            "flow_path": "../code-analyzer-core/packages/code-analyzer-flowtest-engine/test/test-data/sample-workspace/example.flow-meta.xml",
+            "line_no": 502,
+            "source_text": "<variables xmlns=\"http://soap.sforce.com/2006/04/metadata\">\n        <name>street</name>\n        <dataType>String</dataType>\n        <isCollection>false</isCollection>\n        <isInput>true</isInput>\n        <isOutput>false</isOutput>\n    </variables>"
+          },
+          {
+            "influenced_var": "Street",
+            "influencer_var": "street",
+            "element_name": "Copy_1_of_Create_Lead",
+            "comment": "flow into recordCreates via influence over Street in run mode SystemModeWithoutSharing",
+            "flow_path": "../code-analyzer-core/packages/code-analyzer-flowtest-engine/test/test-data/sample-workspace/example.flow-meta.xml",
+            "line_no": 138,
+            "source_text": "<recordCreates xmlns=\"http://soap.sforce.com/2006/04/metadata\">\n        <description>Creates a lead with user entered data</description>\n        <name>Copy_1_of_Create_Lead</name>\n        <label>Copy 1 of Create Lead</label>\n        <locationX>578</locationX>\n        <locationY>1094</locationY>\n        <assignRecordIdToReference>created_id</assignRecordIdToReference>\n        <connector>\n            <targetReference>Copy_1_of_id_return</targetReference>\n        </connector>\n        <inputAssignments>\n            <field>Company</field>\n            <value>\n                <elementReference>Company</elementReference>\n            </value>\n        </inputAssignments>\n        <inputAssignments>\n            <field>Description</field>\n            <value>\n                <elementReference>description2</elementReference>\n            </value>\n        </inputAssignments>\n        <inputAssignments>\n            <field>FirstName</field>\n            <value>\n                <elementReference>First_Name</elementReference>\n            </value>\n        </inputAssignments>\n        <inputAssignments>\n            <field>LastName</field>\n            <value>\n                <elementReference>fixed_last_name</elementReference>\n            </value>\n        </inputAssignments>\n        <inputAssignments>\n            <field>Phone</field>\n            <value>\n                <elementReference>fixed_phone</elementReference>\n            </value>\n        </inputAssignments>\n        <inputAssignments>\n            <field>Street</field>\n            <value>\n                <elementReference>street</elementReference>\n            </value>\n        </inputAssignments>\n        <inputAssignments>\n            <field>Title</field>\n            <value>\n                <elementReference>title</elementReference>\n            </value>\n        </inputAssignments>\n        <object>Lead</object>\n    </recordCreates>\n    "
+          }
+        ],
+        "query_name": "Flow: SystemModeWithoutSharing recordCreates data",
+        "severity": "Flow_Moderate_Severity",
+        "description": "User controlled data flows into recordCreates element data in run mode: SystemModeWithoutSharing",
+        "counter": 10,
+        "elem": "<recordCreates xmlns=\"http://soap.sforce.com/2006/04/metadata\">\n        <description>Creates a lead with user entered data</description>\n        <name>Copy_1_of_Create_Lead</name>\n        <label>Copy 1 of Create Lead</label>\n        <locationX>578</locationX>\n        <locationY>1094</locationY>\n        <assignRecordIdToReference>created_id</assignRecordIdToReference>\n        <connector>\n            <targetReference>Copy_1_of_id_return</targetReference>\n        </connector>\n        <inputAssignments>\n            <field>Company</field>\n            <value>\n                <elementReference>Company</elementReference>\n            </value>\n        </inputAssignments>\n        <inputAssignments>\n            <field>Description</field>\n            <value>\n                <elementReference>description2</elementReference>\n            </value>\n        </inputAssignments>\n        <inputAssignments>\n            <field>FirstName</field>\n            <value>\n                <elementReference>First_Name</elementReference>\n            </value>\n        </inputAssignments>\n        <inputAssignments>\n            <field>LastName</field>\n            <value>\n                <elementReference>fixed_last_name</elementReference>\n            </value>\n        </inputAssignments>\n        <inputAssignments>\n            <field>Phone</field>\n            <value>\n                <elementReference>fixed_phone</elementReference>\n            </value>\n        </inputAssignments>\n        <inputAssignments>\n            <field>Street</field>\n            <value>\n                <elementReference>street</elementReference>\n            </value>\n        </inputAssignments>\n        <inputAssignments>\n            <field>Title</field>\n            <value>\n                <elementReference>title</elementReference>\n            </value>\n        </inputAssignments>\n        <object>Lead</object>\n    </recordCreates>\n    ",
+        "elem_name": "Copy_1_of_Create_Lead",
+        "field": "Street"
+      },
+      {
+        "flow": [
+          {
+            "influenced_var": "title",
+            "influencer_var": "title",
+            "element_name": "title",
+            "comment": "Initialization",
+            "flow_path": "../code-analyzer-core/packages/code-analyzer-flowtest-engine/test/test-data/sample-workspace/example.flow-meta.xml",
+            "line_no": 509,
+            "source_text": "<variables xmlns=\"http://soap.sforce.com/2006/04/metadata\">\n        <description>user supplied title for lead</description>\n        <name>title</name>\n        <dataType>String</dataType>\n        <isCollection>false</isCollection>\n        <isInput>true</isInput>\n        <isOutput>false</isOutput>\n        <value>\n            <stringValue>No Title Provided</stringValue>\n        </value>\n    </variables>"
+          },
+          {
+            "influenced_var": "Title",
+            "influencer_var": "title",
+            "element_name": "Copy_1_of_Create_Lead",
+            "comment": "flow into recordCreates via influence over Title in run mode SystemModeWithoutSharing",
+            "flow_path": "../code-analyzer-core/packages/code-analyzer-flowtest-engine/test/test-data/sample-workspace/example.flow-meta.xml",
+            "line_no": 138,
+            "source_text": "<recordCreates xmlns=\"http://soap.sforce.com/2006/04/metadata\">\n        <description>Creates a lead with user entered data</description>\n        <name>Copy_1_of_Create_Lead</name>\n        <label>Copy 1 of Create Lead</label>\n        <locationX>578</locationX>\n        <locationY>1094</locationY>\n        <assignRecordIdToReference>created_id</assignRecordIdToReference>\n        <connector>\n            <targetReference>Copy_1_of_id_return</targetReference>\n        </connector>\n        <inputAssignments>\n            <field>Company</field>\n            <value>\n                <elementReference>Company</elementReference>\n            </value>\n        </inputAssignments>\n        <inputAssignments>\n            <field>Description</field>\n            <value>\n                <elementReference>description2</elementReference>\n            </value>\n        </inputAssignments>\n        <inputAssignments>\n            <field>FirstName</field>\n            <value>\n                <elementReference>First_Name</elementReference>\n            </value>\n        </inputAssignments>\n        <inputAssignments>\n            <field>LastName</field>\n            <value>\n                <elementReference>fixed_last_name</elementReference>\n            </value>\n        </inputAssignments>\n        <inputAssignments>\n            <field>Phone</field>\n            <value>\n                <elementReference>fixed_phone</elementReference>\n            </value>\n        </inputAssignments>\n        <inputAssignments>\n            <field>Street</field>\n            <value>\n                <elementReference>street</elementReference>\n            </value>\n        </inputAssignments>\n        <inputAssignments>\n            <field>Title</field>\n            <value>\n                <elementReference>title</elementReference>\n            </value>\n        </inputAssignments>\n        <object>Lead</object>\n    </recordCreates>\n    "
+          }
+        ],
+        "query_name": "Flow: SystemModeWithoutSharing recordCreates data",
+        "severity": "Flow_Moderate_Severity",
+        "description": "User controlled data flows into recordCreates element data in run mode: SystemModeWithoutSharing",
+        "counter": 11,
+        "elem": "<recordCreates xmlns=\"http://soap.sforce.com/2006/04/metadata\">\n        <description>Creates a lead with user entered data</description>\n        <name>Copy_1_of_Create_Lead</name>\n        <label>Copy 1 of Create Lead</label>\n        <locationX>578</locationX>\n        <locationY>1094</locationY>\n        <assignRecordIdToReference>created_id</assignRecordIdToReference>\n        <connector>\n            <targetReference>Copy_1_of_id_return</targetReference>\n        </connector>\n        <inputAssignments>\n            <field>Company</field>\n            <value>\n                <elementReference>Company</elementReference>\n            </value>\n        </inputAssignments>\n        <inputAssignments>\n            <field>Description</field>\n            <value>\n                <elementReference>description2</elementReference>\n            </value>\n        </inputAssignments>\n        <inputAssignments>\n            <field>FirstName</field>\n            <value>\n                <elementReference>First_Name</elementReference>\n            </value>\n        </inputAssignments>\n        <inputAssignments>\n            <field>LastName</field>\n            <value>\n                <elementReference>fixed_last_name</elementReference>\n            </value>\n        </inputAssignments>\n        <inputAssignments>\n            <field>Phone</field>\n            <value>\n                <elementReference>fixed_phone</elementReference>\n            </value>\n        </inputAssignments>\n        <inputAssignments>\n            <field>Street</field>\n            <value>\n                <elementReference>street</elementReference>\n            </value>\n        </inputAssignments>\n        <inputAssignments>\n            <field>Title</field>\n            <value>\n                <elementReference>title</elementReference>\n            </value>\n        </inputAssignments>\n        <object>Lead</object>\n    </recordCreates>\n    ",
+        "elem_name": "Copy_1_of_Create_Lead",
+        "field": "Title"
+      }
+    ],
+    "FlowSecurity.SystemModeWithoutSharing.recordUpdates.data": [
+      {
+        "flow": [
+          {
+            "influenced_var": "description",
+            "influencer_var": "description",
+            "element_name": "description",
+            "comment": "Initialization",
+            "flow_path": "../code-analyzer-core/packages/code-analyzer-flowtest-engine/test/test-data/sample-workspace/example.flow-meta.xml",
+            "line_no": 442,
+            "source_text": "<variables xmlns=\"http://soap.sforce.com/2006/04/metadata\">\n        <description>description variable</description>\n        <name>description</name>\n        <dataType>String</dataType>\n        <isCollection>false</isCollection>\n        <isInput>true</isInput>\n        <isOutput>false</isOutput>\n        <value>\n            <stringValue>no description provided</stringValue>\n        </value>\n    </variables>"
+          },
+          {
+            "influenced_var": "Description",
+            "influencer_var": "description",
+            "element_name": "update_lead",
+            "comment": "flow into recordUpdates via influence over Description in run mode SystemModeWithoutSharing",
+            "flow_path": "../code-analyzer-core/packages/code-analyzer-flowtest-engine/test/test-data/sample-workspace/example.flow-meta.xml",
+            "line_no": 266,
+            "source_text": "<recordUpdates xmlns=\"http://soap.sforce.com/2006/04/metadata\">\n        <description>updates a lead</description>\n        <name>update_lead</name>\n        <label>update lead</label>\n        <locationX>270</locationX>\n        <locationY>1214</locationY>\n        <connector>\n            <targetReference>loop_over_recent_leads</targetReference>\n        </connector>\n        <filterLogic>and</filterLogic>\n        <filters>\n            <field>Id</field>\n            <operator>EqualTo</operator>\n            <value>\n                <elementReference>loop_over_recent_leads.Id</elementReference>\n            </value>\n        </filters>\n        <inputAssignments>\n            <field>Description</field>\n            <value>\n                <elementReference>description</elementReference>\n            </value>\n        </inputAssignments>\n        <object>Lead</object>\n    </recordUpdates>\n    "
+          }
+        ],
+        "query_name": "Flow: SystemModeWithoutSharing recordUpdates data",
+        "severity": "Flow_High_Severity",
+        "description": "User controlled data flows into recordUpdates element data in run mode: SystemModeWithoutSharing",
+        "counter": 6,
+        "elem": "<recordUpdates xmlns=\"http://soap.sforce.com/2006/04/metadata\">\n        <description>updates a lead</description>\n        <name>update_lead</name>\n        <label>update lead</label>\n        <locationX>270</locationX>\n        <locationY>1214</locationY>\n        <connector>\n            <targetReference>loop_over_recent_leads</targetReference>\n        </connector>\n        <filterLogic>and</filterLogic>\n        <filters>\n            <field>Id</field>\n            <operator>EqualTo</operator>\n            <value>\n                <elementReference>loop_over_recent_leads.Id</elementReference>\n            </value>\n        </filters>\n        <inputAssignments>\n            <field>Description</field>\n            <value>\n                <elementReference>description</elementReference>\n            </value>\n        </inputAssignments>\n        <object>Lead</object>\n    </recordUpdates>\n    ",
+        "elem_name": "update_lead",
+        "field": "Description"
+      }
+    ]
+  }
+}

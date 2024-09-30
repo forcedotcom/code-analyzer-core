@@ -2,6 +2,7 @@ import {
     DescribeOptions,
     Engine,
     EngineRunResults,
+    LogLevel,
     RuleDescription,
     RuleType,
     RunOptions,
@@ -31,9 +32,9 @@ export class FlowTestEngine extends Engine {
         return convertedRules;
     }
 
-    public async runRules(_ruleNames: string[], _runOptions: RunOptions): Promise<EngineRunResults> {
+    public async runRules(_ruleNames: string[], runOptions: RunOptions): Promise<EngineRunResults> {
         this.emitRunRulesProgressEvent(0);
-
+        this.emitLogEvent(LogLevel.Info, `workspace is ${runOptions.workspace.getWorkspaceRoot()}`);
         this.emitRunRulesProgressEvent(10);
         this.emitRunRulesProgressEvent(100);
         return {

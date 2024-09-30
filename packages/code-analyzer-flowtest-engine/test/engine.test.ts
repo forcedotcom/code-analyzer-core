@@ -1,6 +1,6 @@
 import {RuleDescription, RuleType, SeverityLevel, Workspace} from "@salesforce/code-analyzer-engine-api";
 import {FlowTestEngine} from "../src/engine";
-import {FlowTestCommandWrapper, FlowTestRuleDescriptor} from "../src/python/FlowTestCommandWrapper";
+import {FlowTestCommandWrapper, FlowTestResultFile, FlowTestRuleDescriptor} from "../src/python/FlowTestCommandWrapper";
 import {changeWorkingDirectoryToPackageRoot} from "./test-helpers";
 
 changeWorkingDirectoryToPackageRoot();
@@ -108,6 +108,12 @@ describe('Tests for the FlowTestEngine', () => {
         });
     });
 
+    describe('#runRules()', () => {
+        it('Math still works', () => {
+            expect(2 + 2).toEqual(4);
+        })
+    });
+
     it('TEMPORARY TEST FOR CODE COVERAGE', async () => {
         // Will delete this test as soon as engine is implemented.
         const engine: FlowTestEngine = new FlowTestEngine(new StubCommandWrapper([]));
@@ -124,5 +130,9 @@ class StubCommandWrapper implements FlowTestCommandWrapper {
 
     public getFlowTestRuleDescriptions(): Promise<FlowTestRuleDescriptor[]> {
         return Promise.resolve(this.rules);
+    }
+
+    public runFlowTest(workspace: Workspace): Promise<FlowTestResultFile> {
+        return Promise.resolve({results: null});
     }
 }

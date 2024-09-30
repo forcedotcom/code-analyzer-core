@@ -1,10 +1,6 @@
 import path from 'node:path';
+import {Workspace} from '@salesforce/code-analyzer-engine-api';
 import {PythonCommandExecutor} from './PythonCommandExecutor';
-
-
-export interface FlowTestCommandWrapper {
-    getFlowTestRuleDescriptions(): Promise<FlowTestRuleDescriptor[]>;
-}
 
 /**
  * The format used by FlowTest to describe the Queries (FlowTest's term for what we'd call rules) it can run.
@@ -40,6 +36,35 @@ export type FlowTestRuleDescriptor = {
     is_security: string;
 }
 
+type FlowNode = {
+    influenced_var: string;
+    influencer_var: string;
+    element_name: string;
+    comment: string;
+    flow_path: string;
+    line_no: number;
+}
+
+type FlowResult = {
+    flow: FlowNode[];
+    query_name: string;
+    severity: string;
+    description: string;
+    elem_name: string;
+    field: string;
+}
+
+export type FlowTestResultFile = {
+    results: null|{
+        [queryId: string]: FlowResult[]
+    }
+}
+
+export interface FlowTestCommandWrapper {
+    getFlowTestRuleDescriptions(): Promise<FlowTestRuleDescriptor[]>;
+    runFlowTest(workspace: Workspace): Promise<FlowTestResultFile>
+}
+
 const PATH_TO_PIPX_PYZ = path.join(__dirname, '..', '..', 'pipx.pyz');
 const PATH_TO_FLOWTEST_ROOT = path.join(__dirname, '..', '..', 'FlowTest');
 
@@ -68,5 +93,9 @@ export class RunTimeFlowTestCommandWrapper implements FlowTestCommandWrapper {
         }
         await this.pythonCommandExecutor.exec(pythonArgs, processStdout);
         return JSON.parse(stdout) as FlowTestRuleDescriptor[];
+    }
+
+    public async runFlowTest(workspace: Workspace): Promise<FlowTestResultFile> {
+        return {results: null};
     }
 }
