@@ -14,13 +14,13 @@ public class myCls {
         Integer i = 0;
         do {
             System.debug('Hello World 1');
-            Limits.getHeapSize();
+            Integer n = Limits.getHeapSize();
             System.debug('Hello World 2');
             i++;
         } while (i<10);
         i = 0;
         do {
-            Limits.getHeapSize();
+            Integer n=Limits.getHeapSize();
         } while (++i<10);
     }
 
@@ -28,12 +28,16 @@ public class myCls {
         Integer i = 0;
         while(i<10) {
             System.debug('Hello World 1');
-            Limits.getHeapSize();
+            System.debug(Limits.getHeapSize());
             System.debug('Hello World 2');
             i++;
         }
         while(i++<20) {
-            Limits.getHeapSize();
+            System.debug( Limits.getHeapSize() );
+        }
+        while(i++<20) {
+            // should not match the following
+            aLimits.getHeapSize();
         }
     }
 }  

@@ -289,10 +289,10 @@ describe('Tests for runRules', () => {
                 codeLocations: [
                     {
                         file: path.resolve(__dirname, "test-data", "apexClassGetLimitsInLoop", "testClass.cls"),
-                        startLine: 3,
-                        startColumn: 9,
+                        startLine: 5,
+                        startColumn: 13,
                         endLine: 5,
-                        endColumn: 34
+                        endColumn: 33
                     }
                 ]
             },
@@ -303,10 +303,10 @@ describe('Tests for runRules', () => {
                 codeLocations: [
                     {
                         file: path.resolve(__dirname, "test-data", "apexClassGetLimitsInLoop", "testClass.cls"),
-                        startLine: 8,
-                        startColumn: 9,
+                        startLine: 9,
+                        startColumn: 13,
                         endLine: 9,
-                        endColumn: 34
+                        endColumn: 33
                     }
                 ]
             },
@@ -317,10 +317,10 @@ describe('Tests for runRules', () => {
                 codeLocations: [
                     {
                         file: path.resolve(__dirname, "test-data", "apexClassGetLimitsInLoop", "testClass.cls"),
-                        startLine: 15,
-                        startColumn: 9,
-                        endLine: 20,
-                        endColumn: 24
+                        startLine: 17,
+                        startColumn: 25,
+                        endLine: 17,
+                        endColumn: 45
                     }
                 ]
             },
@@ -331,10 +331,10 @@ describe('Tests for runRules', () => {
                 codeLocations: [
                     {
                         file: path.resolve(__dirname, "test-data", "apexClassGetLimitsInLoop", "testClass.cls"),
-                        startLine: 22,
-                        startColumn: 9,
-                        endLine: 24,
-                        endColumn: 26
+                        startLine: 23,
+                        startColumn: 23,
+                        endLine: 23,
+                        endColumn: 43
                     }
                 ]
             },
@@ -345,10 +345,10 @@ describe('Tests for runRules', () => {
                 codeLocations: [
                     {
                         file: path.resolve(__dirname, "test-data", "apexClassGetLimitsInLoop", "testClass.cls"),
-                        startLine: 29,
-                        startColumn: 9,
+                        startLine: 31,
+                        startColumn: 26,
                         endLine: 31,
-                        endColumn: 34
+                        endColumn: 46
                     }
                 ]
             },
@@ -359,10 +359,10 @@ describe('Tests for runRules', () => {
                 codeLocations: [
                     {
                         file: path.resolve(__dirname, "test-data", "apexClassGetLimitsInLoop", "testClass.cls"),
-                        startLine: 35,
-                        startColumn: 9,
+                        startLine: 36,
+                        startColumn: 27,
                         endLine: 36,
-                        endColumn: 34
+                        endColumn: 47
                     }
                 ]
             },
