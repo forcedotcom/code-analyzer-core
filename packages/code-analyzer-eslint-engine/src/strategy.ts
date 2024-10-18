@@ -230,8 +230,9 @@ function makeRelativeTo(absFolderPath: string, absFilePath: string): string {
 
 async function getAllRuleModules(legacyESLint: ESLint): Promise<Map<string, Rule.RuleModule>> {
     // See https://github.com/eslint/eslint/discussions/18546 to see how we arrived at this implementation.
-    const legacyESLintModule: string = path.resolve(path.dirname(require.resolve('eslint')),'eslint','eslint.js');
-    const {getESLintPrivateMembers} = await import(legacyESLintModule);
+    const legacyESLintModule: string = path.resolve(path.dirname(require.resolve('eslint')),'eslint','eslint.js')
+        .replace('\\', '/');
+    const {getESLintPrivateMembers} = await import(`file://${legacyESLintModule}`);
     return getESLintPrivateMembers(legacyESLint).cliEngine.getRules();
 }
 
