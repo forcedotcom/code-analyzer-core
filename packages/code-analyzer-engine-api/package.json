@@ -1,7 +1,7 @@
 {
   "name": "@salesforce/code-analyzer-engine-api",
   "description": "Engine API Package for the Salesforce Code Analyzer",
-  "version": "0.11.0",
+  "version": "0.11.1",
   "author": "The Salesforce Code Analyzer Team",
   "license": "BSD-3-Clause",
   "homepage": "https://developer.salesforce.com/docs/platform/salesforce-code-analyzer/overview",

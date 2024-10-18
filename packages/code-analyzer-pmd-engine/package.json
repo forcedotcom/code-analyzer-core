@@ -1,7 +1,7 @@
 {
     "name": "@salesforce/code-analyzer-pmd-engine",
     "description": "Plugin package that adds 'pmd' and 'cpd' as engines into Salesforce Code Analyzer",
-    "version": "0.11.0",
+    "version": "0.11.1",
     "author": "The Salesforce Code Analyzer Team",
     "license": "BSD-3-Clause",
     "homepage": "https://developer.salesforce.com/docs/platform/salesforce-code-analyzer/overview",
@@ -14,7 +14,7 @@
     "types": "dist/index.d.ts",
     "dependencies": {
       "@types/node": "^20.0.0",
-      "@salesforce/code-analyzer-engine-api": "0.11.0",
+      "@salesforce/code-analyzer-engine-api": "0.11.1",
       "@types/tmp": "^0.2.6",
       "tmp": "^0.2.3",
       "@types/semver": "^7.5.8",

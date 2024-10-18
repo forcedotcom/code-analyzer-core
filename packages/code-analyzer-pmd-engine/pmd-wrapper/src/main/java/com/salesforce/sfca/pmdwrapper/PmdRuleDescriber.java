@@ -9,11 +9,7 @@ import net.sourceforge.pmd.util.log.PmdReporter;
 import org.slf4j.event.Level;
 
 import javax.annotation.Nullable;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.regex.Pattern;
 import java.util.regex.Matcher;
 
@@ -93,7 +89,7 @@ class PmdRuleDescriber {
         }
 
         // Keep track of "<language>::<ruleName>" so that we don't have duplicates
-        Set<String> alreadySeen = new HashSet<>();
+        Map<String, String> alreadySeen = new HashMap<>();
 
         try (PmdAnalysis pmd = PmdAnalysis.create(config)) {
             for (RuleSet ruleSet : pmd.getRulesets()) {
@@ -108,10 +104,12 @@ class PmdRuleDescriber {
                     // Filter out any rules that we have already seen (duplicates) which can happen if user specifies a
                     // ruleset that references an existing rule
                     String langPlusName = language + "::" + rule.getName();
-                    if(alreadySeen.contains(langPlusName)) {
+                    if(alreadySeen.containsKey(langPlusName)) {
+                        System.out.println("Skipping rule \"" + rule.getName() + "\" for language \"" + language + "\" from ruleset \"" + ruleSet.getFileName() + "\"" +
+                        " because we already added a rule with the same name and language from ruleset \"" + alreadySeen.get(langPlusName) + "\".");
                         continue;
                     }
-                    alreadySeen.add(langPlusName);
+                    alreadySeen.put(langPlusName, ruleSet.getFileName());
 
                     // Add rule info
                     PmdRuleInfo pmdRuleInfo = new PmdRuleInfo();

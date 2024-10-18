@@ -44,7 +44,7 @@ export const SHARED_MESSAGE_CATALOG: MessageCatalog = {
         `The '%s' configuration value must be one of the following: %s. Instead received: %s`,
 
     ConfigPathValueDoesNotExist:
-        `The'%s' configuration value is invalid. The path '%s' does not exist.`,
+        `The '%s' configuration value is invalid. The path '%s' does not exist.`,
 
     ConfigFileValueMustNotBeFolder:
         `The '%s' configuration value is invalid. The value '%s' must be a file instead of a folder`,
