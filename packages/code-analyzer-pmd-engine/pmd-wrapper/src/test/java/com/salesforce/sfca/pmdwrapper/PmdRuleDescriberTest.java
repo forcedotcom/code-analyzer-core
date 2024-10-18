@@ -8,8 +8,6 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
-import java.net.URL;
-import java.net.URLClassLoader;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
@@ -18,7 +16,6 @@ import java.util.stream.Collectors;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.*;
 import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assertions.fail;
 
 public class PmdRuleDescriberTest {
     private PmdRuleDescriber ruleDescriber;
@@ -192,11 +189,14 @@ public class PmdRuleDescriberTest {
         // case of testing a custom jar file to our typescript tests and just have this java test
         // check that if an existing ruleset (already bundled with PMD) is specified that it doesn't
         // cause any conflicts or errors.
-        List<PmdRuleInfo> ruleInfoList = ruleDescriber.describeRulesFor(
-                List.of("category/java/codestyle.xml"),
-                Set.of("java"));
+        try (StdOutCaptor stdoutCaptor = new StdOutCaptor()) {
+            List<PmdRuleInfo> ruleInfoList = ruleDescriber.describeRulesFor(
+                    List.of("category/java/codestyle.xml"),
+                    Set.of("java"));
 
-        assertContainsOneRuleWithNameAndLanguage(ruleInfoList, "AtLeastOneConstructor", "java");
+            assertContainsOneRuleWithNameAndLanguage(ruleInfoList, "AtLeastOneConstructor", "java");
+            assertThat(stdoutCaptor.getCapturedOutput(), containsString("Skipping rule "));
+        }
     }
 
     @Test
@@ -220,16 +220,21 @@ public class PmdRuleDescriberTest {
         Path rulesetFile = tempDir.resolve("sampleRulesetFile.xml");
         Files.write(rulesetFile, createSampleRuleset("sampleRuleset", "ApexCRUDViolation", "apex", 1).getBytes());
 
-        List<PmdRuleInfo> ruleInfoList = ruleDescriber.describeRulesFor(
-                List.of(rulesetFile.toAbsolutePath().toString()),
-                Set.of("apex"));
+        try (StdOutCaptor stdoutCaptor = new StdOutCaptor()) {
+            List<PmdRuleInfo> ruleInfoList = ruleDescriber.describeRulesFor(
+                    List.of(rulesetFile.toAbsolutePath().toString()),
+                    Set.of("apex"));
 
-        PmdRuleInfo ruleInfo = assertContainsOneRuleWithNameAndLanguage(ruleInfoList, "ApexCRUDViolation", "apex");
-        assertThat(ruleInfo.description, is("Sample ApexCRUDViolation description"));
-        assertThat(ruleInfo.externalInfoUrl, is("https://ApexCRUDViolation.com"));
-        assertThat(ruleInfo.ruleSet, is("sampleRuleset"));
-        assertThat(ruleInfo.priority, is("High"));
-        assertThat(ruleInfo.ruleSetFile, is(rulesetFile.toAbsolutePath().toString()));
+            PmdRuleInfo ruleInfo = assertContainsOneRuleWithNameAndLanguage(ruleInfoList, "ApexCRUDViolation", "apex");
+            assertThat(ruleInfo.description, is("Sample ApexCRUDViolation description"));
+            assertThat(ruleInfo.externalInfoUrl, is("https://ApexCRUDViolation.com"));
+            assertThat(ruleInfo.ruleSet, is("sampleRuleset"));
+            assertThat(ruleInfo.priority, is("High"));
+            assertThat(ruleInfo.ruleSetFile, is(rulesetFile.toAbsolutePath().toString()));
+
+            assertThat(stdoutCaptor.getCapturedOutput(), containsString(
+                    "Skipping rule \"ApexCRUDViolation\" for language \"apex\" from ruleset \"category/apex/security.xml\" because we already added a rule with the same name and language from ruleset "));
+        }
     }
 
     static String createSampleRuleset(String rulesetName, String ruleName, String language, int priority) {
