@@ -1,10 +1,11 @@
-import {RunResults} from "./results";
-import {Clock, RealClock} from "./utils";
-import {JsonOutputFormatter} from "./output-formats/json-output-format";
-import {CsvOutputFormatter} from "./output-formats/csv-output-format";
-import {XmlOutputFormatter} from "./output-formats/xml-output-format";
-import {HtmlOutputFormatter} from "./output-formats/html-output-format";
-import {SarifOutputFormatter} from "./output-formats/sarif-output-format";
+import { RunResults } from "./results";
+import { RuleSelection } from "./rules";
+import { Clock, RealClock } from "./utils";
+import { ResultsCsvOutputFormatter } from "./output-formats/results/csv-output-format";
+import { ResultsHtmlOutputFormatter } from "./output-formats/results/html-output-format";
+import { ResultsJsonOutputFormatter } from "./output-formats/results/json-output-format";
+import { ResultsSarifOutputFormatter } from "./output-formats/results/sarif-output-format";
+import { ResultsXmlOutputFormatter } from "./output-formats/results/xml-output-format";
 
 /**
  * Enum of output formats available
@@ -21,32 +22,32 @@ export enum OutputFormat {
 export const CODE_ANALYZER_CORE_NAME: string = 'code-analyzer';
 
 /**
- * Abstract class to convert RunResults to formatted output text
+ * Abstract class to convert data objects to formatted output text
  */
 export abstract class OutputFormatter {
     /**
-     * Formats run results into output text as a string
-     * @param runResults RunResults to be formatted
+     * Formats a given data structure into output text as a string
+     * @param data the type of data to be formatted
      */
-    abstract format(runResults: RunResults): string
+    abstract format(data: RunResults | RuleSelection): string
 
     /**
      * Creates the {@link OutputFormatter} associated with an {@link OutputFormat}
      * @param format {@link OutputFormat} instance
      * @param clock (optional - for internal testing purposes only)
      */
-    static forFormat(format: OutputFormat, /* istanbul ignore next */ clock: Clock = new RealClock()) {
+    static forResultsFormat(format: OutputFormat, /* istanbul ignore next */ clock: Clock = new RealClock()) {
         switch (format) {
             case OutputFormat.CSV:
-                return new CsvOutputFormatter();
+                return new ResultsCsvOutputFormatter();
             case OutputFormat.JSON:
-                return new JsonOutputFormatter();
+                return new ResultsJsonOutputFormatter();
             case OutputFormat.XML:
-                return new XmlOutputFormatter();
+                return new ResultsXmlOutputFormatter();
             case OutputFormat.HTML:
-                return new HtmlOutputFormatter(clock);
+                return new ResultsHtmlOutputFormatter(clock);
             case OutputFormat.SARIF:
-                return new SarifOutputFormatter();
+                return new ResultsSarifOutputFormatter();
             default:
                 throw new Error(`Unsupported output format: ${format}`);
         }

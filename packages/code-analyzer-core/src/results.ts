@@ -409,7 +409,7 @@ export class RunResultsImpl implements RunResults {
     }
 
     toFormattedOutput(format: OutputFormat): string {
-        return OutputFormatter.forFormat(format, this.clock).format(this);
+        return OutputFormatter.forResultsFormat(format, this.clock).format(this);
     }
 
     addEngineRunResults(engineRunResults: EngineRunResults): void {

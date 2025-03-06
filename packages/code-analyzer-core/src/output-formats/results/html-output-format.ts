@@ -1,20 +1,20 @@
 import path from "node:path";
-import {Clock} from "../utils";
-import {RunResults} from "../results";
+import {Clock} from "../../utils";
+import {RunResults} from "../../results";
 import fs from "fs";
-import {OutputFormatter} from "../output-format";
+import { OutputFormatter } from "../../output-format";
 import {
     JsonResultsOutput,
     toJsonResultsOutput
 } from "./json-output-format";
 
 const HTML_TEMPLATE_VERSION: string = '0.0.11';
-const HTML_TEMPLATE_FILE: string = path.resolve(__dirname, '..', '..', 'output-templates', `html-template-${HTML_TEMPLATE_VERSION}.txt`);
+const HTML_TEMPLATE_FILE: string = path.resolve(__dirname, '..', '..', '..', 'output-templates', `html-template-${HTML_TEMPLATE_VERSION}.txt`);
 
 /**
- * Formatter for HTML Output Format
+ * Formatter for Results HTML Output Format
  */
-export class HtmlOutputFormatter implements OutputFormatter {
+export class ResultsHtmlOutputFormatter implements OutputFormatter {
     private static readonly TIMESTAMP_HOLE: string = '{{###TIMESTAMP###}}';
     private static readonly RUNDIR_HOLE: string = '{{###RUNDIR###}}';
     private static readonly VIOLATIONS_HOLE: string = '{{###VIOLATIONS###}}';
@@ -36,9 +36,9 @@ export class HtmlOutputFormatter implements OutputFormatter {
         // Note that value.replace(a,b) has special handling if b has '$' characters in it, so to avoid this special
         // handling, we use value.replace(a, (match) => b) instead so that we always replace with exact text.
         return htmlTemplate
-            .replace(HtmlOutputFormatter.TIMESTAMP_HOLE, (_m) => timestampString)
-            .replace(HtmlOutputFormatter.RUNDIR_HOLE, (_m) => runDir)
-            .replace(HtmlOutputFormatter.VIOLATIONS_HOLE, (_m) => JSON.stringify(jsonOutput));
+            .replace(ResultsHtmlOutputFormatter.TIMESTAMP_HOLE, (_m) => timestampString)
+            .replace(ResultsHtmlOutputFormatter.RUNDIR_HOLE, (_m) => runDir)
+            .replace(ResultsHtmlOutputFormatter.VIOLATIONS_HOLE, (_m) => JSON.stringify(jsonOutput));
     }
 }
 
