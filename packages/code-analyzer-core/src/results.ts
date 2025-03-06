@@ -2,7 +2,8 @@ import {Rule, RuleSelection, SeverityLevel, UnexpectedEngineErrorRule, Uninstant
 import * as engApi from "@salesforce/code-analyzer-engine-api";
 import {getMessage} from "./messages";
 import {Clock, RealClock, toAbsolutePath} from "./utils";
-import {OutputFormat, OutputFormatter} from "./output-format";
+import {RunResultsFormatter} from "./output-format";
+import { OutputFormat } from "./output-format";
 import path from "node:path";
 import fs from "node:fs";
 
@@ -409,7 +410,7 @@ export class RunResultsImpl implements RunResults {
     }
 
     toFormattedOutput(format: OutputFormat): string {
-        return OutputFormatter.forResultsFormat(format, this.clock).format(this);
+        return RunResultsFormatter.forFormat(format, this.clock).format(this);
     }
 
     addEngineRunResults(engineRunResults: EngineRunResults): void {

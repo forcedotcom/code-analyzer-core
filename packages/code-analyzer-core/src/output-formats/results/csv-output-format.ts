@@ -1,7 +1,7 @@
 import {CodeLocation, RunResults, Violation} from "../../results";
 import {stringify as stringifyToCsv} from "csv-stringify/sync";
 import {Options as CsvOptions} from "csv-stringify";
-import {OutputFormatter} from "../../output-format";
+import {RunResultsFormatter} from "../../output-format";
 import {Rule} from "../../rules";
 import {makeRelativeIfPossible} from "./json-output-format";
 
@@ -10,7 +10,7 @@ import {makeRelativeIfPossible} from "./json-output-format";
  *
  * Note that CSV format is limited and doesn't support showing certain information, like multiple code locations.
  */
-export class ResultsCsvOutputFormatter implements OutputFormatter {
+export class CsvRunResultsFormatter implements RunResultsFormatter {
     format(results: RunResults): string {
         // Leveraging the JsonViolationOutput data structure for now. This may change in the near future.
         const csvRows: CsvRow[] = results.getViolations().map(v => toCsvRow(v, results.getRunDirectory()));

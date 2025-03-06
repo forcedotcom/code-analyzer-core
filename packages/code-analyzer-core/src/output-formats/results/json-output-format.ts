@@ -1,5 +1,5 @@
 import {CodeLocation, RunResults, Violation} from "../../results";
-import {OutputFormatter, CODE_ANALYZER_CORE_NAME} from "../../output-format";
+import {RunResultsFormatter, CODE_ANALYZER_CORE_NAME} from "../../output-format";
 import {Rule, SeverityLevel} from "../../rules";
 
 /**
@@ -88,7 +88,7 @@ export type JsonCodeLocationOutput = {
 /**
  * Formatter for Results JSON Output Format
  */
-export class ResultsJsonOutputFormatter implements OutputFormatter {
+export class JsonRunResultsFormatter implements RunResultsFormatter {
     format(results: RunResults): string {
         const resultsOutput: JsonResultsOutput = toJsonResultsOutput(results);
         return JSON.stringify(resultsOutput, undefined, 2);

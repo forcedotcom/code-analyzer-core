@@ -1,12 +1,12 @@
 import {RunResults} from "../../results";
 import * as xmlbuilder from "xmlbuilder";
-import {OutputFormatter, CODE_ANALYZER_CORE_NAME} from "../../output-format";
+import {RunResultsFormatter, CODE_ANALYZER_CORE_NAME} from "../../output-format";
 import {JsonResultsOutput, toJsonResultsOutput} from "./json-output-format";
 
 /**
  * Formatter for Results XML Output Format
  */
-export class ResultsXmlOutputFormatter implements OutputFormatter {
+export class XmlRunResultsFormatter implements RunResultsFormatter {
     format(results: RunResults): string {
         // XML and JSON output formats are very similar, so leveraging the same data structure from JSON for now.
         const resultsOutput: JsonResultsOutput = toJsonResultsOutput(results);
