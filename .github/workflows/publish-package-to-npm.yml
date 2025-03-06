@@ -37,6 +37,11 @@ on:
         type: boolean
         required: false
         default: false
+      code-analyzer-sfge-engine:
+        description: Should the code-analyzer-sfge-engine package be released?
+        type: boolean
+        required: false
+        default: false
       dryrun:
         description: Add --dry-run to npm publish step? (Uncheck to actually publish)
         type: boolean
