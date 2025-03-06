@@ -1,11 +1,10 @@
-import {Rule, RuleSelection, SeverityLevel, UnexpectedEngineErrorRule, UninstantiableEngineErrorRule} from "./rules"
 import * as engApi from "@salesforce/code-analyzer-engine-api";
-import {getMessage} from "./messages";
-import {Clock, RealClock, toAbsolutePath} from "./utils";
-import {RunResultsFormatter} from "./output-format";
-import { OutputFormat } from "./output-format";
-import path from "node:path";
 import fs from "node:fs";
+import path from "node:path";
+import { getMessage } from "./messages";
+import { OutputFormat, RunResultsFormatter } from "./output-format";
+import { Rule, RuleSelection, SeverityLevel, UnexpectedEngineErrorRule, UninstantiableEngineErrorRule } from "./rules";
+import { Clock, RealClock, toAbsolutePath } from "./utils";
 
 /**
  * Describes the code location details associated with a {@link Violation}

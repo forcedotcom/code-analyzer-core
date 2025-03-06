@@ -22,14 +22,14 @@ export enum OutputFormat {
 export const CODE_ANALYZER_CORE_NAME: string = 'code-analyzer';
 
 /**
- * Abstract class to convert RunResults objects to formatted output text
+ * Abstract class to convert RunResults to formatted output text
  */
 export abstract class RunResultsFormatter {
     /**
      * Formats run results into output text as a string
-     * @param results the type of data to be formatted
+     * @param runResults RunResults to be formatted
      */
-    abstract format(results: RunResults): string
+    abstract format(runResults: RunResults): string
 
     /**
      * Creates the {@link RunResultsFormatter} associated with an {@link OutputFormat}
