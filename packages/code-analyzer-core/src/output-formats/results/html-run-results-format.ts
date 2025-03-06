@@ -6,7 +6,7 @@ import { RunResultsFormatter } from "../../output-format";
 import {
     JsonResultsOutput,
     toJsonResultsOutput
-} from "./json-output-format";
+} from "./json-run-results-format";
 
 const HTML_TEMPLATE_VERSION: string = '0.0.11';
 const HTML_TEMPLATE_FILE: string = path.resolve(__dirname, '..', '..', '..', 'output-templates', `html-template-${HTML_TEMPLATE_VERSION}.txt`);

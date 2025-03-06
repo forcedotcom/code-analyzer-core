@@ -3,7 +3,7 @@ import {stringify as stringifyToCsv} from "csv-stringify/sync";
 import {Options as CsvOptions} from "csv-stringify";
 import {RunResultsFormatter} from "../../output-format";
 import {Rule} from "../../rules";
-import {makeRelativeIfPossible} from "./json-output-format";
+import {makeRelativeIfPossible} from "./json-run-results-format";
 
 /**
  * Formatter for Results CSV Output Format

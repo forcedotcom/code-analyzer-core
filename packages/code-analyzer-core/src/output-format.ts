@@ -1,8 +1,8 @@
-import { CsvRunResultsFormatter } from "./output-formats/results/csv-output-format";
-import { HtmlRunResultsFormatter } from "./output-formats/results/html-output-format";
-import { JsonRunResultsFormatter } from "./output-formats/results/json-output-format";
-import { SarifRunResultsFormatter } from "./output-formats/results/sarif-output-format";
-import { XmlRunResultsFormatter } from "./output-formats/results/xml-output-format";
+import { CsvRunResultsFormatter } from "./output-formats/results/csv-run-results-format";
+import { HtmlRunResultsFormatter } from "./output-formats/results/html-run-results-format";
+import { JsonRunResultsFormatter } from "./output-formats/results/json-run-results-format";
+import { SarifRunResultsFormatter } from "./output-formats/results/sarif-run-results-format";
+import { XmlRunResultsFormatter } from "./output-formats/results/xml-run-results-format";
 import { RunResults } from "./results";
 import { Clock, RealClock } from "./utils";
 

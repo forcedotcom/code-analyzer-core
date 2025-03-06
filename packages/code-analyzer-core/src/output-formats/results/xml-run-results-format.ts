@@ -1,7 +1,7 @@
 import {RunResults} from "../../results";
 import * as xmlbuilder from "xmlbuilder";
 import {RunResultsFormatter, CODE_ANALYZER_CORE_NAME} from "../../output-format";
-import {JsonResultsOutput, toJsonResultsOutput} from "./json-output-format";
+import {JsonResultsOutput, toJsonResultsOutput} from "./json-run-results-format";
 
 /**
  * Formatter for Results XML Output Format
@@ -75,6 +75,5 @@ export class XmlRunResultsFormatter implements RunResultsFormatter {
         }
 
         return violationsNode.end({ pretty: true, allowEmpty: true });
-
     }
 }
