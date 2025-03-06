@@ -1,13 +1,13 @@
 import path from 'node:path';
-import {CodeLocation, EngineRunResults, RunResults, Violation} from "../results";
+import {CodeLocation, EngineRunResults, RunResults, Violation} from "../../results";
 import * as sarif from "sarif";
-import {Rule, SeverityLevel} from "../rules";
-import {OutputFormatter} from "../output-format";
+import {Rule, SeverityLevel} from "../../rules";
+import {RunResultsFormatter} from "../../output-format";
 
 /**
  * Formatter for SARIF Output Format
  */
-export class SarifOutputFormatter implements OutputFormatter {
+export class SarifRunResultsFormatter implements RunResultsFormatter {
     format(results: RunResults): string {
         const runDir = results.getRunDirectory();
 

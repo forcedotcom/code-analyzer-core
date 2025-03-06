@@ -1,9 +1,9 @@
-import {RunResults, RunResultsImpl} from "../src/results";
-import {CodeAnalyzer, CodeAnalyzerConfig, OutputFormat} from "../src";
 import * as fs from "fs";
 import path from "node:path";
-import {changeWorkingDirectoryToPackageRoot, FixedClock} from "./test-helpers";
+import { CodeAnalyzer, CodeAnalyzerConfig, OutputFormat } from "../src";
+import { RunResults, RunResultsImpl } from "../src/results";
 import * as stubs from "./stubs";
+import { changeWorkingDirectoryToPackageRoot, FixedClock } from "./test-helpers";
 
 changeWorkingDirectoryToPackageRoot();
 

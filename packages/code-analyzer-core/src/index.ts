@@ -28,7 +28,7 @@ export {
 
 export {
     OutputFormat,
-    OutputFormatter
+    RunResultsFormatter
 } from "./output-format"
 
 export {
