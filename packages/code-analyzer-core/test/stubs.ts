@@ -376,6 +376,48 @@ export function getSampleViolationForStub3RuleA(): engApi.Violation {
     }
 }
 
+/**
+ * EmptyTagEnginePlugin - A plugin to help with testing rules with empty tags
+ */
+export class EmptyTagEnginePlugin extends engApi.EnginePluginV1 {
+    getAvailableEngineNames(): string[] {
+        return ["emptyTags"];
+    }
+
+    async createEngine(_engineName: string, _config: engApi.ConfigObject): Promise<engApi.Engine> {
+        return new EmptyTagEngine();
+    }
+}
+
+/**
+ * EmptyTagEngine - An engine to help with testing rules with empty tags
+ */
+class EmptyTagEngine extends engApi.Engine {
+    getName(): string {
+        return 'emptyTags';
+    }
+
+    getEngineVersion(): Promise<string> {
+        return Promise.resolve('1.0.0');
+    }
+
+    async describeRules(_describeOptions: engApi.DescribeOptions): Promise<engApi.RuleDescription[]> {
+        return [
+            {
+                name: "emptyTagRule",
+                severityLevel: engApi.SeverityLevel.Moderate,
+                tags: [], // Purposely left empty
+                description: 'Some description for emptyTagRule',
+                resourceUrls: [] // Purposely left empty
+            }
+        ]
+    }
+
+    async runRules(_ruleNames: string[], _runOptions: engApi.RunOptions): Promise<engApi.EngineRunResults> {
+        return { violations: [] };
+    }
+}
+
 
 /**
  * FutureEnginePlugin - A plugin to help with testing forward compatibility
