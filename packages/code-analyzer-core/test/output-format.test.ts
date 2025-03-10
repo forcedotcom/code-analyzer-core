@@ -187,6 +187,13 @@ describe("RuleSelectionFormatter Tests", () => {
             const expectedText: string = getContentsOfExpectedOutputFile('multipleRules.goldfile.json', true, true);
             expect(formattedText).toEqual(expectedText);
         });
+
+        it("When a rule selection has a rule with no tags, there is a corresponding empty tag array in the json text output", async () => {
+            const ruleSelectionWithEmptyTags: RuleSelection = await createRulesWithEmptyTags();
+            const formattedText: string = ruleSelectionWithEmptyTags.toFormattedOutput(OutputFormat.JSON);
+            const expectedText: string = getContentsOfExpectedOutputFile('ruleSelectionWithEmptyTags.goldfile.json', true, true);
+            expect(formattedText).toEqual(expectedText);
+        });
     });
 
     describe("Other misc output formatting tests", () => {
@@ -230,4 +237,11 @@ async function createResultsWithUnexpectedError(): Promise<RunResults> {
     codeAnalyzer._setClock(new FixedClock(fixedTime));
     await codeAnalyzer.addEnginePlugin(new stubs.ThrowingEnginePlugin());
     return codeAnalyzer.run(await codeAnalyzer.selectRules([]), {workspace: await codeAnalyzer.createWorkspace(['test'])});
+}
+
+async function createRulesWithEmptyTags(): Promise<RuleSelection> {
+    const codeAnalyzer: CodeAnalyzer = new CodeAnalyzer(CodeAnalyzerConfig.withDefaults());
+    codeAnalyzer._setClock(new FixedClock(fixedTime));
+    await codeAnalyzer.addEnginePlugin(new stubs.EmptyTagEnginePlugin());
+    return await codeAnalyzer.selectRules(['all'])
 }

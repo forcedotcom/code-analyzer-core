@@ -1,0 +1,12 @@
+{
+  "rules": [
+    {
+      "name": "emptyTagRule",
+      "description": "Some description for emptyTagRule",
+      "engine": "emptyTags",
+      "severity": 3,
+      "tags": [],
+      "resources": []
+    }
+  ]
+}
