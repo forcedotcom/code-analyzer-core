@@ -1,5 +1,6 @@
-import * as engApi from "@salesforce/code-analyzer-engine-api"
-import {getMessage} from "./messages";
+import * as engApi from "@salesforce/code-analyzer-engine-api";
+import { getMessage } from "./messages";
+import { OutputFormat, RuleSelectionFormatter } from "./output-format";
 
 /**
  * Enum of rule severity levels
@@ -57,6 +58,12 @@ export interface RuleSelection {
      * @param ruleName the name of the selected rule that you wish to return
      */
     getRule(engineName: string, ruleName: string): Rule
+
+    /**
+    * Returns a formatted string of the rules using the specified {@link OutputFormat}
+    * @param format {@link OutputFormat} to format the rules to
+    */
+    toFormattedOutput(format: OutputFormat): string
 }
 
 
@@ -206,5 +213,9 @@ export class RuleSelectionImpl implements RuleSelection {
             }
         }
         throw new Error(getMessage('RuleDoesNotExistInSelection', ruleName, engineName));
+    }
+
+    toFormattedOutput(format: OutputFormat): string {
+        return RuleSelectionFormatter.forFormat(format).format(this);
     }
 }

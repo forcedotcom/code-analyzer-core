@@ -1,0 +1,117 @@
+{
+  "rules": [
+    {
+      "name": "stub1RuleA",
+      "description": "Some description for stub1RuleA",
+      "engine": "stubEngine1",
+      "severity": 4,
+      "tags": [
+        "Recommended",
+        "CodeStyle"
+      ],
+      "resources": [
+        "https://example.com/stub1RuleA"
+      ]
+    },
+    {
+      "name": "stub1RuleB",
+      "description": "Some description for stub1RuleB",
+      "engine": "stubEngine1",
+      "severity": 2,
+      "tags": [
+        "Recommended",
+        "Security"
+      ],
+      "resources": [
+        "https://example.com/stub1RuleB"
+      ]
+    },
+    {
+      "name": "stub1RuleC",
+      "description": "Some description for stub1RuleC",
+      "engine": "stubEngine1",
+      "severity": 3,
+      "tags": [
+        "Recommended",
+        "Performance",
+        "Custom"
+      ],
+      "resources": [
+        "https://example.com/stub1RuleC"
+      ]
+    },
+    {
+      "name": "stub1RuleD",
+      "description": "Some description for stub1RuleD",
+      "engine": "stubEngine1",
+      "severity": 4,
+      "tags": [
+        "CodeStyle"
+      ],
+      "resources": [
+        "https://example.com/stub1RuleD"
+      ]
+    },
+    {
+      "name": "stub1RuleE",
+      "description": "Some description for stub1RuleE",
+      "engine": "stubEngine1",
+      "severity": 3,
+      "tags": [
+        "Performance"
+      ],
+      "resources": [
+        "https://example.com/stub1RuleE",
+        "https://example.com/stub1RuleE_2"
+      ]
+    },
+    {
+      "name": "stub2RuleA",
+      "description": "Some description for stub2RuleA",
+      "engine": "stubEngine2",
+      "severity": 3,
+      "tags": [
+        "Recommended",
+        "Security"
+      ],
+      "resources": [
+        "https://example.com/stub2RuleA"
+      ]
+    },
+    {
+      "name": "stub2RuleB",
+      "description": "Some description for stub2RuleB",
+      "engine": "stubEngine2",
+      "severity": 4,
+      "tags": [
+        "Performance",
+        "Custom"
+      ],
+      "resources": [
+        "https://example.com/stub2RuleB"
+      ]
+    },
+    {
+      "name": "stub2RuleC",
+      "description": "Some description for stub2RuleC",
+      "engine": "stubEngine2",
+      "severity": 2,
+      "tags": [
+        "Recommended",
+        "BestPractice"
+      ],
+      "resources": []
+    },
+    {
+      "name": "stub3RuleA",
+      "description": "Some description for stub3RuleA",
+      "engine": "stubEngine3",
+      "severity": 3,
+      "tags": [
+        "Recommended",
+        "ErrorProne"
+      ],
+      "resources": []
+    }
+  ]
+}
