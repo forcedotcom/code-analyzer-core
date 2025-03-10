@@ -1,8 +1,7 @@
 import { RuleSelectionFormatter } from "../../output-format";
 import { Rule, RuleSelection } from "../../rules";
-import { sanitize } from "../format-utils";
 
-export type JsonRulesOutput = {
+export type JsonRuleSelectionOutput = {
     rules: JsonRuleOutput[];
 }
 
@@ -31,29 +30,29 @@ export type JsonRuleOutput = {
  */
 export class JsonRulesFormatter implements RuleSelectionFormatter {
     format(ruleSelection: RuleSelection): string {
-        const rulesOutput: JsonRulesOutput = toJsonRulesOutput(ruleSelection);
+        const rulesOutput: JsonRuleSelectionOutput = toJsonRuleSelectionOutput(ruleSelection);
         return JSON.stringify(rulesOutput, undefined, 2);
     }
 }
 
-function toJsonRulesOutput(ruleSelection: RuleSelection): JsonRulesOutput {
+function toJsonRuleSelectionOutput(ruleSelection: RuleSelection): JsonRuleSelectionOutput {
     return {
-        rules: toJsonRulesOutputArray(ruleSelection)
+        rules: toJsonRuleOutputArray(ruleSelection)
     }
 }
 
-function toJsonRulesOutputArray(ruleSelection: RuleSelection): JsonRuleOutput[] {
+function toJsonRuleOutputArray(ruleSelection: RuleSelection): JsonRuleOutput[] {
     const selectedRules: Rule[] = ruleSelection.getEngineNames().flatMap(name => ruleSelection.getRulesFor(name));
     return selectedRules.map((rule) => toJsonRuleOutput(rule));
 }
 
 function toJsonRuleOutput(rule: Rule): JsonRuleOutput {
     return {
-        name: sanitize(rule.getName()),
-        description: sanitize(rule.getDescription()),
+        name: rule.getName(),
+        description: rule.getDescription(),
         engine: rule.getEngineName(),
         severity: rule.getSeverityLevel(),
-        tags: rule.getTags().map(sanitize),
+        tags: rule.getTags(),
         resources: rule.getResourceUrls()
     }
 }
