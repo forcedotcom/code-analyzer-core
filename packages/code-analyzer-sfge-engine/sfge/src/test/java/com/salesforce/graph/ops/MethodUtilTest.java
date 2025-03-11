@@ -1,6 +1,5 @@
 package com.salesforce.graph.ops;
 
-import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.hasSize;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -10,7 +9,6 @@ import static org.junit.jupiter.api.Assertions.fail;
 import com.salesforce.TestUtil;
 import com.salesforce.graph.vertex.MethodVertex;
 import com.salesforce.messaging.CliMessager;
-import com.salesforce.messaging.EventKey;
 import com.salesforce.rules.AbstractRuleRunner.RuleRunnerTarget;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -114,7 +112,6 @@ public class MethodUtilTest {
     @BeforeEach
     public void setup() {
         this.g = TestUtil.getGraph();
-        CliMessager.getInstance().resetMessages();
     }
 
     @Test
@@ -133,9 +130,6 @@ public class MethodUtilTest {
         MatcherAssert.assertThat(methodVertices, hasSize(equalTo(1)));
         MethodVertex firstVertex = methodVertices.get(0);
         assertEquals(METHOD_WITHOUT_OVERLOADS_1, firstVertex.getName());
-
-        String messages = CliMessager.getInstance().getAllMessages();
-        assertEquals("[]", messages);
     }
 
     @Test
@@ -155,9 +149,6 @@ public class MethodUtilTest {
         MatcherAssert.assertThat(methodVertices, hasSize(equalTo(1)));
         MethodVertex firstVertex = methodVertices.get(0);
         assertEquals(METHOD_WITHOUT_OVERLOADS_1, firstVertex.getName());
-
-        String messages = CliMessager.getInstance().getAllMessages();
-        assertEquals("[]", messages);
     }
 
     @Test
@@ -190,8 +181,6 @@ public class MethodUtilTest {
         }
         assertTrue(method1Found);
         assertTrue(method2Found);
-        String messages = CliMessager.getInstance().getAllMessages();
-        assertEquals("[]", messages);
     }
 
     @Test
@@ -213,11 +202,6 @@ public class MethodUtilTest {
 
         MethodVertex secondVertex = methodVertices.get(1);
         assertEquals(METHOD_WITH_INTERNAL_OVERLOADS, secondVertex.getName());
-
-        String messages = CliMessager.getInstance().getAllMessages();
-        MatcherAssert.assertThat(
-                messages,
-                containsString(EventKey.WARNING_MULTIPLE_METHOD_TARGET_MATCHES.getMessageKey()));
     }
 
     @Test
@@ -251,11 +235,6 @@ public class MethodUtilTest {
         }
         assertTrue(line18Found);
         assertTrue(line22Found);
-
-        String messages = CliMessager.getInstance().getAllMessages();
-        MatcherAssert.assertThat(
-                messages,
-                containsString(EventKey.WARNING_MULTIPLE_METHOD_TARGET_MATCHES.getMessageKey()));
     }
 
     @Test
@@ -272,11 +251,6 @@ public class MethodUtilTest {
         List<MethodVertex> methodVertices = MethodUtil.getTargetedMethods(g, targets);
 
         MatcherAssert.assertThat(methodVertices, hasSize(equalTo(0)));
-
-        String messages = CliMessager.getInstance().getAllMessages();
-        MatcherAssert.assertThat(
-                messages,
-                containsString(EventKey.WARNING_NO_METHOD_TARGET_MATCHES.getMessageKey()));
     }
 
     @Test
@@ -324,9 +298,5 @@ public class MethodUtilTest {
         }
         assertTrue(line2Found);
         assertTrue(line11Found);
-        String messages = CliMessager.getInstance().getAllMessages();
-        MatcherAssert.assertThat(
-                messages,
-                containsString(EventKey.WARNING_MULTIPLE_METHOD_TARGET_MATCHES.getMessageKey()));
     }
 }

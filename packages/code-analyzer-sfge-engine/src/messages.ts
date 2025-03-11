@@ -7,7 +7,46 @@ const MESSAGE_CATALOG : { [key: string]: string } = {
         `  [PLACEHOLDER LINK]`,
 
     UnsupportedEngineName:
-        `The SfgeEnginePlugin does not support an engine with the name '%s'.`
+        `The SfgeEnginePlugin does not support an engine with the name '%s'.`,
+
+    debug_sfgeInfoLog:
+        `%s`,
+
+    info_sfgeMetaInfoCollected:
+        `Loaded %s: [ %s ]`,
+
+    progress_sfgeFinishedCompilingFiles:
+        `Compiled %s files.`,
+
+    progress_sfgeStartedBuildingGraph:
+        `Building graph.`,
+
+    progress_sfgeFinishedBuildingGraph:
+        `Added all compilation units to graph.`,
+
+    progress_sfgePathEntryPointsIdentified:
+        `Identified %s path entry point(s).`,
+
+    progress_sfgeViolationsInPathProgress:
+        `Detected %s violation(s) from %s path(s) on %s/%s entry point(s).`,
+
+    progress_sfgeCompletedPathAnalysis:
+        `Overall, analyzed %s path(s) from %s entry point(s). Detected %s violation(s).`,
+
+    warning_sfgeWarnLog:
+        `%s`,
+
+    warning_multipleMethodTargetMatches:
+        `Total of %s methods in file %s matched name #%s`,
+
+    warning_noMethodTargetMatches:
+        `No methods in file %s matched name #%s()`,
+
+    error_external_sfgeErrorLog:
+        `%s`,
+
+    error_external_sfgeIncompleteAnalysis:
+        `Salesforce Graph Engine encountered an error and couldn't complete analysis: %s`
 }
 
 /**

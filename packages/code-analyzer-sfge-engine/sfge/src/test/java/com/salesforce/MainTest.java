@@ -10,7 +10,6 @@ import com.google.common.collect.Lists;
 import com.salesforce.cli.CliArgParser;
 import com.salesforce.cli.Result;
 import com.salesforce.config.UserFacingMessages;
-import com.salesforce.messaging.CliMessager;
 import com.salesforce.rules.RuleRunner;
 import com.salesforce.rules.Violation;
 import com.salesforce.testutils.DummyVertex;
@@ -18,7 +17,6 @@ import java.io.IOException;
 import java.util.List;
 import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversalSource;
 import org.hamcrest.Matchers;
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -46,7 +44,6 @@ public class MainTest {
     private static final String EXECUTE_ACTION = CliArgParser.CLI_ACTION.EXECUTE.name();
     private static final Violation.StaticRuleViolation DUMMY_VIOLATION =
             new Violation.StaticRuleViolation("dummy message", new DummyVertex("dummy label"));
-    private static final String CLI_MESSAGES = "SF-START[]SF-END";
     private static final String DUMMY_VIOLATION_JSON =
             "VIOLATIONS_START[{\"message\":\"dummy message\",\"sourceFileName\":\"dummy\",\"sourceType\":\"dummy\",\"sourceVertexName\":\"\",\"sourceLineNumber\":0,\"sourceColumnNumber\":0,\"severity\":0}]VIOLATIONS_END";
     private static final OutOfMemoryError DUMMY_ERROR =
@@ -68,12 +65,6 @@ public class MainTest {
 
         Mockito.lenient().when(dependencies.createExecuteArgParser()).thenReturn(executeArgParser);
         Mockito.lenient().when(dependencies.getGraph()).thenReturn(g);
-        CliMessager.getInstance().resetMessages();
-    }
-
-    @AfterEach
-    void teardown() {
-        CliMessager.getInstance().resetMessages();
     }
 
     @Test
@@ -125,9 +116,9 @@ public class MainTest {
         assertThat(exitCode, equalTo(Main.EXIT_GOOD_RUN_WITH_VIOLATIONS));
 
         final ArgumentCaptor<String> outputCaptor = ArgumentCaptor.forClass(String.class);
-        verify(dependencies, times(2)).printOutput(outputCaptor.capture());
+        verify(dependencies, times(1)).printOutput(outputCaptor.capture());
         assertThat(
-                outputCaptor.getAllValues(), Matchers.contains(CLI_MESSAGES, DUMMY_VIOLATION_JSON));
+                outputCaptor.getAllValues(), Matchers.contains(DUMMY_VIOLATION_JSON));
 
         final ArgumentCaptor<String> errorCaptor = ArgumentCaptor.forClass(String.class);
         verify(dependencies, times(0)).printError(errorCaptor.capture());
@@ -150,9 +141,9 @@ public class MainTest {
         assertThat(exitCode, equalTo(Main.EXIT_WITH_INTERNAL_ERROR_AND_VIOLATIONS));
 
         final ArgumentCaptor<String> outputCaptor = ArgumentCaptor.forClass(String.class);
-        verify(dependencies, times(2)).printOutput(outputCaptor.capture());
+        verify(dependencies, times(1)).printOutput(outputCaptor.capture());
         assertThat(
-                outputCaptor.getAllValues(), Matchers.contains(CLI_MESSAGES, DUMMY_VIOLATION_JSON));
+                outputCaptor.getAllValues(), Matchers.contains(DUMMY_VIOLATION_JSON));
 
         final ArgumentCaptor<String> errorCaptor = ArgumentCaptor.forClass(String.class);
         verify(dependencies, times(1)).printError(errorCaptor.capture());

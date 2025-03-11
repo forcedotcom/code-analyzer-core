@@ -5,7 +5,8 @@ import com.google.common.base.Joiner;
 import com.salesforce.config.SfgeConfigProvider;
 import com.salesforce.graph.ApexPath;
 import com.salesforce.messaging.CliMessager;
-import com.salesforce.messaging.EventKey;
+import com.salesforce.messaging.LogMessage;
+import com.salesforce.messaging.ProgressMessage;
 import com.salesforce.rules.Violation;
 import java.util.Collection;
 import java.util.List;
@@ -16,6 +17,12 @@ import java.util.TreeSet;
 public class ProgressListenerImpl implements ProgressListener {
 
     @VisibleForTesting static final String NONE_FOUND = "none found";
+
+    private static final int COMPILATION_PROGRESS_PERCENT = 10;
+    private static final int STARTED_BUILDING_GRAPH_COMPLETION_PERCENT = 15;
+    private static final int COMPLETED_BUILDING_GRAPH_COMPLETION_PERCENT = 25;
+    private static final int PATH_ENTRY_POINTS_IDENTIFIED_COMPLETION_PERCENT = 30;
+    private static final int COMPLETED_PATH_ANALYSIS_COMPLETION_PERCENT = 90;
 
     private int filesCompiled = 0;
     private int pathsDetected = 0;
@@ -42,11 +49,7 @@ public class ProgressListenerImpl implements ProgressListener {
     @Override
     public void collectedMetaInfo(String metaInfoType, TreeSet<String> itemsCollected) {
         final String items = stringify(itemsCollected);
-        CliMessager.postMessage(
-                "Meta information collected",
-                EventKey.INFO_META_INFO_COLLECTED,
-                metaInfoType,
-                items);
+        CliMessager.postLogMessage("Meta information collected", LogMessage.LogEventKey.META_INFO_COLLECTED, metaInfoType, items);
     }
 
     @Override
@@ -56,29 +59,35 @@ public class ProgressListenerImpl implements ProgressListener {
 
     @Override
     public void finishedFileCompilation() {
-        CliMessager.postMessage(
-                "Finished compiling files",
-                EventKey.INFO_COMPLETED_FILE_COMPILATION,
+        CliMessager.postProgressMessage("Finished compiling files",
+                ProgressMessage.ProgressEventKey.COMPLETED_FILE_COMPILATION,
+                COMPILATION_PROGRESS_PERCENT,
                 String.valueOf(filesCompiled));
     }
 
     @Override
     public void startedBuildingGraph() {
-        CliMessager.postMessage("Started building graph", EventKey.INFO_STARTED_BUILDING_GRAPH);
+        CliMessager.postProgressMessage("Started building graph",
+                ProgressMessage.ProgressEventKey.STARTED_BUILDING_GRAPH,
+                STARTED_BUILDING_GRAPH_COMPLETION_PERCENT);
     }
 
     @Override
     public void completedBuildingGraph() {
-        CliMessager.postMessage("Finished building graph", EventKey.INFO_COMPLETED_BUILDING_GRAPH);
+        CliMessager.postProgressMessage("Finished building graph",
+                ProgressMessage.ProgressEventKey.COMPLETED_BUILDING_GRAPH,
+                COMPLETED_BUILDING_GRAPH_COMPLETION_PERCENT);
     }
 
     @Override
     public void pathEntryPointsIdentified(int pathEntryPointsCount) {
         totalEntryPoints = pathEntryPointsCount;
-        CliMessager.postMessage(
+        CliMessager.postProgressMessage(
                 "Path entry points identified",
-                EventKey.INFO_PATH_ENTRY_POINTS_IDENTIFIED,
-                String.valueOf(totalEntryPoints));
+                ProgressMessage.ProgressEventKey.PATH_ENTRY_POINTS_IDENTIFIED,
+                PATH_ENTRY_POINTS_IDENTIFIED_COMPLETION_PERCENT,
+                String.valueOf(totalEntryPoints)
+        );
     }
 
     @Override
@@ -86,17 +95,22 @@ public class ProgressListenerImpl implements ProgressListener {
         pathsDetected += paths.size();
         violationsDetected += violations.size();
         entryPointsAnalyzed++;
+        int progressMultiplier = COMPLETED_PATH_ANALYSIS_COMPLETION_PERCENT - PATH_ENTRY_POINTS_IDENTIFIED_COMPLETION_PERCENT;
+        double percentageOfEntryPointsAnalyzed = entryPointsAnalyzed * 100.0 / totalEntryPoints;
+        int completionPercent = (int) Math.round(percentageOfEntryPointsAnalyzed * progressMultiplier) + PATH_ENTRY_POINTS_IDENTIFIED_COMPLETION_PERCENT;
 
         // Make a post only if we have more paths detected than the progress increments
         // since the last time we posted.
         if (pathsDetected - lastPathCountReported >= progressIncrements) {
-            CliMessager.postMessage(
+            CliMessager.postProgressMessage(
                     "Count of violations in paths, entry points",
-                    EventKey.INFO_PATH_ANALYSIS_PROGRESS,
+                    ProgressMessage.ProgressEventKey.PATH_ANALYSIS_PROGRESS,
+                    completionPercent,
                     String.valueOf(violationsDetected),
                     String.valueOf(pathsDetected),
                     String.valueOf(entryPointsAnalyzed),
-                    String.valueOf(totalEntryPoints));
+                    String.valueOf(totalEntryPoints)
+            );
 
             lastPathCountReported = pathsDetected;
         }
@@ -104,12 +118,14 @@ public class ProgressListenerImpl implements ProgressListener {
 
     @Override
     public void completedAnalysis() {
-        CliMessager.postMessage(
+        CliMessager.postProgressMessage(
                 "Completed analysis stats",
-                EventKey.INFO_COMPLETED_PATH_ANALYSIS,
+                ProgressMessage.ProgressEventKey.COMPLETED_PATH_ANALYSIS,
+                COMPLETED_PATH_ANALYSIS_COMPLETION_PERCENT,
                 String.valueOf(pathsDetected),
                 String.valueOf(entryPointsAnalyzed),
-                String.valueOf(violationsDetected));
+                String.valueOf(violationsDetected)
+        );
     }
 
     @VisibleForTesting

@@ -6,13 +6,11 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.salesforce.TestUtil;
 import com.salesforce.graph.vertex.MethodVertex;
-import com.salesforce.messaging.CliMessager;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversalSource;
 import org.hamcrest.MatcherAssert;
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 
 /** Base class with helper methods for testing {@link AbstractSourceSupplier} subclasses. */
@@ -22,12 +20,6 @@ public abstract class BaseSourceSupplierTest {
     @BeforeEach
     public void setup() {
         this.g = TestUtil.getGraph();
-        CliMessager.getInstance().resetMessages();
-    }
-
-    @AfterEach
-    public void teardown() {
-        CliMessager.getInstance().resetMessages();
     }
 
     /**

@@ -2,7 +2,7 @@ package com.salesforce;
 
 import com.salesforce.config.SfgeConfigProvider;
 import com.salesforce.messaging.CliMessager;
-import com.salesforce.messaging.EventKey;
+import com.salesforce.messaging.LogMessage.LogEventKey;
 import java.io.Serializable;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.core.Appender;
@@ -64,15 +64,12 @@ public class CliMessagerAppender extends AbstractAppender {
         Level level = event.getLevel();
         if (Level.WARN.equals(level)) {
             if (this.shouldLogWarningsOnVerbose) {
-                CliMessager.postMessage(
-                        "SFGE Warning as Info", EventKey.INFO_GENERAL, getEventMessage(event));
+                CliMessager.postLogMessage("SFGE Warning as Debug", LogEventKey.DEBUG_GENERAL, getEventMessage(event));
             }
         } else if (Level.ERROR.equals(level)) {
-            CliMessager.postMessage(
-                    "SFGE Error as Warning", EventKey.WARNING_GENERAL, getEventMessage(event));
+            CliMessager.postLogMessage("SFGE Error as Warning", LogEventKey.WARNING_GENERAL, getEventMessage(event));
         } else if (Level.FATAL.equals(level)) {
-            CliMessager.postMessage(
-                    "SFGE Fatal as Error", EventKey.ERROR_GENERAL, getEventMessage(event));
+            CliMessager.postLogMessage("SFGE Fatal as Error", LogEventKey.ERROR_GENERAL, getEventMessage(event));
         }
     }
 

@@ -12,7 +12,6 @@ import com.salesforce.exception.SfgeRuntimeException;
 import com.salesforce.exception.UnexpectedException;
 import com.salesforce.exception.UserActionException;
 import com.salesforce.graph.ops.GraphUtil;
-import com.salesforce.messaging.CliMessager;
 import com.salesforce.metainfo.MetaInfoCollector;
 import com.salesforce.metainfo.MetaInfoCollectorProvider;
 import com.salesforce.rules.AbstractRule;
@@ -181,9 +180,6 @@ public class Main {
             // Mark analysis as completed
             ProgressListenerProvider.get().completedAnalysis();
         } finally {
-
-            // No matter the outcome, share the results found so far
-            dependencies.printOutput(CliMessager.getInstance().getAllMessagesWithFormatting());
 
             final List<Violation> violations = result.getOrderedViolations();
             OutputFormatter formatter = new OutputFormatter();
