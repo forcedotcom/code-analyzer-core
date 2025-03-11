@@ -390,9 +390,7 @@ public class CustomerApexVertexBuilderTest {
                                         __.where(
                                                 __.out(Schema.PARENT)
                                                         .hasLabel(NodeType.USER_CLASS)
-                                                        .has(Schema.NAME, "SubClass")))
-                                .order()
-                                .by(Schema.NAME));
+                                                        .has(Schema.NAME, "SubClass"))));
 
         BaseSFVertex myClassVertex = vertices.get(0);
         BaseSFVertex subClassVertex = vertices.get(1);
