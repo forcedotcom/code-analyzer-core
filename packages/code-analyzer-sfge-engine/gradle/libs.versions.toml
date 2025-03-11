@@ -8,8 +8,38 @@
 [versions]
 hamcrest = "3.0"
 junit-jupiter = "5.11.4"
-
+commons-cli = "1.9.0"
+commons-collections4 = "4.5.0-M3"
+tinkergraph-gremlin = "3.7.3"
+gremlin-driver = "3.7.3"
+antlr-runtime = "3.5.3"
+log4j-api = "2.24.3"
+log4j-core = "2.24.3"
+gson = "2.12.1"
+guava = "33.4.0-jre"
+jsr305 = "3.0.2"
+json-simple = "1.1.1"
+reflections = "0.10.2"
+asm = "9.7.1"
+mockito-core = "5.16.0"
+mockito-junit-jupiter = "5.16.0"
 
 [libraries]
 hamcrest = { module = "org.hamcrest:hamcrest", version.ref = "hamcrest" }
 junit-jupiter = { module = "org.junit.jupiter:junit-jupiter", version.ref = "junit-jupiter" }
+commons-cli = { module = "commons-cli:commons-cli", version.ref = "commons-cli" }
+commons-collections4 = { module = "org.apache.commons:commons-collections4", version.ref = "commons-collections4" }
+tinkergraph-gremlin = { module = "org.apache.tinkerpop:tinkergraph-gremlin", version.ref = "tinkergraph-gremlin" }
+gremlin-driver = { module = "org.apache.tinkerpop:gremlin-driver", version.ref = "gremlin-driver" }
+antlr-runtime = { module = "org.antlr:antlr-runtime", version.ref = "antlr-runtime" }
+log4j-api = { module = "org.apache.logging.log4j:log4j-api", version.ref = "log4j-api" }
+log4j-core = { module = "org.apache.logging.log4j:log4j-core", version.ref = "log4j-core" }
+gson = { module = "com.google.code.gson:gson", version.ref = "gson" }
+guava = { module = "com.google.guava:guava", version.ref = "guava" }
+jsr305 = { module = "com.google.code.findbugs:jsr305", version.ref = "jsr305" }
+json-simple = { module = "com.googlecode.json-simple:json-simple", version.ref = "json-simple" }
+reflections = { module = "org.reflections:reflections", version.ref = "reflections" }
+asm = { module = "org.ow2.asm:asm", version.ref = "asm" }
+junit-platform-launcher = { module = "org.junit.platform:junit-platform-launcher" }
+mockito-core = { module = "org.mockito:mockito-core", version.ref = "mockito-core" }
+mockito-junit-jupiter = { module = "org.mockito:mockito-junit-jupiter", version.ref = "mockito-junit-jupiter" }
