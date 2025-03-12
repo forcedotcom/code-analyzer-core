@@ -13,6 +13,8 @@ import com.salesforce.config.UserFacingMessages;
 import com.salesforce.rules.RuleRunner;
 import com.salesforce.rules.Violation;
 import com.salesforce.testutils.DummyVertex;
+
+import java.io.File;
 import java.io.IOException;
 import java.util.List;
 import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversalSource;
@@ -95,10 +97,16 @@ public class MainTest {
                 .thenReturn(noViolationNoErrorResult);
         Mockito.lenient().when(dependencies.createRuleRunner(g)).thenReturn(ruleRunner);
 
-        final Main main = new Main(dependencies);
-        final int exitCode = main.process(EXECUTE_ACTION, EXECUTION_ARGS_FILENAME);
+        try {
+            File file = File.createTempFile("pre", "suf");
+            file.deleteOnExit();
+            final Main main = new Main(dependencies);
+            final int exitCode = main.process(EXECUTE_ACTION, EXECUTION_ARGS_FILENAME, file.getAbsolutePath());
 
-        assertThat(exitCode, equalTo(Main.EXIT_GOOD_RUN_NO_VIOLATIONS));
+            assertThat(exitCode, equalTo(Main.EXIT_GOOD_RUN_NO_VIOLATIONS));
+        } catch (IOException ex) {
+            throw new RuntimeException(ex);
+        }
     }
 
     @Test
@@ -110,19 +118,26 @@ public class MainTest {
                 .thenReturn(withViolationNoErrorResult);
         Mockito.lenient().when(dependencies.createRuleRunner(g)).thenReturn(ruleRunner);
 
-        final Main main = new Main(dependencies);
-        final int exitCode = main.process(EXECUTE_ACTION, EXECUTION_ARGS_FILENAME);
+        try {
+            final File file = File.createTempFile("pre", "suf");
+            file.deleteOnExit();
+            final Main main = new Main(dependencies);
+            final int exitCode = main.process(EXECUTE_ACTION, EXECUTION_ARGS_FILENAME, file.getAbsolutePath());
 
-        assertThat(exitCode, equalTo(Main.EXIT_GOOD_RUN_WITH_VIOLATIONS));
+            assertThat(exitCode, equalTo(Main.EXIT_GOOD_RUN_WITH_VIOLATIONS));
 
-        final ArgumentCaptor<String> outputCaptor = ArgumentCaptor.forClass(String.class);
-        verify(dependencies, times(1)).printOutput(outputCaptor.capture());
-        assertThat(
-                outputCaptor.getAllValues(), Matchers.contains(DUMMY_VIOLATION_JSON));
+            final ArgumentCaptor<String> firstArgCaptor = ArgumentCaptor.forClass(String.class);
+            final ArgumentCaptor<String> secondArgCaptor = ArgumentCaptor.forClass(String.class);
+            verify(dependencies, times(1)).writeOutput(firstArgCaptor.capture(), secondArgCaptor.capture());
+            assertThat(firstArgCaptor.getAllValues(), Matchers.contains(DUMMY_VIOLATION_JSON));
+            assertThat(secondArgCaptor.getAllValues(), Matchers.contains(file.getAbsolutePath()));
 
-        final ArgumentCaptor<String> errorCaptor = ArgumentCaptor.forClass(String.class);
-        verify(dependencies, times(0)).printError(errorCaptor.capture());
-        assertThat(errorCaptor.getAllValues(), Matchers.empty());
+            final ArgumentCaptor<String> errorCaptor = ArgumentCaptor.forClass(String.class);
+            verify(dependencies, times(0)).printError(errorCaptor.capture());
+            assertThat(errorCaptor.getAllValues(), Matchers.empty());
+        } catch (IOException ex) {
+            throw new RuntimeException(ex);
+        }
     }
 
     @Test
@@ -135,18 +150,25 @@ public class MainTest {
                 .thenReturn(withViolationNoErrorResult);
         Mockito.lenient().when(dependencies.createRuleRunner(g)).thenReturn(ruleRunner);
 
-        final Main main = new Main(dependencies);
-        final int exitCode = main.process(EXECUTE_ACTION, EXECUTION_ARGS_FILENAME);
+        try {
+            File file = File.createTempFile("pre", "suf");
+            file.deleteOnExit();
+            final Main main = new Main(dependencies);
+            final int exitCode = main.process(EXECUTE_ACTION, EXECUTION_ARGS_FILENAME, file.getAbsolutePath());
 
-        assertThat(exitCode, equalTo(Main.EXIT_WITH_INTERNAL_ERROR_AND_VIOLATIONS));
+            assertThat(exitCode, equalTo(Main.EXIT_WITH_INTERNAL_ERROR_AND_VIOLATIONS));
 
-        final ArgumentCaptor<String> outputCaptor = ArgumentCaptor.forClass(String.class);
-        verify(dependencies, times(1)).printOutput(outputCaptor.capture());
-        assertThat(
-                outputCaptor.getAllValues(), Matchers.contains(DUMMY_VIOLATION_JSON));
+            final ArgumentCaptor<String> firstArgCaptor = ArgumentCaptor.forClass(String.class);
+            final ArgumentCaptor<String> secondArgCaptor = ArgumentCaptor.forClass(String.class);
+            verify(dependencies, times(1)).writeOutput(firstArgCaptor.capture(), secondArgCaptor.capture());
+            assertThat(firstArgCaptor.getAllValues(), Matchers.contains(DUMMY_VIOLATION_JSON));
+            assertThat(secondArgCaptor.getAllValues(), Matchers.contains(file.getAbsolutePath()));
 
-        final ArgumentCaptor<String> errorCaptor = ArgumentCaptor.forClass(String.class);
-        verify(dependencies, times(1)).printError(errorCaptor.capture());
-        assertThat(errorCaptor.getAllValues(), Matchers.contains(ERROR_OUTPUT));
+            final ArgumentCaptor<String> errorCaptor = ArgumentCaptor.forClass(String.class);
+            verify(dependencies, times(1)).printError(errorCaptor.capture());
+            assertThat(errorCaptor.getAllValues(), Matchers.contains(ERROR_OUTPUT));
+        } catch (IOException ex) {
+            throw new RuntimeException(ex);
+        }
     }
 }

@@ -43,13 +43,14 @@ public class CliArgParser {
     }
 
     public static class CatalogArgParser {
-        private static final int ARG_COUNT = 2;
+        private static final int ARG_COUNT = 3;
         // NOTE: This value must match the one for the RuleType enum declared in Constants.ts.
         private static final String PATHLESS = "pathless";
         // NOTE: This value must match the one for the RuleType enum declared in Constants.ts.
         private static final String DFA = "dfa";
 
         private List<AbstractRule> selectedRules;
+        private String outfile;
 
         public CatalogArgParser() {
             selectedRules = new ArrayList<>();
@@ -81,19 +82,26 @@ public class CliArgParser {
                     selectedRules = RuleUtil.getEnabledRules();
                     break;
             }
+
+            outfile = args[2];
         }
 
         public List<AbstractRule> getSelectedRules() {
             return selectedRules;
         }
+
+        public String getOutfile() {
+            return outfile;
+        }
     }
 
     public static class ExecuteArgParser {
-        private static int ARG_COUNT = 2;
+        private static final int ARG_COUNT = 3;
 
         private final List<String> projectDirs;
         private final List<RuleRunnerTarget> targets;
         private final List<AbstractRule> selectedRules;
+        private String outfile;
 
         private final Dependencies dependencies;
 
@@ -129,6 +137,7 @@ public class CliArgParser {
             targets.addAll(input.targets);
             projectDirs.addAll(input.projectDirs);
             identifyRules(input.rulesToRun);
+            outfile = args[2];
         }
 
         public List<String> getProjectDirs() {
@@ -141,6 +150,10 @@ public class CliArgParser {
 
         public List<AbstractRule> getSelectedRules() {
             return selectedRules;
+        }
+
+        public String getOutfile() {
+            return outfile;
         }
 
         private ExecuteInput readInputFile(String fileName) {
