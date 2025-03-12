@@ -56,29 +56,29 @@ import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversalSo
  */
 @SuppressWarnings(
         "PMD.SystemPrintln") // Since println is currently used to communicate to outer layer
-public class Main {
+public class Sfge {
     @VisibleForTesting static final int EXIT_GOOD_RUN_NO_VIOLATIONS = 0;
     @VisibleForTesting static final int EXIT_GOOD_RUN_WITH_VIOLATIONS = 4;
     @VisibleForTesting static final int EXIT_WITH_INTERNAL_ERROR_NO_VIOLATIONS = 1;
     @VisibleForTesting static final int EXIT_WITH_INTERNAL_ERROR_AND_VIOLATIONS = 5;
 
-    private static final Logger LOGGER = LogManager.getLogger(Main.class);
+    private static final Logger LOGGER = LogManager.getLogger(Sfge.class);
     public static final String ERROR_PREFIX = "SfgeErrorStart\n";
 
     private final Dependencies dependencies;
 
     public static void main(String[] args) {
-        Main m = new Main();
+        Sfge m = new Sfge();
         int status = m.process(args);
         System.exit(status);
     }
 
-    Main() {
+    Sfge() {
         this(new Dependencies());
     }
 
     @VisibleForTesting
-    Main(Dependencies dependencies) {
+    Sfge(Dependencies dependencies) {
         this.dependencies = dependencies;
     }
 
