@@ -62,7 +62,7 @@ public class CliArgParserTest {
     public void catalogFlowReturnsExpectedRules(String arg, int ruleCount) {
         CliArgParser.CatalogArgParser parser = new CliArgParser.CatalogArgParser();
         try {
-            parser.parseArgs("catalog", arg);
+            parser.parseArgs("catalog", arg, "path/to/fakefile");
             assertThat(
                     "Wrong number of rules returned. Did you add any?",
                     parser.getSelectedRules().size(),

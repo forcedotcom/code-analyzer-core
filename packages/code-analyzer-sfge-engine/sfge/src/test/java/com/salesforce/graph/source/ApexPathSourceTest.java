@@ -7,13 +7,11 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.google.common.collect.ImmutableSet;
 import com.salesforce.TestUtil;
-import com.salesforce.messaging.CliMessager;
 import com.salesforce.rules.AbstractPathBasedRule;
 import com.salesforce.rules.AbstractRuleRunner;
 import java.util.*;
 import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversalSource;
 import org.hamcrest.MatcherAssert;
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -44,12 +42,6 @@ public class ApexPathSourceTest {
     @BeforeEach
     public void setup() {
         this.g = TestUtil.getGraph();
-        CliMessager.getInstance().resetMessages();
-    }
-
-    @AfterEach
-    public void teardown() {
-        CliMessager.getInstance().resetMessages();
     }
 
     private void runTest(

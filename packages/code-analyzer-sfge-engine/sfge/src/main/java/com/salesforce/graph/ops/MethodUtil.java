@@ -22,7 +22,7 @@ import com.salesforce.graph.vertex.*;
 import com.salesforce.graph.visitor.ApexPathWalker;
 import com.salesforce.graph.visitor.DefaultNoOpPathVertexVisitor;
 import com.salesforce.messaging.CliMessager;
-import com.salesforce.messaging.EventKey;
+import com.salesforce.messaging.LogMessage;
 import com.salesforce.rules.AbstractRuleRunner.RuleRunnerTarget;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -101,20 +101,20 @@ public final class MethodUtil {
         for (String targetMethod : target.getTargetMethods()) {
             Integer methodCount = methodCountByName.getOrDefault(targetMethod, 0);
             if (methodCount == 0) {
-                CliMessager.getInstance()
-                        .addMessage(
-                                "Loading " + targetMethod + " vertices",
-                                EventKey.WARNING_NO_METHOD_TARGET_MATCHES,
-                                target.getTargetFile(),
-                                targetMethod);
+                CliMessager.postLogMessage(
+                        "Loading " + targetMethod + " vertices",
+                        LogMessage.LogEventKey.WARNING_NO_METHOD_TARGET_MATCHES,
+                        target.getTargetFile(),
+                        targetMethod
+                );
             } else if (methodCount > 1) {
-                CliMessager.getInstance()
-                        .addMessage(
-                                "Loading " + targetMethod + " vertices",
-                                EventKey.WARNING_MULTIPLE_METHOD_TARGET_MATCHES,
-                                methodCount.toString(),
-                                target.getTargetFile(),
-                                targetMethod);
+                CliMessager.postLogMessage(
+                        "Loading " + targetMethod + " vertices",
+                        LogMessage.LogEventKey.WARNING_MULTIPLE_METHOD_TARGET_MATCHES,
+                        methodCount.toString(),
+                        target.getTargetFile(),
+                        targetMethod
+                    );
             }
         }
     }

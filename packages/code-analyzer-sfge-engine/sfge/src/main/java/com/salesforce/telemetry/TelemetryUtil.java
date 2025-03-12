@@ -3,7 +3,8 @@ package com.salesforce.telemetry;
 import com.google.gson.Gson;
 import com.salesforce.exception.SfgeRuntimeException;
 import com.salesforce.messaging.CliMessager;
-import com.salesforce.messaging.EventKey;
+import com.salesforce.messaging.LogMessage;
+
 import java.util.Arrays;
 import java.util.stream.Collectors;
 import javax.annotation.Nullable;
@@ -54,8 +55,7 @@ public final class TelemetryUtil {
     private static void postTelemetry(
             String message, StackTraceElement[] trace, EventType eventType) {
         TelemetryData telemetryData = new TelemetryData(message, trace, eventType);
-        CliMessager.postMessage(
-                "TelemetryData", EventKey.INFO_TELEMETRY, new Gson().toJson(telemetryData));
+        CliMessager.postLogMessage("TelemetryData", LogMessage.LogEventKey.TELEMETRY, new Gson().toJson(telemetryData));
     }
 
     /** Returns a boolean indicating whether this thread is the main thread. */

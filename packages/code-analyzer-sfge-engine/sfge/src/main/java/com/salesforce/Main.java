@@ -12,7 +12,6 @@ import com.salesforce.exception.SfgeRuntimeException;
 import com.salesforce.exception.UnexpectedException;
 import com.salesforce.exception.UserActionException;
 import com.salesforce.graph.ops.GraphUtil;
-import com.salesforce.messaging.CliMessager;
 import com.salesforce.metainfo.MetaInfoCollector;
 import com.salesforce.metainfo.MetaInfoCollectorProvider;
 import com.salesforce.rules.AbstractRule;
@@ -20,6 +19,9 @@ import com.salesforce.rules.AbstractRuleRunner;
 import com.salesforce.rules.RuleRunner;
 import com.salesforce.rules.Violation;
 import com.salesforce.rules.ops.ProgressListenerProvider;
+
+import java.io.FileWriter;
+import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
@@ -30,9 +32,9 @@ import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversalSo
 /**
  * The main class, invoked by sfdx-scanner. The first arg should be either `catalog` or `execute`,
  * and determines which flow runs. <br>
- * For `catalog`, the second arg should be either `pathless` or `dfa`. Enabled rules matching that
- * type will be logged as a JSON. No meaningful environment variables exist for this flow. Exit code
- * 0 means success. Any other exit code means failure. <br>
+ * For `catalog`, the second arg should be either `pathless`, `dfa`, or `all`. Enabled rules matching that
+ * type will be written as a JSON to the file specified by the third arg. No meaningful environment variables
+ * exist for this flow. Exit code 0 means success. Any other exit code means failure. <br>
  * For `execute`, the second arg should be the path to a JSON file whose contents are structured as:
  *
  * <ol>
@@ -43,6 +45,7 @@ import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversalSo
  *       within that file.
  * </ol>
  *
+ * The third arg should be a file to which the results will be written as a JSON
  * The following exit codes are possible:
  *
  * <ol>
@@ -117,7 +120,7 @@ public class Main {
             return EXIT_WITH_INTERNAL_ERROR_NO_VIOLATIONS;
         }
         OutputFormatter formatter = new OutputFormatter();
-        dependencies.printOutput(formatter.formatRuleJsons(rules));
+        dependencies.writeOutput(formatter.formatRuleJsons(rules), cap.getOutfile());
         return EXIT_GOOD_RUN_NO_VIOLATIONS;
     }
 
@@ -182,12 +185,9 @@ public class Main {
             ProgressListenerProvider.get().completedAnalysis();
         } finally {
 
-            // No matter the outcome, share the results found so far
-            dependencies.printOutput(CliMessager.getInstance().getAllMessagesWithFormatting());
-
             final List<Violation> violations = result.getOrderedViolations();
             OutputFormatter formatter = new OutputFormatter();
-            dependencies.printOutput(formatter.formatViolationJsons(violations));
+            dependencies.writeOutput(formatter.formatViolationJsons(violations), eap.getOutfile());
 
             // Check if any exceptions were thrown
             final List<Throwable> errorsThrown = result.getErrorsThrown();
@@ -260,8 +260,12 @@ public class Main {
             System.err.println(message);
         }
 
-        void printOutput(String message) {
-            System.out.println(message);
+        void writeOutput(String output, String outfile) {
+            try (FileWriter fileWriter = new FileWriter(outfile)) {
+                fileWriter.write(output);
+            } catch (IOException ex) {
+                throw new RuntimeException(ex);
+            }
         }
     }
 }
