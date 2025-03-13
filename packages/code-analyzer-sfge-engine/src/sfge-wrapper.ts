@@ -6,7 +6,6 @@ import {
     SHARED_MESSAGE_CATALOG
 } from '@salesforce/code-analyzer-engine-api';
 import {createTempDir, JavaCommandExecutor} from '@salesforce/code-analyzer-engine-api/utils';
-import {getMessage} from './messages';
 
 export type SfgeRuleInfo = {
     name: string;
