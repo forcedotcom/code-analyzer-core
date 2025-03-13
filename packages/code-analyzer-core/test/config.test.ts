@@ -329,4 +329,12 @@ describe("Tests for creating and accessing configuration values", () => {
         expect(configDescription.fieldDescriptions.rules.wasSuppliedByUser).toEqual(true);
         expect(configDescription.fieldDescriptions.engines.wasSuppliedByUser).toEqual(false);
     });
+
+    it ("When getConfigDescription is called from modified config that contains null, then null is treated as if the config field was not supplied", () => {
+        const configDescription: ConfigDescription = CodeAnalyzerConfig.fromObject(
+            {rules: null, engines: null}
+        ).getConfigDescription();
+        expect(configDescription.fieldDescriptions.rules.wasSuppliedByUser).toEqual(false);
+        expect(configDescription.fieldDescriptions.engines.wasSuppliedByUser).toEqual(false);
+    });
 });

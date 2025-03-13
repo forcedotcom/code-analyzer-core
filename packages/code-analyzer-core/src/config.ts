@@ -4,7 +4,7 @@ import * as path from 'node:path';
 import * as os from "node:os";
 import * as yaml from 'js-yaml';
 import {getMessage} from "./messages";
-import {toAbsolutePath} from "./utils"
+import {deepEquals, toAbsolutePath} from "./utils"
 import {SeverityLevel} from "./rules";
 
 // Only exported internally to share across files
@@ -169,13 +169,13 @@ export class CodeAnalyzerConfig {
                     descriptionText: getMessage('ConfigFieldDescription_rules'),
                     valueType: 'object',
                     defaultValue: {},
-                    wasSuppliedByUser: this.config.rules !== DEFAULT_CONFIG.rules
+                    wasSuppliedByUser: !deepEquals(this.config.rules, DEFAULT_CONFIG.rules)
                 },
                 engines: {
                     descriptionText: getMessage('ConfigFieldDescription_engines'),
                     valueType: 'object',
                     defaultValue: {},
-                    wasSuppliedByUser: this.config.engines !== DEFAULT_CONFIG.engines
+                    wasSuppliedByUser: !deepEquals(this.config.engines, DEFAULT_CONFIG.engines)
                 }
             }
         };

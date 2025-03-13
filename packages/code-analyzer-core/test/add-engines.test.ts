@@ -1,10 +1,10 @@
-import {CodeAnalyzer, CodeAnalyzerConfig, EventType, LogEvent, LogLevel} from "../src";
+import {CodeAnalyzer, CodeAnalyzerConfig, ConfigDescription, ConfigFieldDescription, EventType, LogEvent, LogLevel} from "../src";
 import * as stubs from "./stubs";
 import {getMessage} from "../src/messages";
 import {changeWorkingDirectoryToPackageRoot, FixedClock} from "./test-helpers";
 import path from "node:path";
 import {StubEngine1, StubEngine2, StubEngine3, ThrowingPlugin2} from "./stubs";
-import {ConfigDescription, EnginePluginV1} from "@salesforce/code-analyzer-engine-api";
+import * as engApi from "@salesforce/code-analyzer-engine-api";
 
 changeWorkingDirectoryToPackageRoot();
 
@@ -121,9 +121,9 @@ describe("Tests for adding engines to Code Analyzer", () => {
     })
 
     it.each([
-        {plugin: new stubs.ThrowingPlugin2() as EnginePluginV1, msg: 'SomeErrorFromDescribeEngineConfig', case: 'describeEngineConfig'},
-        {plugin: new stubs.ThrowingPlugin3() as EnginePluginV1, msg: 'SomeErrorFromCreateEngineConfig', case: 'createEngineConfig'},
-        {plugin: new stubs.ThrowingPlugin4() as EnginePluginV1, msg: 'SomeErrorFromCreateEngine', case: 'createEngine'}
+        {plugin: new stubs.ThrowingPlugin2() as engApi.EnginePluginV1, msg: 'SomeErrorFromDescribeEngineConfig', case: 'describeEngineConfig'},
+        {plugin: new stubs.ThrowingPlugin3() as engApi.EnginePluginV1, msg: 'SomeErrorFromCreateEngineConfig', case: 'createEngineConfig'},
+        {plugin: new stubs.ThrowingPlugin4() as engApi.EnginePluginV1, msg: 'SomeErrorFromCreateEngine', case: 'createEngine'}
     ])('When plugin throws error during $case, then we emit error log line and skip that engine', async ({plugin, msg}) => {
         await codeAnalyzer.addEnginePlugin(plugin);
 
@@ -206,6 +206,21 @@ describe("Tests for adding engines to Code Analyzer", () => {
                 }
             },
         });
+    });
+
+    it('If an engine configuration value is overridden with a null value, then getEngineConfigDescription should be treated as if it has not been overridden', async () => {
+        codeAnalyzer = new CodeAnalyzer(CodeAnalyzerConfig.fromObject({
+            engines: {
+                stubEngine1: {
+                    misc_value: null
+                }
+            }
+        }));
+        await codeAnalyzer.addEnginePlugin(new stubs.StubEnginePlugin());
+
+        const engineConfigDescription: ConfigDescription = codeAnalyzer.getEngineConfigDescription('stubEngine1');
+        const miscValueFieldDesc: ConfigFieldDescription = engineConfigDescription.fieldDescriptions['misc_value'];
+        expect(miscValueFieldDesc.wasSuppliedByUser).toEqual(false);
     });
 
     it('If engine has not been added, then getEngineConfig and getEngineConfigDescription should error', async () => {
