@@ -6,7 +6,7 @@
       "Apex",
       "Security"
     ],
-    "description": "Identifies data read/write operations that may not have CRUD/FLS",
+    "description": "This rule is in \"Developer Preview\" and is subject to change. Identifies data read/write operations that may not have CRUD/FLS",
     "resourceUrls": []
   },
   {
@@ -16,7 +16,7 @@
       "Apex",
       "ErrorProne"
     ],
-    "description": "Identifies Apex operations that dereference null objects and throw NullPointerExceptions.",
+    "description": "This rule is in \"Developer Preview\" and is subject to change. Identifies Apex operations that dereference null objects and throw NullPointerExceptions.",
     "resourceUrls": []
   },
   {
@@ -26,7 +26,7 @@
       "Apex",
       "Performance"
     ],
-    "description": "Detects database operations inside loops, which can cause degraded performance.",
+    "description": "This rule is in \"Developer Preview\" and is subject to change. Detects database operations inside loops, which can cause degraded performance.",
     "resourceUrls": []
   },
   {
@@ -36,7 +36,7 @@
       "Apex",
       "Performance"
     ],
-    "description": "Detects mass schema lookups that can cause performance degradation if made more than once in a path. These methods are: Schema.getGlobalDescribe() and Schema.describeSObjects(...). Flagged lookups include those within a loop or multiple invocations in a path.",
+    "description": "This rule is in \"Developer Preview\" and is subject to change. Detects mass schema lookups that can cause performance degradation if made more than once in a path. These methods are: Schema.getGlobalDescribe() and Schema.describeSObjects(...). Flagged lookups include those within a loop or multiple invocations in a path.",
     "resourceUrls": []
   },
   {
@@ -46,7 +46,7 @@
       "Apex",
       "Performance"
     ],
-    "description": "Identifies SOQL queries with variables in WHERE clauses that lack null checks.",
+    "description": "This rule is in \"Developer Preview\" and is subject to change. Identifies SOQL queries with variables in WHERE clauses that lack null checks.",
     "resourceUrls": []
   },
   {
@@ -56,7 +56,7 @@
       "Apex",
       "Performance"
     ],
-    "description": "Identifies methods that aren't invoked from recognized entry points.",
+    "description": "This rule is in \"Developer Preview\" and is subject to change. Identifies methods that aren't invoked from recognized entry points.",
     "resourceUrls": []
   },
   {
@@ -66,7 +66,7 @@
       "Apex",
       "Performance"
     ],
-    "description": "Identifies abstract classes and interfaces that are non-global and don't have implementations or extensions.",
+    "description": "This rule is in \"Developer Preview\" and is subject to change. Identifies abstract classes and interfaces that are non-global and don't have implementations or extensions.",
     "resourceUrls": []
   },
   {
@@ -76,7 +76,7 @@
       "Apex",
       "Security"
     ],
-    "description": "Identifies a database operation executed outside of a \"with sharing\" policy. Warns when DML or SOQL operations inherit sharing rules implicitly instead of explicitly.",
+    "description": "This rule is in \"Developer Preview\" and is subject to change. Identifies a database operation executed outside of a \"with sharing\" policy. Warns when DML or SOQL operations inherit sharing rules implicitly instead of explicitly.",
     "resourceUrls": []
   }
 ]

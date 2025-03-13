@@ -10,6 +10,7 @@ import {
     Workspace
 } from '@salesforce/code-analyzer-engine-api';
 import {JavaCommandExecutor} from '@salesforce/code-analyzer-engine-api/utils';
+import {getMessage} from './messages';
 import {
     RuntimeSfgeWrapper,
     SfgeRuleInfo
@@ -91,7 +92,7 @@ function toRuleDescription(sfgeRuleInfo: SfgeRuleInfo): RuleDescription {
         name: sfgeRuleInfo.name,
         severityLevel: sfgeRuleInfo.severity,
         tags: [COMMON_TAGS.LANGUAGES.APEX, sfgeRuleInfo.category.replaceAll(' ', '')],
-        description: sfgeRuleInfo.description,
+        description: getMessage('DeveloperPreviewRuleNotification', sfgeRuleInfo.description),
         resourceUrls: [] // TODO: Once URLs are in their v5 state, start using them here.
     }
 }
