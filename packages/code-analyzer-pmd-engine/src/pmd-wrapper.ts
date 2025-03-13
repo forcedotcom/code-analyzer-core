@@ -1,8 +1,7 @@
-import {createTempDir, JavaCommandExecutor} from "./utils";
+import {createTempDir, JavaCommandExecutor} from "@salesforce/code-analyzer-engine-api/utils";
 import path from "node:path";
 import fs from "node:fs";
-import {getMessage} from "./messages";
-import {LogLevel} from "@salesforce/code-analyzer-engine-api";
+import {getMessageFromCatalog, LogLevel, SHARED_MESSAGE_CATALOG} from "@salesforce/code-analyzer-engine-api";
 
 const PMD_WRAPPER_JAVA_CLASS: string = "com.salesforce.sfca.pmdwrapper.PmdWrapper";
 const PMD_WRAPPER_LIB_FOLDER: string = path.resolve(__dirname, '..', 'dist', 'java-lib');
@@ -92,7 +91,7 @@ export class PmdWrapperInvoker {
             return pmdRuleInfoList;
         } catch (err) /* istanbul ignore next */ {
             const errMsg: string = err instanceof Error ? err.message : String(err);
-            throw new Error(getMessage('ErrorParsingOutputFile', pmdRulesOutputFile, errMsg), {cause: err});
+            throw new Error(getMessageFromCatalog(SHARED_MESSAGE_CATALOG, 'ErrorParsingOutputFile', pmdRulesOutputFile, errMsg), {cause: err});
         }
     }
 
@@ -140,7 +139,7 @@ export class PmdWrapperInvoker {
 
         } catch (err) /* istanbul ignore next */ {
             const errMsg: string = err instanceof Error ? err.message : String(err);
-            throw new Error(getMessage('ErrorParsingOutputFile', resultsOutputFile, errMsg), {cause: err});
+            throw new Error(getMessageFromCatalog(SHARED_MESSAGE_CATALOG, 'ErrorParsingOutputFile', resultsOutputFile, errMsg), {cause: err});
         }
     }
 

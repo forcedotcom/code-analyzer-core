@@ -69,20 +69,11 @@ const MESSAGE_CATALOG : { [key: string]: string } = {
         `If you have Java installed, specify the command in your Code Analyzer configuration as the value of property '%s'.\n` +
         `If you choose not to install Java, you may disable the corresponding engine in your Code Analyzer configuration by setting '%s' to true.`,
 
-    JavaCommandError:
-        `The following call to 'java' exited with non-zero exit code.\n` +
-        `  Command: %s\n` +
-        `  Exit code: %d\n` +
-        `  StdErr:\n%s`,
-
     InvalidRuleLanguage:
         `The '%s' configuration value is invalid. The specified language '%s' is not one of the supported languages: %s`,
 
     InvalidJavaClasspathEntry:
         `The '%s' configuration value is invalid. The path must either be a '.jar' file or a folder.`,
-
-    ErrorParsingOutputFile:
-        `An internal error was thrown when trying to read the internal output file '%s':\n%s'`,
 
     ProcessingErrorForFile:
         `%s issued a processing error for file '%s':\n%s`,

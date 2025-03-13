@@ -3,8 +3,12 @@ import {getMessageFromCatalog} from "@salesforce/code-analyzer-engine-api";
 const MESSAGE_CATALOG : { [key: string]: string } = {
     ConfigOverview:
         `SFGE ENGINE CONFIGURATION\n` +
+        `This engine is in Developer Preview and is subject to change.\n` +
         `To learn more about this configuration, visit:\n` +
         `  [PLACEHOLDER LINK]`,
+
+    DeveloperPreviewRuleNotification:
+        `This rule is in "Developer Preview" and is subject to change. %s`,
 
     UnsupportedEngineName:
         `The SfgeEnginePlugin does not support an engine with the name '%s'.`,

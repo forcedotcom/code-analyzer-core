@@ -19,9 +19,11 @@ public abstract class AbstractRule {
     // TODO: Define/Refine a system for severity. (e.g.: What's the range? Are higher numbers
     // worse?)
     public enum SEVERITY {
-        HIGH(1),
-        MODERATE(2),
-        LOW(3);
+        CRITICAL(1),
+        HIGH(2),
+        MODERATE(3),
+        LOW(4),
+        INFO(5);
 
         public int code;
 
@@ -69,6 +71,7 @@ public abstract class AbstractRule {
     public static class Descriptor {
         private final String name;
         private final String description;
+        private final int severity;
         private final String category;
         private final String url;
         private final boolean isPilot;
@@ -76,6 +79,7 @@ public abstract class AbstractRule {
         private Descriptor(AbstractRule rule) {
             this.name = rule.getClass().getSimpleName();
             this.description = rule.getDescription();
+            this.severity = rule.getSeverity();
             this.category = rule.getCategory();
             this.url = rule.getUrl();
             this.isPilot = rule.isPilot();
@@ -87,6 +91,10 @@ public abstract class AbstractRule {
 
         public String getDescription() {
             return description;
+        }
+
+        public int getSeverity() {
+            return severity;
         }
 
         public String getCategory() {

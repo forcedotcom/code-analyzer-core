@@ -177,7 +177,7 @@ public final class RemoveUnusedMethod extends AbstractPathBasedRule {
 
     @Override
     protected int getSeverity() {
-        return SEVERITY.LOW.code;
+        return SEVERITY.INFO.code;
     }
 
     @Override

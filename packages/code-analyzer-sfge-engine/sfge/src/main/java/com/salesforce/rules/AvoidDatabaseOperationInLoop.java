@@ -47,7 +47,7 @@ public final class AvoidDatabaseOperationInLoop extends AbstractPathTraversalRul
 
     @Override
     protected int getSeverity() {
-        return SEVERITY.MODERATE.code;
+        return SEVERITY.HIGH.code;
     }
 
     @Override

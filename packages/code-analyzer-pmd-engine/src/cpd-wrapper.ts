@@ -1,8 +1,7 @@
-import {createTempDir, JavaCommandExecutor} from "./utils";
-import {LogLevel} from "@salesforce/code-analyzer-engine-api";
+import {getMessageFromCatalog, LogLevel, SHARED_MESSAGE_CATALOG} from "@salesforce/code-analyzer-engine-api";
+import {createTempDir, JavaCommandExecutor} from "@salesforce/code-analyzer-engine-api/utils";
 import path from "node:path";
 import fs from "node:fs";
-import {getMessage} from "./messages";
 
 const CPD_WRAPPER_JAVA_CLASS: string = "com.salesforce.sfca.cpdwrapper.CpdWrapper";
 const CPD_WRAPPER_LIB_FOLDER: string = path.resolve(__dirname, '..', 'dist', 'java-lib');
@@ -87,7 +86,7 @@ export class CpdWrapperInvoker {
 
         } catch (err) /* istanbul ignore next */ {
             const errMsg: string = err instanceof Error ? err.message : String(err);
-            throw new Error(getMessage('ErrorParsingOutputFile', outputFile, errMsg), {cause: err});
+            throw new Error(getMessageFromCatalog(SHARED_MESSAGE_CATALOG, 'ErrorParsingOutputFile', outputFile, errMsg), {cause: err});
         }
     }
 
