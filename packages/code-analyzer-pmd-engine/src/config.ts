@@ -1,9 +1,9 @@
 import {ConfigDescription, ConfigValueExtractor, ValueValidator} from "@salesforce/code-analyzer-engine-api";
+import {indent} from "@salesforce/code-analyzer-engine-api/utils";
 import {getMessage} from "./messages";
 import {JavaVersionIdentifier} from "./JavaVersionIdentifier";
 import {SemVer} from "semver";
 import path from "node:path";
-import {indent} from "./utils";
 import {MINIMUM_JAVA_VERSION, Language, CPD_ENGINE_NAME, PMD_ENGINE_NAME, DEFAULT_FILE_EXTENSIONS} from "./constants";
 import fs from "node:fs";
 

@@ -4,7 +4,7 @@ import {
 } from "@salesforce/code-analyzer-engine-api";
 import {getMessage} from "./messages";
 
-// As soon as we start adding config properties, we can stop ignoring this rule.
+// TODO: As soon as we start adding config properties, we can stop ignoring this rule.
 // eslint-disable-next-line @typescript-eslint/no-empty-object-type
 export type SfgeEngineConfig = {
 }

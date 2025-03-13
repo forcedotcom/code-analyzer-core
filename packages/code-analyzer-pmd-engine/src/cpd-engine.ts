@@ -11,9 +11,10 @@ import {
     Violation,
     Workspace
 } from "@salesforce/code-analyzer-engine-api";
+import {indent, JavaCommandExecutor} from '@salesforce/code-analyzer-engine-api/utils';
 import {CPD_ENGINE_NAME, Language} from "./constants";
 import {getMessage} from "./messages";
-import {indent, JavaCommandExecutor, toExtensionsToLanguageMap, WorkspaceLiaison} from "./utils";
+import {toExtensionsToLanguageMap, WorkspaceLiaison} from "./utils";
 import {CPD_AVAILABLE_LANGUAGES, CpdEngineConfig} from "./config";
 import {
     CpdBlockLocation,

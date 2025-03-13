@@ -20,6 +20,6 @@ public class OutputFormatter {
 
         Gson gson = new Gson();
 
-        return "CATALOG_START" + gson.toJson(descriptors) + "CATALOG_END";
+        return gson.toJson(descriptors);
     }
 }

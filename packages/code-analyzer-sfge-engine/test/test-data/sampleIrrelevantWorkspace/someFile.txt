@@ -1,0 +1,1 @@
+This is a .txt file, which means it's ineligible for scanning by SFGE.

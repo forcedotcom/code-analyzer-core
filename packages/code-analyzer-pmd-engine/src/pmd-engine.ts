@@ -10,7 +10,8 @@ import {
     Violation,
     Workspace
 } from "@salesforce/code-analyzer-engine-api";
-import {indent, JavaCommandExecutor, toExtensionsToLanguageMap, WorkspaceLiaison} from "./utils";
+import {indent, JavaCommandExecutor} from '@salesforce/code-analyzer-engine-api/utils';
+import {toExtensionsToLanguageMap, WorkspaceLiaison} from "./utils";
 import path from "node:path";
 import * as fs from 'node:fs/promises';
 import {Language, PMD_ENGINE_NAME, SFCA_RULESETS_TO_MAKE_AVAILABLE, SHARED_RULE_NAMES} from "./constants";

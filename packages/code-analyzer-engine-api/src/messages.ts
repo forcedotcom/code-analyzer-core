@@ -53,7 +53,16 @@ export const SHARED_MESSAGE_CATALOG: MessageCatalog = {
         `The '%s' configuration value is invalid. The value '%s' must be a file instead of a folder`,
 
     ConfigFolderValueMustNotBeFile:
-        `The '%s' configuration value is invalid. The value '%s' must be a folder instead of a file.`
+        `The '%s' configuration value is invalid. The value '%s' must be a folder instead of a file.`,
+
+    ErrorParsingOutputFile:
+        `An internal error was thrown when trying to read the internal output file '%s':\n%s'`,
+
+    JavaCommandError:
+        `The following call to 'java' exited with non-zero exit code.\n` +
+        `  Command: %s\n` +
+        `  Exit code: %d\n` +
+        `  StdErr:\n%s`
 }
 
 export function getMessage(msgId: string, ...args: (string | number)[]): string {

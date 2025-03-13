@@ -69,6 +69,7 @@ public abstract class AbstractRule {
     public static class Descriptor {
         private final String name;
         private final String description;
+        private final int severity;
         private final String category;
         private final String url;
         private final boolean isPilot;
@@ -76,6 +77,7 @@ public abstract class AbstractRule {
         private Descriptor(AbstractRule rule) {
             this.name = rule.getClass().getSimpleName();
             this.description = rule.getDescription();
+            this.severity = rule.getSeverity();
             this.category = rule.getCategory();
             this.url = rule.getUrl();
             this.isPilot = rule.isPilot();
@@ -87,6 +89,10 @@ public abstract class AbstractRule {
 
         public String getDescription() {
             return description;
+        }
+
+        public int getSeverity() {
+            return severity;
         }
 
         public String getCategory() {
