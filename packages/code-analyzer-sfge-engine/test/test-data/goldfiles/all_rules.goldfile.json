@@ -1,90 +1,82 @@
 [
   {
     "name": "ApexFlsViolationRule",
-    "severityLevel": 1,
+    "severityLevel": 2,
     "tags": [
+      "Apex",
       "Security"
     ],
     "description": "Identifies data read/write operations that may not have CRUD/FLS",
-    "resourceUrls": [
-      "https://developer.salesforce.com/docs/platform/salesforce-code-analyzer/guide/apexflsviolation-rule.html"
-    ]
+    "resourceUrls": []
   },
   {
     "name": "ApexNullPointerExceptionRule",
-    "severityLevel": 2,
+    "severityLevel": 3,
     "tags": [
+      "Apex",
       "ErrorProne"
     ],
     "description": "Identifies Apex operations that dereference null objects and throw NullPointerExceptions.",
-    "resourceUrls": [
-      "https://developer.salesforce.com/docs/platform/salesforce-code-analyzer/guide/apexnullpointerexception-rule.html"
-    ]
+    "resourceUrls": []
   },
   {
     "name": "AvoidDatabaseOperationInLoop",
     "severityLevel": 2,
     "tags": [
+      "Apex",
       "Performance"
     ],
     "description": "Detects database operations inside loops, which can cause degraded performance.",
-    "resourceUrls": [
-      "https://developer.salesforce.com/docs/platform/salesforce-code-analyzer/guide/avoiddatabaseoperationinloop-rule.html"
-    ]
+    "resourceUrls": []
   },
   {
     "name": "AvoidMultipleMassSchemaLookups",
-    "severityLevel": 1,
+    "severityLevel": 2,
     "tags": [
+      "Apex",
       "Performance"
     ],
     "description": "Detects mass schema lookups that can cause performance degradation if made more than once in a path. These methods are: Schema.getGlobalDescribe() and Schema.describeSObjects(...). Flagged lookups include those within a loop or multiple invocations in a path.",
-    "resourceUrls": [
-      "https://developer.salesforce.com/docs/platform/salesforce-code-analyzer/guide/avoidmultiplemassschemalookup-rule.html"
-    ]
+    "resourceUrls": []
   },
   {
     "name": "PerformNullCheckOnSoqlVariables",
-    "severityLevel": 2,
+    "severityLevel": 3,
     "tags": [
+      "Apex",
       "Performance"
     ],
     "description": "Identifies SOQL queries with variables in WHERE clauses that lack null checks.",
-    "resourceUrls": [
-      "https://developer.salesforce.com/docs/platform/salesforce-code-analyzer/guide/performnullcheckonsoqlvariables-rule.html"
-    ]
+    "resourceUrls": []
   },
   {
     "name": "RemoveUnusedMethod",
-    "severityLevel": 3,
+    "severityLevel": 5,
     "tags": [
+      "Apex",
       "Performance"
     ],
     "description": "Identifies methods that aren't invoked from recognized entry points.",
-    "resourceUrls": [
-      "https://developer.salesforce.com/docs/platform/salesforce-code-analyzer/guide/removeunusedmethod-rule.html"
-    ]
+    "resourceUrls": []
   },
   {
     "name": "UnimplementedTypeRule",
-    "severityLevel": 3,
+    "severityLevel": 4,
     "tags": [
+      "Apex",
       "Performance"
     ],
     "description": "Identifies abstract classes and interfaces that are non-global and don't have implementations or extensions.",
-    "resourceUrls": [
-      "https://developer.salesforce.com/docs/platform/salesforce-code-analyzer/guide/unimplementedtype-rule.html"
-    ]
+    "resourceUrls": []
   },
   {
     "name": "UseWithSharingOnDatabaseOperation",
-    "severityLevel": 1,
+    "severityLevel": 2,
     "tags": [
+      "Apex",
       "Security"
     ],
     "description": "Identifies a database operation executed outside of a \"with sharing\" policy. Warns when DML or SOQL operations inherit sharing rules implicitly instead of explicitly.",
-    "resourceUrls": [
-      "https://developer.salesforce.com/docs/platform/salesforce-code-analyzer/guide/usewithsharingondatabaseoperation-rule.html"
-    ]
+    "resourceUrls": []
   }
 ]

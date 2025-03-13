@@ -1,6 +1,7 @@
 import path from 'node:path';
 import fs from 'node:fs';
 import {
+    COMMON_TAGS,
     DescribeOptions,
     Engine,
     EngineRunResults,
@@ -82,15 +83,15 @@ function getCacheKey(workspace?: Workspace): string {
 
 async function workspaceContainsSfgeRelevantFiles(workspace: Workspace): Promise<boolean> {
     const expandedFiles: string[] = await workspace.getExpandedFiles();
-    return SFGE_RELEVANT_FILE_EXTENSIONS.some(extension => expandedFiles.some(file => file.endsWith(extension)));
+    return SFGE_RELEVANT_FILE_EXTENSIONS.some(extension => expandedFiles.some(file => file.toLowerCase().endsWith(extension)));
 }
 
 function toRuleDescription(sfgeRuleInfo: SfgeRuleInfo): RuleDescription {
     return {
         name: sfgeRuleInfo.name,
         severityLevel: sfgeRuleInfo.severity,
-        tags: [sfgeRuleInfo.category.replaceAll(' ', '')],
+        tags: [COMMON_TAGS.LANGUAGES.APEX, sfgeRuleInfo.category.replaceAll(' ', '')],
         description: sfgeRuleInfo.description,
-        resourceUrls: [sfgeRuleInfo.url]
+        resourceUrls: [] // TODO: Once URLs are in their v5 state, start using them here.
     }
 }

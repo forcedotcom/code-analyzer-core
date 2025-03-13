@@ -19,9 +19,11 @@ public abstract class AbstractRule {
     // TODO: Define/Refine a system for severity. (e.g.: What's the range? Are higher numbers
     // worse?)
     public enum SEVERITY {
-        HIGH(1),
-        MODERATE(2),
-        LOW(3);
+        CRITICAL(1),
+        HIGH(2),
+        MODERATE(3),
+        LOW(4),
+        INFO(5);
 
         public int code;
 
