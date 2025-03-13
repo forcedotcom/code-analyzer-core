@@ -28,7 +28,7 @@ import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 @ExtendWith(MockitoExtension.class)
-public class MainTest {
+public class SfgeTest {
 
     private static final String EXECUTION_ARGS_FILENAME = "executionArgsTest.json";
 
@@ -52,7 +52,7 @@ public class MainTest {
             new OutOfMemoryError("dummy OutOfMemory error");
     private static final String ERROR_OUTPUT = "SfgeErrorStart\ndummy OutOfMemory error";
 
-    @Mock Main.Dependencies dependencies;
+    @Mock Sfge.Dependencies dependencies;
     @Mock CliArgParser.Dependencies argParserDependencies;
     @Mock GraphTraversalSource g;
     @Mock RuleRunner ruleRunner;
@@ -71,7 +71,7 @@ public class MainTest {
 
     @Test
     void testNoActionProvided() {
-        final Main main = new Main(dependencies);
+        final Sfge main = new Sfge(dependencies);
         main.process();
         verify(dependencies)
                 .printError(UserFacingMessages.InvocationErrors.REQUIRES_AT_LEAST_ONE_ARGUMENT);
@@ -79,7 +79,7 @@ public class MainTest {
 
     @Test
     void testInvalidActionProvided() {
-        final Main main = new Main(dependencies);
+        final Sfge main = new Sfge(dependencies);
         final String invalid_action = "INVALID_ACTION";
 
         assertThrows(
@@ -100,10 +100,10 @@ public class MainTest {
         try {
             File file = File.createTempFile("pre", "suf");
             file.deleteOnExit();
-            final Main main = new Main(dependencies);
+            final Sfge main = new Sfge(dependencies);
             final int exitCode = main.process(EXECUTE_ACTION, EXECUTION_ARGS_FILENAME, file.getAbsolutePath());
 
-            assertThat(exitCode, equalTo(Main.EXIT_GOOD_RUN_NO_VIOLATIONS));
+            assertThat(exitCode, equalTo(Sfge.EXIT_GOOD_RUN_NO_VIOLATIONS));
         } catch (IOException ex) {
             throw new RuntimeException(ex);
         }
@@ -121,10 +121,10 @@ public class MainTest {
         try {
             final File file = File.createTempFile("pre", "suf");
             file.deleteOnExit();
-            final Main main = new Main(dependencies);
+            final Sfge main = new Sfge(dependencies);
             final int exitCode = main.process(EXECUTE_ACTION, EXECUTION_ARGS_FILENAME, file.getAbsolutePath());
 
-            assertThat(exitCode, equalTo(Main.EXIT_GOOD_RUN_WITH_VIOLATIONS));
+            assertThat(exitCode, equalTo(Sfge.EXIT_GOOD_RUN_WITH_VIOLATIONS));
 
             final ArgumentCaptor<String> firstArgCaptor = ArgumentCaptor.forClass(String.class);
             final ArgumentCaptor<String> secondArgCaptor = ArgumentCaptor.forClass(String.class);
@@ -153,10 +153,10 @@ public class MainTest {
         try {
             File file = File.createTempFile("pre", "suf");
             file.deleteOnExit();
-            final Main main = new Main(dependencies);
+            final Sfge main = new Sfge(dependencies);
             final int exitCode = main.process(EXECUTE_ACTION, EXECUTION_ARGS_FILENAME, file.getAbsolutePath());
 
-            assertThat(exitCode, equalTo(Main.EXIT_WITH_INTERNAL_ERROR_AND_VIOLATIONS));
+            assertThat(exitCode, equalTo(Sfge.EXIT_WITH_INTERNAL_ERROR_AND_VIOLATIONS));
 
             final ArgumentCaptor<String> firstArgCaptor = ArgumentCaptor.forClass(String.class);
             final ArgumentCaptor<String> secondArgCaptor = ArgumentCaptor.forClass(String.class);

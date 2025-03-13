@@ -2,6 +2,7 @@ package com.salesforce.cli;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.gson.Gson;
+import com.salesforce.Sfge;
 import com.salesforce.config.UserFacingMessages;
 import com.salesforce.exception.SfgeRuntimeException;
 import com.salesforce.rules.AbstractRule;
@@ -57,7 +58,7 @@ public class CliArgParser {
         }
 
         /**
-         * See the documentation of {@link com.salesforce.Main} for information about the
+         * See the documentation of {@link Sfge} for information about the
          * expectations for args.
          */
         public void parseArgs(String... args) throws RuleUtil.RuleNotFoundException {
@@ -118,7 +119,7 @@ public class CliArgParser {
         }
 
         /**
-         * See the documentation of {@link com.salesforce.Main} for information about the
+         * See the documentation of {@link Sfge} for information about the
          * expectations for args.
          */
         public void parseArgs(String... args) {
