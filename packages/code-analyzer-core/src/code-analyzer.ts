@@ -668,19 +668,26 @@ function toConfigDescription(engineConfigDescription: engApi.ConfigDescription, 
                 descriptionText: getMessage('EngineConfigFieldDescription_disable_engine', engineName),
                 valueType: "boolean",
                 defaultValue: false,
-                wasSuppliedByUser: hasCaseInsensitiveKey(engineOverrides, FIELDS.DISABLE_ENGINE)
+                wasSuppliedByUser: wasFieldSuppliedByUser(engineOverrides, FIELDS.DISABLE_ENGINE)
             }
         }
     }
     for (const fieldName in engineConfigDescription.fieldDescriptions) {
         configDescription.fieldDescriptions[fieldName] = {
             ... engineConfigDescription.fieldDescriptions[fieldName],
-            wasSuppliedByUser: hasCaseInsensitiveKey(engineOverrides, fieldName)
+            wasSuppliedByUser: wasFieldSuppliedByUser(engineOverrides, fieldName)
         };
     }
     return configDescription;
 }
 
-function hasCaseInsensitiveKey(obj: object, key: string): boolean {
-    return Object.keys(obj).some(k => k.toLowerCase() === key.toLowerCase());
+function wasFieldSuppliedByUser(engineOverrides: EngineOverrides, fieldName: string): boolean {
+    const correctedFieldName: string | undefined = findCaseInsensitiveKey(engineOverrides, fieldName);
+    return correctedFieldName !== undefined &&
+        engineOverrides[correctedFieldName] !== null &&
+        engineOverrides[correctedFieldName] !== undefined;
+}
+
+function findCaseInsensitiveKey(obj: object, key: string): string | undefined {
+    return Object.keys(obj).find(k => k.toLowerCase() === key.toLowerCase());
 }
