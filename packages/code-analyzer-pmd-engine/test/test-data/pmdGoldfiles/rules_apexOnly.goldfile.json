@@ -220,6 +220,19 @@
     ]
   },
   {
+    "name": "AvoidChangeProtectionUnprotected",
+    "severityLevel": 2,
+    "tags": [
+      "AppExchange",
+      "Security",
+      "Apex"
+    ],
+    "description": "Detects potential misuse of FeatureManagement.changeProtection.",
+    "resourceUrls": [
+      "https://github.com/forcedotcom/sfdx-scanner/blob/dev/pmd-appexchange/docs/AvoidChangeProtectionUnprotected.md"
+    ]
+  },
+  {
     "name": "AvoidDebugStatements",
     "severityLevel": 4,
     "tags": [
