@@ -20,7 +20,7 @@ public class SecretsInPackageUtils {
             "AADHAR" //More?
     );
 
-    private static final List<String> AUTH_FIELD_MAPPINGS_LIST = List.of(
+    public static final List<String> AUTH_FIELD_MAPPINGS_LIST = List.of(
             "KEY", // potentially high false +ve rate
             "ACCESS",
             "PASS",
@@ -43,7 +43,7 @@ public class SecretsInPackageUtils {
             "JWT"
     );
 
-    private static final List<String> POTENTIAL_SECERT_VARS_LIST = List.of(
+    private static final List<String> POTENTIAL_SECRET_VARS_LIST = List.of(
             "APIKEY",
             "API_KEY",
             "API-KEY",
@@ -80,7 +80,32 @@ public class SecretsInPackageUtils {
             "CREDIT_CARD"
     );
 
-    private static boolean isAPartialMatchInList(String inputStr, List<String> listOfStrings) {
+    public static final String [] STRINGS_TO_IGNORE = {
+            "OAUTH",
+            "BEARER",
+            "AUTHORIZATION",
+            "BASIC",
+            "AES128",
+            "AES256",
+            "AES192",
+            "HMAC",
+            "CODE",
+            "GRANT_TYPE",
+            "CLIENT_SECRET",
+            "REFRESH_TOKEN",
+            "API KEY",
+            "/AUTH",
+            "/LOGIN",
+            "/OAUTH",
+            "AUTH-TOKEN",
+            "TRUE",
+            "FALSE",
+            "TOKEN",
+            "\"",
+            "'"
+    };
+
+    public static boolean isAPartialMatchInList(String inputStr, List<String> listOfStrings) {
         String inputStrUpper = inputStr.toUpperCase();
         for (String eachStr : listOfStrings) {
             if (inputStrUpper.contains(eachStr)) {
@@ -99,6 +124,18 @@ public class SecretsInPackageUtils {
     }
 
     public static boolean isAPotentialSecret(String attrName) {
-        return isAPartialMatchInList(attrName, POTENTIAL_SECERT_VARS_LIST );
+        return isAPartialMatchInList(attrName, POTENTIAL_SECRET_VARS_LIST );
     }
+
+    public static boolean notAnInterestingString(String value, List<String> listOfStringsToIgnore) {
+		String nextStr = value.strip().toUpperCase();
+        //todo: is below a helpful comment?
+		if (nextStr.length() <= 3) { //Randomly choose 3 ; this can be anything!
+			return true;
+		}
+		if (listOfStringsToIgnore.contains(nextStr)) {
+			return true;
+        }
+		return false;
+	}
 }

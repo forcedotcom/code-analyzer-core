@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<test-data
+    xmlns="http://pmd.sourceforge.net/rule-tests"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://pmd.sourceforge.net/rule-tests http://pmd.sourceforge.net/rule-tests_1_0_0.xsd">
+
+    <test-code>
+        <description>When UserInfo.getSessionId() is used, then report a violation</description>
+        <expected-problems>2</expected-problems>
+        <expected-linenumbers>3,4</expected-linenumbers>
+        <code><![CDATA[
+public with sharing class SessionIdController {
+    public SessionIdController() {
+        String userInfoSessionId1 = UserInfo.getSessionId();
+        userInfoSessionId1 = System.UserInfo.getSessionId();
+    }
+}
+        ]]></code>
+    </test-code>
+    <test-code>
+        <description>When a generic getSessionId() method is used, then do not report a violation</description>
+        <expected-problems>0</expected-problems>
+        <code><![CDATA[
+public with sharing class SessionIdController {
+    public SessionIdController() {
+        String userInfoSessionId1 = getSessionId();
+    }
+}
+        ]]></code>
+    </test-code>
+</test-data>
