@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<test-data
+    xmlns="http://pmd.sourceforge.net/rule-tests"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://pmd.sourceforge.net/rule-tests http://pmd.sourceforge.net/rule-tests_1_0_0.xsd">
+
+    <test-code>
+        <description>Detect unsafe ChangeProtection use True positive</description>
+        <expected-problems>2</expected-problems>
+        <expected-linenumbers>5,6</expected-linenumbers>
+        <code><![CDATA[
+public with sharing class ProtectedObjectController {
+    @AuraEnabled
+    public static void changeObjectToUnprotected(String objectName){
+        try {            
+            FeatureManagement.changeProtection(objectName, 'CustomObject', 'Unprotected');
+            System.FeatureManagement.changeProtection(objectName, 'CustomObject', 'Unprotected');
+        } catch (Exception e) {
+            throw new AuraHandledException(e.getMessage());
+        }
+    }
+}
+ ]]></code>
+    </test-code>
+    <test-code>
+        <description>Detect unsafe ChangeProtection use False positive</description>
+        <expected-problems>0</expected-problems>
+        <code><![CDATA[
+public with sharing class ProtectedObjectController {
+@AuraEnabled
+    public static void changeObjectToUnProtected(String objectName){
+        try {            
+            SomeOther.changeProtection(objectName, 'CustomObject', 'Unprotected');
+        } catch (Exception e) {
+            throw new AuraHandledException(e.getMessage());
+        }
+    }
+}
+]]></code>
+    </test-code>
+</test-data>

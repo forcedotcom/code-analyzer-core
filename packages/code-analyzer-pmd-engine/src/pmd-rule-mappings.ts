@@ -482,5 +482,13 @@ export const RULE_MAPPINGS: Record<string, {severity: SeverityLevel, tags: strin
     "UseHttpsCallbackUrlConnectedApp": {
         severity: SeverityLevel.Moderate,
         tags: [/* NOT RECOMMENDED */  APP_EXCHANGE_TAG, COMMON_TAGS.CATEGORIES.SECURITY, COMMON_TAGS.LANGUAGES.XML]
-    }
+    },
+
+    // =================================================================================================================
+    //   SFCA-PMD-RULES - APPEXCHANGE APEX RULES
+    // =================================================================================================================
+    "AvoidChangeProtectionUnprotected": {
+        severity: SeverityLevel.High,
+        tags: [/* NOT RECOMMENDED */  APP_EXCHANGE_TAG, COMMON_TAGS.CATEGORIES.SECURITY, COMMON_TAGS.LANGUAGES.APEX]
+    },
 }

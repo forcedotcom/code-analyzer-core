@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ruleset name="AppExchange_apex"
+         xmlns="http://pmd.sourceforge.net/ruleset/2.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://pmd.sourceforge.net/ruleset/2.0.0 https://pmd.sourceforge.io/ruleset_2_0_0.xsd">
+
+    <description>AppExchange Security Rules for Apex Language</description>
+
+
+    <rule name="AvoidChangeProtectionUnprotected"
+          language="apex"
+          message="Ensure appropriate authorization checks are in-place before invoking FeatureManagement.changeProtection called with 'Unprotected' argument."
+          class="com.salesforce.security.pmd.apex.DangerousChangeProtectionMethods" 
+          externalInfoUrl="https://github.com/forcedotcom/sfdx-scanner/blob/dev/pmd-appexchange/docs/AvoidChangeProtectionUnprotected.md" 
+    >
+        <description>
+            Detects potential misuse of FeatureManagement.changeProtection.
+        </description>
+        <priority>1</priority>
+    </rule>
+
+</ruleset>
