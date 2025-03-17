@@ -144,7 +144,7 @@ jobs:
           PMD_PACKAGE_JSON="$(cat packages/code-analyzer-pmd-engine/package.json | base64)"
           REGEX_PACKAGE_JSON="$(cat packages/code-analyzer-regex-engine/package.json | base64)"
           RETIREJS_PACKAGE_JSON="$(cat packages/code-analyzer-retirejs-engine/package.json | base64)"
-          SFGE_PACKAGE_JSON="$(cat pacakges/code-analyzer-sfge-engine/package.json | base64)"
+          SFGE_PACKAGE_JSON="$(cat packages/code-analyzer-sfge-engine/package.json | base64)"
           TEMPLATE_PACKAGE_JSON="$(cat packages/T-E-M-P-L-A-T-E/package.json | base64)"
           # GraphQL also needs the top-level package-lock.json
           PACKAGE_LOCK_JSON="$(cat package-lock.json | base64)"
