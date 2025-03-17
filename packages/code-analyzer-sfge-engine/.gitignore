@@ -8,4 +8,5 @@ sfge/build
 sfge/bin
 
 # Ignore log files
-*.log
+**/*.log
+**/*.gz

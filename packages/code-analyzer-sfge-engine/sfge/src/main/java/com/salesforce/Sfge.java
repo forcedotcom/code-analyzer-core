@@ -57,8 +57,7 @@ import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversalSo
 @SuppressWarnings(
         "PMD.SystemPrintln") // Since println is currently used to communicate to outer layer
 public class Sfge {
-    @VisibleForTesting static final int EXIT_GOOD_RUN_NO_VIOLATIONS = 0;
-    @VisibleForTesting static final int EXIT_GOOD_RUN_WITH_VIOLATIONS = 4;
+    @VisibleForTesting static final int EXIT_GOOD_RUN = 0;
     @VisibleForTesting static final int EXIT_WITH_INTERNAL_ERROR_NO_VIOLATIONS = 1;
     @VisibleForTesting static final int EXIT_WITH_INTERNAL_ERROR_AND_VIOLATIONS = 5;
 
@@ -121,7 +120,7 @@ public class Sfge {
         }
         OutputFormatter formatter = new OutputFormatter();
         dependencies.writeOutput(formatter.formatRuleJsons(rules), cap.getOutfile());
-        return EXIT_GOOD_RUN_NO_VIOLATIONS;
+        return EXIT_GOOD_RUN;
     }
 
     /** Expectations for args documented in class header above. */
@@ -204,9 +203,7 @@ public class Sfge {
                         ? EXIT_WITH_INTERNAL_ERROR_NO_VIOLATIONS
                         : EXIT_WITH_INTERNAL_ERROR_AND_VIOLATIONS;
             }
-            return violations.isEmpty()
-                    ? EXIT_GOOD_RUN_NO_VIOLATIONS
-                    : EXIT_GOOD_RUN_WITH_VIOLATIONS;
+            return EXIT_GOOD_RUN;
         }
     }
 

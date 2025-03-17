@@ -1,0 +1,21 @@
+{
+  "violations": [
+    {
+      "ruleName": "ApexFlsViolationRule",
+      "message": "FLS validation is missing for [READ] operation on [Account] with field(s) [CustomField__c,Name].",
+      "codeLocations": [
+        {
+          "file": "{{RUNDIR}}{{PATHSEP}}SomeClass.cls",
+          "startLine": 5,
+          "startColumn": 24
+        },
+        {
+          "file": "{{RUNDIR}}{{PATHSEP}}SomeClass.cls",
+          "startLine": 11,
+          "startColumn": 16
+        }
+      ],
+      "primaryLocationIndex": 0
+    }
+  ]
+}

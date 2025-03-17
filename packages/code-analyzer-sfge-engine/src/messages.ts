@@ -13,11 +13,17 @@ const MESSAGE_CATALOG : { [key: string]: string } = {
     UnsupportedEngineName:
         `The SfgeEnginePlugin does not support an engine with the name '%s'.`,
 
+    WorkspaceAppearsIncomplete:
+        `Specified workspace is missing %d possibly-relevant file(s) in %s. SFGE results may be incomplete or incorrect.`,
+
     debug_sfgeInfoLog:
         `%s`,
 
     info_sfgeMetaInfoCollected:
         `Loaded %s: [ %s ]`,
+
+    info_telemetry:
+        `%s`,
 
     progress_sfgeFinishedCompilingFiles:
         `Compiled %s files.`,

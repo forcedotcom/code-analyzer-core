@@ -11,7 +11,7 @@ public class OutputFormatter {
     public String formatViolationJsons(List<Violation> violations) {
         Gson gson = new Gson();
 
-        return "VIOLATIONS_START" + gson.toJson(violations) + "VIOLATIONS_END";
+        return gson.toJson(violations);
     }
 
     public String formatRuleJsons(List<AbstractRule> rules) {
