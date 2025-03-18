@@ -85,7 +85,7 @@ describe('SfgeEngine', () => {
         it('When no rule names are provided, no violations are returned', async () => {
             // ====== SETUP ======
             const engine: SfgeEngine = new SfgeEngine(DEFAULT_SFGE_ENGINE_CONFIG);
-            const workspace: Workspace = new Workspace([path.join(TEST_DATA_FOLDER, 'sampleWorkspace')]);
+            const workspace: Workspace = new Workspace([path.join(TEST_DATA_FOLDER, 'sampleRelevantWorkspace')]);
             const logEvents: LogEvent[] = [];
             engine.onEvent(EventType.LogEvent, (e: LogEvent) => logEvents.push(e));
             const progressEvents: RunRulesProgressEvent[] = [];
