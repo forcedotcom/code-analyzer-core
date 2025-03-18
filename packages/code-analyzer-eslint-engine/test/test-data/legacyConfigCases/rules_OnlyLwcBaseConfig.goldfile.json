@@ -72,18 +72,6 @@
     "resourceUrls": []
   },
   {
-    "name": "@lwc/lwc-platform/no-forcegen-namespace",
-    "severityLevel": 3,
-    "tags": [
-      "Recommended",
-      "LWC",
-      "ErrorProne",
-      "Javascript"
-    ],
-    "description": "disallow import or export from 'forcegen' namespace",
-    "resourceUrls": []
-  },
-  {
     "name": "@lwc/lwc-platform/no-inline-disable",
     "severityLevel": 3,
     "tags": [
@@ -285,6 +273,18 @@
       "Javascript"
     ],
     "description": "restrict usage of the \"process\" global object",
+    "resourceUrls": []
+  },
+  {
+    "name": "@lwc/lwc-platform/no-restricted-namespaces",
+    "severityLevel": 3,
+    "tags": [
+      "Recommended",
+      "LWC",
+      "ErrorProne",
+      "Javascript"
+    ],
+    "description": "disallow import or export from restricted namespaces",
     "resourceUrls": []
   },
   {

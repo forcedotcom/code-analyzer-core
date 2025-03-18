@@ -504,7 +504,7 @@
       "BestPractices",
       "Typescript"
     ],
-    "description": "Disallow the use of `eval()`-like methods",
+    "description": "Disallow the use of `eval()`-like functions",
     "resourceUrls": [
       "https://typescript-eslint.io/rules/no-implied-eval"
     ]

@@ -7,7 +7,7 @@
 
 [versions]
 hamcrest = "3.0"
-junit-jupiter = "5.11.4"
+junit-jupiter = "5.12.1"
 commons-cli = "1.9.0"
 commons-collections4 = "4.5.0-M3"
 tinkergraph-gremlin = "3.7.3"
@@ -21,8 +21,8 @@ jsr305 = "3.0.2"
 json-simple = "1.1.1"
 reflections = "0.10.2"
 asm = "9.7.1"
-mockito-core = "5.16.0"
-mockito-junit-jupiter = "5.16.0"
+mockito-core = "5.16.1"
+mockito-junit-jupiter = "5.16.1"
 
 [libraries]
 hamcrest = { module = "org.hamcrest:hamcrest", version.ref = "hamcrest" }

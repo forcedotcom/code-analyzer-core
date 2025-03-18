@@ -324,6 +324,19 @@
     ]
   },
   {
+    "name": "AvoidStatefulDatabaseResult",
+    "severityLevel": 3,
+    "tags": [
+      "Recommended",
+      "ErrorProne",
+      "Apex"
+    ],
+    "description": "Using instance variables of the following types (or collections of these types) within a stateful batch class can cause serialization errors between batch iterations: - `Database.DeleteResult` - `Database.EmptyRecycleBinResult` - `Database.MergeResult` - `Database.SaveResult` - `Database.UndeleteResult` - `Database.UpsertResult` This error occurs inconsistently and asynchronously... Learn more: https://docs.pmd-code.org/pmd-doc-7.11.0/pmd_rules_apex_errorprone.html#avoidstatefuldatabaseresult",
+    "resourceUrls": [
+      "https://docs.pmd-code.org/pmd-doc-{{PMD_VERSION}}/pmd_rules_apex_errorprone.html#avoidstatefuldatabaseresult"
+    ]
+  },
+  {
     "name": "ClassNamingConventions",
     "severityLevel": 3,
     "tags": [
