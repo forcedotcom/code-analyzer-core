@@ -239,7 +239,7 @@ describe('SfgeEngine', () => {
                 .rejects.toThrow('Salesforce Graph Engine encountered an error and couldn\'t complete analysis: | Remove unreachable code to proceed with the analysis:');
         });
 
-        it.skip('When workspace is one relevant file in a folder with other relevant files, a warning is logged', async () => {
+        it('When workspace is one relevant file in a folder with other relevant files, a warning is logged', async () => {
             // ====== SETUP ======
             const engine: SfgeEngine = new SfgeEngine(DEFAULT_SFGE_ENGINE_CONFIG);
             const workspace: Workspace = new Workspace([path.join(TEST_DATA_FOLDER, 'sampleRelevantWorkspace', 'SomeClass.cls')]);
@@ -254,7 +254,7 @@ describe('SfgeEngine', () => {
             await expectResultsToMatchGoldfile(results, 'ApexFlsViolationRule_sampleRelevantWorkspace_violations.goldfile.json', path.join(TEST_DATA_FOLDER, 'sampleRelevantWorkspace'));
             const warningLogEvents: LogEvent[] = logEvents.filter(e => e.logLevel === LogLevel.Warn);
             expect(warningLogEvents.length).toBeGreaterThanOrEqual(1);
-            expect(warningLogEvents[0].message).toEqual('Specified workspace excludes 1 possibly-relevant file(s) in');
+            expect(warningLogEvents[0].message).toEqual(`Specified workspace is missing 1 possibly-relevant file(s) in ${path.join(TEST_DATA_FOLDER, 'sampleRelevantWorkspace')}. SFGE results may be incomplete or incorrect.`);
         });
     });
 })

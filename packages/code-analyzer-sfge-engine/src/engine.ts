@@ -6,6 +6,7 @@ import {
     DescribeOptions,
     Engine,
     EngineRunResults,
+    LogLevel,
     RuleDescription,
     RunOptions,
     Violation,
@@ -19,6 +20,7 @@ import {
     SfgeRunResult
 } from "./sfge-wrapper";
 import {SfgeEngineConfig} from "./config";
+import {dir} from "tmp";
 
 const SFGE_RELEVANT_FILE_EXTENSIONS = ['.cls'];
 
@@ -28,6 +30,7 @@ export class SfgeEngine extends Engine {
     private readonly sfgeWrapper: RuntimeSfgeWrapper;
 
     private sfgeRuleInfoListCache: Map<string, SfgeRuleInfo[]> = new Map();
+    private relevantFilesByWorkspaceId: Map<string, string[]> = new Map();
 
     public constructor(config: SfgeEngineConfig) {
         super();
@@ -64,6 +67,8 @@ export class SfgeEngine extends Engine {
     public override async runRules(selectedRuleNames: string[], runOptions: RunOptions): Promise<EngineRunResults> {
         this.emitRunRulesProgressEvent(2);
 
+        await this.validateWorkspaceCompleteness(runOptions.workspace);
+
         const allRulesInfoList: SfgeRuleInfo[] = await this.getSfgeRuleInfoList(
             runOptions.workspace,
             (innerPerc: number) => this.emitRunRulesProgressEvent(2 + 3*(innerPerc/100)) // 2%-5%
@@ -94,10 +99,31 @@ export class SfgeEngine extends Engine {
         };
     }
 
+    private async validateWorkspaceCompleteness(workspace: Workspace): Promise<void> {
+        const allRelevantFiles: string[] = await this.getRelevantFilesInWorkspace(workspace);
+        const knownRelevantFileCountByDirectory: Map<string, number> = new Map();
+
+        for (const relevantFile of allRelevantFiles) {
+            const dirName: string = path.dirname(relevantFile);
+            const knownRelevantFilesInDirectory: number = knownRelevantFileCountByDirectory.get(dirName) ?? 0;
+            knownRelevantFileCountByDirectory.set(dirName, knownRelevantFilesInDirectory + 1);
+        }
+
+        for (const [dirName, knownRelevantFileCount] of knownRelevantFileCountByDirectory.entries()) {
+            const dirEntries: string[] = await fs.promises.readdir(dirName);
+            const allRelevantFileCount: number = dirEntries.filter(isFileRelevantToSfge).length;
+            if (allRelevantFileCount !== knownRelevantFileCount) {
+                this.emitLogEvent(LogLevel.Warn, getMessage('WorkspaceAppearsIncomplete',
+                    allRelevantFileCount - knownRelevantFileCount,
+                    dirName));
+            }
+        }
+    }
+
     private async getSfgeRuleInfoList(workspace: Workspace|undefined, emitProgress: (percComplete: number) => void): Promise<SfgeRuleInfo[]> {
         const cacheKey: string = getCacheKey(workspace);
         if (!this.sfgeRuleInfoListCache.has(cacheKey)) {
-            if (workspace && !(await workspaceContainsSfgeRelevantFiles(workspace))) {
+            if (workspace && (await this.getRelevantFilesInWorkspace(workspace)).length === 0) {
                 this.sfgeRuleInfoListCache.set(cacheKey, []);
             } else {
                 const ruleInfoList: SfgeRuleInfo[] = await this.sfgeWrapper.invokeDescribeCommand(emitProgress);
@@ -127,15 +153,26 @@ export class SfgeEngine extends Engine {
             primaryLocationIndex: 0
         };
     }
+
+    private async getRelevantFilesInWorkspace(workspace: Workspace): Promise<string[]> {
+        if (!this.relevantFilesByWorkspaceId.has(workspace.getWorkspaceId())) {
+            this.relevantFilesByWorkspaceId.set(workspace.getWorkspaceId(), await getRelevantFilesInWorkspace(workspace));
+        }
+        return this.relevantFilesByWorkspaceId.get(workspace.getWorkspaceId())!;
+    }
 }
 
 function getCacheKey(workspace?: Workspace): string {
     return workspace ? workspace.getWorkspaceId() : process.cwd();
 }
 
-async function workspaceContainsSfgeRelevantFiles(workspace: Workspace): Promise<boolean> {
+async function getRelevantFilesInWorkspace(workspace: Workspace): Promise<string[]> {
     const expandedFiles: string[] = await workspace.getExpandedFiles();
-    return SFGE_RELEVANT_FILE_EXTENSIONS.some(extension => expandedFiles.some(file => file.toLowerCase().endsWith(extension)));
+    return expandedFiles.filter(isFileRelevantToSfge);
+}
+
+function isFileRelevantToSfge(fileName: string): boolean {
+    return SFGE_RELEVANT_FILE_EXTENSIONS.some(extension => fileName.toLowerCase().endsWith(extension));
 }
 
 function toRuleDescription(sfgeRuleInfo: SfgeRuleInfo): RuleDescription {
