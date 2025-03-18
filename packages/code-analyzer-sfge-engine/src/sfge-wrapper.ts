@@ -75,10 +75,11 @@ export class RuntimeSfgeWrapper {
 
     public async invokeDescribeCommand(emitProgress: (percComplete: number) => void): Promise<SfgeRuleInfo[]> {
         const tmpDir: string = await this.getTemporaryWorkingDir();
+        const logFilePath: string = path.join(os.tmpdir(), 'sfge.log');
         const sfgeRulesOutputFile: string = path.join(tmpDir, 'ruleInfo.json');
         emitProgress(10);
 
-        const javaCmdArgs: string[] = [SFGE_MAIN_JAVA_CLASS, 'catalog', 'all', sfgeRulesOutputFile];
+        const javaCmdArgs: string[] = [`-Dsfge_log_name=${logFilePath}`, SFGE_MAIN_JAVA_CLASS, 'catalog', 'all', sfgeRulesOutputFile];
         const javaClassPaths: string[] = [path.join(SFGE_WRAPPER_LIB_FOLDER, '*')];
 
         await this.javaCommandExecutor.exec(javaCmdArgs, javaClassPaths);
