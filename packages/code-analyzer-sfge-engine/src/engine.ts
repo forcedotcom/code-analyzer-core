@@ -66,6 +66,11 @@ export class SfgeEngine extends Engine {
     public override async runRules(selectedRuleNames: string[], runOptions: RunOptions): Promise<EngineRunResults> {
         this.emitRunRulesProgressEvent(2);
 
+        if (selectedRuleNames.length === 0) {
+            this.emitRunRulesProgressEvent(100);
+            return { violations: [] };
+        }
+
         await this.validateWorkspaceCompleteness(runOptions.workspace);
 
         const allRulesInfoList: SfgeRuleInfo[] = await this.getSfgeRuleInfoList(
