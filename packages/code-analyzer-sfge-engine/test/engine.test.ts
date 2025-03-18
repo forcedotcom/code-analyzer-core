@@ -269,11 +269,12 @@ async function expectRulesToMatchGoldfile(actualRuleDescriptions: RuleDescriptio
 
 async function expectResultsToMatchGoldfile(actualResults: EngineRunResults, relativeExpectedFile: string, runDir: string): Promise<void> {
     const actualResultsJsonString: string = JSON.stringify(actualResults, null, 2);
+    const runDirVar: string = (runDir + path.sep)
+        .replaceAll('\\', '\\\\');
     const expectedResultsJsonString: string = (await fs.promises.readFile(
         path.join(TEST_DATA_FOLDER, 'goldfiles', relativeExpectedFile), 'utf-8'
     ))
-        .replaceAll("{{RUNDIR}}", runDir)
-        .replaceAll("{{PATHSEP}}", path.sep);
+        .replaceAll("{{RUNDIR}}", runDirVar);
     expect(actualResultsJsonString).toEqual(expectedResultsJsonString);
 }
 
