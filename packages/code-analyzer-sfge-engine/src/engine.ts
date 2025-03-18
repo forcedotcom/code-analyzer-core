@@ -20,7 +20,6 @@ import {
     SfgeRunResult
 } from "./sfge-wrapper";
 import {SfgeEngineConfig} from "./config";
-import {dir} from "tmp";
 
 const SFGE_RELEVANT_FILE_EXTENSIONS = ['.cls'];
 
