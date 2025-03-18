@@ -155,7 +155,8 @@ export class SfgeEngine extends Engine {
 
     private async getRelevantFilesInWorkspace(workspace: Workspace): Promise<string[]> {
         if (!this.relevantFilesByWorkspaceId.has(workspace.getWorkspaceId())) {
-            this.relevantFilesByWorkspaceId.set(workspace.getWorkspaceId(), await getRelevantFilesInWorkspace(workspace));
+            const relevantFiles: string[] = (await workspace.getExpandedFiles()).filter(isFileRelevantToSfge);
+            this.relevantFilesByWorkspaceId.set(workspace.getWorkspaceId(), relevantFiles);
         }
         return this.relevantFilesByWorkspaceId.get(workspace.getWorkspaceId())!;
     }
@@ -163,11 +164,6 @@ export class SfgeEngine extends Engine {
 
 function getCacheKey(workspace?: Workspace): string {
     return workspace ? workspace.getWorkspaceId() : process.cwd();
-}
-
-async function getRelevantFilesInWorkspace(workspace: Workspace): Promise<string[]> {
-    const expandedFiles: string[] = await workspace.getExpandedFiles();
-    return expandedFiles.filter(isFileRelevantToSfge);
 }
 
 function isFileRelevantToSfge(fileName: string): boolean {
