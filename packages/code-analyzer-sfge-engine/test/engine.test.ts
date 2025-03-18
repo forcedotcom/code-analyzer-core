@@ -157,6 +157,9 @@ describe('SfgeEngine', () => {
             expect(fineLogEvents.length).toBeGreaterThanOrEqual(2);
             expect(fineLogEvents[1].message).toContain('Calling command:');
             expect(fineLogEvents[1].message).toContain("execute");
+            const infoLogEvents: LogEvent[] = logEvents.filter(e => e.logLevel === LogLevel.Info);
+            expect(infoLogEvents.length).toBeGreaterThanOrEqual(1);
+            expect(infoLogEvents[0].message).toEqual(`SFGE execution logs being written to ${path.join(os.tmpdir(), 'sfge.log')}.`);
             expect(progressEvents.map(pe => pe.percentComplete)).toEqual(
                 [2, 2.3, 4.4, 4.7, 5, 6.86, 14.3, 22.21, 26.16, 34.06, 38.02, 85.45, 93.35, 98, 100]
             );

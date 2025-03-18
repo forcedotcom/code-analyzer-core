@@ -1,5 +1,6 @@
 import path from 'node:path';
 import fs from 'node:fs';
+import os from 'node:os';
 import {
     getMessageFromCatalog,
     LogLevel,
@@ -101,15 +102,17 @@ export class RuntimeSfgeWrapper {
         emitProgress(2);
 
         const inputFileName: string = path.join(tmpDir, 'sfgeInput.json');
+        const logFilePath: string = path.join(os.tmpdir(), 'sfge.log');
         const ruleNames: string[] = selectedRuleInfos.map(sri => sri.name);
         const targets: string[] = await workspace.getExpandedFiles(); // TODO: When we add path-start-targeting, this needs to change.
         const projectFolders: string[] = await workspace.getExpandedFiles();
 
         await this.createSfgeInputFile(inputFileName, ruleNames, targets, projectFolders);
         const resultsOutputFile: string = path.join(tmpDir, 'resultsFile.json');
+        this.emitLogEvent(LogLevel.Info, getMessage('LoggingToFile', logFilePath));
         emitProgress(10);
 
-        const javaCmdArgs: string[] = [SFGE_MAIN_JAVA_CLASS, 'execute', inputFileName, resultsOutputFile];
+        const javaCmdArgs: string[] = [`-Dsfge_log_name=${logFilePath}`, SFGE_MAIN_JAVA_CLASS, 'execute', inputFileName, resultsOutputFile];
         const javaClassPaths: string[] = [path.join(SFGE_WRAPPER_LIB_FOLDER, '*')];
 
         try {

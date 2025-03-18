@@ -16,6 +16,9 @@ const MESSAGE_CATALOG : { [key: string]: string } = {
     WorkspaceAppearsIncomplete:
         `Specified workspace is missing %d possibly-relevant file(s) in %s. SFGE results may be incomplete or incorrect.`,
 
+    LoggingToFile:
+        `SFGE execution logs being written to %s.`,
+
     debug_sfgeInfoLog:
         `%s`,
 
