@@ -156,7 +156,7 @@ export class RuntimeSfgeWrapper {
     }
 }
 
-function handleRunStdOut(stdOutMsg: string, emitLog: (logLevel: LogLevel, msg: string) => void,emitProgress: (percComplete: number) => void): void {
+function handleRunStdOut(stdOutMsg: string, emitLog: (logLevel: LogLevel, msg: string) => void, emitProgress: (percComplete: number, msg?: string) => void): void {
     if (stdOutMsg.startsWith(SFCA_REALTIME_START) && stdOutMsg.endsWith(SFCA_REALTIME_END)) {
         const sfgeMessages: SfgeMessage[] = JSON.parse(stdOutMsg.slice(
             SFCA_REALTIME_START.length,
@@ -172,7 +172,7 @@ function handleRunStdOut(stdOutMsg: string, emitLog: (logLevel: LogLevel, msg: s
                 }
             } else if (isSfgeProgressMessage(sfgeMessage)) {
                 const completionPercent: number = sfgeMessage.progressPercent;
-                emitProgress(10 + 85 * completionPercent / 100); // 10%-95%
+                emitProgress(10 + 85 * completionPercent / 100, processedMessage); // 10%-95%
             }
         }
     }

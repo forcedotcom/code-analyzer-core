@@ -638,12 +638,13 @@ describe("Tests for the run method of CodeAnalyzer", () => {
         expect(stub2RunProgressEvents).toHaveLength(4);
         const stub3RunProgressEvents: EngineRunProgressEvent[] = engineRunProgressEvents.filter(e => e.engineName === 'stubEngine3');
         expect(stub3RunProgressEvents).toHaveLength(4);
-        for (const [i, expectedPercentComplete] of [0, 0, 50, 100, 100].entries()) { // Core and stubEngine1 both give us 0 and 100
+        for (const [i, progressDescriptor] of [{percent: 0}, {percent: 0}, {percent: 50, message: "someProgressMessage"}, {percent: 100}, {percent: 100}].entries()) { // Core and stubEngine1 both give us 0 and 100
             expect(stub1RunProgressEvents[i]).toEqual({
                 type: EventType.EngineRunProgressEvent,
                 timestamp: sampleTimestamp,
                 engineName: "stubEngine1",
-                percentComplete: expectedPercentComplete
+                percentComplete: progressDescriptor.percent,
+                message: progressDescriptor.message
             });
         }
         for (const [i, expectedPercentComplete] of [0, 5, 63, 100].entries()) { // Only Core gives us 0 and 100

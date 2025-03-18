@@ -202,9 +202,30 @@ describe('SfgeEngine', () => {
 
             // ====== ASSERTIONS ======
             await expectResultsToMatchGoldfile(results, 'ApexFlsViolationRule_sampleRelevantWorkspace_violations.goldfile.json', path.join(TEST_DATA_FOLDER, 'sampleRelevantWorkspace'));
-            expect(progressEvents.map(pe => pe.percentComplete)).toEqual(
-                [2, 2.3, 4.4, 4.7, 5, 6.86, 14.3, 22.21, 26.16, 34.06, 38.02, 85.45, 93.35, 98, 100]
-            );
+            const expectedProgressDescriptors: {percent: number, message?: string}[] = [
+                {percent: 2, message: undefined},
+                {percent: 2.3, message: undefined},
+                {percent: 4.4, message: undefined},
+                {percent: 4.7, message: undefined},
+                {percent: 5, message: undefined},
+                {percent: 6.86, message: undefined},
+                {percent: 14.3, message: undefined},
+                {percent: 22.21, message: 'Compiled 2 files.'},
+                {percent: 26.16, message: 'Building graph.'},
+                {percent: 34.06, message: 'Added all compilation units to graph.'},
+                {percent: 38.02, message: 'Identified 1 path entry point(s).'},
+                {percent: 85.45, message: 'Overall, analyzed 1 path(s) from 1 entry point(s). Detected 1 violation(s).'},
+                {percent: 93.35, message: undefined},
+                {percent: 98, message: undefined},
+                {percent: 100, message: undefined}
+            ];
+            const actualProgressDescriptors: {percent: number, message?: string}[] = progressEvents.map(pe => {
+                return {
+                    percent: pe.percentComplete,
+                    message: pe.message
+                };
+            });
+            expect(actualProgressDescriptors).toEqual(expectedProgressDescriptors);
         });
 
         it('When a file cannot be scanned, an appropriate error is thrown', async () => {

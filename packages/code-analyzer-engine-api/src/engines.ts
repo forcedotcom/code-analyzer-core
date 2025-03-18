@@ -142,12 +142,14 @@ export abstract class Engine {
     /**
      * Convenience method that subclasses can use to easily emit an event of type {@link RunRulesProgressEvent}
      * @param percentComplete the percent of completion between 0 and 100
+     * @param message optional message
      * @protected
      */
-    protected emitRunRulesProgressEvent(percentComplete: number): void {
+    protected emitRunRulesProgressEvent(percentComplete: number, message?: string): void {
         this.emitEvent({
             type: EventType.RunRulesProgressEvent,
-            percentComplete: roundToHundredths(percentComplete)
+            percentComplete: roundToHundredths(percentComplete),
+            message
         });
     }
 }

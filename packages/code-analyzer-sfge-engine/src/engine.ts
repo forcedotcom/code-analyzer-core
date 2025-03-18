@@ -80,7 +80,7 @@ export class SfgeEngine extends Engine {
         const sfgeResults: SfgeRunResult[] = await this.sfgeWrapper.invokeRunCommand(
             selectedRuleInfoList,
             runOptions.workspace,
-            (innerPerc: number) => this.emitRunRulesProgressEvent(5 + 93*innerPerc/100) // 5%-98%
+            (innerPerc: number, message?: string) => this.emitRunRulesProgressEvent(5 + 93*innerPerc/100, message) // 5%-98%
         );
 
         const violations: Violation[] = [];

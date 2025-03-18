@@ -34,6 +34,7 @@ export type LogEvent = {
  */
 export type RunRulesProgressEvent = {
     type: EventType.RunRulesProgressEvent,
+    message?: string,
     percentComplete: number
 }
 
