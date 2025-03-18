@@ -4,5 +4,8 @@
 # Ignore Gradle build output directory
 sfge/build
 
+# Ignore Gradle bin output directory (for VS Code's gradle plugin)
+sfge/bin
+
 # Ignore log files
 *.log
