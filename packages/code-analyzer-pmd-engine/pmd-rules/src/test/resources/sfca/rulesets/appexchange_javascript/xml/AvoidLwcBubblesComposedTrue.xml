@@ -12,13 +12,13 @@
 import { LightningElement } from 'lwc';
 export default class LwcNoteCreateModal extends LightningElement {
     handleSelected (event) {
-      const selected = new CustomEvent('selected', {
-        bubbles: true,
-        composed: true,
-        detail: event.detail
-      });
-    this.dispatchEvent(selected);
-  }
+        const selected = new CustomEvent('selected', {
+            bubbles: true,
+            composed: true,
+            detail: event.detail
+        });
+        this.dispatchEvent(selected);
+    }
 }
  ]]></code>
  </test-code>
@@ -28,13 +28,13 @@ export default class LwcNoteCreateModal extends LightningElement {
         <code><![CDATA[
 import { LightningElement } from 'lwc';
 export default class LwcNoteCreateModal extends LightningElement {
- handleSelected (event) {
-    const selected = new CustomEvent('selected', {
-      bubbles: true,
-      detail: event.detail
-    });
-    this.dispatchEvent(selected);
-  }
+    handleSelected (event) {
+        const selected = new CustomEvent('selected', {
+            bubbles: true,
+            detail: event.detail
+        });
+        this.dispatchEvent(selected);
+    }
 }
  ]]></code>
  </test-code>
