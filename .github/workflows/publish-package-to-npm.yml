@@ -88,6 +88,9 @@ jobs:
           if [ "${{ inputs.code-analyzer-retirejs-engine }}" == "true" ]; then
             PACKAGES_TO_CHECK_ARR+=('code-analyzer-retirejs-engine')
           fi
+          if [ "${{ inputs.code-analyzer-sfge-engine }}" == "true" ]; then
+            PACKAGES_TO_CHECK_ARR+=('code-analyzer-sfge-engine')
+          fi
           PACKAGES_TO_CHECK_STR=$(IFS=' '; echo "${PACKAGES_TO_CHECK_ARR[*]}")
           node ./.github/workflows/publish-package-to-npm/validate-packages-as-releasable.js "$PACKAGES_TO_CHECK_STR"
           echo "packages_to_release=$PACKAGES_TO_CHECK_STR" >> "$GITHUB_OUTPUT"
@@ -148,7 +151,7 @@ jobs:
           TEMPLATE_PACKAGE_JSON="$(cat packages/T-E-M-P-L-A-T-E/package.json | base64)"
           # GraphQL also needs the top-level package-lock.json
           PACKAGE_LOCK_JSON="$(cat package-lock.json | base64)"
-          
+
           gh api graphql -F message="$MESSAGE" -F oldOid=`git rev-parse HEAD` -F branch="$BRANCH_NAME" \
           -F corePackage="$CORE_PACKAGE_JSON" \
           -F apiPackage="$API_PACKAGE_JSON" \
@@ -245,7 +248,7 @@ jobs:
             else
               npm publish --tag latest-beta --access public --verbose
               echo "Published ${PACKAGE_NAME}@${PUBLISHED_VERSION}"
-          
+
               npm dist-tag add @salesforce/${PACKAGE_NAME}@${PUBLISHED_VERSION} latest
               echo "Added latest tag to @salesforce/${PACKAGE_NAME}@${PUBLISHED_VERSION}"
             fi
