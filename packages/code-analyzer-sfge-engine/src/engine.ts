@@ -86,9 +86,12 @@ export class SfgeEngine extends Engine {
             return { violations: [] };
         }
 
+        const relevantFiles: string[] = await this.getRelevantFilesInWorkspace(runOptions.workspace);
+
         const sfgeResults: SfgeRunResult[] = await this.sfgeWrapper.invokeRunCommand(
             selectedRuleInfoList,
-            runOptions.workspace,
+            relevantFiles, // TODO: WHEN WE ADD PATH-START TARGETING, THIS NEEDS TO CHANGE.
+            relevantFiles,
             (innerPerc: number, message?: string) => this.emitRunRulesProgressEvent(5 + 93*innerPerc/100, message) // 5%-98%
         );
 

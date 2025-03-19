@@ -98,17 +98,15 @@ export class RuntimeSfgeWrapper {
         }
     }
 
-    public async invokeRunCommand(selectedRuleInfos: SfgeRuleInfo[], workspace: Workspace, emitProgress: (percComplete: number) => void): Promise<SfgeRunResult[]> {
+    public async invokeRunCommand(selectedRuleInfos: SfgeRuleInfo[], targetPaths: string[], projectFilePaths: string[], emitProgress: (percComplete: number) => void): Promise<SfgeRunResult[]> {
         const tmpDir: string = await this.getTemporaryWorkingDir();
         emitProgress(2);
 
         const inputFileName: string = path.join(tmpDir, 'sfgeInput.json');
         const logFilePath: string = path.join(os.tmpdir(), 'sfge.log');
         const ruleNames: string[] = selectedRuleInfos.map(sri => sri.name);
-        const targets: string[] = await workspace.getExpandedFiles(); // TODO: When we add path-start-targeting, this needs to change.
-        const projectFolders: string[] = await workspace.getExpandedFiles();
 
-        await this.createSfgeInputFile(inputFileName, ruleNames, targets, projectFolders);
+        await this.createSfgeInputFile(inputFileName, ruleNames, targetPaths, projectFilePaths);
         const resultsOutputFile: string = path.join(tmpDir, 'resultsFile.json');
         this.emitLogEvent(LogLevel.Info, getMessage('LoggingToFile', logFilePath));
         emitProgress(10);
@@ -167,14 +165,15 @@ function handleRunStdOut(stdOutMsg: string, emitLog: (logLevel: LogLevel, msg: s
             stdOutMsg.length - SFCA_REALTIME_END.length)
         );
         for (const sfgeMessage of sfgeMessages) {
-            const processedMessage = getMessage(sfgeMessage.messageKey, ...sfgeMessage.args);
             if (isSfgeLogMessage(sfgeMessage)) {
                 if (sfgeMessage.messageSeverity === 'TELEMETRY') {
                     // TODO: TELEMETRY
                 } else {
+                    const processedMessage = getMessage(sfgeMessage.messageKey, ...sfgeMessage.args);
                     emitLog(sfgeLogLevelToSfcaLogLevel(sfgeMessage.messageSeverity), processedMessage);
                 }
             } else if (isSfgeProgressMessage(sfgeMessage)) {
+                const processedMessage = getMessage(sfgeMessage.messageKey, ...sfgeMessage.args);
                 const completionPercent: number = sfgeMessage.progressPercent;
                 emitProgress(10 + 85 * completionPercent / 100, processedMessage); // 10%-95%
             }

@@ -25,9 +25,6 @@ const MESSAGE_CATALOG : { [key: string]: string } = {
     info_sfgeMetaInfoCollected:
         `Loaded %s: [ %s ]`,
 
-    info_telemetry:
-        `%s`,
-
     progress_sfgeFinishedCompilingFiles:
         `Compiled %s files.`,
 
