@@ -14,11 +14,7 @@ import {
 } from '@salesforce/code-analyzer-engine-api';
 import {JavaCommandExecutor} from '@salesforce/code-analyzer-engine-api/utils';
 import {getMessage} from './messages';
-import {
-    RuntimeSfgeWrapper,
-    SfgeRuleInfo,
-    SfgeRunResult
-} from "./sfge-wrapper";
+import {RuntimeSfgeWrapper, SfgeRuleInfo, SfgeRunResult} from "./sfge-wrapper";
 import {SfgeEngineConfig} from "./config";
 
 const SFGE_RELEVANT_FILE_EXTENSIONS = ['.cls'];
@@ -145,22 +141,23 @@ export class SfgeEngine extends Engine {
     private toViolation(sfgeViolation: SfgeRunResult): Violation {
         const codeLocations: CodeLocation[] = [{
             file: sfgeViolation.sourceFileName,
-            startLine: Math.max(sfgeViolation.sourceLineNumber, 1),
-            startColumn: Math.max(sfgeViolation.sourceColumnNumber, 1)
+            startLine: sfgeViolation.sourceLineNumber,
+            startColumn: sfgeViolation.sourceColumnNumber
         }];
         if (sfgeViolation.sinkFileName) {
             codeLocations.push({
                 file: sfgeViolation.sinkFileName,
-                startLine: Math.max(sfgeViolation.sinkLineNumber!, 1),
-                startColumn: Math.max(sfgeViolation.sinkColumnNumber!, 1)
+                startLine: sfgeViolation.sinkLineNumber!,
+                startColumn: sfgeViolation.sinkColumnNumber!
             });
         }
-        return {
+        const violation: Violation = {
             ruleName: sfgeViolation.ruleName,
             message: sfgeViolation.message,
             codeLocations,
             primaryLocationIndex: 0
         };
+        return this.adjustCodeLocationsIfNeeded(violation);
     }
 
     private async getRelevantFilesInWorkspace(workspace: Workspace): Promise<string[]> {
@@ -169,6 +166,38 @@ export class SfgeEngine extends Engine {
             this.relevantFilesByWorkspaceId.set(workspace.getWorkspaceId(), relevantFiles);
         }
         return this.relevantFilesByWorkspaceId.get(workspace.getWorkspaceId())!;
+    }
+
+    private adjustCodeLocationsIfNeeded(unadjustedViolation: Violation): Violation {
+        const unadjustedCodeLocations: CodeLocation[] = unadjustedViolation.codeLocations;
+        const adjustedCodeLocations: CodeLocation[] = [];
+        let locationsChanged: boolean = false;
+        for (const unadjustedCodeLocation of unadjustedCodeLocations) {
+            const adjustedCodeLocation: CodeLocation = {
+                file: unadjustedCodeLocation.file,
+                startLine: unadjustedCodeLocation.startLine,
+                startColumn: unadjustedCodeLocation.startColumn
+            };
+            if (adjustedCodeLocation.startLine < 1) {
+                adjustedCodeLocation.startLine = 1;
+                locationsChanged = true;
+            }
+            if (adjustedCodeLocation.startColumn < 1) {
+                adjustedCodeLocation.startColumn = 1;
+                locationsChanged = true;
+            }
+            adjustedCodeLocations.push(adjustedCodeLocation);
+        }
+        const adjustedViolation: Violation = {
+            ruleName: unadjustedViolation.ruleName,
+            message: unadjustedViolation.message,
+            codeLocations: adjustedCodeLocations,
+            primaryLocationIndex: unadjustedViolation.primaryLocationIndex
+        }
+        if (locationsChanged) {
+            this.emitLogEvent(LogLevel.Fine, getMessage('ViolationLocationFudged', JSON.stringify(unadjustedViolation), JSON.stringify(adjustedViolation)));
+        }
+        return adjustedViolation;
     }
 }
 
@@ -181,7 +210,7 @@ function isFileRelevantToSfge(fileName: string): boolean {
 }
 
 function toRuleDescription(sfgeRuleInfo: SfgeRuleInfo): RuleDescription {
-    const tags: string[] = [sfgeRuleInfo.category.replaceAll(' ', ''), DEV_PREVIEW_TAG];
+    const tags: string[] = [DEV_PREVIEW_TAG, sfgeRuleInfo.category.replaceAll(' ', '')];
     if (sfgeRuleInfo.isPilot) {
         tags.push(PILOT_TAG);
     }

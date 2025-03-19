@@ -1,17 +1,34 @@
 {
   "violations": [
     {
+      "ruleName": "RemoveUnusedMethod",
+      "message": "Method StaticBlockInvoker in class SomeClass isn't used in any path from any recognized entry point.",
+      "codeLocations": [
+        {
+          "file": "{{RUNDIR}}SomeClass.cls",
+          "startLine": 1,
+          "startColumn": 1
+        },
+        {
+          "file": "{{RUNDIR}}SomeClass.cls",
+          "startLine": 1,
+          "startColumn": 1
+        }
+      ],
+      "primaryLocationIndex": 0
+    },
+    {
       "ruleName": "ApexFlsViolationRule",
       "message": "FLS validation is missing for [READ] operation on [Account] with field(s) [CustomField__c,Name].",
       "codeLocations": [
         {
           "file": "{{RUNDIR}}SomeClass.cls",
-          "startLine": 5,
+          "startLine": 9,
           "startColumn": 24
         },
         {
           "file": "{{RUNDIR}}SomeClass.cls",
-          "startLine": 11,
+          "startLine": 15,
           "startColumn": 16
         }
       ],
@@ -23,12 +40,12 @@
       "codeLocations": [
         {
           "file": "{{RUNDIR}}SomeClass.cls",
-          "startLine": 5,
+          "startLine": 9,
           "startColumn": 24
         },
         {
           "file": "{{RUNDIR}}SomeClass.cls",
-          "startLine": 11,
+          "startLine": 15,
           "startColumn": 16
         }
       ],

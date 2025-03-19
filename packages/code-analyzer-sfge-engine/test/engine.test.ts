@@ -145,7 +145,7 @@ describe('SfgeEngine', () => {
             engine.onEvent(EventType.LogEvent, (e: LogEvent) => logEvents.push(e));
             const progressEvents: RunRulesProgressEvent[] = [];
             engine.onEvent(EventType.RunRulesProgressEvent, (e: RunRulesProgressEvent) => progressEvents.push(e));
-            const ruleNames: string[] = ['RemoveUnusedMethod'];
+            const ruleNames: string[] = ['UnimplementedTypeRule'];
 
             // ====== TESTED BEHAVIOR ======
             const results: EngineRunResults = await engine.runRules(ruleNames, createRunOptions(workspace));
@@ -161,7 +161,7 @@ describe('SfgeEngine', () => {
             expect(infoLogEvents.length).toBeGreaterThanOrEqual(1);
             expect(infoLogEvents[0].message).toEqual(`SFGE execution logs being written to ${path.join(os.tmpdir(), 'sfge.log')}.`);
             expect(progressEvents.map(pe => pe.percentComplete)).toEqual(
-                [2, 2.3, 4.4, 4.7, 5, 6.86, 14.3, 22.21, 26.16, 34.06, 38.02, 85.45, 93.35, 98, 100]
+                [2, 2.3, 4.4, 4.7, 5, 6.86, 14.3, 22.21, 26.16, 34.06, 85.45, 93.35, 98, 100]
             );
         });
 
@@ -180,7 +180,7 @@ describe('SfgeEngine', () => {
             const workspace: Workspace = new Workspace([path.join(TEST_DATA_FOLDER, 'sampleRelevantWorkspace')]);
             const progressEvents: RunRulesProgressEvent[] = [];
             engine.onEvent(EventType.RunRulesProgressEvent, (e: RunRulesProgressEvent) => progressEvents.push(e));
-            const ruleNames: string[] = ['ApexFlsViolationRule', 'UseWithSharingOnDatabaseOperation'];
+            const ruleNames: string[] = ['ApexFlsViolationRule', 'UseWithSharingOnDatabaseOperation', 'RemoveUnusedMethod'];
 
             // ====== TESTED BEHAVIOR ======
             const results: EngineRunResults = await engine.runRules(ruleNames, createRunOptions(workspace));
@@ -198,7 +198,7 @@ describe('SfgeEngine', () => {
             const workspace: Workspace = new Workspace([path.join(TEST_DATA_FOLDER, 'sampleRelevantWorkspace')]);
             const progressEvents: RunRulesProgressEvent[] = [];
             engine.onEvent(EventType.RunRulesProgressEvent, (e: RunRulesProgressEvent) => progressEvents.push(e));
-            const ruleNames: string[] = ['ApexFlsViolationRule', 'RemoveUnusedMethod'];
+            const ruleNames: string[] = ['ApexFlsViolationRule', 'UnimplementedTypeRule'];
 
             // ====== TESTED BEHAVIOR ======
             const results: EngineRunResults = await engine.runRules(ruleNames, createRunOptions(workspace));
@@ -248,7 +248,7 @@ describe('SfgeEngine', () => {
             const workspace: Workspace = new Workspace([path.join(TEST_DATA_FOLDER, 'sampleRelevantWorkspace', 'SomeClass.cls')]);
             const logEvents: LogEvent[] = [];
             engine.onEvent(EventType.LogEvent, (e: LogEvent) => logEvents.push(e));
-            const ruleNames: string[] = ['ApexFlsViolationRule', 'RemoveUnusedMethod'];
+            const ruleNames: string[] = ['ApexFlsViolationRule'];
 
             // ====== TESTED BEHAVIOR ======
             const results: EngineRunResults = await engine.runRules(ruleNames, createRunOptions(workspace));
