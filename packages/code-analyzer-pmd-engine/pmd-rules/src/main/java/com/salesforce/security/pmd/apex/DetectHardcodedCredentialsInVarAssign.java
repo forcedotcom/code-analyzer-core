@@ -4,27 +4,29 @@ import java.util.List;
 
 import com.salesforce.security.pmd.apex.utils.PMDApexUtils;
 
+import net.sourceforge.pmd.lang.apex.ast.ASTAssignmentExpression;
 import net.sourceforge.pmd.lang.apex.ast.ASTLiteralExpression;
 import net.sourceforge.pmd.lang.apex.ast.ASTMethodCallExpression;
-import net.sourceforge.pmd.lang.apex.ast.ASTVariableDeclaration;
+import net.sourceforge.pmd.lang.apex.ast.ASTVariableExpression;
 import net.sourceforge.pmd.lang.ast.Node;
 
-public class DetectHardCodedCredentialsInVarDecls extends DetectHardCodedCredentialsBase{
-
+public class DetectHardcodedCredentialsInVarAssign extends DetectHardcodedCredentialsBase {
+    
     @Override
-    public Object visit(ASTVariableDeclaration node, Object data) {
+    public Object visit(ASTAssignmentExpression node, Object data) {
 
         if (PMDApexUtils.isTestBlock(node)) {
             return data;
         }
 
-        if (node.getType().compareToIgnoreCase("String") != 0) {
+        ASTVariableExpression varExpression = node.firstChild(ASTVariableExpression.class);
+        if (varExpression == null) {
             return data;
         }
 
-        String varName = node.getImage();
+        String varName = varExpression.getImage();
         String matchedToken = isAnAuthToken(varName);
-        if (matchedToken == null){
+        if (matchedToken == null) {
             return data;
         }
 
@@ -34,6 +36,7 @@ public class DetectHardCodedCredentialsInVarDecls extends DetectHardCodedCredent
             .filterNotMatching(ASTLiteralExpression::getImage, "").toList();
 
         for (ASTLiteralExpression nextStringLiteral: stringLiterals) {
+
             Node parent = nextStringLiteral.getParent();
             if (parent.getClass() == ASTMethodCallExpression.class) {
                 continue;
@@ -45,7 +48,7 @@ public class DetectHardCodedCredentialsInVarDecls extends DetectHardCodedCredent
             }
 
             String violationMessage = String.format(HARDCODED_CREDENTIALS_FOUND_MESSAGE, varName, matchedToken);
-            asCtx(data).addViolationWithMessage(node, violationMessage);
+            asCtx(data).addViolationWithMessage(varExpression, violationMessage);
         }
         return data;
     }

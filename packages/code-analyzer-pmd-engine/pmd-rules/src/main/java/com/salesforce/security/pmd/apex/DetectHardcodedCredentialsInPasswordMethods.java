@@ -8,7 +8,7 @@ import net.sourceforge.pmd.lang.apex.ast.ApexNode;
 import net.sourceforge.pmd.lang.apex.rule.AbstractApexRule;
 import net.sourceforge.pmd.lang.apex.rule.internal.Helper;
 
-public class DetectHardCodedCredentialsInPasswordMethods extends AbstractApexRule {
+public class DetectHardcodedCredentialsInPasswordMethods extends AbstractApexRule {
         private static final String SET_PASSWORD = "setPassword";
         private static final String SYSTEM_SET_PASSWORD = "System.setPassword";
         private static final String SET_PASSWORD_HARD_CODED_PASSWORD = "setPassword invoked with hardcoded password";

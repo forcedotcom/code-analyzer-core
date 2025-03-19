@@ -7,7 +7,7 @@ import com.salesforce.security.pmd.utils.SecretsInPackageUtils;
 
 import net.sourceforge.pmd.lang.apex.rule.AbstractApexRule;
 
-public class DetectHardCodedCredentialsBase extends AbstractApexRule {
+public class DetectHardcodedCredentialsBase extends AbstractApexRule {
     protected static final String HARDCODED_CREDENTIALS_FOUND_MESSAGE =
             "Hard coded credentials assigned to variable: %s "
             + " matched the token: %s";

@@ -129,7 +129,6 @@ public class SecretsInPackageUtils {
 
     public static boolean notAnInterestingString(String value, List<String> listOfStringsToIgnore) {
 		String nextStr = value.strip().toUpperCase();
-        //todo: is below a helpful comment?
 		if (nextStr.length() <= 3) { //Randomly choose 3 ; this can be anything!
 			return true;
 		}

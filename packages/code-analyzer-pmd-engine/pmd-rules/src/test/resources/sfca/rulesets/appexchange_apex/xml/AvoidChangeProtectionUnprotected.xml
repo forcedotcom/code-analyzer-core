@@ -27,7 +27,7 @@ public with sharing class ProtectedObjectController {
         <expected-problems>0</expected-problems>
         <code><![CDATA[
 public with sharing class ProtectedObjectController {
-@AuraEnabled
+    @AuraEnabled
     public static void changeObjectToUnprotected(String objectName){
         try {
             SomeOther.changeProtection(objectName, 'CustomObject', 'Unprotected');

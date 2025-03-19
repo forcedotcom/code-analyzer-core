@@ -16,7 +16,7 @@
         <description>
             Detects potential misuse of FeatureManagement.changeProtection.
         </description>
-        <priority>2</priority>
+        <priority>1</priority>
     </rule>
 
     <rule name="AvoidGetInstanceWithTaint"
@@ -46,13 +46,11 @@
     <rule name="AvoidHardcodedCredentialsInFieldDecls"
           language="apex"
           message="Remove hard-coded credentials from source code."
-          class="com.salesforce.security.pmd.apex.DetectHardCodedCredentialsInFieldDecls"
+          class="com.salesforce.security.pmd.apex.DetectHardcodedCredentialsInFieldDecls"
           externalInfoUrl="https://developer.salesforce.com/docs/platform/salesforce-code-analyzer/guide/rules-pmd-appexchange.html#avoidhardcodedcredentialsinfielddecls"
     >
         <description>
-            Identifies hard-coded credentials in source code that must be protected using Protected Custom metadata or Protected Custom settings.
-            Protected custom settings or protected custom metadata should be used to store secrets.
-            Refer to the [Protect Secrets Using Platform Features](https://trailhead.salesforce.com/content/learn/modules/secure-secrets-storage/protect-secrets-using-platform-features) Trailhead module for more guidance.
+            Identifies hard-coded credentials in source code that must be protected using Protected Custom metadata or Protected Custom settings. Protected custom settings or protected custom metadata should be used to store secrets. Refer to the [Protect Secrets Using Platform Features](https://trailhead.salesforce.com/content/learn/modules/secure-secrets-storage/protect-secrets-using-platform-features) Trailhead module for more guidance.
         </description>
         <priority>3</priority>
     </rule>
@@ -60,13 +58,11 @@
     <rule name="AvoidHardcodedCredentialsInHttpHeader"
           language="apex"
           message="Remove hard-coded credentials from source code."
-          class="com.salesforce.security.pmd.apex.DetectHardCodedCredentialsInHttpRequests"
+          class="com.salesforce.security.pmd.apex.DetectHardcodedCredentialsInHttpRequests"
           externalInfoUrl="https://developer.salesforce.com/docs/platform/salesforce-code-analyzer/guide/rules-pmd-appexchange.html#avoidhardcodedcredentialsinhttpheader"
     >
         <description>
-            Identifies hard-coded credentials in source code that must be protected using Protected Custom metadata or Protected Custom settings.
-            Protected custom settings or protected custom metadata should be used to store secrets.
-            Refer to the [Protect Secrets Using Platform Features](https://trailhead.salesforce.com/content/learn/modules/secure-secrets-storage/protect-secrets-using-platform-features) Trailhead module for more guidance.
+            Identifies hard-coded credentials in source code that must be protected using Protected Custom metadata or Protected Custom settings. Protected custom settings or protected custom metadata should be used to store secrets. Refer to the [Protect Secrets Using Platform Features](https://trailhead.salesforce.com/content/learn/modules/secure-secrets-storage/protect-secrets-using-platform-features) Trailhead module for more guidance.
         </description>
         <priority>3</priority>
     </rule>
@@ -74,7 +70,7 @@
     <rule name="AvoidHardcodedCredentialsInSetPassword"
           language="apex"
           message="Avoid using hard-coded credentials with setPassword"
-          class="com.salesforce.security.pmd.apex.DetectHardCodedCredentialsInPasswordMethods"
+          class="com.salesforce.security.pmd.apex.DetectHardcodedCredentialsInPasswordMethods"
           externalInfoUrl="https://developer.salesforce.com/docs/platform/salesforce-code-analyzer/guide/rules-pmd-appexchange.html#avoidhardcodedcredentialsinsetpassword"
     >
         <description>
@@ -86,13 +82,11 @@
     <rule name="AvoidHardcodedCredentialsInVarAssign"
           language="apex"
           message="Remove hard-coded credentials from source code."
-          class="com.salesforce.security.pmd.apex.DetectHardCodedCredentialsInVarAssign"
+          class="com.salesforce.security.pmd.apex.DetectHardcodedCredentialsInVarAssign"
           externalInfoUrl="https://developer.salesforce.com/docs/platform/salesforce-code-analyzer/guide/rules-pmd-appexchange.html#avoidhardcodedcredentialsinvarassign"
     >
         <description>
-            Identifies hard-coded credentials in source code that must be protected using Protected Custom metadata or Protected Custom settings.
-            Protected custom settings or protected custom metadata should be used to store secrets.
-            Refer to the [Protect Secrets Using Platform Features](https://trailhead.salesforce.com/content/learn/modules/secure-secrets-storage/protect-secrets-using-platform-features) Trailhead module for more guidance.
+            Identifies hard-coded credentials in source code that must be protected using Protected Custom metadata or Protected Custom settings. Protected custom settings or protected custom metadata should be used to store secrets. Refer to the [Protect Secrets Using Platform Features](https://trailhead.salesforce.com/content/learn/modules/secure-secrets-storage/protect-secrets-using-platform-features) Trailhead module for more guidance.
         </description>
         <priority>3</priority>
     </rule>
@@ -100,13 +94,11 @@
     <rule name="AvoidHardcodedCredentialsInVarDecls"
           language="apex"
           message="Remove hard-coded credentials from source code."
-          class="com.salesforce.security.pmd.apex.DetectHardCodedCredentialsInVarDecls"
+          class="com.salesforce.security.pmd.apex.DetectHardcodedCredentialsInVarDecls"
           externalInfoUrl="https://developer.salesforce.com/docs/platform/salesforce-code-analyzer/guide/rules-pmd-appexchange.html#avoidhardcodedcredentialsinvardecls"
     >
         <description>
-            Identifies hard-coded credentials in source code that must be protected using Protected Custom metadata or Protected Custom settings.
-            Protected custom settings or protected custom metadata should be used to store secrets.
-            Refer to the [Protect Secrets Using Platform Features](https://trailhead.salesforce.com/content/learn/modules/secure-secrets-storage/protect-secrets-using-platform-features) Trailhead module for more guidance.
+            Identifies hard-coded credentials in source code that must be protected using Protected Custom metadata or Protected Custom settings. Protected custom settings or protected custom metadata should be used to store secrets. Refer to the [Protect Secrets Using Platform Features](https://trailhead.salesforce.com/content/learn/modules/secure-secrets-storage/protect-secrets-using-platform-features) Trailhead module for more guidance.
         </description>
         <priority>3</priority>
     </rule>
@@ -118,8 +110,7 @@
           externalInfoUrl="https://developer.salesforce.com/docs/platform/salesforce-code-analyzer/guide/rules-pmd-appexchange.html#avoidinvalidcrudcontentdistribution"
     >
         <description>
-            Detects the use of `Schema.DescribeSObjectResult` methods to enforce CRUD check on `ContentDistribution`.
-            Developers should use `USER MODE` operations or use the custom below to enforce CRUD check against the `ContentDistribution` object.
+            Detects the use of `Schema.DescribeSObjectResult` methods to enforce CRUD check on `ContentDistribution`. Developers should use `USER MODE` operations or use the custom below to enforce CRUD check against the `ContentDistribution` object.
         </description>
         <priority>3</priority>
     </rule>

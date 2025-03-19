@@ -12,7 +12,7 @@
 public with sharing class ProtectedCustomSettingsHierarchyCtrl {
     @AuraEnabled
     public static Protected_API_Key_Hierarchy__c getInstanceUserId(Id userId){
-        return Protected_API_Key_Hierarchy__c.getInstance(userId); //NEVER return secrets back to the end user
+        return Protected_API_Key_Hierarchy__c.getInstance(userId); // NEVER return secrets back to the end user
     }
 }
         ]]></code>

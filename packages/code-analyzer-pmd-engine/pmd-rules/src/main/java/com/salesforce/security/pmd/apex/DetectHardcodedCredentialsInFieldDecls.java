@@ -9,7 +9,7 @@ import net.sourceforge.pmd.lang.apex.ast.ASTLiteralExpression;
 import net.sourceforge.pmd.lang.apex.ast.ASTMethodCallExpression;
 import net.sourceforge.pmd.lang.ast.Node;
 
-public class DetectHardCodedCredentialsInFieldDecls	extends DetectHardCodedCredentialsBase {
+public class DetectHardcodedCredentialsInFieldDecls extends DetectHardcodedCredentialsBase {
     @Override
     public Object visit(ASTFieldDeclaration node, Object data) {
 

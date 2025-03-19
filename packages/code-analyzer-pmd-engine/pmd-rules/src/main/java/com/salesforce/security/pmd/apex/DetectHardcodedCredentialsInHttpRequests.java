@@ -13,7 +13,7 @@ import net.sourceforge.pmd.lang.ast.Node;
 import java.util.Arrays;
 import java.util.List;
 
-public class DetectHardCodedCredentialsInHttpRequests extends DetectHardCodedCredentialsBase {
+public class DetectHardcodedCredentialsInHttpRequests extends DetectHardcodedCredentialsBase {
     private static final List<String> HTTP_AUTH_HEADERS = SecretsInPackageUtils.AUTH_FIELD_MAPPINGS_LIST;
     private static final List<String> HTTP_AUTH_HEADER_VALUES_TO_IGNORE = Arrays.asList(SecretsInPackageUtils.STRINGS_TO_IGNORE);
     

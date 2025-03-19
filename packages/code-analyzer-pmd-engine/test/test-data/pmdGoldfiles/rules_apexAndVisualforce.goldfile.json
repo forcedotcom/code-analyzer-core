@@ -221,7 +221,7 @@
   },
   {
     "name": "AvoidChangeProtectionUnprotected",
-    "severityLevel": 2,
+    "severityLevel": 1,
     "tags": [
       "AppExchange",
       "Security",

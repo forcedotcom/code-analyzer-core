@@ -492,7 +492,7 @@ export const RULE_MAPPINGS: Record<string, {severity: SeverityLevel, tags: strin
     //   SFCA-PMD-RULES - APPEXCHANGE APEX RULES
     // =================================================================================================================
     "AvoidChangeProtectionUnprotected": {
-        severity: SeverityLevel.High,
+        severity: SeverityLevel.Critical,
         tags: [/* NOT RECOMMENDED */  APP_EXCHANGE_TAG, COMMON_TAGS.CATEGORIES.SECURITY, COMMON_TAGS.LANGUAGES.APEX]
     },
 
