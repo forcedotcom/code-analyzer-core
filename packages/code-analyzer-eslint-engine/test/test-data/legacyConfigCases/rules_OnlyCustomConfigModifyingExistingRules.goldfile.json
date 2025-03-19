@@ -8,8 +8,8 @@
     "severityLevel": 2,
     "tags": [
       "ErrorProne",
-      "Javascript",
-      "Typescript"
+      "JavaScript",
+      "TypeScript"
     ]
   },
   {
@@ -22,7 +22,7 @@
     "tags": [
       "Recommended",
       "ErrorProne",
-      "Javascript"
+      "JavaScript"
     ]
   },
   {
@@ -35,8 +35,8 @@
     "tags": [
       "Recommended",
       "ErrorProne",
-      "Javascript",
-      "Typescript"
+      "JavaScript",
+      "TypeScript"
     ]
   }
 ]

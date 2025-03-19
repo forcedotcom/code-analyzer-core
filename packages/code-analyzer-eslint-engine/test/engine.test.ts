@@ -44,8 +44,8 @@ describe('Tests for the getName method of ESLintEngine', () => {
 
 describe('Tests for the describeRules method of ESLintEngine', () => {
     const LWC_CONFIG_RULES: RuleDescription[] = loadRuleDescriptions('rules_OnlyLwcBaseConfig.goldfile.json');
-    const JS_CONFIG_RULES: RuleDescription[] = loadRuleDescriptions('rules_OnlyJavascriptBaseConfig.goldfile.json');
-    const TS_CONFIG_RULES: RuleDescription[] = loadRuleDescriptions('rules_OnlyTypescriptBaseConfig.goldfile.json');
+    const JS_CONFIG_RULES: RuleDescription[] = loadRuleDescriptions('rules_OnlyJavaScriptBaseConfig.goldfile.json');
+    const TS_CONFIG_RULES: RuleDescription[] = loadRuleDescriptions('rules_OnlyTypeScriptBaseConfig.goldfile.json');
     const DEFAULT_RULES: RuleDescription[] = makeUniqueAndSorted([...LWC_CONFIG_RULES, ...JS_CONFIG_RULES, ...TS_CONFIG_RULES]);
     const CUSTOM_RULES: RuleDescription[] = loadRuleDescriptions('rules_OnlyCustomConfigWithNewRules.goldfile.json');
 

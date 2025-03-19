@@ -6,7 +6,7 @@
       "Recommended",
       "LWC",
       "ErrorProne",
-      "Javascript"
+      "JavaScript"
     ],
     "description": "disallow usage of \"$A\"",
     "resourceUrls": []
@@ -18,7 +18,7 @@
       "Recommended",
       "LWC",
       "ErrorProne",
-      "Javascript"
+      "JavaScript"
     ],
     "description": "disallow import of Aura libraries",
     "resourceUrls": []
@@ -30,7 +30,7 @@
       "Recommended",
       "LWC",
       "ErrorProne",
-      "Javascript"
+      "JavaScript"
     ],
     "description": "disallow import of Community-only properties",
     "resourceUrls": []
@@ -42,7 +42,7 @@
       "Recommended",
       "LWC",
       "BestPractices",
-      "Javascript"
+      "JavaScript"
     ],
     "description": "disallow import of \"createContextProvider\" from \"lwc\"",
     "resourceUrls": []
@@ -54,7 +54,7 @@
       "Recommended",
       "LWC",
       "BestPractices",
-      "Javascript"
+      "JavaScript"
     ],
     "description": "disallow importing deprecated modules",
     "resourceUrls": []
@@ -66,7 +66,7 @@
       "Recommended",
       "LWC",
       "BestPractices",
-      "Javascript"
+      "JavaScript"
     ],
     "description": "disallow dynamic import with an identifier import(id), import(\"stringLiteral\" + id)",
     "resourceUrls": []
@@ -78,7 +78,7 @@
       "Recommended",
       "LWC",
       "BestPractices",
-      "Javascript"
+      "JavaScript"
     ],
     "description": "disallow inline disablement of ESLint rule",
     "resourceUrls": []
@@ -90,7 +90,7 @@
       "Recommended",
       "LWC",
       "BestPractices",
-      "Javascript"
+      "JavaScript"
     ],
     "description": "disallow import of \"aura\"",
     "resourceUrls": []
@@ -102,7 +102,7 @@
       "Recommended",
       "LWC",
       "BestPractices",
-      "Javascript"
+      "JavaScript"
     ],
     "description": "disallow import of \"createComponent\" from \"aura\"",
     "resourceUrls": []
@@ -114,7 +114,7 @@
       "Recommended",
       "LWC",
       "BestPractices",
-      "Javascript"
+      "JavaScript"
     ],
     "description": "disallow import of \"dispatchGlobalEvent\" from \"aura\"",
     "resourceUrls": []
@@ -126,7 +126,7 @@
       "Recommended",
       "LWC",
       "BestPractices",
-      "Javascript"
+      "JavaScript"
     ],
     "description": "disallow import of \"executeGlobalController\" from \"aura\"",
     "resourceUrls": []
@@ -138,7 +138,7 @@
       "Recommended",
       "LWC",
       "BestPractices",
-      "Javascript"
+      "JavaScript"
     ],
     "description": "disallow import of \"unstable_executeGlobalControllerPrivileged\" from \"aura\"",
     "resourceUrls": []
@@ -150,7 +150,7 @@
       "Recommended",
       "LWC",
       "BestPractices",
-      "Javascript"
+      "JavaScript"
     ],
     "description": "disallow import of \"executeGlobalControllerRawResponse\" from \"aura\"",
     "resourceUrls": []
@@ -162,7 +162,7 @@
       "Recommended",
       "LWC",
       "BestPractices",
-      "Javascript"
+      "JavaScript"
     ],
     "description": "disallow import of \"getEventDef\" from \"aura\"",
     "resourceUrls": []
@@ -174,7 +174,7 @@
       "Recommended",
       "LWC",
       "BestPractices",
-      "Javascript"
+      "JavaScript"
     ],
     "description": "disallow import of \"getModule\" from \"aura\"",
     "resourceUrls": []
@@ -186,7 +186,7 @@
       "Recommended",
       "LWC",
       "BestPractices",
-      "Javascript"
+      "JavaScript"
     ],
     "description": "disallow import of \"isExternalDefinition\" from \"aura\"",
     "resourceUrls": []
@@ -198,7 +198,7 @@
       "Recommended",
       "LWC",
       "BestPractices",
-      "Javascript"
+      "JavaScript"
     ],
     "description": "disallow import of \"unstable_loadComponentDefs\" from \"aura\"",
     "resourceUrls": []
@@ -210,7 +210,7 @@
       "Recommended",
       "LWC",
       "BestPractices",
-      "Javascript"
+      "JavaScript"
     ],
     "description": "disallow import of \"aura-instrumentation\"",
     "resourceUrls": []
@@ -222,7 +222,7 @@
       "Recommended",
       "LWC",
       "BestPractices",
-      "Javascript"
+      "JavaScript"
     ],
     "description": "disallow import of \"aura-storage\"",
     "resourceUrls": []
@@ -234,7 +234,7 @@
       "Recommended",
       "LWC",
       "BestPractices",
-      "Javascript"
+      "JavaScript"
     ],
     "description": "disallow import of \"registerModule\" from \"aura\"",
     "resourceUrls": []
@@ -246,7 +246,7 @@
       "Recommended",
       "LWC",
       "BestPractices",
-      "Javascript"
+      "JavaScript"
     ],
     "description": "disallow import of \"renderComponent\" from \"aura\"",
     "resourceUrls": []
@@ -258,7 +258,7 @@
       "Recommended",
       "LWC",
       "BestPractices",
-      "Javascript"
+      "JavaScript"
     ],
     "description": "disallow import of \"sanitizeDOM\" from \"aura\"",
     "resourceUrls": []
@@ -270,7 +270,7 @@
       "Recommended",
       "LWC",
       "BestPractices",
-      "Javascript"
+      "JavaScript"
     ],
     "description": "restrict usage of the \"process\" global object",
     "resourceUrls": []
@@ -282,7 +282,7 @@
       "Recommended",
       "LWC",
       "ErrorProne",
-      "Javascript"
+      "JavaScript"
     ],
     "description": "disallow import or export from restricted namespaces",
     "resourceUrls": []
@@ -294,7 +294,7 @@
       "Recommended",
       "LWC",
       "ErrorProne",
-      "Javascript"
+      "JavaScript"
     ],
     "description": "disallow import of Site-only properties",
     "resourceUrls": []
@@ -306,7 +306,7 @@
       "Recommended",
       "LWC",
       "ErrorProne",
-      "Javascript"
+      "JavaScript"
     ],
     "description": "disallow import of \"wire-service\"",
     "resourceUrls": []
@@ -318,7 +318,7 @@
       "Recommended",
       "LWC",
       "BestPractices",
-      "Javascript"
+      "JavaScript"
     ],
     "description": "validate hint comment in a dynamic import statement",
     "resourceUrls": []
@@ -330,7 +330,7 @@
       "Recommended",
       "LWC",
       "BestPractices",
-      "Javascript"
+      "JavaScript"
     ],
     "description": "prevent public property reassignments",
     "resourceUrls": [
@@ -344,7 +344,7 @@
       "Recommended",
       "LWC",
       "BestPractices",
-      "Javascript"
+      "JavaScript"
     ],
     "description": "restrict usage of async operations",
     "resourceUrls": [
@@ -358,7 +358,7 @@
       "Recommended",
       "LWC",
       "ErrorProne",
-      "Javascript"
+      "JavaScript"
     ],
     "description": "no attributes during construction",
     "resourceUrls": [
@@ -372,7 +372,7 @@
       "Recommended",
       "LWC",
       "BestPractices",
-      "Javascript"
+      "JavaScript"
     ],
     "description": "disallow usage of deprecated LWC APIs",
     "resourceUrls": [
@@ -386,7 +386,7 @@
       "Recommended",
       "LWC",
       "BestPractices",
-      "Javascript"
+      "JavaScript"
     ],
     "description": "restrict unexpected imports from the lwc package",
     "resourceUrls": [
@@ -400,7 +400,7 @@
       "Recommended",
       "LWC",
       "ErrorProne",
-      "Javascript"
+      "JavaScript"
     ],
     "description": "disallow DOM query at the document level.",
     "resourceUrls": [
@@ -414,7 +414,7 @@
       "Recommended",
       "LWC",
       "Security",
-      "Javascript"
+      "JavaScript"
     ],
     "description": "disallow usage of \"innerHtml\"",
     "resourceUrls": [
@@ -428,7 +428,7 @@
       "Recommended",
       "LWC",
       "ErrorProne",
-      "Javascript"
+      "JavaScript"
     ],
     "description": "disallow public property to start with an upper case character",
     "resourceUrls": [
@@ -442,7 +442,7 @@
       "Recommended",
       "LWC",
       "ErrorProne",
-      "Javascript"
+      "JavaScript"
     ],
     "description": "prevent accessing the immediate children of this.template",
     "resourceUrls": [
@@ -456,7 +456,7 @@
       "Recommended",
       "LWC",
       "BestPractices",
-      "Javascript"
+      "JavaScript"
     ],
     "description": "restrict unexpected wire adapter usages",
     "resourceUrls": [
@@ -470,7 +470,7 @@
       "Recommended",
       "LWC",
       "BestPractices",
-      "Javascript"
+      "JavaScript"
     ],
     "description": "restrict usage of unknown wire adapters",
     "resourceUrls": [
@@ -484,7 +484,7 @@
       "Recommended",
       "LWC",
       "BestPractices",
-      "Javascript"
+      "JavaScript"
     ],
     "description": "suggest usage of \"CustomEvent\" over \"Event\" constructor",
     "resourceUrls": [
@@ -498,7 +498,7 @@
       "Recommended",
       "LWC",
       "ErrorProne",
-      "Javascript"
+      "JavaScript"
     ],
     "description": "validate api decorator usage",
     "resourceUrls": [
@@ -512,7 +512,7 @@
       "Recommended",
       "LWC",
       "ErrorProne",
-      "Javascript"
+      "JavaScript"
     ],
     "description": "validate graphql error callback parameter",
     "resourceUrls": [
@@ -526,7 +526,7 @@
       "Recommended",
       "LWC",
       "ErrorProne",
-      "Javascript"
+      "JavaScript"
     ],
     "description": "validate track decorator usage",
     "resourceUrls": [
@@ -540,7 +540,7 @@
       "Recommended",
       "LWC",
       "ErrorProne",
-      "Javascript"
+      "JavaScript"
     ],
     "description": "validate wire decorator usage",
     "resourceUrls": [
@@ -554,7 +554,7 @@
       "Recommended",
       "LWC",
       "ErrorProne",
-      "Javascript"
+      "JavaScript"
     ],
     "description": "enforce invoking Apex methods with the right arguments",
     "resourceUrls": [
@@ -566,7 +566,7 @@
     "severityLevel": 3,
     "tags": [
       "BestPractices",
-      "Javascript"
+      "JavaScript"
     ],
     "description": "Disallow specified modules when loaded by `import`",
     "resourceUrls": [
