@@ -95,14 +95,14 @@ describe('Tests for the FlowTestEngine', () => {
                     expect(ruleDescriptors[0]).toEqual({
                         name: 'PreventPassingUserDataIntoElementWithoutSharing',
                         severityLevel: SeverityLevel.High,
-                        tags: ['Recommended', 'Security', 'Xml'],
+                        tags: ['Recommended', 'Security', 'XML'],
                         description: 'Avoid passing user data into flow elements in run mode: Without Sharing',
                         resourceUrls: []
                     });
                     expect(ruleDescriptors[1]).toEqual({
                         name: 'PreventPassingUserDataIntoElementWithSharing',
                         severityLevel: SeverityLevel.Low,
-                        tags: ['Recommended', 'Security', 'Xml'],
+                        tags: ['Recommended', 'Security', 'XML'],
                         description: 'Avoid passing user data into flow elements in run mode: With Sharing',
                         resourceUrls: []
                     });
@@ -299,7 +299,7 @@ describe('Tests for the FlowTestEngine', () => {
             const expectedExample4Violation1: Violation = createSharedExample4Violation('AccountId');
 
             const expectedExample4Violation2: Violation = createSharedExample4Violation('SuppliedName');
-            
+
             const expectedExample4Violation3: Violation = {
                 ruleName: "PreventPassingUserDataIntoElementWithoutSharing",
                 message: "User controlled data flows into recordLookups element selector in run mode: SystemModeWithoutSharing",

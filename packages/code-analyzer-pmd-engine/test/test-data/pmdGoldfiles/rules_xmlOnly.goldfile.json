@@ -1,0 +1,195 @@
+[
+    {
+        "name": "AvoidApiSessionId",
+        "severityLevel": 2,
+        "tags": [
+            "AppExchange",
+            "Security",
+            "XML"
+        ],
+        "description": "Detects use of Api.Session_ID or GETSESSIONID() to retrieve a session ID.",
+        "resourceUrls": [
+            "https://developer.salesforce.com/docs/platform/salesforce-code-analyzer/guide/rules-pmd-appexchange.html#avoidapisessionid"
+        ]
+    },
+    {
+        "name": "AvoidAuraWithLockerDisabled",
+        "severityLevel": 1,
+        "tags": [
+            "AppExchange",
+            "Security",
+            "XML"
+        ],
+        "description": "Detects use of API versions with Lightning Locker disabled in Aura components. Use API version 40 or greater.",
+        "resourceUrls": [
+            "https://developer.salesforce.com/docs/platform/salesforce-code-analyzer/guide/rules-pmd-appexchange.html#avoidaurawithlockerdisabled"
+        ]
+    },
+    {
+        "name": "AvoidDisableProtocolSecurityRemoteSiteSetting",
+        "severityLevel": 3,
+        "tags": [
+            "AppExchange",
+            "Security",
+            "XML"
+        ],
+        "description": "Detects if \"Disable Protocol Security\" setting is true.",
+        "resourceUrls": [
+            "https://developer.salesforce.com/docs/platform/salesforce-code-analyzer/guide/rules-pmd-appexchange.html#avoiddisableprotocolsecurityremotesitesetting"
+        ]
+    },
+    {
+        "name": "AvoidInsecureHttpRemoteSiteSetting",
+        "severityLevel": 3,
+        "tags": [
+            "AppExchange",
+            "Security",
+            "XML"
+        ],
+        "description": "Detects instances of a Remote Site Settings that use HTTP. Use HTTPS instead.",
+        "resourceUrls": [
+            "https://developer.salesforce.com/docs/platform/salesforce-code-analyzer/guide/rules-pmd-appexchange.html#avoidinsecurehttpremotesitesetting"
+        ]
+    },
+    {
+        "name": "AvoidJavaScriptCustomObject",
+        "severityLevel": 2,
+        "tags": [
+            "AppExchange",
+            "Security",
+            "XML"
+        ],
+        "description": "Detects use of custom JavaScript actions in custom rules.",
+        "resourceUrls": [
+            "https://developer.salesforce.com/docs/platform/salesforce-code-analyzer/guide/rules-pmd-appexchange.html#avoidjavascriptcustomobject"
+        ]
+    },
+    {
+        "name": "AvoidJavaScriptHomePageComponent",
+        "severityLevel": 2,
+        "tags": [
+            "AppExchange",
+            "Security",
+            "XML"
+        ],
+        "description": "Detects use of custom JavaScript actions in home page components.",
+        "resourceUrls": [
+            "https://developer.salesforce.com/docs/platform/salesforce-code-analyzer/guide/rules-pmd-appexchange.html#avoidjavascripthomepagecomponent"
+        ]
+    },
+    {
+        "name": "AvoidJavaScriptInUrls",
+        "severityLevel": 1,
+        "tags": [
+            "AppExchange",
+            "Security",
+            "XML"
+        ],
+        "description": "Detects use of JavaScript-style URLs (javascript:) in components, such as web links and buttons. Avoid JavaScript-style URLs in managed packages.",
+        "resourceUrls": [
+            "https://developer.salesforce.com/docs/platform/salesforce-code-analyzer/guide/rules-pmd-appexchange.html#avoidjavascriptinurls"
+        ]
+    },
+    {
+        "name": "AvoidJavaScriptWebLink",
+        "severityLevel": 2,
+        "tags": [
+            "AppExchange",
+            "Security",
+            "XML"
+        ],
+        "description": "Detects use of custom JavaScript actions in web links.",
+        "resourceUrls": [
+            "https://developer.salesforce.com/docs/platform/salesforce-code-analyzer/guide/rules-pmd-appexchange.html#avoidjavascriptweblink"
+        ]
+    },
+    {
+        "name": "AvoidLmcIsExposedTrue",
+        "severityLevel": 2,
+        "tags": [
+            "AppExchange",
+            "Security",
+            "XML"
+        ],
+        "description": "Detects a Lightning Message Channel with isExposed=true, which isn’t allowed in managed packages.",
+        "resourceUrls": [
+            "https://developer.salesforce.com/docs/platform/salesforce-code-analyzer/guide/rules-pmd-appexchange.html#avoidlmcisexposedtrue"
+        ]
+    },
+    {
+        "name": "AvoidSControls",
+        "severityLevel": 1,
+        "tags": [
+            "AppExchange",
+            "Security",
+            "XML"
+        ],
+        "description": "Detects if S-Controls are used since they should not be used in managed packages.",
+        "resourceUrls": [
+            "https://developer.salesforce.com/docs/platform/salesforce-code-analyzer/guide/rules-pmd-appexchange.html#avoidscontrols"
+        ]
+    },
+    {
+        "name": "LimitConnectedAppScope",
+        "severityLevel": 3,
+        "tags": [
+            "AppExchange",
+            "Security",
+            "XML"
+        ],
+        "description": "Detects if a connected app uses full scope instead of limited scope. Explain this use case in your AppExchange security review submission.",
+        "resourceUrls": [
+            "https://developer.salesforce.com/docs/platform/salesforce-code-analyzer/guide/rules-pmd-appexchange.html#limitconnectedappscope"
+        ]
+    },
+    {
+        "name": "MissingEncoding",
+        "severityLevel": 3,
+        "tags": [
+            "BestPractices",
+            "XML"
+        ],
+        "description": "When the character encoding is missing from the XML declaration, the parser may produce garbled text. This is completely dependent on how the parser is set up and the content of the XML file, so it may be hard to reproduce. Providing an explicit encoding ensures accurate and consistent parsing.",
+        "resourceUrls": [
+            "https://docs.pmd-code.org/pmd-doc-{{PMD_VERSION}}/pmd_rules_xml_bestpractices.html#missingencoding"
+        ]
+    },
+    {
+        "name": "MistypedCDATASection",
+        "severityLevel": 3,
+        "tags": [
+            "ErrorProne",
+            "XML"
+        ],
+        "description": "An XML CDATA section begins with a <![CDATA[ marker, which has only one [, and ends with a ]]> marker, which has two ].",
+        "resourceUrls": [
+            "https://docs.pmd-code.org/pmd-doc-{{PMD_VERSION}}/pmd_rules_xml_errorprone.html#mistypedcdatasection"
+        ]
+    },
+    {
+        "name": "ProtectSensitiveData",
+        "severityLevel": 3,
+        "tags": [
+            "AppExchange",
+            "Security",
+            "XML"
+        ],
+        "description": "Detects where sensitive data must be stored with Protected Custom metadata or Protected Custom settings. Protected custom settings or protected custom metadata should be used to store secrets. Refer to the \"Protect Secrets Using Platform Features\" Trailhead module for more guidance.",
+        "resourceUrls": [
+            "https://developer.salesforce.com/docs/platform/salesforce-code-analyzer/guide/rules-pmd-appexchange.html#protectsensitivedata"
+        ]
+    },
+    {
+        "name": "UseHttpsCallbackUrlConnectedApp",
+        "severityLevel": 3,
+        "tags": [
+            "AppExchange",
+            "Security",
+            "XML"
+        ],
+        "description": "Detects instances of an OAuth callback URL that uses HTTP. Use HTTPS instead.",
+        "resourceUrls": [
+            "https://developer.salesforce.com/docs/platform/salesforce-code-analyzer/guide/rules-pmd-appexchange.html#usehttpscallbackurlconnectedapp"
+        ]
+    }
+]

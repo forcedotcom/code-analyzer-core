@@ -74,7 +74,7 @@ const EXPECTED_AvoidOldSalesforceApiVersions_RULE_DESCRIPTION: RuleDescription =
     name: "AvoidOldSalesforceApiVersions",
     description: getMessage('AvoidOldSalesforceApiVersionsRuleDescription'),
     severityLevel: SeverityLevel.High,
-    tags: ['Recommended', 'Security', 'Xml'],
+    tags: ['Recommended', 'Security', 'XML'],
     resourceUrls: []
 }
 

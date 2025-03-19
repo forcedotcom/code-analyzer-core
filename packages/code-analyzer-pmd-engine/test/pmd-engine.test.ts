@@ -34,6 +34,27 @@ describe('Tests for the getName method of PmdEngine', () => {
 
 
 describe('Tests for the describeRules method of PmdEngine', () => {
+    let EXPECTED_APEX_RULE_DESCRIPTIONS: RuleDescription[];
+    let EXPECTED_HTML_RULE_DESCRIPTIONS: RuleDescription[];
+    let EXPECTED_JAVASCRIPT_RULE_DESCRIPTIONS: RuleDescription[];
+    let EXPECTED_VISUALFORCE_RULE_DESCRIPTIONS: RuleDescription[];
+    let EXPECTED_XML_RULE_DESCRIPTIONS: RuleDescription[];
+    let EXPECTED_ALL_RULE_DESCRIPTIONS: RuleDescription[];
+
+    beforeAll(async () => {
+        EXPECTED_APEX_RULE_DESCRIPTIONS = await getExpectedRulesFromGoldFile('rules_apexOnly.goldfile.json');
+        EXPECTED_HTML_RULE_DESCRIPTIONS = await getExpectedRulesFromGoldFile('rules_htmlOnly.goldfile.json');
+        EXPECTED_JAVASCRIPT_RULE_DESCRIPTIONS = await getExpectedRulesFromGoldFile('rules_javascriptOnly.goldfile.json');
+        EXPECTED_VISUALFORCE_RULE_DESCRIPTIONS = await getExpectedRulesFromGoldFile('rules_visualforceOnly.goldfile.json');
+        EXPECTED_XML_RULE_DESCRIPTIONS = await getExpectedRulesFromGoldFile('rules_xmlOnly.goldfile.json');
+        EXPECTED_ALL_RULE_DESCRIPTIONS = sortRulesByName([
+            ...EXPECTED_APEX_RULE_DESCRIPTIONS,
+            ...EXPECTED_HTML_RULE_DESCRIPTIONS,
+            ...EXPECTED_JAVASCRIPT_RULE_DESCRIPTIONS,
+            ...EXPECTED_VISUALFORCE_RULE_DESCRIPTIONS,
+            ...EXPECTED_XML_RULE_DESCRIPTIONS]);
+    });
+
     it('When using defaults without workspace, then all language rules are returned', async () => {
         const engine: PmdEngine = new PmdEngine(DEFAULT_PMD_ENGINE_CONFIG);
         const logEvents: LogEvent[] = [];
@@ -42,7 +63,7 @@ describe('Tests for the describeRules method of PmdEngine', () => {
         engine.onEvent(EventType.DescribeRulesProgressEvent, (e: DescribeRulesProgressEvent) => progressEvents.push(e));
 
         const ruleDescriptions: RuleDescription[] = await engine.describeRules(createDescribeOptions());
-        await expectRulesToMatchGoldFile(ruleDescriptions, 'rules_allLanguages.goldfile.json');
+        expect(ruleDescriptions).toEqual(EXPECTED_ALL_RULE_DESCRIPTIONS);
 
         // Also check that we have fine logs with the argument list and the duration in milliseconds
         const fineLogEvents: LogEvent[] = logEvents.filter(e => e.logLevel === LogLevel.Fine);
@@ -64,7 +85,7 @@ describe('Tests for the describeRules method of PmdEngine', () => {
             path.join(TEST_DATA_FOLDER, 'samplePmdWorkspace', 'dummy.cls')
         ]);
         const ruleDescriptions: RuleDescription[] = await engine.describeRules(createDescribeOptions(workspace));
-        await expectRulesToMatchGoldFile(ruleDescriptions, 'rules_apexOnly.goldfile.json');
+        expect(ruleDescriptions).toEqual(EXPECTED_APEX_RULE_DESCRIPTIONS);
     });
 
     it('When using defaults with workspace containing only apex and visualforce code, then only apex and visualforce rules are returned', async () => {
@@ -74,7 +95,11 @@ describe('Tests for the describeRules method of PmdEngine', () => {
             path.join(TEST_DATA_FOLDER, 'samplePmdWorkspace', 'dummy.page')
         ]);
         const ruleDescriptions: RuleDescription[] = await engine.describeRules(createDescribeOptions(workspace));
-        await expectRulesToMatchGoldFile(ruleDescriptions, 'rules_apexAndVisualforce.goldfile.json');
+        const expectedRuleDescriptions: RuleDescription[] = sortRulesByName([
+            ... EXPECTED_APEX_RULE_DESCRIPTIONS,
+            ... EXPECTED_VISUALFORCE_RULE_DESCRIPTIONS
+        ]);
+        expect(ruleDescriptions).toEqual(expectedRuleDescriptions);
     });
 
     it('When using defaults with workspace containing only apex and text files, then only apex rules are returned', async () => {
@@ -84,7 +109,7 @@ describe('Tests for the describeRules method of PmdEngine', () => {
             path.join(TEST_DATA_FOLDER, 'samplePmdWorkspace', 'dummy.txt')
         ]);
         const ruleDescriptions: RuleDescription[] = await engine.describeRules(createDescribeOptions(workspace));
-        await expectRulesToMatchGoldFile(ruleDescriptions, 'rules_apexOnly.goldfile.json');
+        expect(ruleDescriptions).toEqual(EXPECTED_APEX_RULE_DESCRIPTIONS);
     });
 
     it('When using defaults with workspace containing only visualforce code, then only visualforce rules are returned', async () => {
@@ -93,7 +118,7 @@ describe('Tests for the describeRules method of PmdEngine', () => {
             path.join(TEST_DATA_FOLDER, 'samplePmdWorkspace', 'dummy.page')
         ]);
         const ruleDescriptions: RuleDescription[] = await engine.describeRules(createDescribeOptions(workspace));
-        await expectRulesToMatchGoldFile(ruleDescriptions, 'rules_visualforceOnly.goldfile.json');
+        expect(ruleDescriptions).toEqual(EXPECTED_VISUALFORCE_RULE_DESCRIPTIONS);
     });
 
     it('When using defaults with workspace containing no supported files, then no rules are returned', async () => {
@@ -111,7 +136,7 @@ describe('Tests for the describeRules method of PmdEngine', () => {
             rule_languages: PMD_AVAILABLE_LANGUAGES
         });
         const ruleDescriptions: RuleDescription[] = await engine.describeRules(createDescribeOptions());
-        await expectRulesToMatchGoldFile(ruleDescriptions, 'rules_allLanguages.goldfile.json');
+        expect(ruleDescriptions).toEqual(EXPECTED_ALL_RULE_DESCRIPTIONS);
 
         // SANITY CHECK THAT NO RULES IN PMD HAVE A '-' CHARACTER IN ITS NAME SINCE IT IS WHAT WE USE TO MAKE UNIQUE NAMES
         expectNoDashesAppearOutsideOfOurLanguageSpecificRules(ruleDescriptions);
@@ -139,7 +164,7 @@ describe('Tests for the describeRules method of PmdEngine', () => {
             path.join(TEST_DATA_FOLDER, 'samplePmdWorkspace', 'dummy.js')
         ]);
         const ruleDescriptions: RuleDescription[] = await engine.describeRules(createDescribeOptions(workspace));
-        await expectRulesToMatchGoldFile(ruleDescriptions, 'rules_javascriptOnly.goldfile.json');
+        expect(ruleDescriptions).toEqual(EXPECTED_JAVASCRIPT_RULE_DESCRIPTIONS);
     });
 
     it('When adding a custom rulesets from disk, then the custom rules are added to the rule descriptions', async () => {
@@ -300,17 +325,14 @@ describe('Tests for the describeRules method of PmdEngine', () => {
             path.join(TEST_DATA_FOLDER, 'samplePmdWorkspace', 'sampleViolations', 'WhileLoopsMustUseBraces.txt')
         ]);
         const ruleDescriptions: RuleDescription[] = await engine.describeRules(createDescribeOptions(workspace));
-
-        await expectRulesToMatchGoldFile(ruleDescriptions, 'rules_javascriptOnly.goldfile.json');
+        expect(ruleDescriptions).toEqual(EXPECTED_JAVASCRIPT_RULE_DESCRIPTIONS);
     });
 });
 
-async function expectRulesToMatchGoldFile(actualRuleDescriptions: RuleDescription[], relativeExpectedFile: string): Promise<void> {
-    const actualRuleDescriptionsJsonString: string = JSON.stringify(actualRuleDescriptions, undefined, 2);
-    let expectedRuleDescriptionsJsonString: string = await fs.promises.readFile(
-        path.join(TEST_DATA_FOLDER, 'pmdGoldfiles', relativeExpectedFile), 'utf-8');
-    expectedRuleDescriptionsJsonString = expectedRuleDescriptionsJsonString.replaceAll('{{PMD_VERSION}}', PMD_VERSION);
-    expect(actualRuleDescriptionsJsonString).toEqual(expectedRuleDescriptionsJsonString);
+async function getExpectedRulesFromGoldFile(relativeExpectedFile: string): Promise<RuleDescription[]> {
+    const expectedRulesJsonStr: string =  (await fs.promises.readFile(path.join(TEST_DATA_FOLDER, 'pmdGoldfiles', relativeExpectedFile), 'utf-8'))
+        .replaceAll('{{PMD_VERSION}}', PMD_VERSION);
+    return JSON.parse(expectedRulesJsonStr) as RuleDescription[];
 }
 
 function expectContainsRuleWithName(ruleDescriptions: RuleDescription[], ruleName: string): RuleDescription {
@@ -626,4 +648,8 @@ function createRunOptions(workspace: Workspace): RunOptions {
         logFolder: os.tmpdir(),
         workspace: workspace
     }
+}
+
+function sortRulesByName(ruleDescriptions: RuleDescription[]): RuleDescription[] {
+    return ruleDescriptions.sort((a, b) => a.name.localeCompare(b.name));
 }

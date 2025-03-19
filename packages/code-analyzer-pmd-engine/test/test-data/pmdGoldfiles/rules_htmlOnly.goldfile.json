@@ -1,0 +1,64 @@
+[
+    {
+        "name": "AvoidUnescapedHtmlInAura",
+        "severityLevel": 2,
+        "tags": [
+            "AppExchange",
+            "Security",
+            "HTML"
+        ],
+        "description": "Detects use of aura:unescapedHtml,which should be used cautiously. Developers should ensure that the unescapedHtml should not use tainted input to protect against XSS.",
+        "resourceUrls": [
+            "https://developer.salesforce.com/docs/platform/salesforce-code-analyzer/guide/rules-pmd-appexchange.html#avoidunescapedhtmlinaura"
+        ]
+    },
+    {
+        "name": "AvoidHardCodedCredentialsInAura",
+        "severityLevel": 2,
+        "tags": [
+            "AppExchange",
+            "Security",
+            "HTML"
+        ],
+        "description": "Detects use of hard coded credentials in Aura components.",
+        "resourceUrls": [
+            "https://developer.salesforce.com/docs/platform/salesforce-code-analyzer/guide/rules-pmd-appexchange.html#avoidhardcodedcredentialsinaura"
+        ]
+    },
+    {
+        "name": "AvoidInlineStyles",
+        "severityLevel": 4,
+        "tags": [
+            "BestPractices",
+            "HTML"
+        ],
+        "description": "Don't mix content and style. Use separate CSS-files for the style and introduce classes. This helps to reuse common styles.",
+        "resourceUrls": [
+            "https://docs.pmd-code.org/pmd-doc-{{PMD_VERSION}}/pmd_rules_html_bestpractices.html#avoidinlinestyles"
+        ]
+    },
+    {
+        "name": "UnnecessaryTypeAttribute",
+        "severityLevel": 3,
+        "tags": [
+            "BestPractices",
+            "HTML"
+        ],
+        "description": "In HTML5 the explicit type attribute for link and script elements is not needed. Modern browsers expect stylesheets to be in CSS and scripts to use JavaScript.",
+        "resourceUrls": [
+            "https://docs.pmd-code.org/pmd-doc-{{PMD_VERSION}}/pmd_rules_html_bestpractices.html#unnecessarytypeattribute"
+        ]
+    },
+    {
+        "name": "UseAltAttributeForImages",
+        "severityLevel": 3,
+        "tags": [
+            "BestPractices",
+            "HTML"
+        ],
+        "description": "Always use an \"alt\" attribute for images. This provides an alternative text and is extensively used by screen readers.",
+        "resourceUrls": [
+            "https://docs.pmd-code.org/pmd-doc-{{PMD_VERSION}}/pmd_rules_html_bestpractices.html#usealtattributeforimages"
+        ]
+    }
+]

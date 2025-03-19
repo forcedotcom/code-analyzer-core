@@ -70,18 +70,18 @@ export const COMMON_TAGS = {
         APEX: "Apex",
 
         /** Rules that analyze files that have HTML code */
-        HTML: "Html",
+        HTML: "HTML",
 
         /** Rules that analyze files that have JavaScript code */
-        JAVASCRIPT: "Javascript",
+        JAVASCRIPT: "JavaScript",
 
         /** Rules that analyze files that have TypeScript code */
-        TYPESCRIPT: "Typescript",
+        TYPESCRIPT: "TypeScript",
 
         /** Rules that analyze files that have Visualforce code */
         VISUALFORCE: "Visualforce",
 
         /** Rules that analyze files that have XML code */
-        XML: "Xml"
+        XML: "XML"
     }
 }
