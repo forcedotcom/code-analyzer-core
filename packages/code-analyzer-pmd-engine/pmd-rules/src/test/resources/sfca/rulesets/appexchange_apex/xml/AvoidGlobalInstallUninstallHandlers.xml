@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<test-data
+    xmlns="http://pmd.sourceforge.net/rule-tests"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://pmd.sourceforge.net/rule-tests http://pmd.sourceforge.net/rule-tests_1_0_0.xsd">
+
+    <test-code>
+        <description>When the InstallHandler interface is extended on a global class, then report a violation</description>
+        <expected-problems>1</expected-problems>
+        <expected-linenumbers>1</expected-linenumbers>
+        <code><![CDATA[
+global class PackageInstallHandler implements InstallHandler {
+    global void onInstall(InstallContext context) {
+        //code to run onInstall
+    }
+}
+        ]]></code>
+    </test-code>
+    <test-code>
+        <description>When the InstallHandler interface is extended on a public class, then do not report a violation</description>
+        <expected-problems>0</expected-problems>
+        <code><![CDATA[
+public class PackageInstallHandler implements InstallHandler{
+    public void onInstall(InstallContext context) {
+        //code to run onInstall
+    }
+}
+        ]]></code>
+    <test-code>
+        <description>When the UninstallHandler interface is extended on a global class, then report a violation</description>
+        <expected-problems>1</expected-problems>
+        <expected-linenumbers>1</expected-linenumbers>
+        <code><![CDATA[
+global with sharing class PackageUninstallHandler implements UninstallHandler{
+    global void onUninstall(UninstallContext context) {
+        //code to run onUninstall
+    }
+}
+        ]]></code>
+    </test-code>
+    </test-code>
+
+    <test-code>
+        <description>When the UninstallHandler interface is extended on a public class, then do not report a violation</description>
+        <expected-problems>0</expected-problems>
+        <code><![CDATA[
+public with sharing class PackageUninstallHandler implements UninstallHandler{
+    public void onUninstall(UninstallContext context) {
+        //code to run onUninstall
+    }
+}
+        ]]></code>
+    </test-code>
+</test-data>

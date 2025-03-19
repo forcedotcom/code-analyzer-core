@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<test-data
+    xmlns="http://pmd.sourceforge.net/rule-tests"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://pmd.sourceforge.net/rule-tests http://pmd.sourceforge.net/rule-tests_1_0_0.xsd">
+
+    <test-code>
+        <description>When Schema.DescribeSObjectResult CRUD check is used on ContentDistribution, then report a violation</description>
+        <expected-problems>4</expected-problems>
+        <expected-linenumbers>3,6,9,12</expected-linenumbers>
+        <code><![CDATA[
+public with sharing class ContentDistributionCheck {
+    public void hasAccess(){
+        if(Schema.SObjectType.ContentDistribution.isCreateable()){
+            System.debug('User has INSERT access on ContentDistribution Object');
+        }
+        if(Schema.SObjectType.ContentDistribution.isAccessible()){
+            System.debug('User has READ access on ContentDistribution Object');
+        }
+        if(Schema.SObjectType.ContentDistribution.isUpdateable()){
+            System.debug('User has UPDATE access on ContentDistribution Object');
+        }
+        if(Schema.SObjectType.ContentDistribution.isDeletable()){
+            System.debug('User has DELETE access on ContentDistribution Object');
+        }
+    }
+}
+        ]]></code>
+    </test-code>
+</test-data>

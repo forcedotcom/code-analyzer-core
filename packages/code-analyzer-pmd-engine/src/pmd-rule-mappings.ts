@@ -486,5 +486,73 @@ export const RULE_MAPPINGS: Record<string, {severity: SeverityLevel, tags: strin
     "UseHttpsCallbackUrlConnectedApp": {
         severity: SeverityLevel.Moderate,
         tags: [/* NOT RECOMMENDED */  APP_EXCHANGE_TAG, COMMON_TAGS.CATEGORIES.SECURITY, COMMON_TAGS.LANGUAGES.XML]
+    },
+
+    // =================================================================================================================
+    //   SFCA-PMD-RULES - APPEXCHANGE APEX RULES
+    // =================================================================================================================
+    "AvoidChangeProtectionUnprotected": {
+        severity: SeverityLevel.Critical,
+        tags: [/* NOT RECOMMENDED */  APP_EXCHANGE_TAG, COMMON_TAGS.CATEGORIES.SECURITY, COMMON_TAGS.LANGUAGES.APEX]
+    },
+
+    "AvoidGetInstanceWithTaint": {
+        severity: SeverityLevel.Moderate,
+        tags: [/* NOT RECOMMENDED */  APP_EXCHANGE_TAG, COMMON_TAGS.CATEGORIES.SECURITY, COMMON_TAGS.LANGUAGES.APEX]
+    },
+
+    "AvoidGlobalInstallUninstallHandlers": {
+        severity: SeverityLevel.Critical,
+        tags: [/* NOT RECOMMENDED */  APP_EXCHANGE_TAG, COMMON_TAGS.CATEGORIES.SECURITY, COMMON_TAGS.LANGUAGES.APEX]
+    },
+
+    "AvoidHardcodedCredentialsInFieldDecls": {
+        severity: SeverityLevel.Moderate,
+        tags: [/* NOT RECOMMENDED */  APP_EXCHANGE_TAG, COMMON_TAGS.CATEGORIES.SECURITY, COMMON_TAGS.LANGUAGES.APEX]
+    },
+
+    "AvoidHardcodedCredentialsInHttpHeader": {
+        severity: SeverityLevel.Moderate,
+        tags: [/* NOT RECOMMENDED */  APP_EXCHANGE_TAG, COMMON_TAGS.CATEGORIES.SECURITY, COMMON_TAGS.LANGUAGES.APEX]
+    },
+
+    "AvoidHardcodedCredentialsInSetPassword": {
+        severity: SeverityLevel.Critical,
+        tags: [/* NOT RECOMMENDED */  APP_EXCHANGE_TAG, COMMON_TAGS.CATEGORIES.SECURITY, COMMON_TAGS.LANGUAGES.APEX]
+    },
+
+    "AvoidHardcodedCredentialsInVarAssign": {
+        severity: SeverityLevel.Moderate,
+        tags: [/* NOT RECOMMENDED */  APP_EXCHANGE_TAG, COMMON_TAGS.CATEGORIES.SECURITY, COMMON_TAGS.LANGUAGES.APEX]
+    },
+
+    "AvoidHardcodedCredentialsInVarDecls": {
+        severity: SeverityLevel.Moderate,
+        tags: [/* NOT RECOMMENDED */  APP_EXCHANGE_TAG, COMMON_TAGS.CATEGORIES.SECURITY, COMMON_TAGS.LANGUAGES.APEX]
+    },
+
+    "AvoidInvalidCrudContentDistribution": {
+        severity: SeverityLevel.Moderate,
+        tags: [/* NOT RECOMMENDED */  APP_EXCHANGE_TAG, COMMON_TAGS.CATEGORIES.SECURITY, COMMON_TAGS.LANGUAGES.APEX]
+    },
+
+    "AvoidSecurityEnforcedOldApiVersion": {
+        severity: SeverityLevel.Moderate,
+        tags: [/* NOT RECOMMENDED */  APP_EXCHANGE_TAG, COMMON_TAGS.CATEGORIES.SECURITY, COMMON_TAGS.LANGUAGES.APEX]
+    },
+
+    "AvoidUnauthorizedApiSessionIdInApex": {
+        severity: SeverityLevel.Moderate,
+        tags: [/* NOT RECOMMENDED */  APP_EXCHANGE_TAG, COMMON_TAGS.CATEGORIES.SECURITY, COMMON_TAGS.LANGUAGES.APEX]
+    },
+
+    "AvoidUnauthorizedGetSessionIdInApex": {
+        severity: SeverityLevel.Moderate,
+        tags: [/* NOT RECOMMENDED */  APP_EXCHANGE_TAG, COMMON_TAGS.CATEGORIES.SECURITY, COMMON_TAGS.LANGUAGES.APEX]
+    },
+
+    "AvoidUnsafePasswordManagementUse": {
+        severity: SeverityLevel.Critical,
+        tags: [/* NOT RECOMMENDED */  APP_EXCHANGE_TAG, COMMON_TAGS.CATEGORIES.SECURITY, COMMON_TAGS.LANGUAGES.APEX]
     }
 }

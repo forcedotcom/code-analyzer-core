@@ -258,6 +258,19 @@
     ]
   },
   {
+    "name": "AvoidChangeProtectionUnprotected",
+    "severityLevel": 1,
+    "tags": [
+      "AppExchange",
+      "Security",
+      "Apex"
+    ],
+    "description": "Detects potential misuse of FeatureManagement.changeProtection.",
+    "resourceUrls": [
+      "https://developer.salesforce.com/docs/platform/salesforce-code-analyzer/guide/rules-pmd-appexchange.html#avoidchangeprotectionunprotected"
+    ]
+  },
+  {
     "name": "AvoidConsoleStatements",
     "severityLevel": 3,
     "tags": [
@@ -322,6 +335,32 @@
     ]
   },
   {
+    "name": "AvoidGetInstanceWithTaint",
+    "severityLevel": 3,
+    "tags": [
+      "AppExchange",
+      "Security",
+      "Apex"
+    ],
+    "description": "Detects use of getInstance(userId)/getInstance(profileId). Hierarchy Custom Settings return the record owned by the current user when getInstance() is invoked without any parameters. But if a tainted or end-user controlled userId or profileId is passed as a parameter to getInstance() that will allow the code to access records owned by other users on... Learn more: https://developer.salesforce.com/docs/platform/salesforce-code-analyzer/guide/rules-pmd-appexchange.html#avoidgetinstancewithtaint",
+    "resourceUrls": [
+      "https://developer.salesforce.com/docs/platform/salesforce-code-analyzer/guide/rules-pmd-appexchange.html#avoidgetinstancewithtaint"
+    ]
+  },
+  {
+    "name": "AvoidGlobalInstallUninstallHandlers",
+    "severityLevel": 1,
+    "tags": [
+      "AppExchange",
+      "Security",
+      "Apex"
+    ],
+    "description": "Detects Install and Uninstall handlers declared as global. Install and Uninstall Handlers don't need to be global classes. Using global for these handlers means global methods in these classes act as controllers and can be invoked by untrusted code outside the context of post-install/uninstall scenarios. Depending on the logic in these... Learn more: https://developer.salesforce.com/docs/platform/salesforce-code-analyzer/guide/rules-pmd-appexchange.html#avoidglobalinstalluninstallhandlers",
+    "resourceUrls": [
+      "https://developer.salesforce.com/docs/platform/salesforce-code-analyzer/guide/rules-pmd-appexchange.html#avoidglobalinstalluninstallhandlers"
+    ]
+  },
+  {
     "name": "AvoidGlobalModifier",
     "severityLevel": 3,
     "tags": [
@@ -345,6 +384,71 @@
     "description": "Detects use of hard coded credentials in Aura components.",
     "resourceUrls": [
       "https://developer.salesforce.com/docs/platform/salesforce-code-analyzer/guide/rules-pmd-appexchange.html#avoidhardcodedcredentialsinaura"
+    ]
+  },
+  {
+    "name": "AvoidHardcodedCredentialsInFieldDecls",
+    "severityLevel": 3,
+    "tags": [
+      "AppExchange",
+      "Security",
+      "Apex"
+    ],
+    "description": "Identifies hard-coded credentials in source code that must be protected using Protected Custom metadata or Protected Custom settings. Protected custom settings or protected custom metadata should be used to store secrets. Refer to the Protect Secrets Using Platform Features Trailhead module for more guidance.",
+    "resourceUrls": [
+      "https://developer.salesforce.com/docs/platform/salesforce-code-analyzer/guide/rules-pmd-appexchange.html#avoidhardcodedcredentialsinfielddecls"
+    ]
+  },
+  {
+    "name": "AvoidHardcodedCredentialsInHttpHeader",
+    "severityLevel": 3,
+    "tags": [
+      "AppExchange",
+      "Security",
+      "Apex"
+    ],
+    "description": "Identifies hard-coded credentials in source code that must be protected using Protected Custom metadata or Protected Custom settings. Protected custom settings or protected custom metadata should be used to store secrets. Refer to the Protect Secrets Using Platform Features Trailhead module for more guidance.",
+    "resourceUrls": [
+      "https://developer.salesforce.com/docs/platform/salesforce-code-analyzer/guide/rules-pmd-appexchange.html#avoidhardcodedcredentialsinhttpheader"
+    ]
+  },
+  {
+    "name": "AvoidHardcodedCredentialsInSetPassword",
+    "severityLevel": 1,
+    "tags": [
+      "AppExchange",
+      "Security",
+      "Apex"
+    ],
+    "description": "Detects hard-coded credentials in the call to setPassword().",
+    "resourceUrls": [
+      "https://developer.salesforce.com/docs/platform/salesforce-code-analyzer/guide/rules-pmd-appexchange.html#avoidhardcodedcredentialsinsetpassword"
+    ]
+  },
+  {
+    "name": "AvoidHardcodedCredentialsInVarAssign",
+    "severityLevel": 3,
+    "tags": [
+      "AppExchange",
+      "Security",
+      "Apex"
+    ],
+    "description": "Identifies hard-coded credentials in source code that must be protected using Protected Custom metadata or Protected Custom settings. Protected custom settings or protected custom metadata should be used to store secrets. Refer to the Protect Secrets Using Platform Features Trailhead module for more guidance.",
+    "resourceUrls": [
+      "https://developer.salesforce.com/docs/platform/salesforce-code-analyzer/guide/rules-pmd-appexchange.html#avoidhardcodedcredentialsinvarassign"
+    ]
+  },
+  {
+    "name": "AvoidHardcodedCredentialsInVarDecls",
+    "severityLevel": 3,
+    "tags": [
+      "AppExchange",
+      "Security",
+      "Apex"
+    ],
+    "description": "Identifies hard-coded credentials in source code that must be protected using Protected Custom metadata or Protected Custom settings. Protected custom settings or protected custom metadata should be used to store secrets. Refer to the Protect Secrets Using Platform Features Trailhead module for more guidance.",
+    "resourceUrls": [
+      "https://developer.salesforce.com/docs/platform/salesforce-code-analyzer/guide/rules-pmd-appexchange.html#avoidhardcodedcredentialsinvardecls"
     ]
   },
   {
@@ -383,6 +487,19 @@
     "description": "Detects instances of a Remote Site Settings that use HTTP. Use HTTPS instead.",
     "resourceUrls": [
       "https://developer.salesforce.com/docs/platform/salesforce-code-analyzer/guide/rules-pmd-appexchange.html#avoidinsecurehttpremotesitesetting"
+    ]
+  },
+  {
+    "name": "AvoidInvalidCrudContentDistribution",
+    "severityLevel": 3,
+    "tags": [
+      "AppExchange",
+      "Security",
+      "Apex"
+    ],
+    "description": "Detects the use of `Schema.DescribeSObjectResult` methods to enforce CRUD check on `ContentDistribution`. Developers should use `USER MODE` operations or use the custom below to enforce CRUD check against the `ContentDistribution` object.",
+    "resourceUrls": [
+      "https://developer.salesforce.com/docs/platform/salesforce-code-analyzer/guide/rules-pmd-appexchange.html#avoidinvalidcrudcontentdistribution"
     ]
   },
   {
@@ -503,6 +620,19 @@
     ]
   },
   {
+    "name": "AvoidSecurityEnforcedOldApiVersion",
+    "severityLevel": 3,
+    "tags": [
+      "AppExchange",
+      "Security",
+      "Apex"
+    ],
+    "description": "Detects use of WITH SECURITY_ENFORCED in API version less than 48.0",
+    "resourceUrls": [
+      "https://developer.salesforce.com/docs/platform/salesforce-code-analyzer/guide/rules-pmd-appexchange.html#avoidsecurityenforcedoldapiversion"
+    ]
+  },
+  {
     "name": "AvoidStatefulDatabaseResult",
     "severityLevel": 3,
     "tags": [
@@ -528,6 +658,32 @@
     ]
   },
   {
+    "name": "AvoidUnauthorizedApiSessionIdInApex",
+    "severityLevel": 3,
+    "tags": [
+      "AppExchange",
+      "Security",
+      "Apex"
+    ],
+    "description": "Detects use of ${API.Session_Id} to retrieve a session ID. For more guidance on approved use cases, read the Session Id Guidance document.",
+    "resourceUrls": [
+      "https://developer.salesforce.com/docs/platform/salesforce-code-analyzer/guide/rules-pmd-appexchange.html#avoidunauthorizedapisessionidinapex"
+    ]
+  },
+  {
+    "name": "AvoidUnauthorizedGetSessionIdInApex",
+    "severityLevel": 3,
+    "tags": [
+      "AppExchange",
+      "Security",
+      "Apex"
+    ],
+    "description": "Detects use of UserInfo.getSessionId() to retrieve a session ID. For more guidance on approved use cases, read the Session Id Guidance document.",
+    "resourceUrls": [
+      "https://developer.salesforce.com/docs/platform/salesforce-code-analyzer/guide/rules-pmd-appexchange.html#avoidunauthorizedgetsessionidinapex"
+    ]
+  },
+  {
     "name": "AvoidUnescapedHtmlInAura",
     "severityLevel": 2,
     "tags": [
@@ -538,6 +694,19 @@
     "description": "Detects use of aura:unescapedHtml,which should be used cautiously. Developers should ensure that the unescapedHtml should not use tainted input to protect against XSS.",
     "resourceUrls": [
       "https://developer.salesforce.com/docs/platform/salesforce-code-analyzer/guide/rules-pmd-appexchange.html#avoidunescapedhtmlinaura"
+    ]
+  },
+  {
+    "name": "AvoidUnsafePasswordManagementUse",
+    "severityLevel": 1,
+    "tags": [
+      "AppExchange",
+      "Security",
+      "Apex"
+    ],
+    "description": "Detects where System.setPassword() exists in Apex code. Use this method with caution.",
+    "resourceUrls": [
+      "https://developer.salesforce.com/docs/platform/salesforce-code-analyzer/guide/rules-pmd-appexchange.html#avoidunsafepasswordmanagementuse"
     ]
   },
   {

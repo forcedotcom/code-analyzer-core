@@ -1,0 +1,166 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ruleset name="AppExchange_apex"
+         xmlns="http://pmd.sourceforge.net/ruleset/2.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://pmd.sourceforge.net/ruleset/2.0.0 https://pmd.sourceforge.io/ruleset_2_0_0.xsd">
+
+    <description>AppExchange Security Rules for Apex Language</description>
+
+
+    <rule name="AvoidChangeProtectionUnprotected"
+          language="apex"
+          message="Ensure appropriate authorization checks are in-place before invoking FeatureManagement.changeProtection called with 'Unprotected' argument."
+          class="com.salesforce.security.pmd.apex.DangerousChangeProtectionMethods" 
+          externalInfoUrl="https://developer.salesforce.com/docs/platform/salesforce-code-analyzer/guide/rules-pmd-appexchange.html#avoidchangeprotectionunprotected"
+    >
+        <description>
+            Detects potential misuse of FeatureManagement.changeProtection.
+        </description>
+        <priority>1</priority>
+    </rule>
+
+    <rule name="AvoidGetInstanceWithTaint"
+          language="apex"
+          message="Ensure getInstance() is not invoked with a potentially tainted parameter."
+          class="com.salesforce.security.pmd.apex.CustomSettingsGetInstanceMisuse"
+          externalInfoUrl="https://developer.salesforce.com/docs/platform/salesforce-code-analyzer/guide/rules-pmd-appexchange.html#avoidgetinstancewithtaint"
+    >
+        <description>
+            Detects use of getInstance(userId)/getInstance(profileId). Hierarchy Custom Settings return the record owned by the current user when getInstance() is invoked without any parameters. But if a tainted or end-user controlled userId or profileId is passed as a parameter to getInstance() that will allow the code to access records owned by other users on the org. Protected Custom Settings are the recommended approach to store subscriber owned secrets. Passing userId or profileId parameters to getInstance() could allow a user access to secrets that belong other other users on the org.
+        </description>
+        <priority>3</priority>
+    </rule>
+
+    <rule name="AvoidGlobalInstallUninstallHandlers"
+          language="apex"
+          message="Install and Uninstall handlers should be public and not global" 
+          class="com.salesforce.security.pmd.apex.GlobalInstallHandler"
+          externalInfoUrl="https://developer.salesforce.com/docs/platform/salesforce-code-analyzer/guide/rules-pmd-appexchange.html#avoidglobalinstalluninstallhandlers"
+    >
+        <description>
+            Detects Install and Uninstall handlers declared as global. Install and Uninstall Handlers don't need to be global classes. Using global for these handlers means global methods in these classes act as controllers and can be invoked by untrusted code outside the context of post-install/uninstall scenarios. Depending on the logic in these handlers, there could be unintended consequences. Sometimes post-install handlers are used to generate an encryption key to be stored in a protected custom settings object. But if the classes are global, then other untrusted code in the org can invoke the global method and the encryption key may be over-written. Helper classes for post-install handlers are recommended to be used "without sharing" - which is acceptable in the context of post-install execution; but could lead to potential security concerns if "without sharing" classes are invoked by untrusted code.
+        </description>
+        <priority>1</priority>
+    </rule>
+
+    <rule name="AvoidHardcodedCredentialsInFieldDecls"
+          language="apex"
+          message="Remove hard-coded credentials from source code."
+          class="com.salesforce.security.pmd.apex.DetectHardcodedCredentialsInFieldDecls"
+          externalInfoUrl="https://developer.salesforce.com/docs/platform/salesforce-code-analyzer/guide/rules-pmd-appexchange.html#avoidhardcodedcredentialsinfielddecls"
+    >
+        <description>
+            Identifies hard-coded credentials in source code that must be protected using Protected Custom metadata or Protected Custom settings. Protected custom settings or protected custom metadata should be used to store secrets. Refer to the [Protect Secrets Using Platform Features](https://trailhead.salesforce.com/content/learn/modules/secure-secrets-storage/protect-secrets-using-platform-features) Trailhead module for more guidance.
+        </description>
+        <priority>3</priority>
+    </rule>
+
+    <rule name="AvoidHardcodedCredentialsInHttpHeader"
+          language="apex"
+          message="Remove hard-coded credentials from source code."
+          class="com.salesforce.security.pmd.apex.DetectHardcodedCredentialsInHttpRequests"
+          externalInfoUrl="https://developer.salesforce.com/docs/platform/salesforce-code-analyzer/guide/rules-pmd-appexchange.html#avoidhardcodedcredentialsinhttpheader"
+    >
+        <description>
+            Identifies hard-coded credentials in source code that must be protected using Protected Custom metadata or Protected Custom settings. Protected custom settings or protected custom metadata should be used to store secrets. Refer to the [Protect Secrets Using Platform Features](https://trailhead.salesforce.com/content/learn/modules/secure-secrets-storage/protect-secrets-using-platform-features) Trailhead module for more guidance.
+        </description>
+        <priority>3</priority>
+    </rule>
+
+    <rule name="AvoidHardcodedCredentialsInSetPassword"
+          language="apex"
+          message="Avoid using hard-coded credentials with setPassword"
+          class="com.salesforce.security.pmd.apex.DetectHardcodedCredentialsInPasswordMethods"
+          externalInfoUrl="https://developer.salesforce.com/docs/platform/salesforce-code-analyzer/guide/rules-pmd-appexchange.html#avoidhardcodedcredentialsinsetpassword"
+    >
+        <description>
+            Detects hard-coded credentials in the call to setPassword().
+        </description>
+        <priority>3</priority>
+    </rule>
+
+    <rule name="AvoidHardcodedCredentialsInVarAssign"
+          language="apex"
+          message="Remove hard-coded credentials from source code."
+          class="com.salesforce.security.pmd.apex.DetectHardcodedCredentialsInVarAssign"
+          externalInfoUrl="https://developer.salesforce.com/docs/platform/salesforce-code-analyzer/guide/rules-pmd-appexchange.html#avoidhardcodedcredentialsinvarassign"
+    >
+        <description>
+            Identifies hard-coded credentials in source code that must be protected using Protected Custom metadata or Protected Custom settings. Protected custom settings or protected custom metadata should be used to store secrets. Refer to the [Protect Secrets Using Platform Features](https://trailhead.salesforce.com/content/learn/modules/secure-secrets-storage/protect-secrets-using-platform-features) Trailhead module for more guidance.
+        </description>
+        <priority>3</priority>
+    </rule>
+
+    <rule name="AvoidHardcodedCredentialsInVarDecls"
+          language="apex"
+          message="Remove hard-coded credentials from source code."
+          class="com.salesforce.security.pmd.apex.DetectHardcodedCredentialsInVarDecls"
+          externalInfoUrl="https://developer.salesforce.com/docs/platform/salesforce-code-analyzer/guide/rules-pmd-appexchange.html#avoidhardcodedcredentialsinvardecls"
+    >
+        <description>
+            Identifies hard-coded credentials in source code that must be protected using Protected Custom metadata or Protected Custom settings. Protected custom settings or protected custom metadata should be used to store secrets. Refer to the [Protect Secrets Using Platform Features](https://trailhead.salesforce.com/content/learn/modules/secure-secrets-storage/protect-secrets-using-platform-features) Trailhead module for more guidance.
+        </description>
+        <priority>3</priority>
+    </rule>
+
+    <rule name="AvoidInvalidCrudContentDistribution"
+          language="apex"
+          message="Do not use Schema.DescribeSObjectResult methods to enforce CRUD check on ContentDistribution" 
+          class="com.salesforce.security.pmd.apex.DetectInvalidCRUDContentDistribution" 
+          externalInfoUrl="https://developer.salesforce.com/docs/platform/salesforce-code-analyzer/guide/rules-pmd-appexchange.html#avoidinvalidcrudcontentdistribution"
+    >
+        <description>
+            Detects the use of `Schema.DescribeSObjectResult` methods to enforce CRUD check on `ContentDistribution`. Developers should use `USER MODE` operations or use the custom below to enforce CRUD check against the `ContentDistribution` object.
+        </description>
+        <priority>3</priority>
+    </rule>
+
+    <rule name="AvoidSecurityEnforcedOldApiVersion"
+          language="apex"
+          message="WITH SECURITY_ENFORCED is used with API version lower than 48.0"
+          class="com.salesforce.security.pmd.apex.DetectInsecureUseOfWithSecurityEnforced"
+          externalInfoUrl="https://developer.salesforce.com/docs/platform/salesforce-code-analyzer/guide/rules-pmd-appexchange.html#avoidsecurityenforcedoldapiversion"
+    >
+        <description>
+            Detects use of WITH SECURITY_ENFORCED in API version less than 48.0
+        </description>
+        <priority>3</priority>
+    </rule>
+
+    <rule name="AvoidUnauthorizedApiSessionIdInApex"
+          language="apex"
+          message="Use of Session Id might not be authorized."
+          class="com.salesforce.security.pmd.apex.UnauthorizedUseOfApiSessionId" 
+          externalInfoUrl="https://developer.salesforce.com/docs/platform/salesforce-code-analyzer/guide/rules-pmd-appexchange.html#avoidunauthorizedapisessionidinapex"
+    >
+        <description>
+            Detects use of ${API.Session_Id} to retrieve a session ID. For more guidance on approved use cases, read the [Session Id Guidance](https://partners.salesforce.com/sfc/servlet.shepherd/version/download/0684V00000O83jT?asPdf=false) document.
+        </description>
+        <priority>3</priority>
+    </rule>
+
+    <rule name="AvoidUnauthorizedGetSessionIdInApex"
+          language="apex"
+          message="Use of Session Id might not be authorized."
+          class="com.salesforce.security.pmd.apex.UnauthorizedUseOfGetSessionId" 
+          externalInfoUrl="https://developer.salesforce.com/docs/platform/salesforce-code-analyzer/guide/rules-pmd-appexchange.html#avoidunauthorizedgetsessionidinapex"
+    >
+        <description>
+            Detects use of UserInfo.getSessionId() to retrieve a session ID. For more guidance on approved use cases, read the [Session Id Guidance](https://partners.salesforce.com/sfc/servlet.shepherd/version/download/0684V00000O83jT?asPdf=false) document.
+        </description>
+        <priority>3</priority>
+    </rule>
+
+    <rule name="AvoidUnsafePasswordManagementUse"
+          language="apex"
+          message="Before invoking password related methods in Apex, perform necessary authorization checks." 
+          class="com.salesforce.security.pmd.apex.DangerousPasswordMethods"
+          externalInfoUrl="https://developer.salesforce.com/docs/platform/salesforce-code-analyzer/guide/rules-pmd-appexchange.html#avoidunsafepasswordmanagementuse"
+    >
+        <description>
+            Detects where System.setPassword() exists in Apex code. Use this method with caution.
+        </description>
+        <priority>1</priority>
+    </rule>
+
+</ruleset>

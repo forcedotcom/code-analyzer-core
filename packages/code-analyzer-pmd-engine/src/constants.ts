@@ -68,7 +68,8 @@ export const DEFAULT_FILE_EXTENSIONS: Record<Language, string[]> = {
 // which rulesets we have bundled inside our sfca-pmd-rules jar file.
 export const SFCA_RULESETS_TO_MAKE_AVAILABLE: string[] = [
     "sfca/rulesets/AppExchange_html.xml",
-    "sfca/rulesets/AppExchange_xml.xml"
+    "sfca/rulesets/AppExchange_xml.xml",
+    "sfca/rulesets/AppExchange_apex.xml"
 ];
 
 // This object lists all the PMD rule names that are shared across languages which helps us map back and forth to unique names
