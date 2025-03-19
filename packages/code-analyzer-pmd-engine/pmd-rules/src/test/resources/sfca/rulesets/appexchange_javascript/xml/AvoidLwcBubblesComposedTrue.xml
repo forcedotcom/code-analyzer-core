@@ -20,8 +20,8 @@ export default class LwcNoteCreateModal extends LightningElement {
         this.dispatchEvent(selected);
     }
 }
- ]]></code>
- </test-code>
+        ]]></code>
+    </test-code>
     <test-code>
         <description>When either bubbles or composed attributes are set, then do not report a violation</description>
         <expected-problems>0</expected-problems>
@@ -36,6 +36,6 @@ export default class LwcNoteCreateModal extends LightningElement {
         this.dispatchEvent(selected);
     }
 }
- ]]></code>
- </test-code>
+        ]]></code>
+    </test-code>
 </test-data>
