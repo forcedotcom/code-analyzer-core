@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ruleset name="AppExchange_html"
+         xmlns="http://pmd.sourceforge.net/ruleset/2.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://pmd.sourceforge.net/ruleset/2.0.0 https://pmd.sourceforge.io/ruleset_2_0_0.xsd">
+    <description>AppExchange Security Rules for JavaScript (ECMAScript) Language</description>
+
+    <rule name="AvoidLwcBubblesComposedTrue"
+          language="ecmascript"
+          class="net.sourceforge.pmd.lang.rule.xpath.XPathRule"
+          message="Avoid setting both Lightning Web component bubbles and composed=true at the same time."
+          externalInfoUrl="https://developer.salesforce.com/docs/platform/salesforce-code-analyzer/guide/rules-pmd-appexchange.html#avoidlwcbubblescomposedtrue">
+        <description>
+            Detects Lightning Web Component event configurations where bubbles and composed are both set to true. To avoid sharing sensitive information unintentionally, use this configuration with caution.
+        </description>
+        <priority>3</priority>
+        <properties>
+            <property name="xpath">
+                <value><![CDATA[
+//ObjectLiteral[
+ObjectProperty/Name[@Identifier="bubbles"]/parent::ObjectProperty/KeywordLiteral[@Literal="true"]
+and
+ObjectProperty/Name[@Identifier="composed"]/parent::ObjectProperty/KeywordLiteral[@Literal="true"]
+]
+                ]]>
+				</value>
+            </property>
+        </properties>
+    </rule>
+
+</ruleset>

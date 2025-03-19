@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<test-data
+    xmlns="http://pmd.sourceforge.net/rule-tests"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://pmd.sourceforge.net/rule-tests http://pmd.sourceforge.net/rule-tests_1_0_0.xsd">
+
+    <test-code>
+        <description>When bubbles and composed attributes are both set, then report a violation</description>
+        <expected-problems>1</expected-problems>
+        <expected-linenumbers>4</expected-linenumbers>
+        <code><![CDATA[
+import { LightningElement } from 'lwc';
+export default class LwcNoteCreateModal extends LightningElement {
+    handleSelected (event) {
+        const selected = new CustomEvent('selected', {
+            bubbles: true,
+            composed: true,
+            detail: event.detail
+        });
+        this.dispatchEvent(selected);
+    }
+}
+        ]]></code>
+    </test-code>
+    <test-code>
+        <description>When either bubbles or composed attributes are set, then do not report a violation</description>
+        <expected-problems>0</expected-problems>
+        <code><![CDATA[
+import { LightningElement } from 'lwc';
+export default class LwcNoteCreateModal extends LightningElement {
+    handleSelected (event) {
+        const selected = new CustomEvent('selected', {
+            bubbles: true,
+            detail: event.detail
+        });
+        this.dispatchEvent(selected);
+    }
+}
+        ]]></code>
+    </test-code>
+</test-data>

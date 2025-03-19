@@ -24,6 +24,19 @@
     ]
   },
   {
+    "name": "AvoidLwcBubblesComposedTrue",
+    "severityLevel": 3,
+    "tags": [
+      "AppExchange",
+      "Security",
+      "Javascript"
+    ],
+    "description": "Detects Lightning Web Component event configurations where bubbles and composed are both set to true. To avoid sharing sensitive information unintentionally, use this configuration with caution.",
+    "resourceUrls": [
+      "https://developer.salesforce.com/docs/platform/salesforce-code-analyzer/guide/rules-pmd-appexchange.html#avoidlwcbubblescomposedtrue"
+    ]
+  },
+  {
     "name": "AvoidTrailingComma",
     "severityLevel": 2,
     "tags": [
