@@ -14,7 +14,7 @@ const MESSAGE_CATALOG : { [key: string]: string } = {
         `The SfgeEnginePlugin does not support an engine with the name '%s'.`,
 
     WorkspaceAppearsIncomplete:
-        `Specified workspace is missing %d possibly-relevant file(s) in %s. SFGE results may be incomplete or incorrect.`,
+        `Specified workspace is missing %d possibly-relevant file(s) from the folder %s. Salesforce Graph Engine may be unable to create a complete graph of your project without all apex files included in your workspace. This may result in incomplete or incorrect results.`,
 
     LoggingToFile:
         `SFGE execution logs being written to %s.`,

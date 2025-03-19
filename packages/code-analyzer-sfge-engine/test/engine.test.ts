@@ -257,7 +257,7 @@ describe('SfgeEngine', () => {
             await expectResultsToMatchGoldfile(results, 'ApexFlsViolationRule_sampleRelevantWorkspace_violations.goldfile.json', path.join(TEST_DATA_FOLDER, 'sampleRelevantWorkspace'));
             const warningLogEvents: LogEvent[] = logEvents.filter(e => e.logLevel === LogLevel.Warn);
             expect(warningLogEvents.length).toBeGreaterThanOrEqual(1);
-            expect(warningLogEvents[0].message).toEqual(`Specified workspace is missing 1 possibly-relevant file(s) in ${path.join(TEST_DATA_FOLDER, 'sampleRelevantWorkspace')}. SFGE results may be incomplete or incorrect.`);
+            expect(warningLogEvents[0].message).toContain(`Specified workspace is missing 1 possibly-relevant file(s) from the folder ${path.join(TEST_DATA_FOLDER, 'sampleRelevantWorkspace')}.`);
         });
     });
 })
