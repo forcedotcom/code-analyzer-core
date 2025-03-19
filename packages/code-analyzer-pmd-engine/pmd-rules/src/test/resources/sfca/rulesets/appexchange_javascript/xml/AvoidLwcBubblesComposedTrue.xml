@@ -9,14 +9,14 @@
         <expected-problems>1</expected-problems>
         <expected-linenumbers>4</expected-linenumbers>
         <code><![CDATA[
-import { LightningElement} from 'lwc';
+import { LightningElement } from 'lwc';
 export default class LwcNoteCreateModal extends LightningElement {
- handleSelected (event) {
-    const selected = new CustomEvent('selected', {
-      bubbles: true,
-      composed: true,
-      detail: event.detail
-    });
+    handleSelected (event) {
+      const selected = new CustomEvent('selected', {
+        bubbles: true,
+        composed: true,
+        detail: event.detail
+      });
     this.dispatchEvent(selected);
   }
 }
