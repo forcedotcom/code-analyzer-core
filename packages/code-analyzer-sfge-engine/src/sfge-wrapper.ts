@@ -4,8 +4,7 @@ import os from 'node:os';
 import {
     getMessageFromCatalog,
     LogLevel,
-    SHARED_MESSAGE_CATALOG,
-    Workspace
+    SHARED_MESSAGE_CATALOG
 } from '@salesforce/code-analyzer-engine-api';
 import {createTempDir, JavaCommandExecutor} from '@salesforce/code-analyzer-engine-api/utils';
 import {getMessage} from "./messages";
