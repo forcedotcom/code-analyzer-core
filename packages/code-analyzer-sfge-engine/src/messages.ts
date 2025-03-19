@@ -19,10 +19,15 @@ const MESSAGE_CATALOG : { [key: string]: string } = {
     LoggingToFile:
         `SFGE execution logs being written to %s.`,
 
+    ViolationLocationFudged:
+        `Fudged a violation's location for compatibility.\n` +
+        `  Before: %s\n` +
+        `  After: %s\n`,
+
     debug_sfgeInfoLog:
         `%s`,
 
-    info_sfgeMetaInfoCollected:
+    debug_sfgeMetaInfoCollected:
         `Loaded %s: [ %s ]`,
 
     progress_sfgeFinishedCompilingFiles:

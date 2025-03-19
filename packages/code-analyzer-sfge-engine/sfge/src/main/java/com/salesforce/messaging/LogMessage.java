@@ -54,7 +54,7 @@ public class LogMessage {
 
     public enum LogEventKey {
         DEBUG_GENERAL("debug_sfgeInfoLog", 1, MessageSeverity.DEBUG),
-        META_INFO_COLLECTED("info_sfgeMetaInfoCollected", 2, MessageSeverity.INFO),
+        DEBUG_METAINFO_COLLECTED("debug_sfgeMetaInfoCollected", 2, MessageSeverity.DEBUG),
         WARNING_GENERAL("warning_sfgeWarnLog", 1, MessageSeverity.WARNING),
         WARNING_MULTIPLE_METHOD_TARGET_MATCHES("warning_multipleMethodTargetMatches", 3, MessageSeverity.WARNING),
         WARNING_NO_METHOD_TARGET_MATCHES("warning_noMethodTargetMatches", 2, MessageSeverity.WARNING),

@@ -14,14 +14,12 @@ import {
 } from '@salesforce/code-analyzer-engine-api';
 import {JavaCommandExecutor} from '@salesforce/code-analyzer-engine-api/utils';
 import {getMessage} from './messages';
-import {
-    RuntimeSfgeWrapper,
-    SfgeRuleInfo,
-    SfgeRunResult
-} from "./sfge-wrapper";
+import {RuntimeSfgeWrapper, SfgeRuleInfo, SfgeRunResult} from "./sfge-wrapper";
 import {SfgeEngineConfig} from "./config";
 
 const SFGE_RELEVANT_FILE_EXTENSIONS = ['.cls'];
+const DEV_PREVIEW_TAG: string = 'DevPreview';
+const PILOT_TAG: string = 'Pilot';
 
 export class SfgeEngine extends Engine {
     public static readonly NAME: string = 'sfge';
@@ -153,12 +151,13 @@ export class SfgeEngine extends Engine {
                 startColumn: sfgeViolation.sinkColumnNumber!
             });
         }
-        return {
+        const violation: Violation = {
             ruleName: sfgeViolation.ruleName,
             message: sfgeViolation.message,
             codeLocations,
             primaryLocationIndex: 0
         };
+        return this.adjustCodeLocationsIfNeeded(violation);
     }
 
     private async getRelevantFilesInWorkspace(workspace: Workspace): Promise<string[]> {
@@ -167,6 +166,38 @@ export class SfgeEngine extends Engine {
             this.relevantFilesByWorkspaceId.set(workspace.getWorkspaceId(), relevantFiles);
         }
         return this.relevantFilesByWorkspaceId.get(workspace.getWorkspaceId())!;
+    }
+
+    private adjustCodeLocationsIfNeeded(unadjustedViolation: Violation): Violation {
+        const unadjustedCodeLocations: CodeLocation[] = unadjustedViolation.codeLocations;
+        const adjustedCodeLocations: CodeLocation[] = [];
+        let locationsChanged: boolean = false;
+        for (const unadjustedCodeLocation of unadjustedCodeLocations) {
+            const adjustedCodeLocation: CodeLocation = {
+                file: unadjustedCodeLocation.file,
+                startLine: unadjustedCodeLocation.startLine,
+                startColumn: unadjustedCodeLocation.startColumn
+            };
+            if (adjustedCodeLocation.startLine < 1) {
+                adjustedCodeLocation.startLine = 1;
+                locationsChanged = true;
+            }
+            if (adjustedCodeLocation.startColumn < 1) {
+                adjustedCodeLocation.startColumn = 1;
+                locationsChanged = true;
+            }
+            adjustedCodeLocations.push(adjustedCodeLocation);
+        }
+        const adjustedViolation: Violation = {
+            ruleName: unadjustedViolation.ruleName,
+            message: unadjustedViolation.message,
+            codeLocations: adjustedCodeLocations,
+            primaryLocationIndex: unadjustedViolation.primaryLocationIndex
+        }
+        if (locationsChanged) {
+            this.emitLogEvent(LogLevel.Fine, getMessage('ViolationLocationFudged', JSON.stringify(unadjustedViolation), JSON.stringify(adjustedViolation)));
+        }
+        return adjustedViolation;
     }
 }
 
@@ -179,10 +210,15 @@ function isFileRelevantToSfge(fileName: string): boolean {
 }
 
 function toRuleDescription(sfgeRuleInfo: SfgeRuleInfo): RuleDescription {
+    const tags: string[] = [DEV_PREVIEW_TAG, sfgeRuleInfo.category.replaceAll(' ', '')];
+    if (sfgeRuleInfo.isPilot) {
+        tags.push(PILOT_TAG);
+    }
+    tags.push(COMMON_TAGS.LANGUAGES.APEX);
     return {
         name: sfgeRuleInfo.name,
         severityLevel: sfgeRuleInfo.severity,
-        tags: [COMMON_TAGS.LANGUAGES.APEX, sfgeRuleInfo.category.replaceAll(' ', '')],
+        tags,
         description: getMessage('DeveloperPreviewRuleNotification', sfgeRuleInfo.description),
         resourceUrls: [] // TODO: Once URLs are in their v5 state, start using them here.
     }

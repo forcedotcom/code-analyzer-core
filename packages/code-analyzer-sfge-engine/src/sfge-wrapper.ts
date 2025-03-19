@@ -206,9 +206,9 @@ function sfgeLogLevelToSfcaLogLevel(sfgeLogLevel: string): LogLevel {
         // istanbul ignore next
         case 'warning':
             return LogLevel.Warn;
+        // istanbul ignore next
         case 'info':
             return LogLevel.Info;
-        // istanbul ignore next
         case 'debug':
             return LogLevel.Debug;
         // istanbul ignore next
