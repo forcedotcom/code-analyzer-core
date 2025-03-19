@@ -22,7 +22,7 @@ const MESSAGE_CATALOG : { [key: string]: string } = {
     debug_sfgeInfoLog:
         `%s`,
 
-    info_sfgeMetaInfoCollected:
+    debug_sfgeMetaInfoCollected:
         `Loaded %s: [ %s ]`,
 
     progress_sfgeFinishedCompilingFiles:

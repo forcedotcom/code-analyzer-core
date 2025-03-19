@@ -49,7 +49,7 @@ public class ProgressListenerImpl implements ProgressListener {
     @Override
     public void collectedMetaInfo(String metaInfoType, TreeSet<String> itemsCollected) {
         final String items = stringify(itemsCollected);
-        CliMessager.postLogMessage("Meta information collected", LogMessage.LogEventKey.META_INFO_COLLECTED, metaInfoType, items);
+        CliMessager.postLogMessage("Meta information collected", LogMessage.LogEventKey.DEBUG_METAINFO_COLLECTED, metaInfoType, items);
     }
 
     @Override
@@ -96,7 +96,7 @@ public class ProgressListenerImpl implements ProgressListener {
         violationsDetected += violations.size();
         entryPointsAnalyzed++;
         int progressMultiplier = COMPLETED_PATH_ANALYSIS_COMPLETION_PERCENT - PATH_ENTRY_POINTS_IDENTIFIED_COMPLETION_PERCENT;
-        double percentageOfEntryPointsAnalyzed = entryPointsAnalyzed * 100.0 / totalEntryPoints;
+        double percentageOfEntryPointsAnalyzed = (double) entryPointsAnalyzed / (double) totalEntryPoints;
         int completionPercent = (int) Math.round(percentageOfEntryPointsAnalyzed * progressMultiplier) + PATH_ENTRY_POINTS_IDENTIFIED_COMPLETION_PERCENT;
 
         // Make a post only if we have more paths detected than the progress increments

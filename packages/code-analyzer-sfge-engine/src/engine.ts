@@ -22,6 +22,8 @@ import {
 import {SfgeEngineConfig} from "./config";
 
 const SFGE_RELEVANT_FILE_EXTENSIONS = ['.cls'];
+const DEV_PREVIEW_TAG: string = 'DevPreview';
+const PILOT_TAG: string = 'Pilot';
 
 export class SfgeEngine extends Engine {
     public static readonly NAME: string = 'sfge';
@@ -143,14 +145,14 @@ export class SfgeEngine extends Engine {
     private toViolation(sfgeViolation: SfgeRunResult): Violation {
         const codeLocations: CodeLocation[] = [{
             file: sfgeViolation.sourceFileName,
-            startLine: sfgeViolation.sourceLineNumber,
-            startColumn: sfgeViolation.sourceColumnNumber
+            startLine: Math.max(sfgeViolation.sourceLineNumber, 1),
+            startColumn: Math.max(sfgeViolation.sourceColumnNumber, 1)
         }];
         if (sfgeViolation.sinkFileName) {
             codeLocations.push({
                 file: sfgeViolation.sinkFileName,
-                startLine: sfgeViolation.sinkLineNumber!,
-                startColumn: sfgeViolation.sinkColumnNumber!
+                startLine: Math.max(sfgeViolation.sinkLineNumber!, 1),
+                startColumn: Math.max(sfgeViolation.sinkColumnNumber!, 1)
             });
         }
         return {
@@ -179,10 +181,15 @@ function isFileRelevantToSfge(fileName: string): boolean {
 }
 
 function toRuleDescription(sfgeRuleInfo: SfgeRuleInfo): RuleDescription {
+    const tags: string[] = [sfgeRuleInfo.category.replaceAll(' ', ''), DEV_PREVIEW_TAG];
+    if (sfgeRuleInfo.isPilot) {
+        tags.push(PILOT_TAG);
+    }
+    tags.push(COMMON_TAGS.LANGUAGES.APEX);
     return {
         name: sfgeRuleInfo.name,
         severityLevel: sfgeRuleInfo.severity,
-        tags: [COMMON_TAGS.LANGUAGES.APEX, sfgeRuleInfo.category.replaceAll(' ', '')],
+        tags,
         description: getMessage('DeveloperPreviewRuleNotification', sfgeRuleInfo.description),
         resourceUrls: [] // TODO: Once URLs are in their v5 state, start using them here.
     }

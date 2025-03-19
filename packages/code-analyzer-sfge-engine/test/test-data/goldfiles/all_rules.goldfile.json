@@ -3,8 +3,9 @@
     "name": "ApexFlsViolationRule",
     "severityLevel": 2,
     "tags": [
-      "Apex",
-      "Security"
+      "Security",
+      "DevPreview",
+      "Apex"
     ],
     "description": "This rule is in \"Developer Preview\" and is subject to change. Identifies data read/write operations that may not have CRUD/FLS",
     "resourceUrls": []
@@ -13,8 +14,9 @@
     "name": "ApexNullPointerExceptionRule",
     "severityLevel": 3,
     "tags": [
-      "Apex",
-      "ErrorProne"
+      "ErrorProne",
+      "DevPreview",
+      "Apex"
     ],
     "description": "This rule is in \"Developer Preview\" and is subject to change. Identifies Apex operations that dereference null objects and throw NullPointerExceptions.",
     "resourceUrls": []
@@ -23,8 +25,9 @@
     "name": "AvoidDatabaseOperationInLoop",
     "severityLevel": 2,
     "tags": [
-      "Apex",
-      "Performance"
+      "Performance",
+      "DevPreview",
+      "Apex"
     ],
     "description": "This rule is in \"Developer Preview\" and is subject to change. Detects database operations inside loops, which can cause degraded performance.",
     "resourceUrls": []
@@ -33,8 +36,9 @@
     "name": "AvoidMultipleMassSchemaLookups",
     "severityLevel": 2,
     "tags": [
-      "Apex",
-      "Performance"
+      "Performance",
+      "DevPreview",
+      "Apex"
     ],
     "description": "This rule is in \"Developer Preview\" and is subject to change. Detects mass schema lookups that can cause performance degradation if made more than once in a path. These methods are: Schema.getGlobalDescribe() and Schema.describeSObjects(...). Flagged lookups include those within a loop or multiple invocations in a path.",
     "resourceUrls": []
@@ -43,8 +47,9 @@
     "name": "PerformNullCheckOnSoqlVariables",
     "severityLevel": 3,
     "tags": [
-      "Apex",
-      "Performance"
+      "Performance",
+      "DevPreview",
+      "Apex"
     ],
     "description": "This rule is in \"Developer Preview\" and is subject to change. Identifies SOQL queries with variables in WHERE clauses that lack null checks.",
     "resourceUrls": []
@@ -53,8 +58,10 @@
     "name": "RemoveUnusedMethod",
     "severityLevel": 5,
     "tags": [
-      "Apex",
-      "Performance"
+      "Performance",
+      "DevPreview",
+      "Pilot",
+      "Apex"
     ],
     "description": "This rule is in \"Developer Preview\" and is subject to change. Identifies methods that aren't invoked from recognized entry points.",
     "resourceUrls": []
@@ -63,8 +70,9 @@
     "name": "UnimplementedTypeRule",
     "severityLevel": 4,
     "tags": [
-      "Apex",
-      "Performance"
+      "Performance",
+      "DevPreview",
+      "Apex"
     ],
     "description": "This rule is in \"Developer Preview\" and is subject to change. Identifies abstract classes and interfaces that are non-global and don't have implementations or extensions.",
     "resourceUrls": []
@@ -73,8 +81,9 @@
     "name": "UseWithSharingOnDatabaseOperation",
     "severityLevel": 2,
     "tags": [
-      "Apex",
-      "Security"
+      "Security",
+      "DevPreview",
+      "Apex"
     ],
     "description": "This rule is in \"Developer Preview\" and is subject to change. Identifies a database operation executed outside of a \"with sharing\" policy. Warns when DML or SOQL operations inherit sharing rules implicitly instead of explicitly.",
     "resourceUrls": []
