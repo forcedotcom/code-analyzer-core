@@ -424,6 +424,7 @@ export class CodeAnalyzer {
                 type: EventType.EngineRunProgressEvent,
                 timestamp: this.clock.now(),
                 engineName: engine.getName(),
+                message: event.message,
                 percentComplete: event.percentComplete
             });
         });

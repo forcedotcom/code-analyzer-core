@@ -63,7 +63,8 @@ export type EngineRunProgressEvent = {
     type: EventType.EngineRunProgressEvent,
     timestamp: Date,
     engineName: string,
-    percentComplete: number
+    percentComplete: number,
+    message?: string
 }
 
 /**

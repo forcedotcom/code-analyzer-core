@@ -1,19 +1,23 @@
 import path from 'node:path';
 import fs from 'node:fs';
 import {
+    CodeLocation,
     COMMON_TAGS,
     DescribeOptions,
     Engine,
     EngineRunResults,
+    LogLevel,
     RuleDescription,
     RunOptions,
+    Violation,
     Workspace
 } from '@salesforce/code-analyzer-engine-api';
 import {JavaCommandExecutor} from '@salesforce/code-analyzer-engine-api/utils';
 import {getMessage} from './messages';
 import {
     RuntimeSfgeWrapper,
-    SfgeRuleInfo
+    SfgeRuleInfo,
+    SfgeRunResult
 } from "./sfge-wrapper";
 import {SfgeEngineConfig} from "./config";
 
@@ -25,6 +29,7 @@ export class SfgeEngine extends Engine {
     private readonly sfgeWrapper: RuntimeSfgeWrapper;
 
     private sfgeRuleInfoListCache: Map<string, SfgeRuleInfo[]> = new Map();
+    private relevantFilesByWorkspaceId: Map<string, string[]> = new Map();
 
     public constructor(config: SfgeEngineConfig) {
         super();
@@ -58,10 +63,74 @@ export class SfgeEngine extends Engine {
         return ruleDescriptions;
     }
 
+    public override async runRules(selectedRuleNames: string[], runOptions: RunOptions): Promise<EngineRunResults> {
+        this.emitRunRulesProgressEvent(2);
+
+        if (selectedRuleNames.length === 0) {
+            this.emitRunRulesProgressEvent(100);
+            return { violations: [] };
+        }
+
+        await this.validateWorkspaceCompleteness(runOptions.workspace);
+
+        const allRulesInfoList: SfgeRuleInfo[] = await this.getSfgeRuleInfoList(
+            runOptions.workspace,
+            (innerPerc: number) => this.emitRunRulesProgressEvent(2 + 3*(innerPerc/100)) // 2%-5%
+        );
+
+        const selectedRuleInfoList: SfgeRuleInfo[] = allRulesInfoList
+            .filter(ruleInfo => selectedRuleNames.some(name => name.toLowerCase() === ruleInfo.name.toLowerCase()));
+
+        if (selectedRuleInfoList.length === 0) {
+            this.emitRunRulesProgressEvent(100);
+            return { violations: [] };
+        }
+
+        const relevantFiles: string[] = await this.getRelevantFilesInWorkspace(runOptions.workspace);
+
+        const sfgeResults: SfgeRunResult[] = await this.sfgeWrapper.invokeRunCommand(
+            selectedRuleInfoList,
+            relevantFiles, // TODO: WHEN WE ADD PATH-START TARGETING, THIS NEEDS TO CHANGE.
+            relevantFiles,
+            (innerPerc: number, message?: string) => this.emitRunRulesProgressEvent(5 + 93*innerPerc/100, message) // 5%-98%
+        );
+
+        const violations: Violation[] = [];
+        for (const sfgeViolation of sfgeResults) {
+            violations.push(this.toViolation(sfgeViolation));
+        }
+
+        this.emitRunRulesProgressEvent(100);
+        return {
+            violations
+        };
+    }
+
+    private async validateWorkspaceCompleteness(workspace: Workspace): Promise<void> {
+        const allRelevantFiles: string[] = await this.getRelevantFilesInWorkspace(workspace);
+        const knownRelevantFileCountByDirectory: Map<string, number> = new Map();
+
+        for (const relevantFile of allRelevantFiles) {
+            const dirName: string = path.dirname(relevantFile);
+            const knownRelevantFilesInDirectory: number = knownRelevantFileCountByDirectory.get(dirName) ?? 0;
+            knownRelevantFileCountByDirectory.set(dirName, knownRelevantFilesInDirectory + 1);
+        }
+
+        for (const [dirName, knownRelevantFileCount] of knownRelevantFileCountByDirectory.entries()) {
+            const dirEntries: string[] = await fs.promises.readdir(dirName);
+            const allRelevantFileCount: number = dirEntries.filter(isFileRelevantToSfge).length;
+            if (allRelevantFileCount !== knownRelevantFileCount) {
+                this.emitLogEvent(LogLevel.Warn, getMessage('WorkspaceAppearsIncomplete',
+                    allRelevantFileCount - knownRelevantFileCount,
+                    dirName));
+            }
+        }
+    }
+
     private async getSfgeRuleInfoList(workspace: Workspace|undefined, emitProgress: (percComplete: number) => void): Promise<SfgeRuleInfo[]> {
         const cacheKey: string = getCacheKey(workspace);
         if (!this.sfgeRuleInfoListCache.has(cacheKey)) {
-            if (workspace && !(await workspaceContainsSfgeRelevantFiles(workspace))) {
+            if (workspace && (await this.getRelevantFilesInWorkspace(workspace)).length === 0) {
                 this.sfgeRuleInfoListCache.set(cacheKey, []);
             } else {
                 const ruleInfoList: SfgeRuleInfo[] = await this.sfgeWrapper.invokeDescribeCommand(emitProgress);
@@ -71,10 +140,33 @@ export class SfgeEngine extends Engine {
         return this.sfgeRuleInfoListCache.get(cacheKey)!;
     }
 
-    public override runRules(_ruleNames: string[], _runOptions: RunOptions): Promise<EngineRunResults> {
-        return Promise.resolve({
-            violations: []
-        });
+    private toViolation(sfgeViolation: SfgeRunResult): Violation {
+        const codeLocations: CodeLocation[] = [{
+            file: sfgeViolation.sourceFileName,
+            startLine: sfgeViolation.sourceLineNumber,
+            startColumn: sfgeViolation.sourceColumnNumber
+        }];
+        if (sfgeViolation.sinkFileName) {
+            codeLocations.push({
+                file: sfgeViolation.sinkFileName,
+                startLine: sfgeViolation.sinkLineNumber!,
+                startColumn: sfgeViolation.sinkColumnNumber!
+            });
+        }
+        return {
+            ruleName: sfgeViolation.ruleName,
+            message: sfgeViolation.message,
+            codeLocations,
+            primaryLocationIndex: 0
+        };
+    }
+
+    private async getRelevantFilesInWorkspace(workspace: Workspace): Promise<string[]> {
+        if (!this.relevantFilesByWorkspaceId.has(workspace.getWorkspaceId())) {
+            const relevantFiles: string[] = (await workspace.getExpandedFiles()).filter(isFileRelevantToSfge);
+            this.relevantFilesByWorkspaceId.set(workspace.getWorkspaceId(), relevantFiles);
+        }
+        return this.relevantFilesByWorkspaceId.get(workspace.getWorkspaceId())!;
     }
 }
 
@@ -82,9 +174,8 @@ function getCacheKey(workspace?: Workspace): string {
     return workspace ? workspace.getWorkspaceId() : process.cwd();
 }
 
-async function workspaceContainsSfgeRelevantFiles(workspace: Workspace): Promise<boolean> {
-    const expandedFiles: string[] = await workspace.getExpandedFiles();
-    return SFGE_RELEVANT_FILE_EXTENSIONS.some(extension => expandedFiles.some(file => file.toLowerCase().endsWith(extension)));
+function isFileRelevantToSfge(fileName: string): boolean {
+    return SFGE_RELEVANT_FILE_EXTENSIONS.some(extension => fileName.toLowerCase().endsWith(extension));
 }
 
 function toRuleDescription(sfgeRuleInfo: SfgeRuleInfo): RuleDescription {

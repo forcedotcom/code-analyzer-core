@@ -47,7 +47,7 @@ public class SfgeTest {
     private static final Violation.StaticRuleViolation DUMMY_VIOLATION =
             new Violation.StaticRuleViolation("dummy message", new DummyVertex("dummy label"));
     private static final String DUMMY_VIOLATION_JSON =
-            "VIOLATIONS_START[{\"message\":\"dummy message\",\"sourceFileName\":\"dummy\",\"sourceType\":\"dummy\",\"sourceVertexName\":\"\",\"sourceLineNumber\":0,\"sourceColumnNumber\":0,\"severity\":0}]VIOLATIONS_END";
+            "[{\"message\":\"dummy message\",\"sourceFileName\":\"dummy\",\"sourceType\":\"dummy\",\"sourceVertexName\":\"\",\"sourceLineNumber\":0,\"sourceColumnNumber\":0,\"severity\":0}]";
     private static final OutOfMemoryError DUMMY_ERROR =
             new OutOfMemoryError("dummy OutOfMemory error");
     private static final String ERROR_OUTPUT = "SfgeErrorStart\ndummy OutOfMemory error";
@@ -103,7 +103,7 @@ public class SfgeTest {
             final Sfge main = new Sfge(dependencies);
             final int exitCode = main.process(EXECUTE_ACTION, EXECUTION_ARGS_FILENAME, file.getAbsolutePath());
 
-            assertThat(exitCode, equalTo(Sfge.EXIT_GOOD_RUN_NO_VIOLATIONS));
+            assertThat(exitCode, equalTo(Sfge.EXIT_GOOD_RUN));
         } catch (IOException ex) {
             throw new RuntimeException(ex);
         }
@@ -124,7 +124,7 @@ public class SfgeTest {
             final Sfge main = new Sfge(dependencies);
             final int exitCode = main.process(EXECUTE_ACTION, EXECUTION_ARGS_FILENAME, file.getAbsolutePath());
 
-            assertThat(exitCode, equalTo(Sfge.EXIT_GOOD_RUN_WITH_VIOLATIONS));
+            assertThat(exitCode, equalTo(Sfge.EXIT_GOOD_RUN));
 
             final ArgumentCaptor<String> firstArgCaptor = ArgumentCaptor.forClass(String.class);
             final ArgumentCaptor<String> secondArgCaptor = ArgumentCaptor.forClass(String.class);

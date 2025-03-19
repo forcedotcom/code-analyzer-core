@@ -126,7 +126,7 @@ export class StubEngine1 extends engApi.Engine {
         this.runRulesCallHistory.push({ruleNames, runOptions});
         this.emitRunRulesProgressEvent(0);
         this.emitLogEvent(engApi.LogLevel.Fine, "someMiscFineMessageFromStubEngine1");
-        this.emitRunRulesProgressEvent(50);
+        this.emitRunRulesProgressEvent(50, "someProgressMessage");
         this.emitRunRulesProgressEvent(100);
         return this.resultsToReturn;
     }
