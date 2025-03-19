@@ -554,5 +554,13 @@ export const RULE_MAPPINGS: Record<string, {severity: SeverityLevel, tags: strin
     "AvoidUnsafePasswordManagementUse": {
         severity: SeverityLevel.Critical,
         tags: [/* NOT RECOMMENDED */  APP_EXCHANGE_TAG, COMMON_TAGS.CATEGORIES.SECURITY, COMMON_TAGS.LANGUAGES.APEX]
+    },
+
+    // =================================================================================================================
+    //   SFCA-PMD-RULES - APPEXCHANGE JAVASCRIPT RULES
+    // =================================================================================================================
+    "AvoidLwcBubblesComposedTrue": {
+        severity: SeverityLevel.Moderate,
+        tags: [/* NOT RECOMMENDED */  APP_EXCHANGE_TAG, COMMON_TAGS.CATEGORIES.SECURITY, COMMON_TAGS.LANGUAGES.JAVASCRIPT]
     }
 }
