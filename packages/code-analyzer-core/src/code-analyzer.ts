@@ -291,7 +291,15 @@ export class CodeAnalyzer {
 
     private async getAllRulesFor(engineName: string, describeOptions: engApi.DescribeOptions): Promise<RuleImpl[]> {
         this.emitLogEvent(LogLevel.Debug, getMessage('GatheringRulesFromEngine', engineName));
-        const ruleDescriptions: engApi.RuleDescription[] = await this.getEngine(engineName).describeRules(describeOptions);
+        let ruleDescriptions: engApi.RuleDescription[] = [];
+        try {
+            ruleDescriptions = await this.getEngine(engineName).describeRules(describeOptions);
+        } catch (err) {
+            this.uninstantiableEnginesMap.set(engineName, err as Error);
+            this.emitLogEvent(LogLevel.Error, getMessage('PluginErrorWhenGettingRules', engineName, (err as Error).message + '\n\n' +
+                getMessage('InstructionsToIgnoreErrorAndDisableEngine', engineName)));
+            return [];
+        }
         this.emitLogEvent(LogLevel.Debug, getMessage('FinishedGatheringRulesFromEngine', ruleDescriptions.length, engineName));
 
         validateRuleDescriptions(ruleDescriptions, engineName);

@@ -231,6 +231,24 @@ describe('Tests for selecting rules', () => {
         expect(ruleNamesFor(selection, 'stubEngine2')).toEqual([]);
     });
 
+    it('When an engine fails to return its rules, an error is logged and empty results are returned', async () => {
+        // ====== TEST SETUP ======
+        codeAnalyzer = new CodeAnalyzer(CodeAnalyzerConfig.withDefaults());
+        await codeAnalyzer.addEnginePlugin(new stubs.ThrowingEnginePlugin2());
+        const logEvents: LogEvent[] = [];
+        codeAnalyzer.onEvent(EventType.LogEvent, (event: LogEvent) => logEvents.push(event));
+
+        // ====== TESTED BEHAVIOR ======
+        const selection: RuleSelection = await codeAnalyzer.selectRules([]);
+
+        // ====== ASSERTIONS ======
+        expect(selection.getCount()).toEqual(0);
+        const errorEvents: LogEvent[] = logEvents.filter(e => e.logLevel === LogLevel.Error);
+        expect(errorEvents).toHaveLength(1);
+        expect(errorEvents[0].message).toEqual(getMessage('PluginErrorWhenGettingRules', 'someEngine', 'SomeErrorFromDescribeRules') + '\n\n' +
+            getMessage('InstructionsToIgnoreErrorAndDisableEngine', 'someEngine'));
+    })
+
     it('When attempting to get a rule that does not exist in the selection, then error', async () => {
         const selection: RuleSelection = await codeAnalyzer.selectRules([]);
 
