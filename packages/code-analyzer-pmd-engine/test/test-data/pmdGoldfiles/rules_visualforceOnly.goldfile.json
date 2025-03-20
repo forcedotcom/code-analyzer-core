@@ -1,5 +1,109 @@
 [
   {
+    "name": "AvoidCreateElementScriptLinkTag",
+    "severityLevel": 2,
+    "tags": [
+      "AppExchange",
+      "Security",
+      "Visualforce"
+    ],
+    "description": "Detects dynamic creation of script or link tags Note: This rule identifies the `<script>` block where `createElement` is detected; but can only show the line number where the `<script>` tag begins and not the line number for `createElement`. That means if there are multiple `createElement` calls with `script` as input, you'll see multiple issues... Learn more: https://developer.salesforce.com/docs/platform/salesforce-code-analyzer/guide/rules-pmd-appexchange.html#avoidcreateelementscriptlinktag",
+    "resourceUrls": [
+      "https://developer.salesforce.com/docs/platform/salesforce-code-analyzer/guide/rules-pmd-appexchange.html#avoidcreateelementscriptlinktag"
+    ]
+  },
+  {
+    "name": "AvoidHardcodedSecretsInVFAttrs",
+    "severityLevel": 2,
+    "tags": [
+      "AppExchange",
+      "Security",
+      "Visualforce"
+    ],
+    "description": "Detects hardcoded secrets in VF attributes",
+    "resourceUrls": [
+      "https://developer.salesforce.com/docs/platform/salesforce-code-analyzer/guide/rules-pmd-appexchange.html#avoidhardcodedsecretsinvfattrs"
+    ]
+  },
+  {
+    "name": "AvoidUnauthorizedApiSessionIdVisualforce",
+    "severityLevel": 3,
+    "tags": [
+      "AppExchange",
+      "Security",
+      "Visualforce"
+    ],
+    "description": "Detects use of Api.Session_ID to retrieve a session ID in Visualforce code. For more guidance on approved use cases, read the Session Id Guidance document.",
+    "resourceUrls": [
+      "https://developer.salesforce.com/docs/platform/salesforce-code-analyzer/guide/rules-pmd-appexchange.html#avoidunauthorizedapisessionidvisualforce"
+    ]
+  },
+  {
+    "name": "AvoidUnauthorizedGetSessionIdInVisualforce",
+    "severityLevel": 2,
+    "tags": [
+      "AppExchange",
+      "Security",
+      "Visualforce"
+    ],
+    "description": "Detects use of GETSESSIONID() to retrieve a session ID in Visualforce code. For more guidance on approved use cases, read the Session Id Guidance document.",
+    "resourceUrls": [
+      "https://developer.salesforce.com/docs/platform/salesforce-code-analyzer/guide/rules-pmd-appexchange.html#avoidunauthorizedgetsessionidinvisualforce"
+    ]
+  },
+  {
+    "name": "LoadCSSApexStylesheet",
+    "severityLevel": 2,
+    "tags": [
+      "AppExchange",
+      "Security",
+      "Visualforce"
+    ],
+    "description": "Determines where CSS must be loaded as a static resource",
+    "resourceUrls": [
+      "https://developer.salesforce.com/docs/platform/salesforce-code-analyzer/guide/rules-pmd-appexchange.html#loadcssapexstylesheet"
+    ]
+  },
+  {
+    "name": "LoadCSSLinkHref",
+    "severityLevel": 2,
+    "tags": [
+      "AppExchange",
+      "Security",
+      "Visualforce"
+    ],
+    "description": "Determines where CSS must be loaded as a static resource",
+    "resourceUrls": [
+      "https://developer.salesforce.com/docs/platform/salesforce-code-analyzer/guide/rules-pmd-appexchange.html#loadcsslinkhref"
+    ]
+  },
+  {
+    "name": "LoadJavaScriptHtmlScript",
+    "severityLevel": 2,
+    "tags": [
+      "AppExchange",
+      "Security",
+      "Visualforce"
+    ],
+    "description": "Determines HTML script locations where JavaScript code must be loaded as static resources.",
+    "resourceUrls": [
+      "https://developer.salesforce.com/docs/platform/salesforce-code-analyzer/guide/rules-pmd-appexchange.html#loadjavascripthtmlscript"
+    ]
+  },
+  {
+    "name": "LoadJavaScriptIncludeScript",
+    "severityLevel": 2,
+    "tags": [
+      "AppExchange",
+      "Security",
+      "Visualforce"
+    ],
+    "description": "Determines include script locations where JavaScript code must be loaded as static resources.",
+    "resourceUrls": [
+      "https://developer.salesforce.com/docs/platform/salesforce-code-analyzer/guide/rules-pmd-appexchange.html#loadjavascriptincludescript"
+    ]
+  },
+  {
     "name": "VfCsrf",
     "severityLevel": 2,
     "tags": [

@@ -1,0 +1,143 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ruleset name="AppExchange_html"
+         xmlns="http://pmd.sourceforge.net/ruleset/2.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://pmd.sourceforge.net/ruleset/2.0.0 https://pmd.sourceforge.io/ruleset_2_0_0.xsd">
+    <description>AppExchange Security Rules for Visualforce Language</description>
+
+    <rule name="AvoidCreateElementScriptLinkTag"
+          language="visualforce"
+          class="com.salesforce.security.pmd.visualforce.DetectCreateElementScriptTag"
+          message="Load JavaScript/CSS only from static resources."
+          externalInfoUrl="https://developer.salesforce.com/docs/platform/salesforce-code-analyzer/guide/rules-pmd-appexchange.html#avoidcreateelementscriptlinktag">
+        
+        <description>
+            Detects dynamic creation of script or link tags Note: This rule identifies the `&lt;script&gt;` block where `createElement` is detected; but can only show the line number where the `&lt;script&gt;` tag begins and not the line number for `createElement`. That means if there are multiple `createElement` calls with `script` as input, you'll see multiple issues reported with the line number of the `&lt;script&gt;` tag. This is a known issue; developers are expected to go through the `&lt;script&gt;` block to identify the use of `createElement`
+        </description>
+        <priority>2</priority>
+        <example>
+<![CDATA[<script src="{!$Resource.jquery}"/> ]]>
+See more examples on properly using static resources here: https://developer.salesforce.com/docs/atlas.en-us.secure_coding_guide.meta/secure_coding_guide/secure_coding_cross_site_scripting.htm
+        </example>
+    </rule>
+
+    <rule name="AvoidHardcodedSecretsInVFAttrs"
+          language="visualforce"
+          class="com.salesforce.security.pmd.visualforce.DetectHardcodedSecretsInAttributes"
+          message="Hardcoded secrets detected in VF attributes"
+          externalInfoUrl="https://developer.salesforce.com/docs/platform/salesforce-code-analyzer/guide/rules-pmd-appexchange.html#avoidhardcodedsecretsinvfattrs">
+        
+        <description>
+            Detects hardcoded secrets in VF attributes
+        </description>
+        <priority>2</priority>
+    </rule>
+
+    <rule name="AvoidUnauthorizedApiSessionIdVisualforce"
+          language="visualforce"
+          class="net.sourceforge.pmd.lang.rule.xpath.XPathRule"
+          message="Retrieval of session ID using API.Session_ID is not authorized." 
+          externalInfoUrl="https://developer.salesforce.com/docs/platform/salesforce-code-analyzer/guide/rules-pmd-appexchange.html#avoidunauthorizedapisessionidvisualforce">
+        
+        <description>
+            Detects use of Api.Session_ID to retrieve a session ID in Visualforce code. For more guidance on approved use cases, read the [Session Id Guidance](https://partners.salesforce.com/sfc/servlet.shepherd/version/download/0684V00000O83jT?asPdf=false) document.
+        </description>
+        <priority>3</priority>
+        <properties>
+            <property name="xpath">
+                <value>
+<![CDATA[
+//Expression/Identifier[upper-case(@Image)="$API"]/parent::Expression/
+DotExpression/Identifier[upper-case(@Image)="SESSION_ID"]/parent::DotExpression/parent::Expression
+]]>
+                </value>
+            </property>
+        </properties>
+    </rule>
+
+    <rule name="AvoidUnauthorizedGetSessionIdInVisualforce"
+          language="visualforce"
+          class="net.sourceforge.pmd.lang.rule.xpath.XPathRule"
+          message="Use of session ID with GETSESSIONID is not authorized."
+          externalInfoUrl="https://developer.salesforce.com/docs/platform/salesforce-code-analyzer/guide/rules-pmd-appexchange.html#avoidunauthorizedgetsessionidinvisualforce">
+        
+        <description>
+            Detects use of GETSESSIONID() to retrieve a session ID in Visualforce code. For more guidance on approved use cases, read the [Session Id Guidance](https://partners.salesforce.com/sfc/servlet.shepherd/version/download/0684V00000O83jT?asPdf=false) document.
+        </description>
+        <priority>2</priority>
+        <properties>
+            <property name="xpath">
+                <value>
+<![CDATA[
+//Expression/Identifier[upper-case(@Image)="GETSESSIONID"]/parent::Expression/Arguments/parent::Expression
+]]>
+                </value>
+            </property>
+        </properties>
+    </rule>
+
+    <rule name="LoadCSSApexStylesheet"
+          language="visualforce"
+          class="com.salesforce.security.pmd.visualforce.CSSNotInStaticResourcesApexStylesheet"
+          message="Load JavaScript only from static resources."
+          externalInfoUrl="https://developer.salesforce.com/docs/platform/salesforce-code-analyzer/guide/rules-pmd-appexchange.html#loadcssapexstylesheet">
+        
+        <description>
+            Determines where CSS must be loaded as a static resource
+        </description>
+        <priority>2</priority>
+        <example>
+<![CDATA[<apex:stylesheet value="{!$Resource.mycssresource}"/>  ]]>
+See more examples on properly using static resources here: https://developer.salesforce.com/docs/atlas.en-us.secure_coding_guide.meta/secure_coding_guide/secure_coding_cross_site_scripting.htm
+        </example>
+    </rule>
+
+    <rule name="LoadCSSLinkHref"
+          language="visualforce"
+          class="com.salesforce.security.pmd.visualforce.CSSNotInStaticResourcesUsingLinkRel"
+          message="Load JavaScript only from static resources."
+          externalInfoUrl="https://developer.salesforce.com/docs/platform/salesforce-code-analyzer/guide/rules-pmd-appexchange.html#loadcsslinkhref">
+        
+        <description>
+            Determines where CSS must be loaded as a static resource
+        </description>
+        <priority>2</priority>
+        <example>
+<![CDATA[<link rel="stylesheet" src="{!$Resource.mycustomcss}"/>  ]]>
+See more examples on properly using static resources here: https://developer.salesforce.com/docs/atlas.en-us.secure_coding_guide.meta/secure_coding_guide/secure_coding_cross_site_scripting.htm
+        </example>
+    </rule>
+
+    <rule name="LoadJavaScriptHtmlScript"
+          language="visualforce"
+          class="com.salesforce.security.pmd.visualforce.JsNotInStaticResourceHtmlScript"
+          message="Load JavaScript only from static resources."
+          externalInfoUrl="https://developer.salesforce.com/docs/platform/salesforce-code-analyzer/guide/rules-pmd-appexchange.html#loadjavascripthtmlscript">
+        
+        <description>
+            Determines HTML script locations where JavaScript code must be loaded as static resources.
+        </description>
+        <priority>2</priority>
+        <example>
+<![CDATA[<script src="{!$Resource.jquery}"/>  ]]>
+See more examples on properly using static resources here: https://developer.salesforce.com/docs/atlas.en-us.secure_coding_guide.meta/secure_coding_guide/secure_coding_cross_site_scripting.htm
+        </example>
+    </rule>
+
+    <rule name="LoadJavaScriptIncludeScript"
+          language="visualforce"
+          class="com.salesforce.security.pmd.visualforce.JsNotInStaticResourceIncludeScript"
+          message="Load JavaScript only from static resources."
+          externalInfoUrl="https://developer.salesforce.com/docs/platform/salesforce-code-analyzer/guide/rules-pmd-appexchange.html#loadjavascriptincludescript">
+        
+        <description>
+            Determines include script locations where JavaScript code must be loaded as static resources.
+        </description>
+        <priority>2</priority>
+        <example>
+<![CDATA[<apex:IncludeScript value="{!$Resource.jquery}"/>  ]]>
+See more examples on properly using static resources here: https://developer.salesforce.com/docs/atlas.en-us.secure_coding_guide.meta/secure_coding_guide/secure_coding_cross_site_scripting.htm
+        </example>
+    </rule>
+
+</ruleset>

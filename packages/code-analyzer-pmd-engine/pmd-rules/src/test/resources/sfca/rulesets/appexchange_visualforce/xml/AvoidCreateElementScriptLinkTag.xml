@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<test-data
+    xmlns="http://pmd.sourceforge.net/rule-tests"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://pmd.sourceforge.net/rule-tests http://pmd.sourceforge.net/rule-tests_1_0_0.xsd">
+
+    <test-code>
+        <description>When createElement("script") is found, then report a violation</description>
+        <expected-problems>1</expected-problems>
+        <expected-linenumbers>2</expected-linenumbers>
+        <code><![CDATA[
+<apex:page controller="VFFutureMethodCtrl" >
+    <script>
+        var s = document.createElement("script");
+        s.src="https://something.example.com/test.js";
+    </script>
+</apex:page>
+        ]]></code>
+    </test-code>
+</test-data>
