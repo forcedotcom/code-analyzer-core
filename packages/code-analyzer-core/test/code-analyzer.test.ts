@@ -565,8 +565,9 @@ describe("Tests for the run method of CodeAnalyzer", () => {
     it.each([
         {plugin: new stubs.ThrowingPlugin2() as engApi.EnginePluginV1, msg: 'SomeErrorFromDescribeEngineConfig', case: 'error in #describeEngineConfig'},
         {plugin: new stubs.ThrowingPlugin3() as engApi.EnginePluginV1, msg: 'SomeErrorFromCreateEngineConfig', case: 'error in #createEngineConfig'},
-        {plugin: new stubs.ThrowingPlugin4() as engApi.EnginePluginV1, msg: 'SomeErrorFromCreateEngine', case: 'error in #createEngine'}
-    ])(`When an engine could not be added, running that engine produces a Critical violation of type UninstantiableEngineError. Case: $case`, async ({plugin, msg}) => {
+        {plugin: new stubs.ThrowingPlugin4() as engApi.EnginePluginV1, msg: 'SomeErrorFromCreateEngine', case: 'error in #createEngine'},
+        {plugin: new stubs.ThrowingEnginePlugin2() as engApi.EnginePluginV1, msg: 'SomeErrorFromDescribeRules', case: 'error in #describeRules'}
+    ])(`When an engine could not be instantiated, running rules produces a Critical violation of type UninstantiableEngineError. Case: $case`, async ({plugin, msg}) => {
         codeAnalyzer = new CodeAnalyzer(CodeAnalyzerConfig.withDefaults());
         await codeAnalyzer.addEnginePlugin(plugin);
         selection = await codeAnalyzer.selectRules([]);
@@ -592,7 +593,7 @@ describe("Tests for the run method of CodeAnalyzer", () => {
         expect(violations[0].getPrimaryLocationIndex()).toEqual(0);
         expect(violations[0].getCodeLocations()).toEqual([UndefinedCodeLocation.INSTANCE]);
         expect(violations[0].getMessage()).toContain(msg);
-    })
+    });
 
     it("When running engines, then the log events should include the start and end of each engine run", async () => {
         const logEvents: LogEvent[] = [];

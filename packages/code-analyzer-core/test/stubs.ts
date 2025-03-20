@@ -543,6 +543,30 @@ export class ThrowingEnginePlugin extends engApi.EnginePluginV1 {
     }
 }
 
+export class ThrowingEnginePlugin2 extends engApi.EnginePluginV1 {
+    private readonly createdEngines: Map<string, engApi.Engine> = new Map();
+
+    getAvailableEngineNames(): string[] {
+        return ['someEngine'];
+    }
+
+    async createEngine(engineName: string, config: engApi.ConfigObject): Promise<engApi.Engine> {
+        if (engineName === 'someEngine') {
+            this.createdEngines.set(engineName, new ThrowingEngine2(config));
+        } else {
+            throw new Error(`Unsupported engine name: ${engineName}`);
+        }
+        return this.getCreatedEngine(engineName);
+    }
+
+    getCreatedEngine(engineName: string): engApi.Engine {
+        if (this.createdEngines.has(engineName)) {
+            return this.createdEngines.get(engineName) as engApi.Engine;
+        }
+        throw new Error(`Engine with name ${engineName} has not yet been created`);
+    }
+}
+
 /**
  * ThrowingEngine - An engine that throws an error when ran
  */
@@ -561,6 +585,28 @@ class ThrowingEngine extends StubEngine1 {
 
     async runRules(_ruleNames: string[], _runOptions: engApi.RunOptions): Promise<engApi.EngineRunResults> {
         throw new Error('SomeErrorMessageFromThrowingEngine');
+    }
+}
+
+class ThrowingEngine2 extends engApi.Engine {
+    constructor(_config: engApi.ConfigObject) {
+        super();
+    }
+
+    getName(): string {
+        return "someEngine";
+    }
+
+    getEngineVersion(): Promise<string> {
+        return Promise.resolve('0.0.1');
+    }
+
+    async describeRules(_describeOptions: engApi.DescribeOptions): Promise<engApi.RuleDescription[]> {
+        throw new Error('SomeErrorFromDescribeRules');
+    }
+
+    async runRules(_ruleNames: string[], _runOptions: engApi.RunOptions): Promise<engApi.EngineRunResults> {
+        throw new Error('This method should never be called');
     }
 }
 
