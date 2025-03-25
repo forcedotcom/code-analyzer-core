@@ -26,7 +26,7 @@
     ]
   },
   {
-    "name": "AvoidUnauthorizedApiSessionIdVisualforce",
+    "name": "AvoidUnauthorizedApiSessionIdInVisualforce",
     "severityLevel": 3,
     "tags": [
       "AppExchange",
@@ -35,7 +35,7 @@
     ],
     "description": "Detects use of Api.Session_ID to retrieve a session ID in Visualforce code. For more guidance on approved use cases, read the Session Id Guidance document.",
     "resourceUrls": [
-      "https://developer.salesforce.com/docs/platform/salesforce-code-analyzer/guide/rules-pmd-appexchange.html#avoidunauthorizedapisessionidvisualforce"
+      "https://developer.salesforce.com/docs/platform/salesforce-code-analyzer/guide/rules-pmd-appexchange.html#avoidunauthorizedapisessionidinvisualforce"
     ]
   },
   {

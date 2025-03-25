@@ -577,7 +577,7 @@ export const RULE_MAPPINGS: Record<string, {severity: SeverityLevel, tags: strin
         tags: [/* NOT RECOMMENDED */  APP_EXCHANGE_TAG, COMMON_TAGS.CATEGORIES.SECURITY, COMMON_TAGS.LANGUAGES.VISUALFORCE]
     },
 
-    "AvoidUnauthorizedApiSessionIdVisualforce": {
+    "AvoidUnauthorizedApiSessionIdInVisualforce": {
         severity: SeverityLevel.Moderate,
         tags: [/* NOT RECOMMENDED */  APP_EXCHANGE_TAG, COMMON_TAGS.CATEGORIES.SECURITY, COMMON_TAGS.LANGUAGES.VISUALFORCE]
     },

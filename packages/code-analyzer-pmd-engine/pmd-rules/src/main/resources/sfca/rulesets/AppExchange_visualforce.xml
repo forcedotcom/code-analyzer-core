@@ -33,11 +33,11 @@ See more examples on properly using static resources here: https://developer.sal
         <priority>2</priority>
     </rule>
 
-    <rule name="AvoidUnauthorizedApiSessionIdVisualforce"
+    <rule name="AvoidUnauthorizedApiSessionIdInVisualforce"
           language="visualforce"
           class="net.sourceforge.pmd.lang.rule.xpath.XPathRule"
           message="Retrieval of session ID using API.Session_ID is not authorized." 
-          externalInfoUrl="https://developer.salesforce.com/docs/platform/salesforce-code-analyzer/guide/rules-pmd-appexchange.html#avoidunauthorizedapisessionidvisualforce">
+          externalInfoUrl="https://developer.salesforce.com/docs/platform/salesforce-code-analyzer/guide/rules-pmd-appexchange.html#avoidunauthorizedapisessionidinvisualforce">
         
         <description>
             Detects use of Api.Session_ID to retrieve a session ID in Visualforce code. For more guidance on approved use cases, read the [Session Id Guidance](https://partners.salesforce.com/sfc/servlet.shepherd/version/download/0684V00000O83jT?asPdf=false) document.
