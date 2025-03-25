@@ -1,0 +1,99 @@
+package com.salesforce.security.pmd.visualforce;
+
+import org.checkerframework.checker.nullness.qual.NonNull;
+import net.sourceforge.pmd.lang.ast.NodeStream;
+import net.sourceforge.pmd.lang.rule.RuleTargetSelector;
+import net.sourceforge.pmd.lang.visualforce.ast.ASTAttribute;
+import net.sourceforge.pmd.lang.visualforce.ast.ASTAttributeValue;
+import net.sourceforge.pmd.lang.visualforce.ast.ASTText;
+import net.sourceforge.pmd.lang.visualforce.ast.VfNode;
+import net.sourceforge.pmd.lang.visualforce.ast.ASTElement;
+import net.sourceforge.pmd.lang.visualforce.ast.ASTExpression;
+import net.sourceforge.pmd.lang.visualforce.ast.ASTIdentifier;
+import net.sourceforge.pmd.lang.visualforce.rule.AbstractVfRule;
+
+public class CSSNotInStaticResourcesUsingLinkRel extends AbstractVfRule {
+    public static final String HTML_LINK_TAG = "link";
+    public static final String LINK_HREF_VIOLATION_MESSAGE = "CSS Should be loaded from static resources";
+    private static final String URLFOR_IDENTIFIER = "URLFOR";
+    private static final String RESOURCE_IDENTIFIER = "$Resource";
+
+    @Override
+    protected @NonNull RuleTargetSelector buildTargetSelector() {
+        return RuleTargetSelector.forTypes(ASTElement.class);
+    }
+
+    @Override
+    public Object visit(ASTElement node, Object data) {
+        if (!HTML_LINK_TAG.equalsIgnoreCase(node.getName())) {
+            return data;
+        }
+        processASTAttribute(node, data);
+        return data;
+    }
+    private void processASTAttribute(ASTElement node,Object data) {
+        int relSheet =
+                node.children(ASTAttribute.class)
+                .filterMatching(ASTAttribute::getName, "rel")
+                .descendants(ASTText.class)
+                .filterMatching(ASTText::getImage, "stylesheet").count();
+
+        if (relSheet == 0) {
+            return;
+        }
+
+        ASTAttribute hrefAttr = 
+            node.children(ASTAttribute.class)
+            .filterMatching(ASTAttribute::getName, "href").get(0);
+
+        if (hrefAttr == null) {
+            return ; //inline script
+        }
+    
+        ASTAttributeValue hrefAttrValue = hrefAttr.children(ASTAttributeValue.class).get(0);
+        
+        int countOfAttrExpressions = hrefAttr.descendants(ASTExpression.class).count();
+        if (countOfAttrExpressions != 0) {
+            handleExpression(hrefAttrValue, data);
+        } else { 
+            ASTText hrefAttrText = hrefAttrValue.children(ASTText.class).get(0);
+            handleLiteralStringSrc(hrefAttrText, data);
+        }
+    }
+    
+    private void handleExpression(ASTAttributeValue node, Object data) {
+        VfNode firstChild = node.getFirstChild();
+        if (firstChild.getClass() == ASTText.class) {
+            handleLiteralStringSrc((ASTText)firstChild, data);
+            return;
+        }
+        
+        NodeStream<ASTExpression> expressions = node.descendants(ASTExpression.class);
+        VfNode firstExpressionIdentifier = expressions.get(0).getFirstChild();
+        if (firstExpressionIdentifier.getClass() == ASTIdentifier.class) {
+            if (firstExpressionIdentifier.getImage().compareToIgnoreCase(URLFOR_IDENTIFIER) == 0 ||
+                firstExpressionIdentifier.getImage().compareToIgnoreCase(RESOURCE_IDENTIFIER) == 0
+            ) {
+                return;
+            }
+            else {
+                asCtx(data).addViolationWithMessage(node, LINK_HREF_VIOLATION_MESSAGE);
+            }
+        }
+    }
+    
+    private void handleLiteralStringSrc(ASTText node,Object data) {
+        if (node == null) {
+            return;
+        }
+
+        String hrefValue = node.getImage();
+        if ((hrefValue.startsWith("/") && !hrefValue.startsWith("//")) ||
+            hrefValue.startsWith("../")
+        ) {
+            return;
+        } else {
+            asCtx(data).addViolationWithMessage(node, LINK_HREF_VIOLATION_MESSAGE);
+        }
+    }
+}

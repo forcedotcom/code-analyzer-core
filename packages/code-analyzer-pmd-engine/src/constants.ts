@@ -70,6 +70,7 @@ export const SFCA_RULESETS_TO_MAKE_AVAILABLE: string[] = [
     "sfca/rulesets/AppExchange_apex.xml",
     "sfca/rulesets/AppExchange_html.xml",
     "sfca/rulesets/AppExchange_javascript.xml",
+    "sfca/rulesets/AppExchange_visualforce.xml",
     "sfca/rulesets/AppExchange_xml.xml"
 ];
 

@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<test-data
+    xmlns="http://pmd.sourceforge.net/rule-tests"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://pmd.sourceforge.net/rule-tests http://pmd.sourceforge.net/rule-tests_1_0_0.xsd">
+
+    <test-code>
+        <description>When CSS scripts are loaded from a CDN using &lt;apex:includescript&gt;, then report a violation</description>
+        <expected-problems>3</expected-problems>
+        <expected-linenumbers>2,3,4</expected-linenumbers>
+        <code><![CDATA[
+<apex:page controller="VFFutureMethodCtrl">
+    <apex:includescript value="https://something.example.com/styles.js"/>
+    <apex:includescript value="https://something.example.com/{!myvar}"/>
+    <apex:includescript value="{!jsUrl}"/>
+    <apex:includescript value="{!URLFOR($Resource.myresource, 'something/js/something.js')}"/>
+    <apex:includescript value="{!$Resource.myjs}"/>
+</apex:page>
+        ]]></code>
+    </test-code>
+</test-data>

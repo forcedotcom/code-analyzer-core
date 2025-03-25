@@ -562,5 +562,48 @@ export const RULE_MAPPINGS: Record<string, {severity: SeverityLevel, tags: strin
     "AvoidLwcBubblesComposedTrue": {
         severity: SeverityLevel.Moderate,
         tags: [/* NOT RECOMMENDED */  APP_EXCHANGE_TAG, COMMON_TAGS.CATEGORIES.SECURITY, COMMON_TAGS.LANGUAGES.JAVASCRIPT]
+    },
+
+    // =================================================================================================================
+    //   SFCA-PMD-RULES - APPEXCHANGE VISUALFORCE RULES
+    // =================================================================================================================
+    "AvoidCreateElementScriptLinkTag": {
+        severity: SeverityLevel.High,
+        tags: [/* NOT RECOMMENDED */  APP_EXCHANGE_TAG, COMMON_TAGS.CATEGORIES.SECURITY, COMMON_TAGS.LANGUAGES.VISUALFORCE]
+    },
+
+    "AvoidHardcodedSecretsInVFAttrs": {
+        severity: SeverityLevel.High,
+        tags: [/* NOT RECOMMENDED */  APP_EXCHANGE_TAG, COMMON_TAGS.CATEGORIES.SECURITY, COMMON_TAGS.LANGUAGES.VISUALFORCE]
+    },
+
+    "AvoidUnauthorizedApiSessionIdInVisualforce": {
+        severity: SeverityLevel.Moderate,
+        tags: [/* NOT RECOMMENDED */  APP_EXCHANGE_TAG, COMMON_TAGS.CATEGORIES.SECURITY, COMMON_TAGS.LANGUAGES.VISUALFORCE]
+    },
+
+    "AvoidUnauthorizedGetSessionIdInVisualforce": {
+        severity: SeverityLevel.High,
+        tags: [/* NOT RECOMMENDED */  APP_EXCHANGE_TAG, COMMON_TAGS.CATEGORIES.SECURITY, COMMON_TAGS.LANGUAGES.VISUALFORCE]
+    },
+
+    "LoadCSSApexStylesheet": {
+        severity: SeverityLevel.High,
+        tags: [/* NOT RECOMMENDED */  APP_EXCHANGE_TAG, COMMON_TAGS.CATEGORIES.SECURITY, COMMON_TAGS.LANGUAGES.VISUALFORCE]
+    },
+
+    "LoadCSSLinkHref": {
+        severity: SeverityLevel.High,
+        tags: [/* NOT RECOMMENDED */  APP_EXCHANGE_TAG, COMMON_TAGS.CATEGORIES.SECURITY, COMMON_TAGS.LANGUAGES.VISUALFORCE]
+    },
+
+    "LoadJavaScriptHtmlScript": {
+        severity: SeverityLevel.High,
+        tags: [/* NOT RECOMMENDED */  APP_EXCHANGE_TAG, COMMON_TAGS.CATEGORIES.SECURITY, COMMON_TAGS.LANGUAGES.VISUALFORCE]
+    },
+
+    "LoadJavaScriptIncludeScript": {
+        severity: SeverityLevel.High,
+        tags: [/* NOT RECOMMENDED */  APP_EXCHANGE_TAG, COMMON_TAGS.CATEGORIES.SECURITY, COMMON_TAGS.LANGUAGES.VISUALFORCE]
     }
 }
