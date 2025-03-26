@@ -11,12 +11,11 @@ import {SemVer} from 'semver';
 import {EngineLogEvent, EngineResultsEvent, EngineRunProgressEvent, Event, EventType, LogLevel} from "./events"
 import {getMessage} from "./messages";
 import * as engApi from "@salesforce/code-analyzer-engine-api"
+import {Clock, RealClock} from '@salesforce/code-analyzer-engine-api/utils';
 import {EventEmitter} from "node:events";
 import {CodeAnalyzerConfig, ConfigDescription, EngineOverrides, FIELDS, RuleOverride} from "./config";
 import {
-    Clock,
     EngineProgressAggregator,
-    RealClock,
     SimpleUniqueIdGenerator,
     toAbsolutePath,
     UniqueIdGenerator

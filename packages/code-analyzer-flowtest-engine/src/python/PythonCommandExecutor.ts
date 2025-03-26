@@ -1,3 +1,4 @@
+import {indent} from '@salesforce/code-analyzer-engine-api/utils';
 import {ChildProcessWithoutNullStreams, spawn} from 'node:child_process';
 import path from 'node:path';
 import {getMessage} from "../messages";
@@ -50,8 +51,4 @@ export class PythonCommandExecutor {
             });
         });
     }
-}
-
-function indent(text: string, indentation: string): string {
-    return indentation + text.replaceAll('\n', `\n${indentation}`);
 }

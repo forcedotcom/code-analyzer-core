@@ -1,21 +1,7 @@
-import * as tmp from "tmp";
 import fs from "node:fs";
 import path from "node:path";
 import {isBinaryFileSync} from "isbinaryfile";
-import {promisify} from "node:util";
 import {getMessage} from "./messages";
-
-tmp.setGracefulCleanup();
-const tmpDirAsync = promisify((options: tmp.DirOptions, cb: tmp.DirCallback) => tmp.dir(options, cb));
-
-/**
- * Creates a temporary directory that eventually cleans up after itself
- * @param parentTempDir - if supplied, then a temporary folder is placed directly underneath this parent folder.
- */
-export async function createTempDir(parentTempDir?: string) : Promise<string> {
-    return tmpDirAsync({dir: parentTempDir, keep: false, unsafeCleanup: true});
-}
-
 /**
  * Attempts to create a symlink, and if that fails, attempts to create a link, and if that fails, just copies the file
  * @param srcFile Source file

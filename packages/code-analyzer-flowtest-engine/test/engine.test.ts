@@ -13,12 +13,12 @@ import {
     Violation,
     Workspace
 } from "@salesforce/code-analyzer-engine-api";
+import {FixedClock} from "@salesforce/code-analyzer-engine-api/utils";
 import {FlowTestEngine} from "../src/engine";
 import {RunTimeFlowTestCommandWrapper} from "../src/python/FlowTestCommandWrapper";
-import {changeWorkingDirectoryToPackageRoot, FixedClock} from "./test-helpers";
+import {changeWorkingDirectoryToPackageRoot} from "./test-helpers";
 import os from "node:os";
 import {getMessage} from "../src/messages";
-import {Clock} from "../src/utils";
 import fs from "node:fs";
 
 changeWorkingDirectoryToPackageRoot();

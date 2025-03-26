@@ -6,6 +6,7 @@ import path from "node:path";
 import {DecoratedStreamZip} from './zip-decorator';
 import {getMessage} from "./messages";
 import {LogLevel} from "@salesforce/code-analyzer-engine-api";
+import {createTempDir} from "@salesforce/code-analyzer-engine-api/utils";
 
 // To handle the special case where a vulnerable library is found within a zip archive, a RetireJsExecutor can use this
 // marker to update the file field to look like <zip_file>::[ZIPPED_FILE]::<embedded_file> which the engine handles.
@@ -60,7 +61,7 @@ export class SimpleRetireJsExecutor implements RetireJsExecutor {
     }
 
     private async scanFolder(folder: string): Promise<Finding[]> {
-        const tempOutputFile: string = (await utils.createTempDir()) + path.sep + 'output.json';
+        const tempOutputFile: string = (await createTempDir()) + path.sep + 'output.json';
         const commandArgs: string[] = [
             '--path', folder,
             '--exitwith', '13',
@@ -70,7 +71,7 @@ export class SimpleRetireJsExecutor implements RetireJsExecutor {
             '--ext', JS_EXTENSIONS.map(ext => ext.replace('.','')).join(',')
         ]
 
-        const cmdStr: string = `${RETIRE_COMMAND} ${commandArgs.map(a => a.includes(' ') ? 
+        const cmdStr: string = `${RETIRE_COMMAND} ${commandArgs.map(a => a.includes(' ') ?
             /* istanbul ignore next */ `"${a}"` : a).join(',')}`;
         this.emitLogEvent(LogLevel.Fine, `Executing command: ${cmdStr}`);
         try {
@@ -181,7 +182,7 @@ export class AdvancedRetireJsExecutor implements RetireJsExecutor {
         this.origToTempDirMap.clear();
         this.tempToOrigFileMap.clear();
         this.uniqNameCounter = 0;
-        this.parentTempDir = await utils.createTempDir();
+        this.parentTempDir = await createTempDir();
         const mkdirPromises: Promise<void>[] = [];
         for (const textFile of textFiles) {
             const folder: string = path.dirname(textFile);

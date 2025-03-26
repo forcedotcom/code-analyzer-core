@@ -1,16 +1,6 @@
 import {getMessage} from "./messages";
 import {REGEX_STRING_PATTERN} from "./config";
 
-export interface Clock {
-    now(): Date;
-}
-
-export class RealClock implements Clock {
-    now(): Date {
-        return new Date();
-    }
-}
-
 export function convertToRegex(value: string): RegExp {
     const match: RegExpMatchArray | null = value.match(REGEX_STRING_PATTERN);
     if (!match) {

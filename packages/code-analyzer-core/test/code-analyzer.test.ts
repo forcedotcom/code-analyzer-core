@@ -19,8 +19,9 @@ import {
 import * as stubs from "./stubs";
 import {getMessage} from "../src/messages";
 import path from "node:path";
-import {changeWorkingDirectoryToPackageRoot, FixedClock, FixedUniqueIdGenerator} from "./test-helpers";
+import {changeWorkingDirectoryToPackageRoot, FixedUniqueIdGenerator} from "./test-helpers";
 import * as engApi from "@salesforce/code-analyzer-engine-api"
+import {FixedClock} from "@salesforce/code-analyzer-engine-api/utils"
 import {UnexpectedEngineErrorRule} from "../src/rules";
 import {UndefinedCodeLocation} from "../src/results";
 

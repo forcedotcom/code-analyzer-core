@@ -4,6 +4,7 @@ import * as utils from "../src/utils";
 import {Component, Finding} from "retire/lib/types";
 import path from "node:path";
 import {Workspace} from "@salesforce/code-analyzer-engine-api";
+import {createTempDir} from '@salesforce/code-analyzer-engine-api/utils';
 
 changeWorkingDirectoryToPackageRoot();
 
@@ -14,7 +15,7 @@ describe('Tests for the AdvancedRetireJsExecutor', () => {
     });
 
     it('When running a directory containing no violations, then output is an empty array.', async () => {
-        const workspace: Workspace = new Workspace([await utils.createTempDir()]);
+        const workspace: Workspace = new Workspace([await createTempDir()]);
         const findings: Finding[] = await executor.execute(await workspace.getExpandedFiles());
         expect(findings).toEqual([]);
     });
@@ -137,7 +138,7 @@ describe('Tests for the SimpleRetireJsExecutor', () => {
 
     describe.skip('These tests are just nice to have right now since we do not expose SimpleRetireJsExecutor. So they are skipped.', () => {
         it('When running a directory containing no violations, then output is an empty array.', async () => {
-            const findings: Finding[] = await executor.execute([await utils.createTempDir()]);
+            const findings: Finding[] = await executor.execute([await createTempDir()]);
             expect(findings).toEqual([]);
         });
 

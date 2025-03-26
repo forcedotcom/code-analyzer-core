@@ -1,5 +1,5 @@
 import path from "node:path";
-import {Clock} from "../../utils";
+import {Clock} from "@salesforce/code-analyzer-engine-api/utils";
 import {RunResults} from "../../results";
 import fs from "fs";
 import { RunResultsFormatter } from "../../output-format";

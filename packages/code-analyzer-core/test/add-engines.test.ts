@@ -1,10 +1,11 @@
 import {CodeAnalyzer, CodeAnalyzerConfig, ConfigDescription, ConfigFieldDescription, EventType, LogEvent, LogLevel} from "../src";
 import * as stubs from "./stubs";
 import {getMessage} from "../src/messages";
-import {changeWorkingDirectoryToPackageRoot, FixedClock} from "./test-helpers";
+import {changeWorkingDirectoryToPackageRoot} from "./test-helpers";
 import path from "node:path";
 import {StubEngine1, StubEngine2, StubEngine3, ThrowingPlugin2} from "./stubs";
 import * as engApi from "@salesforce/code-analyzer-engine-api";
+import {FixedClock} from "@salesforce/code-analyzer-engine-api/utils";
 
 changeWorkingDirectoryToPackageRoot();
 
