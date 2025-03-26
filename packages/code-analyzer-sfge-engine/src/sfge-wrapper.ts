@@ -1,6 +1,5 @@
 import path from 'node:path';
 import fs from 'node:fs';
-import os from 'node:os';
 import {
     getMessageFromCatalog,
     LogLevel,
@@ -8,6 +7,7 @@ import {
 } from '@salesforce/code-analyzer-engine-api';
 import {createTempDir, JavaCommandExecutor} from '@salesforce/code-analyzer-engine-api/utils';
 import {getMessage} from "./messages";
+import {Clock, formatToDateTimeString} from './utils';
 
 export type SfgeRuleInfo = {
     name: string;
@@ -64,18 +64,21 @@ const SFGE_ERROR_START: string = 'SfgeErrorStart';
 
 export class RuntimeSfgeWrapper {
     private readonly javaCommandExecutor: JavaCommandExecutor;
+    private readonly logFileName: string;
     private temporaryWorkingDir?: string;
     private readonly emitLogEvent: (logLeveL: LogLevel, message: string) => void;
 
-    public constructor(javaCommandExecutor: JavaCommandExecutor, emitLogEvent: (logLevel: LogLevel, message: string) => void) {
+    public constructor(javaCommandExecutor: JavaCommandExecutor, clock: Clock, emitLogEvent: (logLevel: LogLevel, message: string) => void) {
         this.javaCommandExecutor = javaCommandExecutor;
+        this.logFileName = `sfca-sfge-${formatToDateTimeString(clock.now())}.log`;
         this.emitLogEvent = emitLogEvent;
     }
 
-    public async invokeDescribeCommand(emitProgress: (percComplete: number) => void): Promise<SfgeRuleInfo[]> {
+    public async invokeDescribeCommand(emitProgress: (percComplete: number) => void, logFolder: string): Promise<SfgeRuleInfo[]> {
         const tmpDir: string = await this.getTemporaryWorkingDir();
-        const logFilePath: string = path.join(os.tmpdir(), 'sfge.log');
+        const logFilePath: string = path.join(logFolder, this.logFileName);
         const sfgeRulesOutputFile: string = path.join(tmpDir, 'ruleInfo.json');
+        this.emitLogEvent(LogLevel.Debug, getMessage('LoggingToFile', 'describe', logFilePath));
         emitProgress(10);
 
         const javaCmdArgs: string[] = [`-Dsfge_log_name=${logFilePath}`, SFGE_MAIN_JAVA_CLASS, 'catalog', 'all', sfgeRulesOutputFile];
@@ -97,17 +100,17 @@ export class RuntimeSfgeWrapper {
         }
     }
 
-    public async invokeRunCommand(selectedRuleInfos: SfgeRuleInfo[], targetPaths: string[], projectFilePaths: string[], emitProgress: (percComplete: number) => void): Promise<SfgeRunResult[]> {
+    public async invokeRunCommand(selectedRuleInfos: SfgeRuleInfo[], targetPaths: string[], projectFilePaths: string[], logFolder: string, emitProgress: (percComplete: number) => void): Promise<SfgeRunResult[]> {
         const tmpDir: string = await this.getTemporaryWorkingDir();
         emitProgress(2);
 
         const inputFileName: string = path.join(tmpDir, 'sfgeInput.json');
-        const logFilePath: string = path.join(os.tmpdir(), 'sfge.log');
+        const logFilePath: string = path.join(logFolder, this.logFileName);
         const ruleNames: string[] = selectedRuleInfos.map(sri => sri.name);
 
         await this.createSfgeInputFile(inputFileName, ruleNames, targetPaths, projectFilePaths);
         const resultsOutputFile: string = path.join(tmpDir, 'resultsFile.json');
-        this.emitLogEvent(LogLevel.Info, getMessage('LoggingToFile', logFilePath));
+        this.emitLogEvent(LogLevel.Debug, getMessage('LoggingToFile', 'run', logFilePath));
         emitProgress(10);
 
         const javaCmdArgs: string[] = [`-Dsfge_log_name=${logFilePath}`, SFGE_MAIN_JAVA_CLASS, 'execute', inputFileName, resultsOutputFile];
