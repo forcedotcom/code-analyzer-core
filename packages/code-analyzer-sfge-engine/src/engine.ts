@@ -13,6 +13,7 @@ import {
     Workspace
 } from '@salesforce/code-analyzer-engine-api';
 import {JavaCommandExecutor} from '@salesforce/code-analyzer-engine-api/utils';
+import {Clock} from './utils';
 import {getMessage} from './messages';
 import {RuntimeSfgeWrapper, SfgeRuleInfo, SfgeRunResult} from "./sfge-wrapper";
 import {SfgeEngineConfig} from "./config";
@@ -29,11 +30,11 @@ export class SfgeEngine extends Engine {
     private sfgeRuleInfoListCache: Map<string, SfgeRuleInfo[]> = new Map();
     private relevantFilesByWorkspaceId: Map<string, string[]> = new Map();
 
-    public constructor(config: SfgeEngineConfig) {
+    public constructor(config: SfgeEngineConfig, clock: Clock) {
         super();
         // TODO: When we support custom Java commands, we'll need to use the config property instead of the hardcoded string here.
         const javaCommandExecutor: JavaCommandExecutor = new JavaCommandExecutor('java', this.emitLogEvent.bind(this));
-        this.sfgeWrapper = new RuntimeSfgeWrapper(javaCommandExecutor, this.emitLogEvent.bind(this));
+        this.sfgeWrapper = new RuntimeSfgeWrapper(javaCommandExecutor, clock, this.emitLogEvent.bind(this));
         this.config = config;
     }
 
@@ -51,7 +52,7 @@ export class SfgeEngine extends Engine {
         this.emitDescribeRulesProgressEvent(5);
 
         const ruleInfoList: SfgeRuleInfo[] = await this.getSfgeRuleInfoList(
-            describeOptions.workspace,
+            describeOptions,
             (innerPerc: number) => this.emitDescribeRulesProgressEvent(5 + (90*innerPerc/100)) // 5%-95%
         );
 
@@ -72,7 +73,7 @@ export class SfgeEngine extends Engine {
         await this.validateWorkspaceCompleteness(runOptions.workspace);
 
         const allRulesInfoList: SfgeRuleInfo[] = await this.getSfgeRuleInfoList(
-            runOptions.workspace,
+            runOptions,
             (innerPerc: number) => this.emitRunRulesProgressEvent(2 + 3*(innerPerc/100)) // 2%-5%
         );
 
@@ -90,6 +91,7 @@ export class SfgeEngine extends Engine {
             selectedRuleInfoList,
             relevantFiles, // TODO: WHEN WE ADD PATH-START TARGETING, THIS NEEDS TO CHANGE.
             relevantFiles,
+            runOptions.logFolder,
             (innerPerc: number, message?: string) => this.emitRunRulesProgressEvent(5 + 93*innerPerc/100, message) // 5%-98%
         );
 
@@ -125,13 +127,15 @@ export class SfgeEngine extends Engine {
         }
     }
 
-    private async getSfgeRuleInfoList(workspace: Workspace|undefined, emitProgress: (percComplete: number) => void): Promise<SfgeRuleInfo[]> {
+    private async getSfgeRuleInfoList(options: DescribeOptions|RunOptions, emitProgress: (percComplete: number) => void): Promise<SfgeRuleInfo[]> {
+        const workspace: Workspace|undefined = options.workspace;
+        const logFolder: string = options.logFolder;
         const cacheKey: string = getCacheKey(workspace);
         if (!this.sfgeRuleInfoListCache.has(cacheKey)) {
             if (workspace && (await this.getRelevantFilesInWorkspace(workspace)).length === 0) {
                 this.sfgeRuleInfoListCache.set(cacheKey, []);
             } else {
-                const ruleInfoList: SfgeRuleInfo[] = await this.sfgeWrapper.invokeDescribeCommand(emitProgress);
+                const ruleInfoList: SfgeRuleInfo[] = await this.sfgeWrapper.invokeDescribeCommand(emitProgress, logFolder);
                 this.sfgeRuleInfoListCache.set(cacheKey, ruleInfoList);
             }
         }

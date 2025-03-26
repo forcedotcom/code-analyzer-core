@@ -17,7 +17,7 @@ const MESSAGE_CATALOG : { [key: string]: string } = {
         `Specified workspace is missing %d possibly-relevant file(s) from the folder %s. Salesforce Graph Engine may be unable to create a complete graph of your project without all apex files included in your workspace. This may result in incomplete or incorrect results.`,
 
     LoggingToFile:
-        `SFGE execution logs being written to %s.`,
+        `Invoking SFGE %s flow. Logs being written to %s.`,
 
     ViolationLocationFudged:
         `Fudged a violation's location for compatibility.\n` +

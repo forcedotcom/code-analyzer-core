@@ -15,23 +15,24 @@ import {
 } from "@salesforce/code-analyzer-engine-api";
 import {DEFAULT_SFGE_ENGINE_CONFIG} from "../src/config";
 import {SfgeEngine} from "../src/engine";
-import {changeWorkingDirectoryToPackageRoot} from "./test-helpers";
+import {changeWorkingDirectoryToPackageRoot, FixedClock} from "./test-helpers";
 
 changeWorkingDirectoryToPackageRoot();
 
 const TEST_DATA_FOLDER: string = path.join(__dirname, 'test-data');
 
 describe('SfgeEngine', () => {
+    const fixedClock: FixedClock = new FixedClock(new Date(2025, 2, 21, 12, 30, 25, 20));
     describe('#getName()', () => {
         it(`Returns 'sfge'`, () => {
-            const engine: SfgeEngine = new SfgeEngine(DEFAULT_SFGE_ENGINE_CONFIG);
+            const engine: SfgeEngine = new SfgeEngine(DEFAULT_SFGE_ENGINE_CONFIG, fixedClock);
             expect(engine.getName()).toEqual('sfge');
         });
     });
 
     describe('#getEngineVersion()', () => {
         it('Outputs something resembling a Semantic Version', async () => {
-            const engine: SfgeEngine = new SfgeEngine(DEFAULT_SFGE_ENGINE_CONFIG);
+            const engine: SfgeEngine = new SfgeEngine(DEFAULT_SFGE_ENGINE_CONFIG, fixedClock);
             const version: string = await engine.getEngineVersion();
 
             expect(version).toMatch(/\d+\.\d+\.\d+.*/);
@@ -40,7 +41,7 @@ describe('SfgeEngine', () => {
 
     describe('#describeRules()', () => {
         it('When no workspace is provided, all rules are returned', async () => {
-            const engine: SfgeEngine = new SfgeEngine(DEFAULT_SFGE_ENGINE_CONFIG);
+            const engine: SfgeEngine = new SfgeEngine(DEFAULT_SFGE_ENGINE_CONFIG, fixedClock);
             const logEvents: LogEvent[] = [];
             engine.onEvent(EventType.LogEvent, (e: LogEvent) => logEvents.push(e));
             const progressEvents: DescribeRulesProgressEvent[] = [];
@@ -54,6 +55,11 @@ describe('SfgeEngine', () => {
             expect(fineLogEvents.length).toBeGreaterThanOrEqual(1);
             expect(fineLogEvents[0].message).toContain('Calling command:');
 
+            // Also check that we have a debug log indicating where the SFGE log was written to.
+            const debugLogEvents: LogEvent[] = logEvents.filter(e => e.logLevel === LogLevel.Debug);
+            expect(debugLogEvents.length).toBeGreaterThanOrEqual(1);
+            expect(debugLogEvents[0].message).toEqual(`Invoking SFGE describe flow. Logs being written to ${path.join(os.tmpdir(), 'sfge-2025_03_21_12_30_25_020.log')}.`);
+
             // Also check that we have all the correct progress events
             expect(progressEvents.map(e => e.percentComplete)).toEqual([5, 14, 77, 86, 95, 100]);
 
@@ -62,7 +68,7 @@ describe('SfgeEngine', () => {
         });
 
         it('When a workspace without Apex files is provided, no rules are returned', async () => {
-            const engine: SfgeEngine = new SfgeEngine(DEFAULT_SFGE_ENGINE_CONFIG);
+            const engine: SfgeEngine = new SfgeEngine(DEFAULT_SFGE_ENGINE_CONFIG, fixedClock);
             const workspace: Workspace = new Workspace([
                 path.join(TEST_DATA_FOLDER, 'sampleIrrelevantWorkspace')
             ]);
@@ -71,7 +77,7 @@ describe('SfgeEngine', () => {
         });
 
         it('When a workspace with Apex files is provided, all rules are returned', async () => {
-            const engine: SfgeEngine = new SfgeEngine(DEFAULT_SFGE_ENGINE_CONFIG);
+            const engine: SfgeEngine = new SfgeEngine(DEFAULT_SFGE_ENGINE_CONFIG, fixedClock);
             const workspace: Workspace = new Workspace([
                 path.join(TEST_DATA_FOLDER, 'sampleRelevantWorkspace')
             ]);
@@ -84,7 +90,7 @@ describe('SfgeEngine', () => {
     describe('#runRules()', () => {
         it('When no rule names are provided, no violations are returned', async () => {
             // ====== SETUP ======
-            const engine: SfgeEngine = new SfgeEngine(DEFAULT_SFGE_ENGINE_CONFIG);
+            const engine: SfgeEngine = new SfgeEngine(DEFAULT_SFGE_ENGINE_CONFIG, fixedClock);
             const workspace: Workspace = new Workspace([path.join(TEST_DATA_FOLDER, 'sampleRelevantWorkspace')]);
             const logEvents: LogEvent[] = [];
             engine.onEvent(EventType.LogEvent, (e: LogEvent) => logEvents.push(e));
@@ -108,7 +114,7 @@ describe('SfgeEngine', () => {
             {case: 'an irrelevant file', workspacePath: path.join(TEST_DATA_FOLDER, 'sampleIrrelevantWorkspace', 'someFile.txt')}
         ])('When workspace is $case, no violations are returned', async ({workspacePath}) => {
             // ====== SETUP ======
-            const engine: SfgeEngine = new SfgeEngine(DEFAULT_SFGE_ENGINE_CONFIG);
+            const engine: SfgeEngine = new SfgeEngine(DEFAULT_SFGE_ENGINE_CONFIG, fixedClock);
             const workspace: Workspace = new Workspace([workspacePath]);
             const logEvents: LogEvent[] = [];
             engine.onEvent(EventType.LogEvent, (e: LogEvent) => logEvents.push(e));
@@ -139,7 +145,7 @@ describe('SfgeEngine', () => {
             }
         ])('When workspace is $case, no violations are returned', async ({workspacePaths}) => {
             // ====== SETUP ======
-            const engine: SfgeEngine = new SfgeEngine(DEFAULT_SFGE_ENGINE_CONFIG);
+            const engine: SfgeEngine = new SfgeEngine(DEFAULT_SFGE_ENGINE_CONFIG, fixedClock);
             const workspace: Workspace = new Workspace(workspacePaths);
             const logEvents: LogEvent[] = [];
             engine.onEvent(EventType.LogEvent, (e: LogEvent) => logEvents.push(e));
@@ -157,9 +163,10 @@ describe('SfgeEngine', () => {
             expect(fineLogEvents.length).toBeGreaterThanOrEqual(2);
             expect(fineLogEvents[1].message).toContain('Calling command:');
             expect(fineLogEvents[1].message).toContain("execute");
-            const infoLogEvents: LogEvent[] = logEvents.filter(e => e.logLevel === LogLevel.Info);
-            expect(infoLogEvents.length).toBeGreaterThanOrEqual(1);
-            expect(infoLogEvents[0].message).toEqual(`SFGE execution logs being written to ${path.join(os.tmpdir(), 'sfge.log')}.`);
+            const debugLogEvents: LogEvent[] = logEvents.filter(e => e.logLevel === LogLevel.Debug);
+            expect(debugLogEvents.length).toBeGreaterThanOrEqual(2);
+            expect(debugLogEvents[0].message).toEqual(`Invoking SFGE describe flow. Logs being written to ${path.join(os.tmpdir(), 'sfge-2025_03_21_12_30_25_020.log')}.`);
+            expect(debugLogEvents[1].message).toEqual(`Invoking SFGE run flow. Logs being written to ${path.join(os.tmpdir(), 'sfge-2025_03_21_12_30_25_020.log')}.`);
             expect(progressEvents.map(pe => pe.percentComplete)).toEqual(
                 [2, 2.3, 4.4, 4.7, 5, 6.86, 14.3, 22.21, 26.16, 34.06, 85.45, 93.35, 98, 100]
             );
@@ -176,7 +183,7 @@ describe('SfgeEngine', () => {
             }
         ])('When workspace is $case, those violations are returned', async () => {
             // ====== SETUP ======
-            const engine: SfgeEngine = new SfgeEngine(DEFAULT_SFGE_ENGINE_CONFIG);
+            const engine: SfgeEngine = new SfgeEngine(DEFAULT_SFGE_ENGINE_CONFIG, fixedClock);
             const workspace: Workspace = new Workspace([path.join(TEST_DATA_FOLDER, 'sampleRelevantWorkspace')]);
             const progressEvents: RunRulesProgressEvent[] = [];
             engine.onEvent(EventType.RunRulesProgressEvent, (e: RunRulesProgressEvent) => progressEvents.push(e));
@@ -194,7 +201,7 @@ describe('SfgeEngine', () => {
 
         it('When only one of several selected rules is violated, violations are returned for only that rule', async () => {
             // ====== SETUP ======
-            const engine: SfgeEngine = new SfgeEngine(DEFAULT_SFGE_ENGINE_CONFIG);
+            const engine: SfgeEngine = new SfgeEngine(DEFAULT_SFGE_ENGINE_CONFIG, fixedClock);
             const workspace: Workspace = new Workspace([path.join(TEST_DATA_FOLDER, 'sampleRelevantWorkspace')]);
             const progressEvents: RunRulesProgressEvent[] = [];
             engine.onEvent(EventType.RunRulesProgressEvent, (e: RunRulesProgressEvent) => progressEvents.push(e));
@@ -233,7 +240,7 @@ describe('SfgeEngine', () => {
 
         it('When a file cannot be scanned, an appropriate error is thrown', async () => {
             // ====== SETUP ======
-            const engine: SfgeEngine = new SfgeEngine(DEFAULT_SFGE_ENGINE_CONFIG);
+            const engine: SfgeEngine = new SfgeEngine(DEFAULT_SFGE_ENGINE_CONFIG, fixedClock);
             const workspace: Workspace = new Workspace([path.join(TEST_DATA_FOLDER, 'sampleInvalidWorkspace')]);
             const ruleNames: string[] = ['ApexFlsViolationRule', 'RemoveUnusedMethod'];
 
@@ -244,7 +251,7 @@ describe('SfgeEngine', () => {
 
         it('When workspace is one relevant file in a folder with other relevant files, a warning is logged', async () => {
             // ====== SETUP ======
-            const engine: SfgeEngine = new SfgeEngine(DEFAULT_SFGE_ENGINE_CONFIG);
+            const engine: SfgeEngine = new SfgeEngine(DEFAULT_SFGE_ENGINE_CONFIG, fixedClock);
             const workspace: Workspace = new Workspace([path.join(TEST_DATA_FOLDER, 'sampleRelevantWorkspace', 'SomeClass.cls')]);
             const logEvents: LogEvent[] = [];
             engine.onEvent(EventType.LogEvent, (e: LogEvent) => logEvents.push(e));

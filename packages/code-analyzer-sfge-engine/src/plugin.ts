@@ -12,6 +12,7 @@ import {
 } from "./config";
 import {getMessage} from './messages';
 import {SfgeEngine} from "./engine";
+import {RealClock} from './utils';
 
 export class SfgeEnginePlugin extends EnginePluginV1 {
 
@@ -35,7 +36,7 @@ export class SfgeEnginePlugin extends EnginePluginV1 {
 
     public override async createEngine(engineName: string, resolvedConfig: ConfigObject): Promise<Engine> {
         validateEngineName(engineName);
-        return new SfgeEngine(resolvedConfig as SfgeEngineConfig);
+        return new SfgeEngine(resolvedConfig as SfgeEngineConfig, new RealClock());
     }
 }
 

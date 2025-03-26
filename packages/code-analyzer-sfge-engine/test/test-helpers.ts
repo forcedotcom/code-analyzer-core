@@ -1,5 +1,6 @@
 import process from "node:process";
 import path from "node:path";
+import {Clock} from '../src/utils';
 
 export function changeWorkingDirectoryToPackageRoot() {
     let original_working_directory: string;
@@ -15,4 +16,16 @@ export function changeWorkingDirectoryToPackageRoot() {
     afterAll(() => {
         process.chdir(original_working_directory);
     });
+}
+
+export class FixedClock implements Clock {
+    private readonly fixedTimestamp: Date;
+
+    public constructor(fixedTimestamp: Date) {
+        this.fixedTimestamp = fixedTimestamp;
+    }
+
+    public now(): Date {
+        return this.fixedTimestamp;
+    }
 }
