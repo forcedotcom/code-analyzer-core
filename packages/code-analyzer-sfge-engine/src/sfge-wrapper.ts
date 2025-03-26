@@ -70,7 +70,7 @@ export class RuntimeSfgeWrapper {
 
     public constructor(javaCommandExecutor: JavaCommandExecutor, clock: Clock, emitLogEvent: (logLevel: LogLevel, message: string) => void) {
         this.javaCommandExecutor = javaCommandExecutor;
-        this.logFileName = `sfge-${formatToDateTimeString(clock.now())}.log`;
+        this.logFileName = `sfca-sfge-${formatToDateTimeString(clock.now())}.log`;
         this.emitLogEvent = emitLogEvent;
     }
 

@@ -13,7 +13,7 @@ import {
     Workspace
 } from '@salesforce/code-analyzer-engine-api';
 import {JavaCommandExecutor} from '@salesforce/code-analyzer-engine-api/utils';
-import {Clock} from './utils';
+import {Clock, RealClock} from './utils';
 import {getMessage} from './messages';
 import {RuntimeSfgeWrapper, SfgeRuleInfo, SfgeRunResult} from "./sfge-wrapper";
 import {SfgeEngineConfig} from "./config";
@@ -30,7 +30,7 @@ export class SfgeEngine extends Engine {
     private sfgeRuleInfoListCache: Map<string, SfgeRuleInfo[]> = new Map();
     private relevantFilesByWorkspaceId: Map<string, string[]> = new Map();
 
-    public constructor(config: SfgeEngineConfig, clock: Clock) {
+    public constructor(config: SfgeEngineConfig, clock: Clock = new RealClock()) {
         super();
         // TODO: When we support custom Java commands, we'll need to use the config property instead of the hardcoded string here.
         const javaCommandExecutor: JavaCommandExecutor = new JavaCommandExecutor('java', this.emitLogEvent.bind(this));

@@ -58,7 +58,7 @@ describe('SfgeEngine', () => {
             // Also check that we have a debug log indicating where the SFGE log was written to.
             const debugLogEvents: LogEvent[] = logEvents.filter(e => e.logLevel === LogLevel.Debug);
             expect(debugLogEvents.length).toBeGreaterThanOrEqual(1);
-            expect(debugLogEvents[0].message).toEqual(`Invoking SFGE describe flow. Logs being written to ${path.join(os.tmpdir(), 'sfge-2025_03_21_12_30_25_020.log')}.`);
+            expect(debugLogEvents[0].message).toEqual(`Invoking SFGE's describe command. Logs being written to ${path.join(os.tmpdir(), 'sfca-sfge-2025_03_21_12_30_25_020.log')}.`);
 
             // Also check that we have all the correct progress events
             expect(progressEvents.map(e => e.percentComplete)).toEqual([5, 14, 77, 86, 95, 100]);
@@ -165,8 +165,8 @@ describe('SfgeEngine', () => {
             expect(fineLogEvents[1].message).toContain("execute");
             const debugLogEvents: LogEvent[] = logEvents.filter(e => e.logLevel === LogLevel.Debug);
             expect(debugLogEvents.length).toBeGreaterThanOrEqual(2);
-            expect(debugLogEvents[0].message).toEqual(`Invoking SFGE describe flow. Logs being written to ${path.join(os.tmpdir(), 'sfge-2025_03_21_12_30_25_020.log')}.`);
-            expect(debugLogEvents[1].message).toEqual(`Invoking SFGE run flow. Logs being written to ${path.join(os.tmpdir(), 'sfge-2025_03_21_12_30_25_020.log')}.`);
+            expect(debugLogEvents[0].message).toEqual(`Invoking SFGE's describe command. Logs being written to ${path.join(os.tmpdir(), 'sfca-sfge-2025_03_21_12_30_25_020.log')}.`);
+            expect(debugLogEvents[1].message).toEqual(`Invoking SFGE's run command. Logs being written to ${path.join(os.tmpdir(), 'sfca-sfge-2025_03_21_12_30_25_020.log')}.`);
             expect(progressEvents.map(pe => pe.percentComplete)).toEqual(
                 [2, 2.3, 4.4, 4.7, 5, 6.86, 14.3, 22.21, 26.16, 34.06, 85.45, 93.35, 98, 100]
             );
