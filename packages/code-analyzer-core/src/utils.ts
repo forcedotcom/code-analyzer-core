@@ -8,16 +8,6 @@ export function toAbsolutePath(fileOrFolder: string): string {
     return path.resolve(fileOrFolder.replace(/[\\/]/g, path.sep));
 }
 
-export interface Clock {
-    now(): Date;
-}
-
-export class RealClock implements Clock {
-    now(): Date {
-        return new Date();
-    }
-}
-
 export interface UniqueIdGenerator {
     getUniqueId(prefix: string): string;
 }

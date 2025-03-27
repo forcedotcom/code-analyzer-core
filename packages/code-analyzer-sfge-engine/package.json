@@ -13,10 +13,8 @@
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "dependencies": {
-    "@salesforce/code-analyzer-engine-api": "0.20.0",
-    "@types/node": "^20.0.0",
-    "@types/tmp": "^0.2.6",
-    "tmp": "^0.2.3"
+      "@salesforce/code-analyzer-engine-api": "0.21.0-SNAPSHOT",
+      "@types/node": "^20.0.0"
   },
   "devDependencies": {
     "@eslint/js": "^8.57.1",

@@ -4,7 +4,8 @@ import { CodeAnalyzer, CodeAnalyzerConfig, OutputFormat } from "../src";
 import { RunResults, RunResultsImpl } from "../src/results";
 import { RuleSelection, RuleSelectionImpl } from "../src/rules";
 import * as stubs from "./stubs";
-import { changeWorkingDirectoryToPackageRoot, FixedClock } from "./test-helpers";
+import { FixedClock } from "@salesforce/code-analyzer-engine-api/utils";
+import { changeWorkingDirectoryToPackageRoot } from "./test-helpers";
 
 changeWorkingDirectoryToPackageRoot();
 

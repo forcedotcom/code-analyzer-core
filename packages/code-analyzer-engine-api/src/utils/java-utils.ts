@@ -1,20 +1,8 @@
-import * as tmp from 'tmp';
-import {promisify} from "node:util";
 import {getMessage} from "../messages";
 import path from "node:path";
 import {LogLevel} from "../events";
 import {ChildProcessWithoutNullStreams, spawn} from "node:child_process";
-
-tmp.setGracefulCleanup();
-const tmpDirAsync = promisify((options: tmp.DirOptions, cb: tmp.DirCallback) => tmp.dir(options, cb));
-
-/**
- * Creates a temporary directory that eventually cleans up after itself
- * @param parentTempDir - if supplied, then a temporary folder is placed directly underneath this parent folder.
- */
-export async function createTempDir(parentTempDir?: string) : Promise<string> {
-    return tmpDirAsync({dir: parentTempDir, keep: false, unsafeCleanup: true});
-}
+import {indent} from './string-utils';
 
 type ProcessStdOutFcn = (stdOutMsg: string) => void;
 const NO_OP = () => {};
@@ -66,8 +54,4 @@ export class JavaCommandExecutor {
             });
         });
     }
-}
-
-export function indent(value: string, indentation = '    '): string {
-    return indentation + value.replaceAll('\n', `\n${indentation}`);
 }

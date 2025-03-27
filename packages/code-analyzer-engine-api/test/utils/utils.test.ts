@@ -1,7 +1,30 @@
 import fs from 'node:fs';
 import os from 'node:os';
-import path from 'node:path';
-import {createTempDir, indent, JavaCommandExecutor} from "../../src/utils";
+import {createTempDir, FixedClock, indent, JavaCommandExecutor, RealClock} from "../../src/utils";
+
+
+describe('Tests for Clock', () => {
+    const fixedClock: FixedClock = new FixedClock(new Date(2025, 2, 21, 12, 30, 25, 20));
+
+    describe('Tests for #formatToDateTimeString()', () => {
+        it('Properly formats string', () => {
+            expect(fixedClock.formatToDateTimeString()).toEqual('2025_03_21_12_30_25_020');
+        });
+    });
+
+    describe('Tests for RealClock#now()', () => {
+        it('Returns accurate DateTime', () => {
+            // Get the time at the start of the test.
+            const floor: number = Date.now();
+            // Use a RealClock to get a timestamp.
+            const now: number = new RealClock().now().getTime();
+            // Get the time after using the RealClock.
+            const ceiling: number = Date.now();
+            expect(now).toBeGreaterThanOrEqual(floor);
+            expect(now).toBeLessThanOrEqual(ceiling);
+        });
+    });
+})
 
 describe('Tests for createTempDir', () => {
     it('Successfully creates temporary directory', async () => {

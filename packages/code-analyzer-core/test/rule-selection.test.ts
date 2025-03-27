@@ -12,9 +12,10 @@ import {
     SeverityLevel
 } from "../src";
 import * as engApi from "@salesforce/code-analyzer-engine-api"
+import {FixedClock} from "@salesforce/code-analyzer-engine-api/utils";
 import {RepeatedRuleNameEnginePlugin, StubEnginePlugin} from "./stubs";
 import path from "node:path";
-import {changeWorkingDirectoryToPackageRoot, FixedClock, FixedUniqueIdGenerator} from "./test-helpers";
+import {changeWorkingDirectoryToPackageRoot, FixedUniqueIdGenerator} from "./test-helpers";
 import {getMessage} from "../src/messages";
 import * as stubs from "./stubs";
 

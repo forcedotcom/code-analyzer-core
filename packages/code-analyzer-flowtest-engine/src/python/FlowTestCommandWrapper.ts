@@ -1,7 +1,6 @@
-import tmp from 'tmp';
+import {createTempDir} from '@salesforce/code-analyzer-engine-api/utils';
 import {PythonCommandExecutor} from './PythonCommandExecutor';
 import {getMessage} from '../messages';
-import {promisify} from "node:util";
 import path from "node:path";
 import fs from "node:fs";
 
@@ -168,9 +167,4 @@ export class RunTimeFlowTestCommandWrapper implements FlowTestCommandWrapper {
         }
         return 'source_text' in flowNode && typeof flowNode.source_text === 'string';
     }
-}
-
-const tmpDirAsync = promisify((options: tmp.DirOptions, cb: tmp.DirCallback) => tmp.dir(options, cb));
-async function createTempDir() : Promise<string> {
-    return tmpDirAsync({keep: false, unsafeCleanup: true});
 }

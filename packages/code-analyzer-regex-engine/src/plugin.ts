@@ -7,6 +7,7 @@ import {
     EnginePluginV1,
     SeverityLevel,
 } from "@salesforce/code-analyzer-engine-api";
+import {Clock, RealClock} from "@salesforce/code-analyzer-engine-api/utils";
 import {getMessage} from "./messages";
 import {RegexEngine} from "./engine";
 import {
@@ -16,7 +17,6 @@ import {
     RegexRules,
     validateAndNormalizeConfig
 } from "./config";
-import {Clock, RealClock} from "./utils";
 
 export const RULE_RESOURCE_URLS: Map<string, string[]> = new Map([
     ['AvoidTermsWithImplicitBias',['https://www.salesforce.com/news/stories/salesforce-updates-technical-language-in-ongoing-effort-to-address-implicit-bias/']]

@@ -7,6 +7,7 @@ import {
     SeverityLevel,
     SHARED_MESSAGE_CATALOG
 } from "@salesforce/code-analyzer-engine-api";
+import {FixedClock, RealClock} from '@salesforce/code-analyzer-engine-api/utils';
 import {getMessage} from "../src/messages";
 import {
     FILE_EXT_PATTERN,
@@ -17,8 +18,6 @@ import {
     RULE_NAME_PATTERN
 } from "../src/config";
 import {createBaseRegexRules} from "../src/plugin";
-import {FixedClock} from "./test-helpers";
-import {RealClock} from "../src/utils";
 
 const SAMPLE_RAW_CUSTOM_RULE_DEFINITION = {
     regex: String.raw`/TODO:\s/gi`,

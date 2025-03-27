@@ -10,10 +10,10 @@ import {
     RunOptions,
     Workspace
 } from "@salesforce/code-analyzer-engine-api";
+import {Clock, RealClock} from '@salesforce/code-analyzer-engine-api/utils';
 import {getMessage} from './messages';
 import {FlowNodeDescriptor, FlowTestCommandWrapper, FlowTestExecutionResult} from "./python/FlowTestCommandWrapper";
 import {getConsolidatedRuleByName, getConsolidatedRuleName, getConsolidatedRuleNames} from "./hardcoded-catalog";
-import {Clock, formatToDateTimeString, RealClock} from "./utils";
 
 /**
  * An arbitrarily chosen value for how close the engine is to completion before the underlying FlowTest tool is invoked,
@@ -69,7 +69,7 @@ export class FlowTestEngine extends Engine {
             return { violations: [] };
         }
 
-        const dateTimeStr: string = formatToDateTimeString(this.clock.now());
+        const dateTimeStr: string = this.clock.formatToDateTimeString();
         const logFile: string = path.join(runOptions.logFolder, `sfca-flowtest-${dateTimeStr}.log`);
         this.emitLogEvent(LogLevel.Debug, getMessage('WritingFlowtestLogToFile', logFile));
 
