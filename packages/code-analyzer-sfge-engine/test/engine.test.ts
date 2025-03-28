@@ -13,7 +13,7 @@ import {
     RunRulesProgressEvent,
     Workspace
 } from "@salesforce/code-analyzer-engine-api";
-import {DEFAULT_SFGE_ENGINE_CONFIG} from "../src/config";
+import {DEFAULT_SFGE_ENGINE_CONFIG, SfgeEngineConfig} from "../src/config";
 import {SfgeEngine} from "../src/engine";
 import {changeWorkingDirectoryToPackageRoot, FixedClock} from "./test-helpers";
 
@@ -236,6 +236,35 @@ describe('SfgeEngine', () => {
                 };
             });
             expect(actualProgressDescriptors).toEqual(expectedProgressDescriptors);
+        });
+
+        it.each([
+            {prop: 'disable_limit_reached_violations', value: true, javaArg: '-DSFGE_PATH_EXPANSION_LIMIT=-1'},
+            {prop: 'java_max_heap_size', value: '2g', javaArg: '-Xmx2g'},
+            {prop: 'java_thread_count', value: 7, javaArg: '-DSFGE_RULE_THREAD_COUNT=7'},
+            {prop: 'java_thread_timeout', value: 40000, javaArg: '-DSFGE_RULE_THREAD_TIMEOUT=40000'}
+        ])('Config property $prop is properly passed through to Java layer', async ({prop, value, javaArg}) => {
+            // ====== SETUP ======
+            const config: SfgeEngineConfig = {
+                ...DEFAULT_SFGE_ENGINE_CONFIG,
+                [prop]: value
+            };
+            const engine: SfgeEngine = new SfgeEngine(config);
+            const workspace: Workspace = new Workspace([path.join(TEST_DATA_FOLDER, 'sampleRelevantWorkspace')]);
+            const logEvents: LogEvent[] = [];
+            engine.onEvent(EventType.LogEvent, (e: LogEvent) => logEvents.push(e));
+            // Use a static rule, because we don't actually care about the results and we're trying to keep runtimes
+            // manageable.
+            const ruleNames: string[] = ['UnimplementedTypeRule'];
+
+            // ====== TESTED BEHAVIOR ======
+            const results: EngineRunResults = await engine.runRules(ruleNames, createRunOptions(workspace));
+
+            // ====== ASSERTIONS ======
+            expect(results.violations).toHaveLength(0);
+            const fineLogEvents: LogEvent[] = logEvents.filter(e => e.logLevel === LogLevel.Fine);
+            expect(fineLogEvents.length).toBeGreaterThanOrEqual(2);
+            expect(fineLogEvents[1].message).toContain(javaArg);
         });
 
         it('When a file cannot be scanned, an appropriate error is thrown', async () => {

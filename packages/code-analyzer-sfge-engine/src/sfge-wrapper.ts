@@ -62,6 +62,14 @@ const SFCA_REALTIME_START: string = 'SFCA-REALTIME-START';
 const SFCA_REALTIME_END: string = 'SFCA-REALTIME-END';
 const SFGE_ERROR_START: string = 'SfgeErrorStart';
 
+export type SfgeRunOptions = {
+    logFolder: string;
+    disableLimitReachedViolations: boolean;
+    threadCount: number;
+    threadTimeout: number;
+    heapSizeArg?: string;
+};
+
 export class RuntimeSfgeWrapper {
     private readonly javaCommandExecutor: JavaCommandExecutor;
     private readonly logFileName: string;
@@ -100,12 +108,12 @@ export class RuntimeSfgeWrapper {
         }
     }
 
-    public async invokeRunCommand(selectedRuleInfos: SfgeRuleInfo[], targetPaths: string[], projectFilePaths: string[], logFolder: string, emitProgress: (percComplete: number) => void): Promise<SfgeRunResult[]> {
+    public async invokeRunCommand(selectedRuleInfos: SfgeRuleInfo[], targetPaths: string[], projectFilePaths: string[], sfgeRunOptions: SfgeRunOptions, emitProgress: (percComplete: number) => void): Promise<SfgeRunResult[]> {
         const tmpDir: string = await this.getTemporaryWorkingDir();
         emitProgress(2);
 
         const inputFileName: string = path.join(tmpDir, 'sfgeInput.json');
-        const logFilePath: string = path.join(logFolder, this.logFileName);
+        const logFilePath: string = path.join(sfgeRunOptions.logFolder, this.logFileName);
         const ruleNames: string[] = selectedRuleInfos.map(sri => sri.name);
 
         await this.createSfgeInputFile(inputFileName, ruleNames, targetPaths, projectFilePaths);
@@ -113,7 +121,18 @@ export class RuntimeSfgeWrapper {
         this.emitLogEvent(LogLevel.Debug, getMessage('LoggingToFile', 'run', logFilePath));
         emitProgress(10);
 
-        const javaCmdArgs: string[] = [`-Dsfge_log_name=${logFilePath}`, SFGE_MAIN_JAVA_CLASS, 'execute', inputFileName, resultsOutputFile];
+        const javaCmdArgs: string[] = [`-Dsfge_log_name=${logFilePath}`];
+        if (sfgeRunOptions.disableLimitReachedViolations) {
+            // If the path expansion limit is set to -1, then there is no limit, and path expansion will continue unabated
+            // instead of throwing LimitReached violations.
+            javaCmdArgs.push('-DSFGE_PATH_EXPANSION_LIMIT=-1');
+        }
+        if (sfgeRunOptions.heapSizeArg) {
+            javaCmdArgs.push(`-Xmx${sfgeRunOptions.heapSizeArg}`);
+        }
+        javaCmdArgs.push(`-DSFGE_RULE_THREAD_COUNT=${sfgeRunOptions.threadCount}`);
+        javaCmdArgs.push(`-DSFGE_RULE_THREAD_TIMEOUT=${sfgeRunOptions.threadTimeout}`);
+        javaCmdArgs.push(SFGE_MAIN_JAVA_CLASS, 'execute', inputFileName, resultsOutputFile);
         const javaClassPaths: string[] = [path.join(SFGE_WRAPPER_LIB_FOLDER, '*')];
 
         try {
