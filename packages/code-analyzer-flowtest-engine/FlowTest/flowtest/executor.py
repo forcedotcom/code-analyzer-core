@@ -123,10 +123,11 @@ class Stack(object):
         """
         while True:
             next_frame = self.current_frame.execute()
-            if next_frame is not None:
+            if next_frame is not None and not self.is_circular_reference(next_frame):
                 # we have a function call and need to store the current frame on the stack
                 self.push(self.current_frame)
                 self.current_frame = next_frame
+
             else:
                 # save the (collected) frame
                 self.__collected_frames.append(self.current_frame)
@@ -160,6 +161,31 @@ class Stack(object):
 
                     # now switch execution to new frame
                     self.current_frame = next_frame
+
+    def is_circular_reference(self, next_frame: Frame) -> bool:
+        """Checks if the next frame is in the previously
+           processed frames.
+
+        Args:
+            next_frame: next frame to process
+
+        Returns:
+            True if the next frame is in the old frames
+        """
+        if next_frame is None:
+            return False
+        flow_path = next_frame.flow_path
+        seen = False
+        # don't allow reference to something on the current stack
+        if flow_path in [f.flow_path for f in self.__frame_stack]:
+            seen = True
+        elif flow_path in [f.flow_path for f in self.__collected_frames]:
+            seen = True
+
+        if seen is True:
+            logger.critical(f"found circular reference in {next_frame.flow_path}")
+
+        return seen
 
 
 def add_inputs_to_call_cache(cache: {str: [[{(str, str): flows.FlowVector}]]},
@@ -599,6 +625,9 @@ class Frame(object):
         try:
             sub_name = parse_utils.get_subflow_name(current_elem)
             sub_path = resolve_name(self.all_flow_paths, sub_name=sub_name)
+            if sub_path == self.flow_path:
+                # Don't follow subflows that point to the same flow
+                return None
 
             if sub_path is None:
                 # We can't find the path of the sub flow, so don't process

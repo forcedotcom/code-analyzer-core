@@ -11,6 +11,8 @@ import uuid
 from collections.abc import Callable
 from dataclasses import fields
 from typing import TYPE_CHECKING
+import json
+import traceback
 
 from public.data_obj import VariableType
 from public.enums import RunMode
@@ -20,7 +22,10 @@ if TYPE_CHECKING:
 
 FLOW_EXTENSION = ".flow-meta.xml"
 PACKAGE_FLOW_EXTENSION = ".flow"
+PROJECT_JSON_NAME = "sfdx-project.json"
+
 CURR_DIR = os.getcwd()
+
 
 """
     Crawling limits
@@ -38,7 +43,9 @@ def get_flows_in_dir(root_dir: str) -> {str: str}:
         root_dir: directory in which to search
 
     Returns:
-        Returns a dict flow_name -> filename
+        Returns a tuple of (T1, T2) where T1 is the list of flows
+         to be scanned and T2 is a map:
+         (local label, fully qualified label | None) -> [path of flow with these labels]
     """
     flow_paths = dict()
     for root, dir_names, filenames in os.walk(root_dir):
@@ -47,6 +54,55 @@ def get_flows_in_dir(root_dir: str) -> {str: str}:
                 flow_paths[get_label(root, filename)] = os.path.join(root, filename)
 
     return flow_paths
+
+
+def get_flows_in_dir_with_ns(root_dir: str) -> ([str], {str: str}):
+    """Searches recursively through for flows
+
+    Args:
+        root_dir: directory in which to search
+
+    Returns:
+        Returns a tuple of (T1, T2) where T1 is the list of flows
+         to be scanned and T2 is a map:
+         (local label, fully qualified label | None) -> [path of flow with these labels]
+    """
+    flow_paths = dict()
+    current_ns = None
+    for root, dir_names, filenames in os.walk(root_dir):
+        for filename in filenames:
+            if filename.endswith(".flow") or filename.endswith(".flow-meta.xml"):
+                flow_paths[get_label(root, filename)] = os.path.join(root, filename)
+
+    return flow_paths
+
+
+def extract_ns_from_project_root(project_root_dir: str) -> str | None:
+    """Looks in the provided directory for a project json file and tries to extract the namespace
+
+    Args:
+        project_root_dir: directory in which to search
+
+    Returns: namespace string or none
+
+    """
+    candidate_path = os.path.join(project_root_dir, PROJECT_JSON_NAME)
+    if (not os.path.exists(project_root_dir) or
+            not os.path.exists(candidate_path)):
+
+        return None
+    else:
+        try:
+            obj = json.loads(project_root_dir)
+            ns = obj["namespace"]
+            logger.info(f"found namespace {ns} in project root {project_root_dir}")
+            return ns
+
+        except Exception:
+            logger.info(f"Failed to extract namespace from project root "
+                        f"dir when searching in f{project_root_dir} for f{PROJECT_JSON_NAME}:\n"
+                        f"{traceback.format_exc()}")
+            return None
 
 
 def get_label(root: str, filename: str) -> (str, str):

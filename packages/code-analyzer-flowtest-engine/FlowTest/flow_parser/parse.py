@@ -7,6 +7,7 @@ from __future__ import annotations
 import sys
 
 from flow_parser import expression_parser
+from public.flowtest_exceptions import InvalidFlowException
 
 sys.modules['_elementtree'] = None
 import xml.etree.ElementTree as ET
@@ -18,7 +19,7 @@ import flowtest.util as util
 from public.contracts import FlowParser
 import public.custom_parser as CP
 
-from public.parse_utils import get_by_tag, get_tag, get_name, get_named_elems, STRING_LITERAL_TOKEN
+from public.parse_utils import get_by_tag, get_tag, get_name, get_named_elems, STRING_LITERAL_TOKEN, get_conn_target_map
 from public.enums import RunMode, FlowType
 from public.data_obj import VariableType
 from public.enums import DataType, ReferenceType
@@ -80,6 +81,7 @@ class Parser(FlowParser):
         self.flow_type: FlowType | None = None
 
         #: frozen set of all elements that have a child of <name> and are thus flow globals
+        #: useful for setting scopes
         self.all_named_elems: frozenset[ET.Element] | None = None
 
         #: set of all names (names of named elements)
@@ -94,11 +96,11 @@ class Parser(FlowParser):
         #: for marking string literals
         self.literal_var = VariableType(tag='stringValue', datatype=DataType.Literal)
 
-        #: map from (path, (resolved) name) --> Variable (cache)
-        self.__parsed_vars: {(str, str): VariableType} = {}
+        #: map from (path, (resolved) parent name) --> Variable (cache)
+        self.__seen_parents: {(str, str): VariableType} = {}
 
         #: cache of name resolutions: (flow_path, raw_name) --> (name, member, Variable)
-        self.__resolutions: {(str, str): (str, str, VariableType)} = {}
+        self.__seen_resolutions: {(str, str): (str, str, VariableType)} = {}
 
     def get_effective_run_mode(self) -> RunMode:
         return self.effective_run_mode
@@ -175,6 +177,9 @@ class Parser(FlowParser):
                 else:
                     flow_type = FlowType.AutoLaunched
 
+            elif self.flow_path.endswith(".flow"):
+                flow_type = FlowType.AutoLaunched
+
         if flow_type is not None:
             self.flow_type = flow_type
             return flow_type
@@ -212,7 +217,7 @@ class Parser(FlowParser):
             return name, None, res
 
         # second cache, contains properties already seen as well as names of flow elements
-        seen = dict.get(self.__resolutions, (path, name))
+        seen = dict.get(self.__seen_resolutions, (path, name))
         if seen is not None:
             return seen
 
@@ -250,7 +255,7 @@ class Parser(FlowParser):
                     # We have an indirect reference, e.g. subflow.foo or subflow.foo.bar
                     # add this to the cache of parsed variables
                     ref_name = tst + '.' + splits[1]
-                    self.__parsed_vars[(path, ref_name)] = var_type  # TODO: try to get more precise type
+                    self.__seen_parents[(path, ref_name)] = var_type  # TODO: try to get more precise type
 
                     if spl_len == 2:
                         # while we could just continue, we can handle this now directly to save lookup
@@ -261,7 +266,7 @@ class Parser(FlowParser):
                         to_return = (ref_name, name[len(tst) + 1:], var_type)
 
                     # add this resolution to the cache
-                    self.__resolutions[(path, name)] = to_return
+                    self.__seen_resolutions[(path, name)] = to_return
                     return to_return
 
                 # name is foo.bar.baz so if foo.bar is best (most specific) match,
@@ -270,7 +275,7 @@ class Parser(FlowParser):
                 to_return = (tst, name[len(tst) + 1:], var_type)
 
                 # add to cache of resolutions, so we don't need to go through this again
-                self.__resolutions[(path, name)] = to_return
+                self.__seen_resolutions[(path, name)] = to_return
 
                 # return
                 return to_return
@@ -313,11 +318,10 @@ class Parser(FlowParser):
             None
 
         """
-
         all_named, all_names, vars_, inputs, outputs = _get_global_flow_data(self.flow_path, self.root)
         self.all_named_elems = all_named
         self.all_names = all_names
-        self.__parsed_vars = vars_
+        self.__seen_parents = vars_
         self.input_variables = inputs
         self.output_variables = outputs
         self.get_flow_type()  # will populate flow type
@@ -335,7 +339,7 @@ class Parser(FlowParser):
                 )
 
             # we always update parsed variables, so we have full resolutions available
-            self.__parsed_vars.update(old_parser.__parsed_vars)
+            self.__seen_parents.update(old_parser.__seen_parents)
 
         return self
 
@@ -428,10 +432,7 @@ class Parser(FlowParser):
     def get_all_traversable_flow_elements(self) -> [ET.Element]:
         """ ignore start"""
         return [child for child in self.root if
-                get_tag(child) in ['actionCalls', 'assignments', 'decisions', 'loops',
-                                   'recordLookups', 'recordUpdates',
-                                   'collectionProcessors', 'recordDeletes', 'recordCreates', 'screens', 'subflows',
-                                   'waits', 'recordRollbacks']]
+                get_tag(child) in parse_utils.CTRL_FLOW_ELEM]
 
     def get_all_variable_elems(self) -> [ET.Element] or None:
         elems = get_by_tag(self.root, 'variables')
@@ -473,23 +474,62 @@ class Parser(FlowParser):
             <start> element or element pointed to in <startElementReference>
 
         """
-        res1 = get_by_tag(self.root, 'start')
-        res2 = get_by_tag(self.root, 'startElementReference')
-        if len(res1) == 1:
-            return res1[0]
+        start_elements = parse_utils.START_ELEMS
+        # These are used in obsolete flow versions that exist only in unit tests in core
+        blacklisted_elements = parse_utils.BANNED_ELEMS
 
-        elif len(res2) == 1:
-            # res2[0] = first connector target
-            return res2[0]
-
-        # Put in provision for older flows that are missing start elements but have only
-        # a single crud element
-        candidates = get_by_tag(self.root, 'recordUpdates') + get_by_tag(self.root, 'recordCreates')
-        if len(candidates) == 1:
-            return candidates[0]
+        blacklist_max = max([len(get_by_tag(self.root, x)) for x in blacklisted_elements])
+        if blacklist_max > 0:
+            msg = "Cannot process a flow with blacklisted elements, skipping flow"
+            logger.warning(msg)
+            raise InvalidFlowException(msg, flow=self.flow_path)
 
         else:
-            raise RuntimeError("Currently only flows with a single 'start' or 'startElementReference' can be scanned")
+            start_res = {x: get_by_tag(self.root, x) for x in start_elements}
+
+            for key in start_res:
+                if len(start_res[key]) == 1:
+                    return start_res[key][0]
+
+            # no start element, so guess
+            possible = self._guess_start_element()
+
+            if possible is None:
+                msg = "Cannot find start element for this flow, skipping flow."
+                logger.warning(msg)
+                raise InvalidFlowException(msg, flow=self.flow_path)
+            else:
+                return possible
+
+    def _guess_start_element(self) -> ET.Element | None:
+        """
+        When the flow has no start or startElementReference we try to guess by looking for a
+        traversable flow element that is not pointed to by a connector.
+
+        Returns:
+            Start Element or None if none can be found
+        """
+        traversables = self.get_all_traversable_flow_elements()
+        if len(traversables) == 0:
+            return None
+
+        # Only one option and no connector can point to it
+        if len(traversables) == 1:
+            return traversables[0]
+
+        traversable_map = {get_name(x): x for x in traversables}
+        connector_names = set()
+        for x in traversables:
+            targets = get_conn_target_map(x)
+            if targets is not None and len(targets) > 0:
+                connector_names.update({x[0] for x in targets.values()})
+
+        candidates = [traversable_map[x] for x in traversable_map if x not in connector_names]
+
+        if len(candidates) == 1:
+            return candidates[0]
+        else:
+            return None
 
     def get_all_indirect_tuples(self) -> list[tuple[str, ET.Element]]:
         """returns a list of tuples of all indirect references, e.g.
@@ -539,14 +579,14 @@ class Parser(FlowParser):
         if path is None:
             path = self.flow_path
 
-        if (path, name) in self.__parsed_vars:
-            return self.__parsed_vars[(path, name)]
+        if (path, name) in self.__seen_parents:
+            return self.__seen_parents[(path, name)]
 
         if name.startswith('$'):
             global_type = _resolve_globals(name)
             if global_type is not None:
                 # add to cache
-                self.__parsed_vars[(path, name)] = global_type
+                self.__seen_parents[(path, name)] = global_type
                 return global_type
 
         else:
@@ -581,10 +621,116 @@ def build_vartype_from_elem(elem: ET.Element) -> VariableType | None:
         If the element is not a named Flow element or is unknown to the parser.
     """
     if elem is None:
-        return
+        return None
+
     tag = get_tag(elem)
 
     try:
+
+        if tag == 'actionCalls':
+            is_ = parse_utils.is_auto_store(elem)
+            if is_ is True:
+                reference = ReferenceType.ActionCallReference
+                # TODO: see if we can get datatype info from return value
+
+                return VariableType(tag=tag, datatype=DataType.StringValue,
+                                    reference=reference, is_optional=False)
+
+        if tag == 'actions':
+            pass
+
+        if tag == 'apexPluginCalls':
+            pass
+
+        if tag == 'capabilityTypes':
+            pass
+
+        if tag == 'choices':
+            # TODO: handle this better, now put in a stub
+            datatype = parse_utils.get_datatype(elem)
+            return VariableType(tag=tag, datatype=datatype)
+
+        if tag == 'collectionProcessors':
+            if elem.find(f'{ns}elementSubtype').text == 'FilterCollectionProcessor':
+                # These always store automatically
+                # TODO: Better type inferences needed. Defer this for now.
+                return VariableType(tag=tag,
+                                    reference=ReferenceType.CollectionReference,
+                                    is_collection=True)
+
+        if tag == 'constants':
+            datatype = parse_utils.get_datatype(elem)
+            return VariableType(tag=tag, datatype=datatype, reference=ReferenceType.Constant)
+
+        if tag == 'customErrors':
+            pass
+
+        if tag == 'customProperties':
+            pass
+
+        if tag == 'dynamicChoiceSets':
+            # These are effectively record lookups
+            # TODO: handle this better, right now we just have a stub
+            datatype = parse_utils.get_datatype(elem)
+            obj_type = parse_utils.get_obj_name(elem)
+            return VariableType(tag=tag, datatype=datatype, object_name=obj_type)
+
+        if tag == 'fields':
+            # TODO: support more vars as time allows. Screens have many possible components.
+            # every field should have a field type
+            # TODO: decide on nullable policy -- say declare nullable if no default?
+            res = elem.find(f'{ns}fieldType').text
+            if res == 'InputField':
+                is_not_required = elem.find(f'{ns}isRequired').text == 'false'
+                return VariableType(tag=tag, datatype=DataType.StringValue,
+                                    reference=ReferenceType.ElementReference,
+                                    is_collection=False,
+                                    is_optional=is_not_required)
+            else:
+                # put in a stub
+                # TODO: revisit this against corpus (e.g. componentInstance fields)
+                return VariableType(tag=tag, datatype=DataType.StringValue,
+                                    reference=ReferenceType.ElementReference,
+                                    is_collection=False)
+
+        if tag == 'formulas' or tag == 'textTemplates':
+            return VariableType(tag=tag, datatype=DataType.StringValue,
+                                reference=ReferenceType.Formula,
+                                is_collection=False)
+
+        if tag == 'inputs':
+            pass
+
+        if tag == 'loops':
+            return VariableType(tag=tag,
+                                reference=ReferenceType.CollectionReference,
+                                is_optional=False, is_collection=True)
+
+        if tag == 'orchestratedStages':
+            pass
+
+        if tag == 'outputAssignments':
+            pass
+
+        if tag == 'outputParameters':
+            pass
+
+        if tag == 'recordCreates':
+            # Todo: get collection parsing correct, look if record being created is itself
+            # a collection element - do examples of bulkified versions of commands.
+            is_ = parse_utils.is_auto_store(elem)
+            obj_ = parse_utils.get_obj_name(elem)
+            if is_ is True and obj_ is not None:
+                reference = ReferenceType.ElementReference
+            else:
+                reference = None
+            return VariableType(tag=tag, datatype=DataType.StringValue,
+                                reference=reference,
+                                object_name=obj_, is_optional=False)
+
+        if tag == 'recordDeletes':
+            pass
+
         if tag == 'recordLookups':
             type_ = DataType.Object
             nulls_provided = parse_utils.is_assign_null(elem)
@@ -606,53 +752,29 @@ def build_vartype_from_elem(elem: ET.Element) -> VariableType | None:
                                     object_name=parse_utils.get_obj_name(elem),
                                     is_optional=nulls_provided is not None and nulls_provided is False)
 
-        if tag == 'actionCalls':
-            is_ = parse_utils.is_auto_store(elem)
-            if is_ is True:
-                reference = ReferenceType.ActionCallReference
-                # TODO: see if we can get datatype info from return value
+        if tag == 'recordRollbacks':
+            pass
 
-                return VariableType(tag=tag, datatype=DataType.StringValue,
-                                    reference=reference, is_optional=False)
+        if tag == 'recordUpdates':
+            pass
 
-        if tag == 'recordCreates':
-            # Todo: get collection parsing correct, look if record being created is itself
-            # a collection element - do examples of bulkified versions of commands.
-            is_ = parse_utils.is_auto_store(elem)
-            obj_ = parse_utils.get_obj_name(elem)
-            if is_ is True and obj_ is not None:
-                reference = ReferenceType.ElementReference
+        if tag == 'stageSteps':
+            # output as foo.Outputs.output_var_name
+            pass
+
+        if tag == 'stages':
+            pass
+
+        if tag == 'subflows':
+            if parse_utils.is_auto_store(elem) is True:
+                # todo: we need a None field for booleans we don't know
+                return VariableType(tag=tag,
+                                    reference=ReferenceType.SubflowReference)
             else:
-                reference = None
-            return VariableType(tag=tag, datatype=DataType.StringValue,
-                                reference=reference,
-                                object_name=obj_, is_optional=False)
+                return VariableType(tag=tag)
 
-        # recordUpdates and recordDeletes are not currently supported as they are not
-        # influencers of variables or sinks.
-
-        if tag == 'formulas' or tag == 'textTemplates':
-            return VariableType(tag=tag, datatype=DataType.StringValue,
-                                reference=ReferenceType.Formula,
-                                is_collection=False)
-
-        if tag == 'fields':
-            # TODO: support more vars as time allows. Screens have many possible components.
-            # every field should have a field type
-            # TODO: decide on nullable policy -- say declare nullable if no default?
-            res = elem.find(f'{ns}fieldType').text
-            if res == 'InputField':
-                is_not_required = elem.find(f'{ns}isRequired').text == 'false'
-                return VariableType(tag=tag, datatype=DataType.StringValue,
-                                    reference=ReferenceType.ElementReference,
-                                    is_collection=False,
-                                    is_optional=is_not_required)
-            else:
-                # put in a stub
-                # TODO: revisit this against corpus (e.g. componentInstance fields)
-                return VariableType(tag=tag, datatype=DataType.StringValue,
-                                    reference=ReferenceType.ElementReference,
-                                    is_collection=False)
+        if tag == 'transforms':
+            pass
 
         if tag == 'variables':
             # TODO: handle default variable values in wiring module
@@ -675,43 +797,15 @@ def build_vartype_from_elem(elem: ET.Element) -> VariableType | None:
                                 is_input=input_, is_output=output_,
                                 properties=None)
 
-        if tag == 'dynamicChoiceSets':
-            # These are effectively record lookups
-            # TODO: handle this better, right now we just have a stub
-            datatype = parse_utils.get_datatype(elem)
-            obj_type = parse_utils.get_obj_name(elem)
-            return VariableType(tag=tag, datatype=datatype, object_name=obj_type)
+        if tag == 'waitEvents':
+            pass
 
-        if tag == 'choices':
-            # TODO: handle this better, now put in a stub
-            datatype = parse_utils.get_datatype(elem)
-            return VariableType(tag=tag, datatype=datatype)
+        if tag == 'wait':
+            pass
 
-        if tag == 'constants':
-            datatype = parse_utils.get_datatype(elem)
-            return VariableType(tag=tag, datatype=datatype, reference=ReferenceType.Constant)
-
-        if tag == 'subflows':
-            if parse_utils.is_auto_store(elem) is True:
-                # todo: we need a None field for booleans we don't know
-                return VariableType(tag=tag,
-                                    reference=ReferenceType.SubflowReference)
-            else:
-                return VariableType(tag=tag)
-
-        if tag == 'collectionProcessors':
-            if elem.find(f'{ns}elementSubtype').text == 'FilterCollectionProcessor':
-                # These always store automatically
-                # TODO: Better type inferences needed. Defer this for now.
-                return VariableType(tag=tag,
-                                    reference=ReferenceType.CollectionReference,
-                                    is_collection=True)
-        if tag == 'loops':
-            return VariableType(tag=tag,
-                                reference=ReferenceType.CollectionReference,
-                                is_optional=False, is_collection=True)
 
     except Exception as e:
+        # Todo: create flow exception here
         logger.error(f"Error parsing variable element {e.args[0]}")
 
     return None

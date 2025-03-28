@@ -8,6 +8,8 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 import logging
 
+from flowtest.flow_result import DEFAULT_HELP_URL
+
 if TYPE_CHECKING:
     import xml.etree.ElementTree as ET
 
@@ -20,7 +22,10 @@ from public.contracts import QueryProcessor, FlowParser, State
 
 logger = logging.getLogger(__name__)
 
-default_preset = 'pentest'
+DEFAULT_HELP_URL = ("https://developer.salesforce.com/docs/atlas.en-us.secure_coding_guide.meta"
+                    "/secure_coding_guide/secure_coding_considerations_flow_design.htm")
+
+DEFAULT_PRESET = 'pentest'
 
 presets = {'pentest': {'name': 'Penetration Testing',
                        'owner': 'rsussland@salesforce.com',
@@ -57,9 +62,9 @@ FlowSecurity.DefaultMode.recordLookups.selector"""
 QUERY_IDS = []
 
 
-def build_preset(preset_name: str = default_preset):
+def build_preset(preset_name: str = DEFAULT_PRESET):
     if preset_name is None:
-        preset_name = default_preset
+        preset_name = DEFAULT_PRESET
 
     if preset_name not in presets.keys():
         return None
@@ -337,4 +342,4 @@ def build_query_description(elem_type, check_labels_val, run_mode):
         severity = Severity.Flow_Informational
 
     return QueryDescription(query_id=query_id, query_name=query_name, severity=severity,
-                            query_description=query_description)
+                            query_description=query_description, help_url=DEFAULT_HELP_URL)

@@ -8,6 +8,8 @@ import json
 from dataclasses import dataclass, field
 from typing import TYPE_CHECKING
 
+from public.custom_parser import clean_string
+
 if TYPE_CHECKING:
     from public.enums import DataType, ReferenceType, Severity
 
@@ -53,7 +55,7 @@ class DataInfluenceStatement:
     source_text: str
 
     def to_dict(self):
-        return {s: getattr(self, s) for s in self.__slots__}
+        return {s: clean_string(getattr(self, s)) for s in self.__slots__}
 
 
 @dataclass(frozen=True, eq=True, slots=True)
@@ -97,6 +99,9 @@ class VariableType:
 
     # is this variable available for output
     is_output: bool | None = None
+
+    # overrides usual match on element name
+    match_override: str | None = None
 
 
 @dataclass(frozen=True, eq=True, slots=True)

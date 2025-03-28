@@ -16,7 +16,7 @@ import pkgutil
 from typing import TYPE_CHECKING
 
 # noinspection PyUnresolvedReferences
-import xml.etree.ElementTree as ET
+import public.custom_parser as CP
 import logging
 import traceback
 from . import ESAPI
@@ -172,9 +172,8 @@ def serialize(portion, elem):
         return '</' + elem.tag + '>' + line_end
 
     elif portion is None:
-        raw_str = ET.tostring(elem, encoding='unicode',
-                              default_namespace='http://soap.sforce.com/2006/04/metadata')
-        return raw_str #todo: pretty print
+        raw_str = CP.to_string(elem)
+        return raw_str  # todo: pretty print
 
 
     else:
@@ -289,7 +288,7 @@ def _safe_append(fp, data):
         fp.write(data)
         return True
     except:
-        logger.critical('Error writing data ' + data + ' to file pointer '
+        logger.critical('Error writing data ' + str(data) + ' to file pointer '
                         + repr(fp) + " " + traceback.format_exc())
         return False
 
@@ -888,12 +887,12 @@ def parse_results(xml_file=None,
         logger.info("opening " + report_path)
 
     if xml_file is None and xml_report_str is not None:
-        xml_file = io.BytesIO(xml_report_str.encode())
+         xml_file = io.StringIO(xml_report_str)
 
     elif xml_report_str is None and xml_file is None:
         raise ValueError("no xml file passed into function")
 
-    context = ET.iterparse(xml_file, events=('end', 'start'))
+    context = CP.ET.iterparse(xml_file, events=('end', 'start'))
 
     query_printed = False  # track whether we have rendered this query
 
@@ -901,11 +900,14 @@ def parse_results(xml_file=None,
 
     jobinfo.update(root)
     logger.debug('preset is: ' + jobinfo.preset)
-    parent = None
+    parent = root
 
     for event, element in context:
 
         if event == 'start':
+
+            element.getparent = lambda p=parent: p
+            parent = element
 
             if element.tag == 'Query':
                 query_printed = False
@@ -920,7 +922,7 @@ def parse_results(xml_file=None,
                         query_printed is False):
                     # render parent (result) info
                     query_printed = True
-                    _report_append(parent, report_fp, source_dir)
+                    _report_append(element.getparent(), report_fp, source_dir)
 
                 if report_fp is not None:
                     _report_append(element, report_fp,
@@ -928,7 +930,8 @@ def parse_results(xml_file=None,
                                    query_data.tallies)
 
         if event == 'end':
-            parent = element
+            if element != root:
+                parent = element.getparent()
 
             if element.tag == 'Query':
                 scan_results.add(query_data)
@@ -1000,7 +1003,7 @@ def _pre_parse(xml_file,
 
     out_fp = codecs.open(out_path, mode='a', encoding='utf-8')
 
-    context = ET.iterparse(xml_file, events=('end', 'start'), remove_blank_text=True, encoding='utf-8')
+    context = CP.ET.iterparse(xml_file, events=('end', 'start'))
 
     # for deduplication of consecutive pathnodes that are the same line in a given result
     curr_pathnode_sig = None
@@ -1019,14 +1022,15 @@ def _pre_parse(xml_file,
     out_fp.write('<?xml version="1.0" encoding="utf-8"?>\n')
 
     event, root = next(context)
-
+    parent = root
     # render root
     out_fp.write(serialize('start', root))
-    parent_map = {}
 
     for event, element in context:
 
         if event == 'start':
+            element.getparent = lambda p=parent: p
+            parent = element
 
             if element.tag == 'Query':
                 # we have a new query
@@ -1058,7 +1062,8 @@ def _pre_parse(xml_file,
                     skip_path = True
 
         if event == 'end':
-            parent_map
+            parent = element.getparent()
+
             if element.tag == 'Query':
                 out_fp.write(serialize('end', element))
 

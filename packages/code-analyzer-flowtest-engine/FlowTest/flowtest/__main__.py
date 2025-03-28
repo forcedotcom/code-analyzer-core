@@ -148,7 +148,7 @@ def get_flow_paths(args: argparse.Namespace) -> (list[str], {str: str}):
             label = util.get_label(os.path.dirname(a_flow), os.path.basename(a_flow))
             if label is not None:
                 if label in flow_map:
-                    print("alert, label %s in map already" % label)
+                    print(f"alert, label {label} in map already")
                 else:
                     flow_map[label] = a_flow
 

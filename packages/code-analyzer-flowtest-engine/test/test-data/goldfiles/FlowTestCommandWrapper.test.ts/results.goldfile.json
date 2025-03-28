@@ -33,12 +33,12 @@
         "comment" : "flow into recordUpdates via influence over update_to_new_subject in run mode SystemModeWithoutSharing",
         "flow_path" : "__PATH_TO_EXAMPLE1__",
         "line_no" : 102,
-        "source_text" : "<ns0:recordUpdates xmlns:ns0=\"http://soap.sforce.com/2006/04/metadata\">\n        <ns0:name>update_to_new_subject</ns0:name>\n        <ns0:label>update_to_new_subject</ns0:label>\n        <ns0:locationX>50</ns0:locationX>\n        <ns0:locationY>355</ns0:locationY>\n        <ns0:connector>\n            <ns0:targetReference>confirm_delete</ns0:targetReference>\n        </ns0:connector>\n        <ns0:inputReference>another_case_holder</ns0:inputReference>\n    </ns0:recordUpdates>\n    "
+        "source_text" : "<recordUpdates>\n        <name>update_to_new_subject</name>\n        <label>update_to_new_subject</label>\n        <locationX>50</locationX>\n        <locationY>355</locationY>\n        <connector>\n            <targetReference>confirm_delete</targetReference>\n        </connector>\n        <inputReference>another_case_holder</inputReference>\n    </recordUpdates>\n    "
       } ],
       "query_name" : "Flow: SystemModeWithoutSharing recordUpdates data",
       "severity" : "Flow_High_Severity",
       "description" : "User controlled data flows into recordUpdates element data in run mode: SystemModeWithoutSharing",
-      "elem" : "<ns0:recordUpdates xmlns:ns0=\"http://soap.sforce.com/2006/04/metadata\">\n        <ns0:name>update_to_new_subject</ns0:name>\n        <ns0:label>update_to_new_subject</ns0:label>\n        <ns0:locationX>50</ns0:locationX>\n        <ns0:locationY>355</ns0:locationY>\n        <ns0:connector>\n            <ns0:targetReference>confirm_delete</ns0:targetReference>\n        </ns0:connector>\n        <ns0:inputReference>another_case_holder</ns0:inputReference>\n    </ns0:recordUpdates>\n    ",
+      "elem" : "<recordUpdates>\n        <name>update_to_new_subject</name>\n        <label>update_to_new_subject</label>\n        <locationX>50</locationX>\n        <locationY>355</locationY>\n        <connector>\n            <targetReference>confirm_delete</targetReference>\n        </connector>\n        <inputReference>another_case_holder</inputReference>\n    </recordUpdates>\n    ",
       "elem_name" : "update_to_new_subject",
       "field" : "update_to_new_subject"
     } ],
@@ -66,12 +66,12 @@
         "comment" : "flow into recordDeletes via influence over delete_created_case in run mode SystemModeWithoutSharing",
         "flow_path" : "__PATH_TO_EXAMPLE1__",
         "line_no" : 69,
-        "source_text" : "<ns0:recordDeletes xmlns:ns0=\"http://soap.sforce.com/2006/04/metadata\">\n        <ns0:name>delete_created_case</ns0:name>\n        <ns0:label>delete_created_case</ns0:label>\n        <ns0:locationX>247</ns0:locationX>\n        <ns0:locationY>201</ns0:locationY>\n        <ns0:connector>\n            <ns0:targetReference>exit_screen</ns0:targetReference>\n        </ns0:connector>\n        <ns0:inputReference>another_case_holder</ns0:inputReference>\n    </ns0:recordDeletes>\n    "
+        "source_text" : "<recordDeletes>\n        <name>delete_created_case</name>\n        <label>delete_created_case</label>\n        <locationX>247</locationX>\n        <locationY>201</locationY>\n        <connector>\n            <targetReference>exit_screen</targetReference>\n        </connector>\n        <inputReference>another_case_holder</inputReference>\n    </recordDeletes>\n    "
       } ],
       "query_name" : "Flow: SystemModeWithoutSharing recordDeletes selector",
       "severity" : "Flow_High_Severity",
       "description" : "User controlled data flows into recordDeletes element selector in run mode: SystemModeWithoutSharing",
-      "elem" : "<ns0:recordDeletes xmlns:ns0=\"http://soap.sforce.com/2006/04/metadata\">\n        <ns0:name>delete_created_case</ns0:name>\n        <ns0:label>delete_created_case</ns0:label>\n        <ns0:locationX>247</ns0:locationX>\n        <ns0:locationY>201</ns0:locationY>\n        <ns0:connector>\n            <ns0:targetReference>exit_screen</ns0:targetReference>\n        </ns0:connector>\n        <ns0:inputReference>another_case_holder</ns0:inputReference>\n    </ns0:recordDeletes>\n    ",
+      "elem" : "<recordDeletes>\n        <name>delete_created_case</name>\n        <label>delete_created_case</label>\n        <locationX>247</locationX>\n        <locationY>201</locationY>\n        <connector>\n            <targetReference>exit_screen</targetReference>\n        </connector>\n        <inputReference>another_case_holder</inputReference>\n    </recordDeletes>\n    ",
       "elem_name" : "delete_created_case",
       "field" : "delete_created_case"
     } ],
@@ -99,12 +99,12 @@
         "comment" : "flow into recordUpdates via influence over update_to_new_subject in run mode SystemModeWithSharing",
         "flow_path" : "__PATH_TO_EXAMPLE2__",
         "line_no" : 102,
-        "source_text" : "<ns0:recordUpdates xmlns:ns0=\"http://soap.sforce.com/2006/04/metadata\">\n        <ns0:name>update_to_new_subject</ns0:name>\n        <ns0:label>update_to_new_subject</ns0:label>\n        <ns0:locationX>50</ns0:locationX>\n        <ns0:locationY>355</ns0:locationY>\n        <ns0:connector>\n            <ns0:targetReference>confirm_delete</ns0:targetReference>\n        </ns0:connector>\n        <ns0:inputReference>another_case_holder</ns0:inputReference>\n    </ns0:recordUpdates>\n    "
+        "source_text" : "<recordUpdates>\n        <name>update_to_new_subject</name>\n        <label>update_to_new_subject</label>\n        <locationX>50</locationX>\n        <locationY>355</locationY>\n        <connector>\n            <targetReference>confirm_delete</targetReference>\n        </connector>\n        <inputReference>another_case_holder</inputReference>\n    </recordUpdates>\n    "
       } ],
       "query_name" : "Flow: SystemModeWithSharing recordUpdates data",
       "severity" : "Flow_Low_Severity",
       "description" : "User controlled data flows into recordUpdates element data in run mode: SystemModeWithSharing",
-      "elem" : "<ns0:recordUpdates xmlns:ns0=\"http://soap.sforce.com/2006/04/metadata\">\n        <ns0:name>update_to_new_subject</ns0:name>\n        <ns0:label>update_to_new_subject</ns0:label>\n        <ns0:locationX>50</ns0:locationX>\n        <ns0:locationY>355</ns0:locationY>\n        <ns0:connector>\n            <ns0:targetReference>confirm_delete</ns0:targetReference>\n        </ns0:connector>\n        <ns0:inputReference>another_case_holder</ns0:inputReference>\n    </ns0:recordUpdates>\n    ",
+      "elem" : "<recordUpdates>\n        <name>update_to_new_subject</name>\n        <label>update_to_new_subject</label>\n        <locationX>50</locationX>\n        <locationY>355</locationY>\n        <connector>\n            <targetReference>confirm_delete</targetReference>\n        </connector>\n        <inputReference>another_case_holder</inputReference>\n    </recordUpdates>\n    ",
       "elem_name" : "update_to_new_subject",
       "field" : "update_to_new_subject"
     } ],
@@ -132,12 +132,12 @@
         "comment" : "flow into recordDeletes via influence over delete_created_case in run mode SystemModeWithSharing",
         "flow_path" : "__PATH_TO_EXAMPLE2__",
         "line_no" : 69,
-        "source_text" : "<ns0:recordDeletes xmlns:ns0=\"http://soap.sforce.com/2006/04/metadata\">\n        <ns0:name>delete_created_case</ns0:name>\n        <ns0:label>delete_created_case</ns0:label>\n        <ns0:locationX>247</ns0:locationX>\n        <ns0:locationY>201</ns0:locationY>\n        <ns0:connector>\n            <ns0:targetReference>exit_screen</ns0:targetReference>\n        </ns0:connector>\n        <ns0:inputReference>another_case_holder</ns0:inputReference>\n    </ns0:recordDeletes>\n    "
+        "source_text" : "<recordDeletes>\n        <name>delete_created_case</name>\n        <label>delete_created_case</label>\n        <locationX>247</locationX>\n        <locationY>201</locationY>\n        <connector>\n            <targetReference>exit_screen</targetReference>\n        </connector>\n        <inputReference>another_case_holder</inputReference>\n    </recordDeletes>\n    "
       } ],
       "query_name" : "Flow: SystemModeWithSharing recordDeletes selector",
       "severity" : "Flow_Low_Severity",
       "description" : "User controlled data flows into recordDeletes element selector in run mode: SystemModeWithSharing",
-      "elem" : "<ns0:recordDeletes xmlns:ns0=\"http://soap.sforce.com/2006/04/metadata\">\n        <ns0:name>delete_created_case</ns0:name>\n        <ns0:label>delete_created_case</ns0:label>\n        <ns0:locationX>247</ns0:locationX>\n        <ns0:locationY>201</ns0:locationY>\n        <ns0:connector>\n            <ns0:targetReference>exit_screen</ns0:targetReference>\n        </ns0:connector>\n        <ns0:inputReference>another_case_holder</ns0:inputReference>\n    </ns0:recordDeletes>\n    ",
+      "elem" : "<recordDeletes>\n        <name>delete_created_case</name>\n        <label>delete_created_case</label>\n        <locationX>247</locationX>\n        <locationY>201</locationY>\n        <connector>\n            <targetReference>exit_screen</targetReference>\n        </connector>\n        <inputReference>another_case_holder</inputReference>\n    </recordDeletes>\n    ",
       "elem_name" : "delete_created_case",
       "field" : "delete_created_case"
     } ]
