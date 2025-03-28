@@ -17,8 +17,7 @@ def get_root_from_string(byte_str) -> ET.Element:
 
 
 def to_string(elem: ET.Element) -> str:
-    return clean_string(ET.tostring(elem, encoding='unicode',
-                                    default_namespace='http://soap.sforce.com/2006/04/metadata').strip())
+    return clean_string(ET.tostring(elem, encoding='unicode').strip())
 
 
 def clean_string(msg: str) -> str:
@@ -28,17 +27,22 @@ def clean_string(msg: str) -> str:
         2) </ns0:recordCreates> --> <recordCreates>
         3) <recordCreates xmlns="http://soap.sforce.com/2006/04/metadata"> --> <recordCreates>
         4) <recordCreates xmlns:ns0=\"http://soap.sforce.com/2006/04/metadata\"> --><recordCreates>
-
+        5) replace &lt;ns0: with &lt; and &lt;/ns0: with &lt;
     Args:
         msg: string to clean
 
     Returns:
         cleaned string
     """
-    msg1 = msg.replace("<ns0:", "<").replace("</ns0:", "</")
-    msg2 = (msg1.replace(' xmlns="http://soap.sforce.com/2006/04/metadata"', '')
-            .replace(' xmlns:ns0="http://soap.sforce.com/2006/04/metadata"', ''))
-    return msg2
+    if not isinstance(msg, str):
+        return msg
+    else:
+        msg1 = msg.replace("<ns0:", "<").replace("</ns0:", "</")
+        msg2 = (msg1.replace(' xmlns="http://soap.sforce.com/2006/04/metadata"', '')
+                .replace(' xmlns:ns0="http://soap.sforce.com/2006/04/metadata"', ''))
+        msg3 = msg2.replace('&lt;ns0:', '&lt;').replace('&lt;/ns0:', '&lt;')
+
+        return msg3
 
 
 class LineNumberingParser(ET.XMLParser):

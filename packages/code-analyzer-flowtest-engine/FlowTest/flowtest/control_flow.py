@@ -14,6 +14,7 @@ import flow_parser.parse as parse
 from flow_parser.parse import Parser
 from public.data_obj import BranchVisitor, CrawlStep
 from public.enums import ConnType
+from public.flowtest_exceptions import InvalidFlowException
 from public.parse_utils import (ET, get_name, get_conn_target_map,
                                 is_subflow, is_loop, get_tag)
 
@@ -292,6 +293,14 @@ class ControlFlowGraph(JSONSerializable):
 
 
 def _get_crawl_visits(cfg: ControlFlowGraph) -> {str: [BranchVisitor]}:
+    """For testing and analysis.
+
+    Args:
+        cfg: control flow graph
+
+    Returns:
+        map from label to BranchVisitor
+    """
     # for testing and analysis
     # initialize visits
     visits = {label: [] for label in cfg.segment_map.keys()}

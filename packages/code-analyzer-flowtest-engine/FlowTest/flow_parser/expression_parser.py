@@ -25,14 +25,14 @@ func_name = re.compile(r'[A-Z2]*$')  # 'ATAN2' has a number
 ALWAYS_SKIP = ["ACOS", "ADDMONTHS", "AND", "ASCII", "ASIN", "ATAN", "ATAN2", "BEGINS", "CHR",
                "CONTAINS", "COS", "CURRENCYRATE", "DATE", "DAY", "DAYOFYEAR", "DISTANCE",
                "EXP", "FIND", "FORMATDURATION", "FROMUNIXTIME", "GEOLOCATION",
-               "INCLUDES", "ISBLANK", "ISNULL", "ISNUMBER",
+               "INCLUDES", "ISBLANK", "ISCHANGED", "ISNULL", "ISNUMBER",
                "ISOWEEK", "ISOYEAR", "ISPICKVAL", "LEN", "LN", "LOG", "MONTH", "NOT",
                "OR", "PICKLISTCOUNT", "SIN", "SQRT", "TAN", "WEEKDAY", "YEAR"]
 
 ALWAYS_PROPAGATE = ["ABS", "CASESAFEID", "CEILING", "DATETIMEVALUE",
                     "DATEVALUE", "FLOOR", "HTMLENCODE", "HYPERLINK", "INITCAP",
                     "JSENCODE", "JSINHTMLENCODE", "LOWER", "MAX",
-                    "MCEILING", "MFLOOR", "MIN", "NULLVALUE", "PREDICT", "REGEX",
+                    "MCEILING", "MFLOOR", "MIN", "NULLVALUE", "PREDICT", "PRIORVALUE", "REGEX",
                     "REVERSE", "TEXT", "TRIM",
                     "UNIXTIMESTAMP", "UPPER", "URLENCODE", "VALUE"]
 
@@ -165,8 +165,8 @@ def parse_expression(expression: str) -> list[str]:
     try:
         return process_expression(expression)
     except:
-        logger.critical("error parsing expression" + traceback.format_exc())
-        logger.info("falling back to simple extractor")
+        logger.critical(f"error parsing expression:\n{expression}\n\n{traceback.format_exc()}"
+                        f"\n\nfalling back to simple extractor")
         return extract_expression(expression)
 
 
@@ -174,7 +174,7 @@ def process_expression(expression: str) -> list[str]:
     """Process expression to return list of data influencing variables
 
     Args:
-        expr: expression to be processed
+        expression: expression to be processed
 
     Returns:
         list of variable names that data influence the expression
@@ -365,11 +365,13 @@ def _handle_argument_end(ctx: Context, is_comma=True) -> Context:
 
     if should_propagate is True:
         # add existing text array to processed buffer
-        ctx.prev_arguments_text_array = util.safe_list_add(ctx.current_argument_text_array,
-                                                           ctx.prev_arguments_text_array)
-        ctx.prev_arguments_text_array = util.safe_list_add(ctx.prev_arguments_text_array,
-                                                           [ctx.expression[
-                                                            ctx.start_of_current_argument_processing:ctx.current_position]])
+        ctx.prev_arguments_text_array = util.safe_list_add(
+            ctx.current_argument_text_array,
+            ctx.prev_arguments_text_array)
+        ctx.prev_arguments_text_array = util.safe_list_add(
+            ctx.prev_arguments_text_array,
+            [ctx.expression[ctx.start_of_current_argument_processing:ctx.current_position]]
+        )
 
     # Now flush current processing buffer
     ctx.current_argument_text_array = None

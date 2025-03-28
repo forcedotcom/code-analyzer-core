@@ -17,13 +17,11 @@ from __future__ import annotations
 
 import logging
 import re
-import sys
 
 import public.custom_parser as CP
-
 from public.custom_parser import ET
-
 from public.enums import DataType, ConnType
+from public.flowtest_exceptions import InvalidFlowException
 
 #: sfdc namespace
 ns = '{http://soap.sforce.com/2006/04/metadata}'
@@ -49,8 +47,38 @@ NO_MORE_CONN = 'noMoreValuesConnector'
 #: default connector in 'decisions' Flow Element
 DEFAULT_CONN = 'defaultConnector'
 
+#: connector to call when timing out during callout or action call
+TIMEOUT_CONNECTOR = 'timeoutConnector'
+
 #: list of all known connector tags
-CONN_LIST = [CONNECTOR, DEFAULT_CONN, NEXT_VALUE_CONNECTOR, FAULT_CONNECTOR, NO_MORE_CONN]
+CONN_LIST = [CONNECTOR, DEFAULT_CONN, NEXT_VALUE_CONNECTOR, FAULT_CONNECTOR, NO_MORE_CONN, TIMEOUT_CONNECTOR]
+
+#: list of all (supported) elements that have a connector except start.
+#: These are relevant for control flow.
+
+CTRL_FLOW_ELEM = ["screens",
+                  "assignments",
+                  "customErrors"
+                  "recordLookups",
+                  "subflows",
+                  "recordUpdates",
+                  "recordDeletes",
+                  "recordCreates",
+                  "loops",
+                  "decisions",
+                  "collectionProcessors",
+                  "actionCalls",
+                  "orchestratedStages",
+                  "waits",
+                  "apexPluginCalls",
+                  "transforms",
+                  "recordRollbacks"]
+
+#: list of supported start elements
+START_ELEMS = ['start', 'startElementReference']
+
+#: list of banned elements (we may add support later, but now skip these flows)
+BANNED_ELEMS = ['startElement', 'connectors', 'allocators', 'questions', 'experiments', 'statements']
 
 #: module logger
 logger = logging.getLogger(__name__)
@@ -158,8 +186,8 @@ def get_named_elems(elem: ET.Element) -> list[ET.Element]:
 
     """
     named = elem.findall(f'.//{ns}name/..')
-    return [x for x in named if get_tag(x) != f'{ns}processMetadataValues']
-
+    to_return = [x for x in named if get_tag(x) != 'processMetadataValues']
+    return to_return
 
 def get_name(elem: ET.Element | None) -> str | None:
     """returns the string name of elem or None if no name or '*'"""
@@ -167,7 +195,7 @@ def get_name(elem: ET.Element | None) -> str | None:
         return None
     name = elem.find(f'{ns}name')
     if name is None:
-        if get_tag(elem) in ['start', 'startElementReference']:
+        if get_tag(elem) in START_ELEMS:
             return '*'
         return None
     else:
@@ -186,7 +214,15 @@ def get_line_no(elem: ET.Element) -> int:
 
 
 def get_subflow_name(subflow):
-    return get_by_tag(subflow, "flowName")[0].text
+    sub_name_el = get_by_tag(subflow, "flowName")
+    if sub_name_el is None or len(sub_name_el) == 0:
+        sub_name_el = get_by_tag(subflow, "subflowName")
+    if sub_name_el is None or len(sub_name_el) == 0:
+        logger.critical(f"found a subflow with no name: {CP.to_string(subflow)}")
+        return None
+    else:
+        return sub_name_el[0].text
+
 
 
 def get_assignment_statement_dicts(elem: ET.Element) -> list[(str, {str: str})] | None:
@@ -196,7 +232,7 @@ def get_assignment_statement_dicts(elem: ET.Element) -> list[(str, {str: str})] 
 
     Returns:
         [(operator, dict)] where dict is suitable for constructing
-        DataInfluenceStatements via \*\*args unpack passed to the constructor.
+        DataInfluenceStatements via args unpack passed to the constructor.
     """
     if get_tag(elem) == "assignments":
         elem_name = get_name(elem)
@@ -300,7 +336,7 @@ def get_sinks_from_field_values(elems: ET.Element) -> list[(str, str)]:
     return accum
 
 
-def get_conn_target_map(elem: ET.Element) -> {ET.Element: (str, ConnType, bool)}:
+def get_conn_target_map(elem: ET.Element) -> {ET.Element: (str, ConnType, bool)} or None:
     """Get a connector map that also works for all possible start elements
 
     Args:
@@ -370,7 +406,7 @@ def _get_conn_target_map(elem: ET.Element) -> {ET.Element: (str, ConnType, bool)
                     else:
                         is_optional = True
                 else:
-                    if conn_type in [FAULT_CONNECTOR]:
+                    if conn_type in [FAULT_CONNECTOR, TIMEOUT_CONNECTOR]:
                         is_optional = True
                     else:
                         is_optional = False

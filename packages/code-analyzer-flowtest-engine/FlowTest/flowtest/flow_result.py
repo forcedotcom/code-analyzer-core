@@ -12,7 +12,7 @@ from datetime import datetime
 from typing import TextIO
 
 sys.modules['_elementtree'] = None
-from public.custom_parser import ET
+from public.custom_parser import ET, clean_string
 import public.custom_parser as CP
 
 from flowtest import ESAPI
@@ -163,7 +163,7 @@ class ResultsProcessor(object):
                     for index, node in enumerate(statements):
                         filename = node.flow_path
                         line = node.line_no
-                        code = ESAPI.html_encode(node.source_text)
+                        code = ESAPI.html_encode(clean_string(node.source_text))
                         result_str += f"<PathNode><FileName>{ESAPI.html_encode(filename)}</FileName>"
                         result_str += f"<Line>{line}</Line>"
                         # TODO: currently we hardcode but should get real columns
@@ -256,7 +256,7 @@ class ResultsProcessor(object):
                                           "severity": str(query_desc.severity),
                                           "description": query_desc.query_description,
                                           "counter": self.counter,
-                                          "elem": end_stmt.source_text,
+                                          "elem": clean_string(end_stmt.source_text),
                                           "elem_name": end_stmt.element_name,
                                           "field": end_stmt.influenced_var})
 
@@ -312,7 +312,7 @@ def _validate_and_prettify_xml(xml_str: str) -> str:
     """
     my_root = CP.get_root_from_string(bytes(xml_str, encoding='utf-8'))
     ET.indent(my_root)
-    return ET.tostring(my_root, encoding='utf')
+    return CP.to_string(my_root)
 
 
 def _merge_results(results: list[QueryResult]) -> [QueryResult]:
