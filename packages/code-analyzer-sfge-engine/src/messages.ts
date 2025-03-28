@@ -38,10 +38,10 @@ const MESSAGE_CATALOG : { [key: string]: string } = {
         `The '%s' configuration value is invalid. %s`,
 
     InsufficientMemorySpecified:
-        `It must specify >=2MB`,
+        `The amount of memory specified must be >=2MB`,
 
     InvalidMemoryMultiple:
-        `It must be divisible by 1024`,
+        `The amount of memory specified in bytes must be divisible by 1024`,
 
     WorkspaceAppearsIncomplete:
         `Specified workspace is missing %d possibly-relevant file(s) from the folder %s. Salesforce Graph Engine may be unable to create a complete graph of your project without all apex files included in your workspace. This may result in incomplete or incorrect results.`,

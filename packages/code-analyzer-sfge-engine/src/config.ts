@@ -87,26 +87,25 @@ class SfgeConfigValueExtractor {
         if (javaMaxHeapSize.toLowerCase().endsWith('g')) {
             // A value expressed in gigabytes is always fine.
             return javaMaxHeapSize;
-        } else {
-            const numericPortion: number = parseInt(javaMaxHeapSize);
-            if (numericPortion < expressTwoMegabytesInRelevantUnit(javaMaxHeapSize)) {
-                throw new Error(getMessage(
-                    'InvalidConfigValue',
-                    this.delegateExtractor.getFieldPath('java_max_heap_size'),
-                    getMessage('InsufficientMemorySpecified')
-                ));
-            }
-
-            const isStrictlyNumeric: boolean = /^\d+$/.test(javaMaxHeapSize);
-            if (isStrictlyNumeric && numericPortion % 1024 !== 0) {
-                throw new Error(getMessage(
-                    'InvalidConfigValue',
-                    this.delegateExtractor.getFieldPath('java_max_heap_size'),
-                    getMessage('InvalidMemoryMultiple')
-                ));
-            }
-            return javaMaxHeapSize;
         }
+        const numericPortion: number = parseInt(javaMaxHeapSize);
+        if (numericPortion < expressTwoMegabytesInRelevantUnit(javaMaxHeapSize)) {
+            throw new Error(getMessage(
+                'InvalidConfigValue',
+                this.delegateExtractor.getFieldPath('java_max_heap_size'),
+                getMessage('InsufficientMemorySpecified')
+            ));
+        }
+
+        const isStrictlyNumeric: boolean = /^\d+$/.test(javaMaxHeapSize);
+        if (isStrictlyNumeric && numericPortion % 1024 !== 0) {
+            throw new Error(getMessage(
+                'InvalidConfigValue',
+                this.delegateExtractor.getFieldPath('java_max_heap_size'),
+                getMessage('InvalidMemoryMultiple')
+            ));
+        }
+        return javaMaxHeapSize;
     }
 
     public extractBooleanValue(fieldName: string): boolean {

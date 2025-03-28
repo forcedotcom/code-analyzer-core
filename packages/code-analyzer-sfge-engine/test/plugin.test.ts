@@ -170,16 +170,16 @@ describe('SfgeEnginePlugin', () => {
             it.each([
                 {
                     val: '1024',     // This value is too small.
-                    errMsg: `The 'engines.sfge.java_max_heap_size' configuration value is invalid. It must specify >=2MB`
+                    errMsg: `The 'engines.sfge.java_max_heap_size' configuration value is invalid. The amount of memory specified must be >=2MB`
                 }, {
                     val: '1024k',    // This value is too small.
-                    errMsg: `The 'engines.sfge.java_max_heap_size' configuration value is invalid. It must specify >=2MB`
+                    errMsg: `The 'engines.sfge.java_max_heap_size' configuration value is invalid. The amount of memory specified must be >=2MB`
                 }, {
                     val: '1m',       // This value is too small.
-                    errMsg: `The 'engines.sfge.java_max_heap_size' configuration value is invalid. It must specify >=2MB`
+                    errMsg: `The 'engines.sfge.java_max_heap_size' configuration value is invalid. The amount of memory specified must be >=2MB`
                 }, {
                     val: '8388700',  // This value is large enough, but it's not a multiple of 1024.
-                    errMsg: `The 'engines.sfge.java_max_heap_size' configuration value is invalid. It must be divisible by 1024`
+                    errMsg: `The 'engines.sfge.java_max_heap_size' configuration value is invalid. The amount of memory specified in bytes must be divisible by 1024`
                 }, {
                     val: '2c',       // This value uses an invalid suffix.
                     errMsg: `The 'engines.sfge.java_max_heap_size' configuration value is invalid. The string did not match the regular expression pattern: /^\\d+[kmg]?$/i`
