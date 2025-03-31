@@ -15,7 +15,7 @@ import {
 import {JavaCommandExecutor} from '@salesforce/code-analyzer-engine-api/utils';
 import {Clock, RealClock} from './utils';
 import {getMessage} from './messages';
-import {RuntimeSfgeWrapper, SfgeRuleInfo, SfgeRunResult} from "./sfge-wrapper";
+import {RuntimeSfgeWrapper, SfgeRuleInfo, SfgeRunOptions, SfgeRunResult} from "./sfge-wrapper";
 import {SfgeEngineConfig} from "./config";
 
 const SFGE_RELEVANT_FILE_EXTENSIONS = ['.cls'];
@@ -87,11 +87,19 @@ export class SfgeEngine extends Engine {
 
         const relevantFiles: string[] = await this.getRelevantFilesInWorkspace(runOptions.workspace);
 
+        const sfgeRunOptions: SfgeRunOptions = {
+            heapSizeArg: this.config.java_max_heap_size,
+            logFolder: runOptions.logFolder,
+            disableLimitReachedViolations: this.config.disable_limit_reached_violations,
+            threadCount: this.config.java_thread_count,
+            threadTimeout: this.config.java_thread_timeout
+        };
+
         const sfgeResults: SfgeRunResult[] = await this.sfgeWrapper.invokeRunCommand(
             selectedRuleInfoList,
             relevantFiles, // TODO: WHEN WE ADD PATH-START TARGETING, THIS NEEDS TO CHANGE.
             relevantFiles,
-            runOptions.logFolder,
+            sfgeRunOptions,
             (innerPerc: number, message?: string) => this.emitRunRulesProgressEvent(5 + 93*innerPerc/100, message) // 5%-98%
         );
 
