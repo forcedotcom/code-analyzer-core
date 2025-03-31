@@ -44,15 +44,19 @@ export const SFGE_ENGINE_CONFIG_DESCRIPTION: ConfigDescription = {
             valueType: "boolean",
             defaultValue: DEFAULT_SFGE_ENGINE_CONFIG.disable_limit_reached_violations
         },
+        // Indicates the specific 'java' command associated with the JRE or JDK to use for the 'sfge' engine.
+        // May be provided as the name of a command that exists on the path, or an absolute file path location.
+        // If unspecified, or specified as null, then an attempt will be made to automatically discover a 'java' command from your environment.
         java_command: {
             descriptionText: getMessage('ConfigFieldDescription_java_command'),
             valueType: "string",
             defaultValue: null // Using null for doc and since it indicates that the value is calculated based on the environment
         },
         // Specifies the maximum size (in bytes) of the Java heap. The specified value is appended to the '-Xmx' Java
-        // command option. The value must be a multiple of 1024, and greater than 2MB. Append the letter 'k' or 'K' to
-        // indicate kilobytes, m or M to indicate megabytes, and g or G to indicate gigabytes. If unspecified, or specified`
-        // as null, then the JVM will dynamically choose a default value at runtime based on system configuration.
+        // command option. The value must be a multiple of 1024, and greater than 2MB. Append the letters 'k', 'K', 'kb',
+        // or 'KB' to indicate kilobytes, 'm', 'M', 'mb', or 'MB' to indicate megabytes, and 'g', 'G', 'gb', or 'GB' to
+        // indicate gigabytes. If unspecified, or specified as null, then the JVM will dynamically choose a default value
+        // at runtime based on system configuration.
         java_max_heap_size: {
             descriptionText: getMessage('ConfigFieldDescription_java_max_heap_size'),
             valueType: "string",
@@ -75,7 +79,7 @@ export const SFGE_ENGINE_CONFIG_DESCRIPTION: ConfigDescription = {
     }
 }
 
-const JAVA_HEAP_SIZE_REGEX: RegExp = /^\d+[kmg]?$/i;
+const JAVA_HEAP_SIZE_REGEX: RegExp = /^\d+[kmg]?b?$/i;
 
 export async function validateAndNormalizeConfig(cve: ConfigValueExtractor, javaVersionIdentifier: JavaVersionIdentifier): Promise<SfgeEngineConfig> {
     cve.validateContainsOnlySpecifiedKeys(['disable_limit_reached_violations', 'java_command', 'java_max_heap_size', 'java_thread_count', 'java_thread_timeout']);
@@ -165,7 +169,7 @@ class SfgeConfigValueExtractor {
             return undefined;
         }
 
-        if (javaMaxHeapSize.toLowerCase().endsWith('g')) {
+        if (javaMaxHeapSize.toLowerCase().endsWith('g') || javaMaxHeapSize.toLowerCase().endsWith('gb')) {
             // A value expressed in gigabytes is always fine.
             return javaMaxHeapSize;
         }
@@ -178,7 +182,7 @@ class SfgeConfigValueExtractor {
             ));
         }
 
-        const isStrictlyNumeric: boolean = /^\d+$/.test(javaMaxHeapSize);
+        const isStrictlyNumeric: boolean = /^\d+b?$/i.test(javaMaxHeapSize);
         if (isStrictlyNumeric && numericPortion % 1024 !== 0) {
             throw new Error(getMessage(
                 'InvalidConfigValue',
@@ -199,9 +203,10 @@ class SfgeConfigValueExtractor {
 }
 
 function expressTwoMegabytesInRelevantUnit(val: string): number {
-    if (val.toLowerCase().endsWith('m')) {
+    const lowerCaseVal: string = val.toLowerCase();
+    if (lowerCaseVal.endsWith('m') || lowerCaseVal.endsWith('mb')) {
         return 2;
-    } else if (val.toLowerCase().endsWith('k')) {
+    } else if (lowerCaseVal.endsWith('k') || lowerCaseVal.endsWith('kb')) {
         return 2048; // 2MB === 2048KB
     } else {
         return 2 ** 21; // 2MB === 2^21 bytes

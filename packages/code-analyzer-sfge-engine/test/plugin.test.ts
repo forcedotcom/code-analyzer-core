@@ -185,19 +185,27 @@ describe('SfgeEnginePlugin', () => {
 
         describe(`Validating the formatted string property java_max_heap_size`, () => {
             it.each([
-                {val: '2097152'}, // Java needs >=2MB to run at all.
-                {val: '2048K'},   // Java needs >=2MB to run at all.
-                {val: '2048k'},   // Java needs >=2MB to run at all.
-                {val: '2M'},      // Java needs >=2MB to run at all.
-                {val: '2m'},      // Java needs >=2MB to run at all.
-                {val: '2098176'}, // Un-suffixed numbers must be increments of 1024.
-                {val: '8193K'},   // Suffixed numbers can be any value, and suffix can be any case.
-                {val: '8193k'},   // Suffixed numbers can be any value, and suffix can be any case.
-                {val: '9M'},      // Suffixed numbers can be any value, and suffix can be any case.
-                {val: '9m'},      // Suffixed numbers can be any value, and suffix can be any case.
-                {val: '2G'},      // Suffixed numbers can be any value, and suffix can be any case.
-                {val: '2g'},      // Suffixed numbers can be any value, and suffix can be any case.
-                {val: '02g'}      // Leading zeroes are weird, but they're not invalid.
+                {val: '2097152'},  // Java needs >=2MB to run at all.
+                {val: '2097152b'}, // Java needs >=2MB to run at all.
+                {val: '2048K'},    // Java needs >=2MB to run at all.
+                {val: '2048KB'},   // Java needs >=2MB to run at all.
+                {val: '2048k'},    // Java needs >=2MB to run at all.
+                {val: '2048kb'},   // Java needs >=2MB to run at all.
+                {val: '2M'},       // Java needs >=2MB to run at all.
+                {val: '2MB'},      // Java needs >=2MB to run at all.
+                {val: '2m'},       // Java needs >=2MB to run at all.
+                {val: '2mb'},      // Java needs >=2MB to run at all.
+                {val: '2098176'},  // Un-suffixed numbers must be increments of 1024.
+                {val: '8193K'},    // Suffixed numbers can be any value, and suffix can be any case.
+                {val: '8193k'},    // Suffixed numbers can be any value, and suffix can be any case.
+                {val: '9M'},       // Suffixed numbers can be any value, and suffix can be any case.
+                {val: '9m'},       // Suffixed numbers can be any value, and suffix can be any case.
+                {val: '2G'},       // Suffixed numbers can be any value, and suffix can be any case.
+                {val: '2GB'},      // Suffixed numbers can be any value, and suffix can be any case.
+                {val: '2g'},       // Suffixed numbers can be any value, and suffix can be any case.
+                {val: '2gb'},      // Suffixed numbers can be any value, and suffix can be any case.
+                {val: '02g'},      // Leading zeroes are weird, but they're not invalid.
+                {val: '02gb'}      // Leading zeroes are weird, but they're not invalid.
             ])('Accepts valid string input: $val', async ({val}) => {
                 const rawConfig: ConfigObject = {
                     java_max_heap_size: val
@@ -222,19 +230,22 @@ describe('SfgeEnginePlugin', () => {
                     errMsg: `The 'engines.sfge.java_max_heap_size' configuration value is invalid. The amount of memory specified in bytes must be divisible by 1024`
                 }, {
                     val: '2c',       // This value uses an invalid suffix.
-                    errMsg: `The 'engines.sfge.java_max_heap_size' configuration value is invalid. The string did not match the regular expression pattern: /^\\d+[kmg]?$/i`
+                    errMsg: `The 'engines.sfge.java_max_heap_size' configuration value is invalid. The string did not match the regular expression pattern: /^\\d+[kmg]?b?$/i`
+                }, {
+                    val: '2cb',      // This value uses an invalid suffix.
+                    errMsg: `The 'engines.sfge.java_max_heap_size' configuration value is invalid. The string did not match the regular expression pattern: /^\\d+[kmg]?b?$/i`
                 }, {
                     val: 'g33',      // This value has the right suffix in the wrong place.
-                    errMsg: `The 'engines.sfge.java_max_heap_size' configuration value is invalid. The string did not match the regular expression pattern: /^\\d+[kmg]?$/i`
+                    errMsg: `The 'engines.sfge.java_max_heap_size' configuration value is invalid. The string did not match the regular expression pattern: /^\\d+[kmg]?b?$/i`
                 }, {
                     val: '3g3',      // This value has extra stuff trailing after the suffix.
-                    errMsg: `The 'engines.sfge.java_max_heap_size' configuration value is invalid. The string did not match the regular expression pattern: /^\\d+[kmg]?$/i`
+                    errMsg: `The 'engines.sfge.java_max_heap_size' configuration value is invalid. The string did not match the regular expression pattern: /^\\d+[kmg]?b?$/i`
                 }, {
                     val: 'g',        // Standalone suffix is invalid.
-                    errMsg: `The 'engines.sfge.java_max_heap_size' configuration value is invalid. The string did not match the regular expression pattern: /^\\d+[kmg]?$/i`
+                    errMsg: `The 'engines.sfge.java_max_heap_size' configuration value is invalid. The string did not match the regular expression pattern: /^\\d+[kmg]?b?$/i`
                 }, {
                     val: 'asdf',     // This value is pure nonsense.
-                    errMsg: `The 'engines.sfge.java_max_heap_size' configuration value is invalid. The string did not match the regular expression pattern: /^\\d+[kmg]?$/i`
+                    errMsg: `The 'engines.sfge.java_max_heap_size' configuration value is invalid. The string did not match the regular expression pattern: /^\\d+[kmg]?b?$/i`
                 }
             ])('Rejects invalid string value: $val', async ({val, errMsg}) => {
                 const rawConfig: ConfigObject = {
