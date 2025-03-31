@@ -12,11 +12,14 @@ import {
 } from "./config";
 import {getMessage} from './messages';
 import {SfgeEngine} from "./engine";
+import {JavaVersionIdentifier, RuntimeJavaVersionIdentifier} from "./java-version-identifier";
 
 export class SfgeEnginePlugin extends EnginePluginV1 {
+    private readonly javaVersionIdentifier: JavaVersionIdentifier;
 
-    public constructor() {
+    public constructor(javaVersionIdentifier: JavaVersionIdentifier = new RuntimeJavaVersionIdentifier()) {
         super();
+        this.javaVersionIdentifier = javaVersionIdentifier;
     }
 
     public override getAvailableEngineNames(): string[] {
@@ -30,7 +33,7 @@ export class SfgeEnginePlugin extends EnginePluginV1 {
 
     public override async createEngineConfig(engineName: string, configValueExtractor: ConfigValueExtractor): Promise<ConfigObject> {
         validateEngineName(engineName);
-        return await validateAndNormalizeConfig(configValueExtractor) as ConfigObject;
+        return await validateAndNormalizeConfig(configValueExtractor, this.javaVersionIdentifier) as ConfigObject;
     }
 
     public override async createEngine(engineName: string, resolvedConfig: ConfigObject): Promise<Engine> {

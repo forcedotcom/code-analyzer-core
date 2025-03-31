@@ -5,6 +5,7 @@ import {
     getMessageFromCatalog,
     SHARED_MESSAGE_CATALOG
 } from "@salesforce/code-analyzer-engine-api";
+import {SemVer} from 'semver';
 import {SfgeEnginePlugin} from "../src";
 import {
     DEFAULT_SFGE_ENGINE_CONFIG,
@@ -13,6 +14,7 @@ import {
 } from "../src/config";
 import {SfgeEngine} from "../src/engine";
 import {getMessage} from '../src/messages';
+import {JavaVersionIdentifier, RuntimeJavaVersionIdentifier} from "../src/java-version-identifier";
 
 describe('SfgeEnginePlugin', () => {
     let plugin: EnginePluginV1;
@@ -45,7 +47,7 @@ describe('SfgeEnginePlugin', () => {
             const cve: ConfigValueExtractor = new ConfigValueExtractor({invalidField: 2}, 'engines.sfge');
             await expect(plugin.createEngineConfig('sfge', cve)).rejects.toThrow(
                 getMessageFromCatalog(SHARED_MESSAGE_CATALOG, 'ConfigObjectContainsInvalidKey', 'engines.sfge', 'invalidField',
-                    '["disable_limit_reached_violations","java_max_heap_size","java_thread_count","java_thread_timeout"]'));
+                    '["disable_limit_reached_violations","java_command","java_max_heap_size","java_thread_count","java_thread_timeout"]'));
         });
 
         it('When given an empty raw config, the correct defaults are returned', async () => {
@@ -53,9 +55,9 @@ describe('SfgeEnginePlugin', () => {
             // This test assumes that all environments that run this test will have JAVA v11+ installed and either has
             // * the JAVA_HOME environment variable points to the home folder of this java command
             // * or has the java command is already on the top of the PATH
-            //expect(resolvedConfig.java_command.endsWith('java')).toEqual(true);
+            expect(resolvedConfig.java_command.endsWith('java')).toEqual(true);
             expect(resolvedConfig).toEqual({
-                //java_command: resolvedConfig.java_command, // We just checked the Java Command above.
+                java_command: resolvedConfig.java_command, // We just checked the Java Command above.
                 disable_limit_reached_violations: false,
                 java_max_heap_size: undefined,
                 java_thread_count: 4,
@@ -63,25 +65,63 @@ describe('SfgeEnginePlugin', () => {
             });
         });
 
-//        describe(`Validating the pathlike 'java_command' property`, () => {
-//            it.each([
-//                {case: 'Java lookup fails'},
-//                {case: 'Java lookup produces outdated Java version'}
-//            ])('When java_command is absent and $case, an error is thrown', async () => {
-//
-//            });
-//
-//            it.each([
-//                {case: 'invalid'},
-//                {case: 'outdated'}
-//            ])('When provided java_command value is $case, an error is thrown', async () => {
-//
-//            });
-//
-//            it('When provided java_command value is valid and up-to-date, it is used', async () => {
-//
-//            });
-//        });
+        describe(`Validating the pathlike 'java_command' property`, () => {
+            it.each([
+                {
+                    case: 'absent and Java lookup fails',
+                    configObject: {} as ConfigObject,
+                    javaVersionIdentifierBuilder: () => new StubJavaVersionIdentifier(null),
+                    mainMessage: 'Could not locate Java v11.0.0+',
+                    reasonMessage: getMessage('UnrecognizableJavaVersion', 'java')
+                },
+                {
+                    case: 'absent and Java lookup produces outdated Java version',
+                    configObject: {} as ConfigObject,
+                    javaVersionIdentifierBuilder: () => new StubJavaVersionIdentifier(new SemVer('1.9.0')),
+                    mainMessage: 'Could not locate Java v11.0.0+',
+                    reasonMessage: `The command 'java' specifies Java v1.9.0, which is below minimum supported version v11.0.0.`
+                },
+                {
+                    case: 'specified as an invalid command',
+                    configObject: {java_command: '/some/invalid/java'} as ConfigObject,
+                    javaVersionIdentifierBuilder: () => new RuntimeJavaVersionIdentifier(),
+                    mainMessage: `The 'engines.sfge.java_command' configuration value is invalid.`,
+                    reasonMessage: `When attempting to find the version of command '/some/invalid/java', an error was thrown:`
+                },
+                {
+                    case: 'specified as an unrecognizable version',
+                    configObject: {java_command: '/some/version/of/java'} as ConfigObject,
+                    javaVersionIdentifierBuilder: () => new StubJavaVersionIdentifier(null),
+                    mainMessage: `The 'engines.sfge.java_command' configuration value is invalid.`,
+                    reasonMessage: getMessage('UnrecognizableJavaVersion', '/some/version/of/java')
+                },
+                {
+                    case: 'specified as an outdated version',
+                    configObject: {java_command: '/some/version/of/java'} as ConfigObject,
+                    javaVersionIdentifierBuilder: () => new StubJavaVersionIdentifier(new SemVer('1.9.0')),
+                    mainMessage: `The 'engines.sfge.java_command' configuration value is invalid.`,
+                    reasonMessage: `The command '/some/version/of/java' specifies Java v1.9.0, which is below minimum supported version v11.0.0.`,
+                }
+            ])('When java_command is $case, an error is thrown', async ({configObject, javaVersionIdentifierBuilder, mainMessage, reasonMessage}) => {
+                const pluginWithStub: SfgeEnginePlugin = new SfgeEnginePlugin(javaVersionIdentifierBuilder());
+                try {
+                    await pluginWithStub.createEngineConfig('sfge', new ConfigValueExtractor(configObject, 'engines.sfge'));
+                    fail('Expected error to be thrown');
+                } catch (err) {
+                    const errMsg: string = (err as Error).message;
+                    expect(errMsg).toContain(mainMessage);
+                    expect(errMsg).toContain(reasonMessage);
+                }
+            });
+
+            it('When provided java_command value is valid and up-to-date, it is used', async () => {
+                const pluginWithStub: SfgeEnginePlugin = new SfgeEnginePlugin(new StubJavaVersionIdentifier(new SemVer('21.4.0')));
+                const rawConfig: ConfigObject = {java_command: '/some/java'};
+                const configValueExtractor: ConfigValueExtractor = new ConfigValueExtractor(rawConfig, 'engines.sfge');
+                const normalizedConfig: ConfigObject = await pluginWithStub.createEngineConfig('sfge', configValueExtractor);
+                expect(normalizedConfig).toHaveProperty('java_command', '/some/java');
+            });
+        });
 
         describe(`Validating the boolean 'disable_limit_reached_violations' property`, () => {
             it.each([
@@ -233,3 +273,15 @@ describe('SfgeEnginePlugin', () => {
         });
     });
 });
+
+class StubJavaVersionIdentifier implements JavaVersionIdentifier {
+    private readonly version: SemVer|null;
+
+    constructor(version: SemVer|null) {
+        this.version = version;
+    }
+
+    public identifyJavaVersion(_javaCommand: string): Promise<SemVer|null> {
+        return Promise.resolve(this.version);
+    }
+}

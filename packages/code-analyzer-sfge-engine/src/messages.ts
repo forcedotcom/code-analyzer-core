@@ -14,6 +14,11 @@ const MESSAGE_CATALOG : { [key: string]: string } = {
         `complexity is dynamically calculated based on the max Java heap size available, but in some cases you may\n` +
         `desire to disable this check in addition to increasing java_max_heap_size.`,
 
+    ConfigFieldDescription_java_command:
+        `Indicates the specific 'java' command associated with the JRE or JDK to use for the 'sfge' engine.\n` +
+        `May be provided as the name of a command that exists on the path, or an absolute file path location.\n` +
+        `If unspecified, or specified as null, then an attempt will be made to automatically discover a 'java' command from your environment.`,
+
     ConfigFieldDescription_java_max_heap_size:
         `Specifies the maximum size (in bytes) of the Java heap. The specified value is appended to the '-Xmx' Java\n` +
         `command option. The value must be a multiple of 1024, and greater than 2MB. Append the letter 'k' or 'K' to\n` +
@@ -42,6 +47,21 @@ const MESSAGE_CATALOG : { [key: string]: string } = {
 
     InvalidMemoryMultiple:
         `The amount of memory specified in bytes must be divisible by 1024`,
+
+    JavaVersionCheckProducedError:
+        `When attempting to find the version of command '%s', an error was thrown:\n%s`,
+
+    UnrecognizableJavaVersion:
+        `The command '%s' does not seem to be a recognizable version of Java.`,
+
+    JavaBelowMinimumVersion:
+        `The command '%s' specifies Java v%s, which is below minimum supported version v%s.`,
+
+    CouldNotLocateJava:
+        `Could not locate Java v%s+.\n` +
+        `%s\n` +
+        `If you have Java installed, specify the command in your Code Analyzer configuration as the value of property '%s'.\n` +
+        `If you choose not to install Java, you may disable the corresponding engine in your Code Analyzer configuration by setting '%s' to true.`,
 
     WorkspaceAppearsIncomplete:
         `Specified workspace is missing %d possibly-relevant file(s) from the folder %s. Salesforce Graph Engine may be unable to create a complete graph of your project without all apex files included in your workspace. This may result in incomplete or incorrect results.`,
