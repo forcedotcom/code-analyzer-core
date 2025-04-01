@@ -1,0 +1,4 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<notAFlowFile>
+    This is not a flow file, so the flow engine should ignore it.
+</notAFlowFile>

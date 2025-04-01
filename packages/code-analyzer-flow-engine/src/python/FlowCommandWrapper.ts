@@ -4,15 +4,15 @@ import {getMessage} from '../messages';
 import path from "node:path";
 import fs from "node:fs";
 
-export interface FlowTestCommandWrapper {
-    runFlowTestRules(flowFilesToScan: string[], absLogFilePath: string, completionPercentageHandler: (percentage: number) => void): Promise<FlowTestExecutionResult>;
+export interface FlowCommandWrapper {
+    runFlowRules(flowFilesToScan: string[], absLogFilePath: string, completionPercentageHandler: (percentage: number) => void): Promise<FlowExecutionResult>;
 }
 
-export type FlowTestExecutionResult = {
-    results: Record<string, FlowTestRuleResult[]>
+export type FlowExecutionResult = {
+    results: Record<string, FlowRuleResult[]>
 }
 
-export type FlowTestRuleResult = {
+export type FlowRuleResult = {
     flow: FlowNodeDescriptor[];
     query_name: string;
     severity: string;
@@ -34,30 +34,32 @@ export type FlowNodeDescriptor = {
 
 const STATUS_DELIMITER = '**STATUS:';
 
-export class RunTimeFlowTestCommandWrapper implements FlowTestCommandWrapper {
+export class RunTimeFlowCommandWrapper implements FlowCommandWrapper {
     private readonly pythonCommandExecutor: PythonCommandExecutor;
 
     public constructor(pythonCommand: string) {
         this.pythonCommandExecutor = new PythonCommandExecutor(pythonCommand);
     }
 
-    public async runFlowTestRules(flowFilesToScan: string[], absLogFilePath: string,
-                                  completionPercentageHandler: (percentage: number) => void): Promise<FlowTestExecutionResult> {
+    public async runFlowRules(flowFilesToScan: string[], absLogFilePath: string,
+                                  completionPercentageHandler: (percentage: number) => void): Promise<FlowExecutionResult> {
         const tempDir: string = await createTempDir();
         const flowFilesToScanFile: string = path.join(tempDir, 'flowFilesToScan.txt');
         await fs.promises.writeFile(flowFilesToScanFile, flowFilesToScan.join('\n'), 'utf-8');
 
-        const flowtestResultsFile: string = path.join(tempDir, 'flowtestResultsFile.json')
+        const flowResultsFile: string = path.join(tempDir, 'flowResultsFile.json')
+        const commandName = 'flowtest'; //name set by internal team
+
         const pythonArgs: string[] = [
             '-m',
-            'flowtest',
+            commandName,
             '--debug',
             '--log_file',
             absLogFilePath,
             '--infile',
             flowFilesToScanFile,
             '--json',
-            flowtestResultsFile
+            flowResultsFile
         ];
 
         const processStdout = (stdoutMsg: string) => {
@@ -75,7 +77,7 @@ export class RunTimeFlowTestCommandWrapper implements FlowTestCommandWrapper {
 
         await this.pythonCommandExecutor.exec(pythonArgs, processStdout);
 
-        const outputFileContents: string = await fs.promises.readFile(flowtestResultsFile, 'utf-8');
+        const outputFileContents: string = await fs.promises.readFile(flowResultsFile, 'utf-8');
 
         let parsedResults: object;
         try {
@@ -91,7 +93,7 @@ export class RunTimeFlowTestCommandWrapper implements FlowTestCommandWrapper {
         return parsedResults;
     }
 
-    private executionResultsAreValid(executionResults: object): executionResults is FlowTestExecutionResult {
+    private executionResultsAreValid(executionResults: object): executionResults is FlowExecutionResult {
         if (!('results' in executionResults) || typeof executionResults.results !== 'object') {
             return false;
         }
@@ -114,7 +116,7 @@ export class RunTimeFlowTestCommandWrapper implements FlowTestCommandWrapper {
     }
 
     /* istanbul ignore next */
-    private ruleResultIsValid(ruleResult: object): ruleResult is FlowTestRuleResult {
+    private ruleResultIsValid(ruleResult: object): ruleResult is FlowRuleResult {
         if (!('query_name' in ruleResult) || typeof ruleResult.query_name !== 'string') {
             return false;
         }

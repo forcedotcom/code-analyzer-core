@@ -14,8 +14,8 @@ import {
     Workspace
 } from "@salesforce/code-analyzer-engine-api";
 import {FixedClock} from "@salesforce/code-analyzer-engine-api/utils";
-import {FlowTestEngine} from "../src/engine";
-import {RunTimeFlowTestCommandWrapper} from "../src/python/FlowTestCommandWrapper";
+import {FlowEngine} from "../src/engine";
+import {RunTimeFlowCommandWrapper} from "../src/python/FlowCommandWrapper";
 import {changeWorkingDirectoryToPackageRoot} from "./test-helpers";
 import os from "node:os";
 import {getMessage} from "../src/messages";
@@ -32,22 +32,22 @@ const PATH_TO_EXAMPLE3: string = path.join(PATH_TO_MULTIPLE_FLOWS_WORKSPACE, 'ex
 const PATH_TO_EXAMPLE4_PARENTFLOW: string = path.join(PATH_TO_MULTIPLE_FLOWS_WORKSPACE, 'example4_parentFlow.flow-meta.xml');
 const PATH_TO_EXAMPLE4_SUBFLOW: string = path.join(PATH_TO_MULTIPLE_FLOWS_WORKSPACE, 'example4_subflow.flow-meta.xml');
 
-describe('Tests for the FlowTestEngine', () => {
-    const flowtestCommandWrapper: RunTimeFlowTestCommandWrapper = new RunTimeFlowTestCommandWrapper('python3');
+describe('Tests for the TestEngine', () => {
+    const flowCommandWrapper: RunTimeFlowCommandWrapper = new RunTimeFlowCommandWrapper('python3');
     let tempFolder: string;
 
     beforeAll(async() => {
-        tempFolder = await fs.promises.mkdtemp(path.join(os.tmpdir(), 'flowtest-engine-test'));
+        tempFolder = await fs.promises.mkdtemp(path.join(os.tmpdir(), 'flow-engine-test'));
     });
 
     it('getName() returns correct name', () => {
-        const engine: FlowTestEngine = new FlowTestEngine(flowtestCommandWrapper);
-        expect(engine.getName()).toEqual('flowtest');
+        const engine: FlowEngine = new FlowEngine(flowCommandWrapper);
+        expect(engine.getName()).toEqual('flow');
     });
 
     describe('End-to-End tests', () => {
         const sampleTimestamp: Date = new Date(2025, 1, 20, 14, 30, 18, 14);
-        const engine: FlowTestEngine = new FlowTestEngine(flowtestCommandWrapper, new FixedClock(sampleTimestamp));
+        const engine: FlowEngine = new FlowEngine(flowCommandWrapper, new FixedClock(sampleTimestamp));
         const workspace: Workspace = new Workspace([PATH_TO_MULTIPLE_FLOWS_WORKSPACE]);
 
         it('Engine can describe rules, run them, and convert the results into standard format', async () => {
@@ -73,21 +73,21 @@ describe('Tests for the FlowTestEngine', () => {
             expect(results.violations).toHaveLength(7);
             expect(runProgressEvents.map(e => e.percentComplete)).toEqual([0, 10, 10, 26, 42, 58, 74, 100]);
 
-            // Confirm separate flowtest log file exists and the main log points to this file
+            // Confirm separate flow log file exists and the main log points to this file
             const debugLogMsgs: string[] = logEvents.filter(e => e.logLevel == LogLevel.Debug).map(e => e.message);
             expect(debugLogMsgs).toHaveLength(1);
-            const expectedFlowtestLogFile: string = path.join(tempFolder, 'sfca-flowtest-2025_02_20_14_30_18_014.log');
-            expect(debugLogMsgs[0]).toEqual(getMessage('WritingFlowtestLogToFile', expectedFlowtestLogFile));
-            const flowtestLogContents: string = await fs.promises.readFile(expectedFlowtestLogFile, 'utf-8');
-            expect(flowtestLogContents).toContain('DEBUG'); // Sanity check that we are using --debug log level
+            const expectedFlowLogFile: string = path.join(tempFolder, 'sfca-flow-2025_02_20_14_30_18_014.log');
+            expect(debugLogMsgs[0]).toEqual(getMessage('WritingFlowLogToFile', expectedFlowLogFile));
+            const flowLogContents: string = await fs.promises.readFile(expectedFlowLogFile, 'utf-8');
+            expect(flowLogContents).toContain('DEBUG'); // Sanity check that we are using --debug log level
         });
     });
 
     describe('Unit tests', () => {
         describe('#describeRules()', () => {
             describe('Rule description parsing', () => {
-                it('Consolidates well-formed FlowTest rule descriptors into Code Analyzer rule descriptors', async () => {
-                    const engine: FlowTestEngine = new FlowTestEngine(flowtestCommandWrapper);
+                it('Consolidates well-formed Flow rule descriptors into Code Analyzer rule descriptors', async () => {
+                    const engine: FlowEngine = new FlowEngine(flowCommandWrapper);
 
                     const ruleDescriptors: RuleDescription[] = await engine.describeRules(createDescribeOptions(tempFolder));
 
@@ -125,7 +125,7 @@ describe('Tests for the FlowTestEngine', () => {
                         workspace: new Workspace([PATH_TO_MULTIPLE_FLOWS_WORKSPACE])
                     },
                 ])('When workspace $desc, rules are returned', async ({workspace}) => {
-                    const engine: FlowTestEngine = new FlowTestEngine(flowtestCommandWrapper);
+                    const engine: FlowEngine = new FlowEngine(flowCommandWrapper);
 
                     const ruleDescriptors: RuleDescription[] = await engine.describeRules(createDescribeOptions(tempFolder, workspace));
 
@@ -139,10 +139,10 @@ describe('Tests for the FlowTestEngine', () => {
                     },
                     {
                         desc: 'is file that is not a flow file but lives in a folder with flow files',
-                        workspace: new Workspace([path.resolve(PATH_TO_MULTIPLE_FLOWS_WORKSPACE, 'shouldNotGetPickedUpByFlowTest.xml')])
+                        workspace: new Workspace([path.resolve(PATH_TO_MULTIPLE_FLOWS_WORKSPACE, 'shouldNotGetPickedUpByFlow.xml')])
                     },
                 ])('When workspace $desc, no rules are returned', async ({workspace}) => {
-                    const engine: FlowTestEngine = new FlowTestEngine(flowtestCommandWrapper);
+                    const engine: FlowEngine = new FlowEngine(flowCommandWrapper);
 
                     const ruleDescriptors: RuleDescription[] = await engine.describeRules(createDescribeOptions(tempFolder, workspace));
 
@@ -339,9 +339,9 @@ describe('Tests for the FlowTestEngine', () => {
                 resourceUrls: []
             };
 
-            let engine: FlowTestEngine;
+            let engine: FlowEngine;
             beforeEach(() => {
-                engine = new FlowTestEngine(flowtestCommandWrapper);
+                engine = new FlowEngine(flowCommandWrapper);
             });
 
             afterEach(() => {
@@ -367,7 +367,7 @@ describe('Tests for the FlowTestEngine', () => {
             });
 
             it('When running only one rule on workspace that contains violations for multiple rules, then results should only contain results for the selected rule', async () => {
-                const engine: FlowTestEngine = new FlowTestEngine(flowtestCommandWrapper);
+                const engine: FlowEngine = new FlowEngine(flowCommandWrapper);
 
                 const selectedRuleNames: string[] = ['PreventPassingUserDataIntoElementWithSharing'];
                 const engineResults: EngineRunResults = await engine.runRules(selectedRuleNames, createRunOptions(
@@ -379,7 +379,7 @@ describe('Tests for the FlowTestEngine', () => {
             });
 
             it('When workspace includes only some files from within a folder, then filters out results for files outside of workspace', async () => {
-                const engine: FlowTestEngine = new FlowTestEngine(flowtestCommandWrapper);
+                const engine: FlowEngine = new FlowEngine(flowCommandWrapper);
 
                 const selectedRuleNames: string[] = [
                     'PreventPassingUserDataIntoElementWithSharing',
@@ -406,7 +406,7 @@ describe('Tests for the FlowTestEngine', () => {
             });
 
             it('When workspace contains flow files that have no violations but is in folder with other flow files that do have violations, then return valid results with zero violations', async () => {
-                const engine: FlowTestEngine = new FlowTestEngine(flowtestCommandWrapper);
+                const engine: FlowEngine = new FlowEngine(flowCommandWrapper);
 
                 const selectedRuleNames: string[] = [
                     'PreventPassingUserDataIntoElementWithSharing',
@@ -420,11 +420,10 @@ describe('Tests for the FlowTestEngine', () => {
             });
 
             it('When workspace contains a flow file that has no violations and no other flow files are in the folder, then return valid results with zero violations', async () => {
-                // Note that this test is needed because the implementation today currently runs flowtest on the
+                // Note that this test is needed because the implementation today currently runs flow on the
                 // workspace root, and then we filter out the results based on the workspace files. Without this test
-                // we might miss the flowtest utility returning results: null.
-                // See https://git.soma.salesforce.com/SecurityTools/FlowSecurityLinter/issues/59
-                const engine: FlowTestEngine = new FlowTestEngine(flowtestCommandWrapper);
+                // we might miss the flow utility returning results: null.
+                const engine: FlowEngine = new FlowEngine(flowCommandWrapper);
 
                 const selectedRuleNames: string[] = [
                     'PreventPassingUserDataIntoElementWithSharing',
@@ -441,7 +440,7 @@ describe('Tests for the FlowTestEngine', () => {
                 new Workspace([path.resolve(__dirname, 'test-data', 'example workspaces','contains-parent-without-subflow')]),
                 new Workspace([path.resolve(PATH_TO_MULTIPLE_FLOWS_WORKSPACE, 'example4_parentFlow.flow-meta.xml')])
             ])('When workspace contains a parent flow but not its child subflow, then return valid results with zero violations', async (workspace) => {
-                const engine: FlowTestEngine = new FlowTestEngine(flowtestCommandWrapper);
+                const engine: FlowEngine = new FlowEngine(flowCommandWrapper);
 
                 const selectedRuleNames: string[] = [
                     'PreventPassingUserDataIntoElementWithSharing',
@@ -456,7 +455,7 @@ describe('Tests for the FlowTestEngine', () => {
                 new Workspace([path.resolve(__dirname, 'test-data', 'example workspaces','contains-subflow-without-parent')]),
                 new Workspace([path.resolve(PATH_TO_MULTIPLE_FLOWS_WORKSPACE, 'example4_subflow.flow-meta.xml')])
             ])('When workspace contains a child subflow but not its parent flow, then return valid results with zero violations', async (workspace) => {
-                const engine: FlowTestEngine = new FlowTestEngine(flowtestCommandWrapper);
+                const engine: FlowEngine = new FlowEngine(flowCommandWrapper);
 
                 const selectedRuleNames: string[] = [
                     'PreventPassingUserDataIntoElementWithSharing',
@@ -474,7 +473,7 @@ describe('Tests for the FlowTestEngine', () => {
 
         describe('#getEngineVersion', () => {
             it('Returns something resembling a Semantic Version', async () => {
-                const engine: FlowTestEngine = new FlowTestEngine(flowtestCommandWrapper);
+                const engine: FlowEngine = new FlowEngine(flowCommandWrapper);
                 const version: string = await engine.getEngineVersion();
 
                 expect(version).toMatch(/\d+\.\d+\.\d+.*/);

@@ -1,6 +1,6 @@
 {
-  "name": "@salesforce/code-analyzer-flowtest-engine",
-  "description": "Plugin package that adds 'flowtest' as an engine into Salesforce Code Analyzer",
+  "name": "@salesforce/code-analyzer-flow-engine",
+  "description": "Plugin package that adds 'Flow Scanner' as an engine into Salesforce Code Analyzer",
   "version": "0.19.0-SNAPSHOT",
   "author": "The Salesforce Code Analyzer Team",
   "license": "BSD-3-Clause",
@@ -8,7 +8,7 @@
   "repository": {
     "type": "git",
     "url": "git+https://github.com/forcedotcom/code-analyzer-core.git",
-    "directory": "packages/code-analyzer-flowtest-engine"
+    "directory": "packages/code-analyzer-flow-engine"
   },
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -34,7 +34,7 @@
   "files": [
     "dist",
     "LICENSE",
-    "FlowTest",
+    "Flow",
     "package.json"
   ],
   "scripts": {

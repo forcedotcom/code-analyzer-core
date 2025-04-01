@@ -17,8 +17,8 @@ on:
         type: boolean
         required: false
         default: false
-      code-analyzer-flowtest-engine:
-        description: Should the code-analyzer-flowtest-engine package be released?
+      code-analyzer-flow-engine:
+        description: Should the code-analyzer-flow-engine package be released?
         type: boolean
         required: false
         default: false
@@ -76,8 +76,8 @@ jobs:
           if [ "${{ inputs.code-analyzer-eslint-engine }}" == "true" ]; then
             PACKAGES_TO_CHECK_ARR+=('code-analyzer-eslint-engine')
           fi
-          if [ "${{ inputs.code-analyzer-flowtest-engine }}" == "true" ]; then
-            PACKAGES_TO_CHECK_ARR+=('code-analyzer-flowtest-engine')
+          if [ "${{ inputs.code-analyzer-flow-engine }}" == "true" ]; then
+            PACKAGES_TO_CHECK_ARR+=('code-analyzer-flow-engine')
           fi
           if [ "${{ inputs.code-analyzer-pmd-engine }}" == "true" ]; then
             PACKAGES_TO_CHECK_ARR+=('code-analyzer-pmd-engine')
@@ -143,7 +143,7 @@ jobs:
           CORE_PACKAGE_JSON="$(cat packages/code-analyzer-core/package.json | base64)"
           API_PACKAGE_JSON="$(cat packages/code-analyzer-engine-api/package.json | base64)"
           ESLINT_PACKAGE_JSON="$(cat packages/code-analyzer-eslint-engine/package.json | base64)"
-          FLOWTEST_PACKAGE_JSON="$(cat packages/code-analyzer-flowtest-engine/package.json | base64)"
+          FLOW_PACKAGE_JSON="$(cat packages/code-analyzer-flow-engine/package.json | base64)"
           PMD_PACKAGE_JSON="$(cat packages/code-analyzer-pmd-engine/package.json | base64)"
           REGEX_PACKAGE_JSON="$(cat packages/code-analyzer-regex-engine/package.json | base64)"
           RETIREJS_PACKAGE_JSON="$(cat packages/code-analyzer-retirejs-engine/package.json | base64)"
@@ -156,7 +156,7 @@ jobs:
           -F corePackage="$CORE_PACKAGE_JSON" \
           -F apiPackage="$API_PACKAGE_JSON" \
           -F eslintPackage="$ESLINT_PACKAGE_JSON" \
-          -F flowtestPackage="$FLOWTEST_PACKAGE_JSON" \
+          -F flowPackage="$FLOW_PACKAGE_JSON" \
           -F pmdPackage="$PMD_PACKAGE_JSON" \
           -F regexPackage="$REGEX_PACKAGE_JSON" \
           -F retirejsPackage="$RETIREJS_PACKAGE_JSON" \
@@ -166,7 +166,7 @@ jobs:
           -f query='
             mutation ($message: String!, $oldOid: GitObjectID!, $branch: String!,
                       $corePackage: Base64String!, $apiPackage: Base64String!, $eslintPackage: Base64String!,
-                      $flowtestPackage: Base64String!, $pmdPackage: Base64String!, $regexPackage: Base64String!,
+                      $flowPackage: Base64String!, $pmdPackage: Base64String!, $regexPackage: Base64String!,
                       $retirejsPackage: Base64String!, $sfgePackage: Base64String!, $templatePackage: Base64String!,
                       $packageLock: Base64String!) {
               createCommitOnBranch(input: {
@@ -189,8 +189,8 @@ jobs:
                       path: "packages/code-analyzer-eslint-engine/package.json",
                       contents: $eslintPackage
                     }, {
-                      path: "packages/code-analyzer-flowtest-engine/package.json",
-                      contents: $flowtestPackage
+                      path: "packages/code-analyzer-flow-engine/package.json",
+                      contents: $flowPackage
                     }, {
                       path: "packages/code-analyzer-pmd-engine/package.json",
                       contents: $pmdPackage

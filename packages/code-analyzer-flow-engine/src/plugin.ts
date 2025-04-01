@@ -5,14 +5,14 @@ import {
     Engine,
     EnginePluginV1
 } from "@salesforce/code-analyzer-engine-api";
-import {FlowTestEngine} from "./engine";
+import {FlowEngine} from "./engine";
 import {getMessage} from './messages';
-import {FLOWTEST_ENGINE_CONFIG_DESCRIPTION, FlowTestConfig, validateAndNormalizeConfig} from "./config";
-import {RunTimeFlowTestCommandWrapper} from "./python/FlowTestCommandWrapper";
+import {FLOW_ENGINE_CONFIG_DESCRIPTION, FlowConfig, validateAndNormalizeConfig} from "./config";
+import {RunTimeFlowCommandWrapper} from "./python/FlowCommandWrapper";
 import {PythonVersionIdentifier, RuntimePythonVersionIdentifier} from "./python/PythonVersionIdentifier";
 
 
-export class FlowTestEnginePlugin extends EnginePluginV1 {
+export class FlowEnginePlugin extends EnginePluginV1 {
     private readonly pythonVersionIdentifier: PythonVersionIdentifier;
 
     public constructor(pythonVersionIdentifier: PythonVersionIdentifier = new RuntimePythonVersionIdentifier()) {
@@ -21,12 +21,12 @@ export class FlowTestEnginePlugin extends EnginePluginV1 {
     }
 
     public getAvailableEngineNames(): string[] {
-        return [FlowTestEngine.NAME];
+        return [FlowEngine.NAME];
     }
 
     describeEngineConfig(engineName: string): ConfigDescription {
         validateEngineName(engineName);
-        return FLOWTEST_ENGINE_CONFIG_DESCRIPTION;
+        return FLOW_ENGINE_CONFIG_DESCRIPTION;
     }
 
     async createEngineConfig(engineName: string, configValueExtractor: ConfigValueExtractor): Promise<ConfigObject> {
@@ -36,13 +36,13 @@ export class FlowTestEnginePlugin extends EnginePluginV1 {
 
     public async createEngine(engineName: string, resolvedConfig: ConfigObject): Promise<Engine> {
         validateEngineName(engineName);
-        const wrapper: RunTimeFlowTestCommandWrapper = new RunTimeFlowTestCommandWrapper((resolvedConfig as FlowTestConfig).python_command);
-        return new FlowTestEngine(wrapper);
+        const wrapper: RunTimeFlowCommandWrapper = new RunTimeFlowCommandWrapper((resolvedConfig as FlowConfig).python_command);
+        return new FlowEngine(wrapper);
     }
 }
 
 function validateEngineName(engineName: string) {
-    if (engineName !== FlowTestEngine.NAME) {
+    if (engineName !== FlowEngine.NAME) {
         throw new Error(getMessage('UnsupportedEngineName', engineName));
     }
 }

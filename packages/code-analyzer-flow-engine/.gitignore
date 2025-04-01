@@ -1,0 +1,3 @@
+Flow/build/**/**
+Flow/**/__pycache__/**
+Flow/flowtest.egg-info/**
