@@ -21,9 +21,10 @@ const MESSAGE_CATALOG : { [key: string]: string } = {
 
     ConfigFieldDescription_java_max_heap_size:
         `Specifies the maximum size (in bytes) of the Java heap. The specified value is appended to the '-Xmx' Java\n` +
-        `command option. The value must be a multiple of 1024, and greater than 2MB. Append the letter 'k' or 'K' to\n` +
-        `indicate kilobytes, m or M to indicate megabytes, and g or G to indicate gigabytes. If unspecified, or specified\n` +
-        `as null, then the JVM will dynamically choose a default value at runtime based on system configuration.`,
+        `command option. The value must be a multiple of 1024, and greater than 2MB. Append the letters 'k', 'K', 'kb',\n` +
+        `or 'KB' to indicate kilobytes, 'm', 'M', 'mb', or 'MB' to indicate megabytes, and 'g', 'G', 'gb', or 'GB' to\n` +
+        `indicate gigabytes. If unspecified, or specified as null, then the JVM will dynamically choose a default value\n` +
+        `at runtime based on system configuration.`,
 
     ConfigFieldDescription_java_thread_count:
         `Specifies the number of Java threads available for parallel execution. Increasing the thread count allows for\n` +
