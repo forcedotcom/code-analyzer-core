@@ -241,7 +241,6 @@ describe('SfgeEngine', () => {
         it.each([
             {prop: 'disable_limit_reached_violations', value: true, javaArg: '-DSFGE_PATH_EXPANSION_LIMIT=-1'},
             {prop: 'java_max_heap_size', value: '2g', javaArg: '-Xmx2g'},
-            {prop: 'java_max_heap_size', value: '2gb', javaArg: '-Xmx2g'},
             {prop: 'java_thread_count', value: 7, javaArg: '-DSFGE_RULE_THREAD_COUNT=7'},
             {prop: 'java_thread_timeout', value: 40000, javaArg: '-DSFGE_RULE_THREAD_TIMEOUT=40000'}
         ])('Config property $prop is properly passed through to Java layer', async ({prop, value, javaArg}) => {

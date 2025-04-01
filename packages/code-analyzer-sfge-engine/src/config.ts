@@ -169,12 +169,14 @@ class SfgeConfigValueExtractor {
             return undefined;
         }
 
-        if (javaMaxHeapSize.toLowerCase().endsWith('g') || javaMaxHeapSize.toLowerCase().endsWith('gb')) {
+        const normalizedHeapSize: string = normalizeHeapSize(javaMaxHeapSize);
+
+        if (normalizedHeapSize.endsWith('g')) {
             // A value expressed in gigabytes is always fine.
-            return javaMaxHeapSize;
+            return normalizedHeapSize;
         }
-        const numericPortion: number = parseInt(javaMaxHeapSize);
-        if (numericPortion < expressTwoMegabytesInRelevantUnit(javaMaxHeapSize)) {
+        const numericPortion: number = parseInt(normalizedHeapSize);
+        if (numericPortion < expressTwoMegabytesInRelevantUnit(normalizedHeapSize)) {
             throw new Error(getMessage(
                 'InvalidConfigValue',
                 this.delegateExtractor.getFieldPath('java_max_heap_size'),
@@ -182,7 +184,7 @@ class SfgeConfigValueExtractor {
             ));
         }
 
-        const isStrictlyNumeric: boolean = /^\d+b?$/i.test(javaMaxHeapSize);
+        const isStrictlyNumeric: boolean = /^\d+$/i.test(normalizedHeapSize);
         if (isStrictlyNumeric && numericPortion % 1024 !== 0) {
             throw new Error(getMessage(
                 'InvalidConfigValue',
@@ -190,7 +192,7 @@ class SfgeConfigValueExtractor {
                 getMessage('InvalidMemoryMultiple')
             ));
         }
-        return javaMaxHeapSize;
+        return normalizedHeapSize;
     }
 
     public extractBooleanValue(fieldName: string): boolean {
@@ -202,11 +204,17 @@ class SfgeConfigValueExtractor {
     }
 }
 
+function normalizeHeapSize(heapSize: string): string {
+    const normalizedHeapSize: string = heapSize.toLowerCase();
+    return normalizedHeapSize.endsWith('b')
+        ? normalizedHeapSize.slice(0, normalizedHeapSize.length - 1)
+        : normalizedHeapSize;
+}
+
 function expressTwoMegabytesInRelevantUnit(val: string): number {
-    const lowerCaseVal: string = val.toLowerCase();
-    if (lowerCaseVal.endsWith('m') || lowerCaseVal.endsWith('mb')) {
+    if (val.endsWith('m')) {
         return 2;
-    } else if (lowerCaseVal.endsWith('k') || lowerCaseVal.endsWith('kb')) {
+    } else if (val.endsWith('k')) {
         return 2048; // 2MB === 2048KB
     } else {
         return 2 ** 21; // 2MB === 2^21 bytes

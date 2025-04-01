@@ -128,12 +128,7 @@ export class RuntimeSfgeWrapper {
             javaCmdArgs.push('-DSFGE_PATH_EXPANSION_LIMIT=-1');
         }
         if (sfgeRunOptions.heapSizeArg) {
-            // We technically allow a trailing `b` in the heap size arg so that users can write stuff like "2mb" instead
-            // of "2m". But Java won't accept that, so we need to pop it off.
-            const processedHeapSizeArg: string = sfgeRunOptions.heapSizeArg.toLowerCase().endsWith('b')
-                    ? sfgeRunOptions.heapSizeArg.slice(0, sfgeRunOptions.heapSizeArg.length - 1)
-                    : sfgeRunOptions.heapSizeArg;
-            javaCmdArgs.push(`-Xmx${processedHeapSizeArg}`);
+            javaCmdArgs.push(`-Xmx${sfgeRunOptions.heapSizeArg}`);
         }
         javaCmdArgs.push(`-DSFGE_RULE_THREAD_COUNT=${sfgeRunOptions.threadCount}`);
         javaCmdArgs.push(`-DSFGE_RULE_THREAD_TIMEOUT=${sfgeRunOptions.threadTimeout}`);

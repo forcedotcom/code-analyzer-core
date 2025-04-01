@@ -185,34 +185,34 @@ describe('SfgeEnginePlugin', () => {
 
         describe(`Validating the formatted string property java_max_heap_size`, () => {
             it.each([
-                {val: '2097152'},  // Java needs >=2MB to run at all.
-                {val: '2097152b'}, // Java needs >=2MB to run at all.
-                {val: '2048K'},    // Java needs >=2MB to run at all.
-                {val: '2048KB'},   // Java needs >=2MB to run at all.
-                {val: '2048k'},    // Java needs >=2MB to run at all.
-                {val: '2048kb'},   // Java needs >=2MB to run at all.
-                {val: '2M'},       // Java needs >=2MB to run at all.
-                {val: '2MB'},      // Java needs >=2MB to run at all.
-                {val: '2m'},       // Java needs >=2MB to run at all.
-                {val: '2mb'},      // Java needs >=2MB to run at all.
-                {val: '2098176'},  // Un-suffixed numbers must be increments of 1024.
-                {val: '8193K'},    // Suffixed numbers can be any value, and suffix can be any case.
-                {val: '8193k'},    // Suffixed numbers can be any value, and suffix can be any case.
-                {val: '9M'},       // Suffixed numbers can be any value, and suffix can be any case.
-                {val: '9m'},       // Suffixed numbers can be any value, and suffix can be any case.
-                {val: '2G'},       // Suffixed numbers can be any value, and suffix can be any case.
-                {val: '2GB'},      // Suffixed numbers can be any value, and suffix can be any case.
-                {val: '2g'},       // Suffixed numbers can be any value, and suffix can be any case.
-                {val: '2gb'},      // Suffixed numbers can be any value, and suffix can be any case.
-                {val: '02g'},      // Leading zeroes are weird, but they're not invalid.
-                {val: '02gb'}      // Leading zeroes are weird, but they're not invalid.
-            ])('Accepts valid string input: $val', async ({val}) => {
+                {rawVal: '2097152', normalizedVal: '2097152'},  // Java needs >=2MB to run at all.
+                {rawVal: '2097152b', normalizedVal: '2097152'}, // Java needs >=2MB to run at all.
+                {rawVal: '2048K', normalizedVal: '2048k'},      // Java needs >=2MB to run at all.
+                {rawVal: '2048KB', normalizedVal: '2048k'},     // Java needs >=2MB to run at all.
+                {rawVal: '2048k', normalizedVal: '2048k'},      // Java needs >=2MB to run at all.
+                {rawVal: '2048kb', normalizedVal: '2048k'},     // Java needs >=2MB to run at all.
+                {rawVal: '2M', normalizedVal: '2m'},            // Java needs >=2MB to run at all.
+                {rawVal: '2MB', normalizedVal: '2m'},           // Java needs >=2MB to run at all.
+                {rawVal: '2m', normalizedVal: '2m'},            // Java needs >=2MB to run at all.
+                {rawVal: '2mb', normalizedVal: '2m'},           // Java needs >=2MB to run at all.
+                {rawVal: '2098176', normalizedVal: '2098176'},  // Un-suffixed numbers must be increments of 1024.
+                {rawVal: '8193K', normalizedVal: '8193k'},      // Suffixed numbers can be any value, and suffix can be any case.
+                {rawVal: '8193k', normalizedVal: '8193k'},      // Suffixed numbers can be any value, and suffix can be any case.
+                {rawVal: '9M', normalizedVal: '9m'},            // Suffixed numbers can be any value, and suffix can be any case.
+                {rawVal: '9m', normalizedVal: '9m'},            // Suffixed numbers can be any value, and suffix can be any case.
+                {rawVal: '2G', normalizedVal: '2g'},            // Suffixed numbers can be any value, and suffix can be any case.
+                {rawVal: '2GB', normalizedVal: '2g'},           // Suffixed numbers can be any value, and suffix can be any case.
+                {rawVal: '2g', normalizedVal: '2g'},            // Suffixed numbers can be any value, and suffix can be any case.
+                {rawVal: '2gb', normalizedVal: '2g'},           // Suffixed numbers can be any value, and suffix can be any case.
+                {rawVal: '02g', normalizedVal: '02g'},          // Leading zeroes are weird, but they're not invalid.
+                {rawVal: '02gb', normalizedVal: '02g'}          // Leading zeroes are weird, but they're not invalid.
+            ])('Accepts valid string input: $val', async ({rawVal, normalizedVal}) => {
                 const rawConfig: ConfigObject = {
-                    java_max_heap_size: val
+                    java_max_heap_size: rawVal
                 };
                 const configValueExtractor: ConfigValueExtractor = new ConfigValueExtractor(rawConfig, 'engines.sfge');
                 const resolvedConfig: ConfigObject = await plugin.createEngineConfig('sfge', configValueExtractor);
-                expect(resolvedConfig).toHaveProperty('java_max_heap_size', val);
+                expect(resolvedConfig).toHaveProperty('java_max_heap_size', normalizedVal);
             });
 
             it.each([
