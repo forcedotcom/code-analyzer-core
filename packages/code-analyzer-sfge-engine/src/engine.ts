@@ -20,7 +20,6 @@ import {SfgeEngineConfig} from "./config";
 
 const SFGE_RELEVANT_FILE_EXTENSIONS = ['.cls'];
 const DEV_PREVIEW_TAG: string = 'DevPreview';
-const PILOT_TAG: string = 'Pilot';
 
 export class SfgeEngine extends Engine {
     public static readonly NAME: string = 'sfge';
