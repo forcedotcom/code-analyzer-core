@@ -55,18 +55,6 @@
     "resourceUrls": []
   },
   {
-    "name": "RemoveUnusedMethod",
-    "severityLevel": 5,
-    "tags": [
-      "DevPreview",
-      "Performance",
-      "Pilot",
-      "Apex"
-    ],
-    "description": "This rule is in \"Developer Preview\" and is subject to change. Identifies methods that aren't invoked from recognized entry points.",
-    "resourceUrls": []
-  },
-  {
     "name": "UnimplementedTypeRule",
     "severityLevel": 4,
     "tags": [

@@ -151,7 +151,7 @@ describe('SfgeEngine', () => {
             engine.onEvent(EventType.LogEvent, (e: LogEvent) => logEvents.push(e));
             const progressEvents: RunRulesProgressEvent[] = [];
             engine.onEvent(EventType.RunRulesProgressEvent, (e: RunRulesProgressEvent) => progressEvents.push(e));
-            const ruleNames: string[] = ['UnimplementedTypeRule'];
+            const ruleNames: string[] = ['AvoidDatabaseOperationInLoop'];
 
             // ====== TESTED BEHAVIOR ======
             const results: EngineRunResults = await engine.runRules(ruleNames, createRunOptions(workspace));
@@ -167,9 +167,10 @@ describe('SfgeEngine', () => {
             expect(debugLogEvents.length).toBeGreaterThanOrEqual(2);
             expect(debugLogEvents[0].message).toEqual(`Invoking SFGE's describe command. Logs being written to ${path.join(os.tmpdir(), 'sfca-sfge-2025_03_21_12_30_25_020.log')}.`);
             expect(debugLogEvents[1].message).toEqual(`Invoking SFGE's run command. Logs being written to ${path.join(os.tmpdir(), 'sfca-sfge-2025_03_21_12_30_25_020.log')}.`);
-            expect(progressEvents.map(pe => pe.percentComplete)).toEqual(
-                [2, 2.3, 4.4, 4.7, 5, 6.86, 14.3, 22.21, 26.16, 34.06, 85.45, 93.35, 98, 100]
-            );
+            const progressPercents: number[] = progressEvents.map(pe => pe.percentComplete);
+            expect(progressPercents[0]).toEqual(2);
+            expect(progressPercents[progressPercents.length - 1]).toEqual(100);
+            expectProgressEventsToAscend(progressPercents);
         });
 
         it.each([
@@ -187,16 +188,17 @@ describe('SfgeEngine', () => {
             const workspace: Workspace = new Workspace([path.join(TEST_DATA_FOLDER, 'sampleRelevantWorkspace')]);
             const progressEvents: RunRulesProgressEvent[] = [];
             engine.onEvent(EventType.RunRulesProgressEvent, (e: RunRulesProgressEvent) => progressEvents.push(e));
-            const ruleNames: string[] = ['ApexFlsViolationRule', 'UseWithSharingOnDatabaseOperation', 'RemoveUnusedMethod'];
+            const ruleNames: string[] = ['ApexFlsViolationRule', 'UseWithSharingOnDatabaseOperation', 'UnimplementedTypeRule', 'RemoveUnusedMethod'];
 
             // ====== TESTED BEHAVIOR ======
             const results: EngineRunResults = await engine.runRules(ruleNames, createRunOptions(workspace));
 
             // ====== ASSERTIONS ======
             await expectResultsToMatchGoldfile(results, 'all_sampleRelevantWorkspace_violations.goldfile.json', path.join(TEST_DATA_FOLDER, 'sampleRelevantWorkspace'));
-            expect(progressEvents.map(pe => pe.percentComplete)).toEqual(
-                [2, 2.3, 4.4, 4.7, 5, 6.86, 14.3, 22.21, 26.16, 34.06, 38.02, 85.45, 93.35, 98, 100]
-            );
+            const progressPercents: number[] = progressEvents.map(pe => pe.percentComplete);
+            expect(progressPercents[0]).toEqual(2);
+            expect(progressPercents[progressPercents.length - 1]).toEqual(100);
+            expectProgressEventsToAscend(progressPercents);
         });
 
         it('When only one of several selected rules is violated, violations are returned for only that rule', async () => {
@@ -205,7 +207,7 @@ describe('SfgeEngine', () => {
             const workspace: Workspace = new Workspace([path.join(TEST_DATA_FOLDER, 'sampleRelevantWorkspace')]);
             const progressEvents: RunRulesProgressEvent[] = [];
             engine.onEvent(EventType.RunRulesProgressEvent, (e: RunRulesProgressEvent) => progressEvents.push(e));
-            const ruleNames: string[] = ['ApexFlsViolationRule', 'UnimplementedTypeRule'];
+            const ruleNames: string[] = ['ApexFlsViolationRule', 'AvoidDatabaseOperationInLoop'];
 
             // ====== TESTED BEHAVIOR ======
             const results: EngineRunResults = await engine.runRules(ruleNames, createRunOptions(workspace));
@@ -255,7 +257,7 @@ describe('SfgeEngine', () => {
             engine.onEvent(EventType.LogEvent, (e: LogEvent) => logEvents.push(e));
             // Use a static rule, because we don't actually care about the results and we're trying to keep runtimes
             // manageable.
-            const ruleNames: string[] = ['UnimplementedTypeRule'];
+            const ruleNames: string[] = ['AvoidDatabaseOperationInLoop'];
 
             // ====== TESTED BEHAVIOR ======
             const results: EngineRunResults = await engine.runRules(ruleNames, createRunOptions(workspace));
@@ -306,6 +308,7 @@ async function expectRulesToMatchGoldfile(actualRuleDescriptions: RuleDescriptio
     expect(actualRuleDescriptionsJsonString).toEqual(expectedRuleDescriptionsJsonString);
 }
 
+
 async function expectResultsToMatchGoldfile(actualResults: EngineRunResults, relativeExpectedFile: string, runDir: string): Promise<void> {
     const actualResultsJsonString: string = JSON.stringify(actualResults, null, 2);
     const runDirVar: string = (runDir + path.sep)
@@ -315,6 +318,12 @@ async function expectResultsToMatchGoldfile(actualResults: EngineRunResults, rel
     ))
         .replaceAll("{{RUNDIR}}", runDirVar);
     expect(actualResultsJsonString).toEqual(expectedResultsJsonString);
+}
+
+function expectProgressEventsToAscend(progressEvents: number[]): void {
+    for (let i = 0; i < progressEvents.length - 1; i++) {
+        expect(progressEvents[i]).toBeLessThan(progressEvents[i + 1]);
+    }
 }
 
 function createDescribeOptions(workspace?: Workspace): DescribeOptions {

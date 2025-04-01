@@ -195,11 +195,6 @@ public final class RemoveUnusedMethod extends AbstractPathBasedRule {
         return URL;
     }
 
-    @Override
-    protected boolean isEnabled() {
-        return true;
-    }
-
     private static final class LazyHolder {
         // Postpone initialization until first use
         private static final RemoveUnusedMethod INSTANCE = new RemoveUnusedMethod();
