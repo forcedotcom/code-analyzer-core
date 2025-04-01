@@ -70,11 +70,6 @@ const MESSAGE_CATALOG : { [key: string]: string } = {
     LoggingToFile:
         `Invoking SFGE's %s command. Logs being written to %s.`,
 
-    ViolationLocationFudged:
-        `Fudged a violation's location for compatibility.\n` +
-        `  Before: %s\n` +
-        `  After: %s\n`,
-
     debug_sfgeInfoLog:
         `%s`,
 

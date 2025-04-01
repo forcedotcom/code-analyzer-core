@@ -6,16 +6,16 @@
       "codeLocations": [
         {
           "file": "{{RUNDIR}}SomeClass.cls",
-          "startLine": 9,
+          "startLine": 5,
           "startColumn": 24
         },
         {
           "file": "{{RUNDIR}}SomeClass.cls",
-          "startLine": 15,
+          "startLine": 11,
           "startColumn": 16
         }
       ],
-      "primaryLocationIndex": 0
+      "primaryLocationIndex": 1
     }
   ]
 }
