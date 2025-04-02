@@ -23,9 +23,10 @@ import fs from "node:fs";
 
 changeWorkingDirectoryToPackageRoot();
 
-const PATH_TO_NO_FLOWS_WORKSPACE = path.resolve(__dirname, 'test-data', 'example-workspaces', 'contains-no-flows');
-const PATH_TO_MULTIPLE_FLOWS_WORKSPACE = path.resolve(__dirname, 'test-data', 'example-workspaces', 'contains-multiple-flows');
-const PATH_TO_ONE_FLOW_NO_VIOLATIONS_WORKSPACE = path.resolve(__dirname, 'test-data', 'example-workspaces', 'contains-one-flow-no-violations');
+//the space in the "example workspaces" path is important for testing purposes. do not remove.
+const PATH_TO_NO_FLOWS_WORKSPACE = path.resolve(__dirname, 'test-data', 'example workspaces', 'contains-no-flows');
+const PATH_TO_MULTIPLE_FLOWS_WORKSPACE = path.resolve(__dirname, 'test-data', 'example workspaces', 'contains-multiple-flows');
+const PATH_TO_ONE_FLOW_NO_VIOLATIONS_WORKSPACE = path.resolve(__dirname, 'test-data', 'example workspaces', 'contains-one-flow-no-violations');
 const PATH_TO_EXAMPLE1: string = path.join(PATH_TO_MULTIPLE_FLOWS_WORKSPACE, 'example1_containsWithoutSharingViolations.flow-meta.xml');
 const PATH_TO_EXAMPLE2: string = path.join(PATH_TO_MULTIPLE_FLOWS_WORKSPACE, 'example2_containsWithSharingViolations.flow');
 const PATH_TO_EXAMPLE3: string = path.join(PATH_TO_MULTIPLE_FLOWS_WORKSPACE, 'example3_containsNoViolations.flow');
@@ -437,7 +438,7 @@ describe('Tests for the TestEngine', () => {
             });
 
             it.each([
-                new Workspace([path.resolve(__dirname, 'test-data', 'example-workspaces','contains-parent-without-subflow')]),
+                new Workspace([path.resolve(__dirname, 'test-data', 'example workspaces','contains-parent-without-subflow')]),
                 new Workspace([path.resolve(PATH_TO_MULTIPLE_FLOWS_WORKSPACE, 'example4_parentFlow.flow-meta.xml')])
             ])('When workspace contains a parent flow but not its child subflow, then return valid results with zero violations', async (workspace) => {
                 const engine: FlowScannerEngine = new FlowScannerEngine(flowScannerCommandWrapper);
@@ -452,7 +453,7 @@ describe('Tests for the TestEngine', () => {
             });
 
             it.each([
-                new Workspace([path.resolve(__dirname, 'test-data', 'example-workspaces','contains-subflow-without-parent')]),
+                new Workspace([path.resolve(__dirname, 'test-data', 'example workspaces','contains-subflow-without-parent')]),
                 new Workspace([path.resolve(PATH_TO_MULTIPLE_FLOWS_WORKSPACE, 'example4_subflow.flow-meta.xml')])
             ])('When workspace contains a child subflow but not its parent flow, then return valid results with zero violations', async (workspace) => {
                 const engine: FlowScannerEngine = new FlowScannerEngine(flowScannerCommandWrapper);
