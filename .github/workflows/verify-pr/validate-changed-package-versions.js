@@ -70,6 +70,10 @@ function isFileInTestFolder(changedFile) {
 function identifyIncorrectlyVersionedPackages(changedPackages) {
     const incorrectlyVersionedPackages = [];
     for (const changedPackage of changedPackages) {
+        //A temporary workaround for the rename of the flowtest-engine package to flow-engine
+        if (changedPackage === 'packages/code-analyzer-flowtest-engine') {
+            continue;
+        }
         const packageVersion = getPackageVersion(changedPackage);
         if (!packageVersion.endsWith('-SNAPSHOT')) {
             incorrectlyVersionedPackages.push(`${changedPackage} (currently versioned as ${packageVersion}) lacks a trailing "-SNAPSHOT"`);
