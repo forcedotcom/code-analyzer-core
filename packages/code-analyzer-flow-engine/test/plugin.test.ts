@@ -12,7 +12,7 @@ import {getMessage} from "../src/messages";
 import {changeWorkingDirectoryToPackageRoot} from "./test-helpers";
 import {SemVer} from "semver";
 import {PythonVersionIdentifier} from "../src/python/PythonVersionIdentifier";
-import {FLOW_ENGINE_CONFIG_DESCRIPTION} from "../src/config";
+import {FLOW_SCANNER_ENGINE_CONFIG_DESCRIPTION} from "../src/config";
 
 changeWorkingDirectoryToPackageRoot();
 
@@ -29,7 +29,7 @@ describe('Tests for the FlowEnginePlugin', () => {
 
     it('When createEngineConfigDescription is with a valid engine name, then return the correct ConfigDescription', async () => {
         const plugin: EnginePluginV1 = new FlowScannerEnginePlugin();
-        expect(plugin.describeEngineConfig(FlowScannerEngine.NAME)).toEqual(FLOW_ENGINE_CONFIG_DESCRIPTION);
+        expect(plugin.describeEngineConfig(FlowScannerEngine.NAME)).toEqual(FLOW_SCANNER_ENGINE_CONFIG_DESCRIPTION);
     });
 
     it('When createEngineConfig is called with an invalid engine name, then error is thrown', async () => {

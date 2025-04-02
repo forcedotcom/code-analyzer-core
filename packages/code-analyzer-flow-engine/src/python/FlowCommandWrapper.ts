@@ -4,15 +4,15 @@ import {getMessage} from '../messages';
 import path from "node:path";
 import fs from "node:fs";
 
-export interface FlowCommandWrapper {
-    runFlowRules(flowFilesToScan: string[], absLogFilePath: string, completionPercentageHandler: (percentage: number) => void): Promise<FlowExecutionResult>;
+export interface FlowScannerCommandWrapper {
+    runFlowScannerRules(flowFilesToScan: string[], absLogFilePath: string, completionPercentageHandler: (percentage: number) => void): Promise<FlowScannerExecutionResult>;
 }
 
-export type FlowExecutionResult = {
-    results: Record<string, FlowRuleResult[]>
+export type FlowScannerExecutionResult = {
+    results: Record<string, FlowScannerRuleResult[]>
 }
 
-export type FlowRuleResult = {
+export type FlowScannerRuleResult = {
     flow: FlowNodeDescriptor[];
     query_name: string;
     severity: string;
@@ -34,20 +34,20 @@ export type FlowNodeDescriptor = {
 
 const STATUS_DELIMITER = '**STATUS:';
 
-export class RunTimeFlowCommandWrapper implements FlowCommandWrapper {
+export class RunTimeFlowScannerCommandWrapper implements FlowScannerCommandWrapper {
     private readonly pythonCommandExecutor: PythonCommandExecutor;
 
     public constructor(pythonCommand: string) {
         this.pythonCommandExecutor = new PythonCommandExecutor(pythonCommand);
     }
 
-    public async runFlowRules(flowFilesToScan: string[], absLogFilePath: string,
-                                  completionPercentageHandler: (percentage: number) => void): Promise<FlowExecutionResult> {
+    public async runFlowScannerRules(flowFilesToScan: string[], absLogFilePath: string,
+                                  completionPercentageHandler: (percentage: number) => void): Promise<FlowScannerExecutionResult> {
         const tempDir: string = await createTempDir();
         const flowFilesToScanFile: string = path.join(tempDir, 'flowFilesToScan.txt');
         await fs.promises.writeFile(flowFilesToScanFile, flowFilesToScan.join('\n'), 'utf-8');
 
-        const flowResultsFile: string = path.join(tempDir, 'flowResultsFile.json')
+        const flowScannerResultsFile: string = path.join(tempDir, 'flowScannerResultsFile.json')
         const commandName = 'flowtest'; //pythonModuleName set by internal team
 
         const pythonArgs: string[] = [
@@ -59,7 +59,7 @@ export class RunTimeFlowCommandWrapper implements FlowCommandWrapper {
             '--infile',
             flowFilesToScanFile,
             '--json',
-            flowResultsFile
+            flowScannerResultsFile
         ];
 
         const processStdout = (stdoutMsg: string) => {
@@ -77,7 +77,7 @@ export class RunTimeFlowCommandWrapper implements FlowCommandWrapper {
 
         await this.pythonCommandExecutor.exec(pythonArgs, processStdout);
 
-        const outputFileContents: string = await fs.promises.readFile(flowResultsFile, 'utf-8');
+        const outputFileContents: string = await fs.promises.readFile(flowScannerResultsFile, 'utf-8');
 
         let parsedResults: object;
         try {
@@ -93,7 +93,7 @@ export class RunTimeFlowCommandWrapper implements FlowCommandWrapper {
         return parsedResults;
     }
 
-    private executionResultsAreValid(executionResults: object): executionResults is FlowExecutionResult {
+    private executionResultsAreValid(executionResults: object): executionResults is FlowScannerExecutionResult {
         if (!('results' in executionResults) || typeof executionResults.results !== 'object') {
             return false;
         }
@@ -116,7 +116,7 @@ export class RunTimeFlowCommandWrapper implements FlowCommandWrapper {
     }
 
     /* istanbul ignore next */
-    private ruleResultIsValid(ruleResult: object): ruleResult is FlowRuleResult {
+    private ruleResultIsValid(ruleResult: object): ruleResult is FlowScannerRuleResult {
         if (!('query_name' in ruleResult) || typeof ruleResult.query_name !== 'string') {
             return false;
         }

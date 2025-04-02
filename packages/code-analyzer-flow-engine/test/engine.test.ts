@@ -15,7 +15,7 @@ import {
 } from "@salesforce/code-analyzer-engine-api";
 import {FixedClock} from "@salesforce/code-analyzer-engine-api/utils";
 import {FlowScannerEngine} from "../src/engine";
-import {RunTimeFlowCommandWrapper} from "../src/python/FlowCommandWrapper";
+import {RunTimeFlowScannerCommandWrapper} from "../src/python/FlowCommandWrapper";
 import {changeWorkingDirectoryToPackageRoot} from "./test-helpers";
 import os from "node:os";
 import {getMessage} from "../src/messages";
@@ -33,7 +33,7 @@ const PATH_TO_EXAMPLE4_PARENTFLOW: string = path.join(PATH_TO_MULTIPLE_FLOWS_WOR
 const PATH_TO_EXAMPLE4_SUBFLOW: string = path.join(PATH_TO_MULTIPLE_FLOWS_WORKSPACE, 'example4_subflow.flow-meta.xml');
 
 describe('Tests for the TestEngine', () => {
-    const flowCommandWrapper: RunTimeFlowCommandWrapper = new RunTimeFlowCommandWrapper('python3');
+    const flowCommandWrapper: RunTimeFlowScannerCommandWrapper = new RunTimeFlowScannerCommandWrapper('python3');
     let tempFolder: string;
 
     beforeAll(async() => {
@@ -420,7 +420,7 @@ describe('Tests for the TestEngine', () => {
             });
 
             it('When workspace contains a flow file that has no violations and no other flow files are in the folder, then return valid results with zero violations', async () => {
-                // Note that this test is needed because the implementation today currently runs flow on the
+                // Note that this test is needed because the implementation today currently runs on the
                 // workspace root, and then we filter out the results based on the workspace files. Without this test
                 // we might miss the flow utility returning results: null.
                 const engine: FlowScannerEngine = new FlowScannerEngine(flowCommandWrapper);

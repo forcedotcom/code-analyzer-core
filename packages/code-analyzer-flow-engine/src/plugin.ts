@@ -7,8 +7,8 @@ import {
 } from "@salesforce/code-analyzer-engine-api";
 import {FlowScannerEngine} from "./engine";
 import {getMessage} from './messages';
-import {FLOW_ENGINE_CONFIG_DESCRIPTION, FlowConfig, validateAndNormalizeConfig} from "./config";
-import {RunTimeFlowCommandWrapper} from "./python/FlowCommandWrapper";
+import {FLOW_SCANNER_ENGINE_CONFIG_DESCRIPTION, FlowScannerConfig, validateAndNormalizeConfig} from "./config";
+import {RunTimeFlowScannerCommandWrapper} from "./python/FlowCommandWrapper";
 import {PythonVersionIdentifier, RuntimePythonVersionIdentifier} from "./python/PythonVersionIdentifier";
 
 
@@ -26,7 +26,7 @@ export class FlowScannerEnginePlugin extends EnginePluginV1 {
 
     describeEngineConfig(engineName: string): ConfigDescription {
         validateEngineName(engineName);
-        return FLOW_ENGINE_CONFIG_DESCRIPTION;
+        return FLOW_SCANNER_ENGINE_CONFIG_DESCRIPTION;
     }
 
     async createEngineConfig(engineName: string, configValueExtractor: ConfigValueExtractor): Promise<ConfigObject> {
@@ -36,7 +36,7 @@ export class FlowScannerEnginePlugin extends EnginePluginV1 {
 
     public async createEngine(engineName: string, resolvedConfig: ConfigObject): Promise<Engine> {
         validateEngineName(engineName);
-        const wrapper: RunTimeFlowCommandWrapper = new RunTimeFlowCommandWrapper((resolvedConfig as FlowConfig).python_command);
+        const wrapper: RunTimeFlowScannerCommandWrapper = new RunTimeFlowScannerCommandWrapper((resolvedConfig as FlowScannerConfig).python_command);
         return new FlowScannerEngine(wrapper);
     }
 }

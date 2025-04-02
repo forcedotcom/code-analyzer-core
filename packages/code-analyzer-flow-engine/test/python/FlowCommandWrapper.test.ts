@@ -1,6 +1,6 @@
 import fs from 'node:fs';
 import path from 'node:path';
-import {FlowExecutionResult, RunTimeFlowCommandWrapper} from "../../src/python/FlowCommandWrapper";
+import {FlowScannerExecutionResult, RunTimeFlowScannerCommandWrapper} from "../../src/python/FlowCommandWrapper";
 import {PythonCommandExecutor} from '../../src/python/PythonCommandExecutor';
 import os from "node:os";
 
@@ -10,27 +10,27 @@ const PATH_TO_MULTIPLE_FLOWS_WORKSPACE = path.resolve(__dirname, '..', 'test-dat
 const PATH_TO_EXAMPLE1: string = path.join(PATH_TO_MULTIPLE_FLOWS_WORKSPACE, 'example1_containsWithoutSharingViolations.flow-meta.xml');
 const PATH_TO_EXAMPLE2: string = path.join(PATH_TO_MULTIPLE_FLOWS_WORKSPACE, 'example2_containsWithSharingViolations.flow');
 
-describe('FlowCommandWrapper implementations', () => {
-    describe('RunTimeFlowCommandWrapper', () => {
+describe('FlowScannerCommandWrapper implementations', () => {
+    describe('RunTimeFlowScannerCommandWrapper', () => {
         let tempLogFile: string;
 
         beforeAll(async() => {
             const tempFolder: string = await fs.promises.mkdtemp(path.join(os.tmpdir(), 'engine-test'));
-            tempLogFile = path.join(tempFolder, "flow_logfile.log");
+            tempLogFile = path.join(tempFolder, "flow_scanner_logfile.log");
         })
 
-        describe('#runFlowRules()', () => {
+        describe('#runFlowScannerRules()', () => {
 
             describe('Successful execution', () => {
-                const wrapper: RunTimeFlowCommandWrapper = new RunTimeFlowCommandWrapper(PYTHON_COMMAND);
-                let results: FlowExecutionResult;
+                const wrapper: RunTimeFlowScannerCommandWrapper = new RunTimeFlowScannerCommandWrapper(PYTHON_COMMAND);
+                let results: FlowScannerExecutionResult;
                 const completionPercentages: number[] = [];
                 const statusProcessorFunction = (completionPercentage: number) => {
                     completionPercentages.push(completionPercentage);
                 };
 
                 beforeAll(async () => {
-                    results = await wrapper.runFlowRules([PATH_TO_EXAMPLE1, PATH_TO_EXAMPLE2], tempLogFile, statusProcessorFunction);
+                    results = await wrapper.runFlowScannerRules([PATH_TO_EXAMPLE1, PATH_TO_EXAMPLE2], tempLogFile, statusProcessorFunction);
                     // The `counter` property is irrelevant to us, and causes problems across platforms. So delete it.
                     for (const queryName of Object.keys(results.results)) {
                         for (const queryResults of results.results[queryName]) {
@@ -45,7 +45,7 @@ describe('FlowCommandWrapper implementations', () => {
                         .replaceAll('"__PATH_TO_EXAMPLE1__"', JSON.stringify(PATH_TO_EXAMPLE1))
                         .replaceAll('"__PATH_TO_EXAMPLE2__"', JSON.stringify(PATH_TO_EXAMPLE2));
 
-                    const expectedResults: FlowExecutionResult = JSON.parse(goldFileContents) as FlowExecutionResult;
+                    const expectedResults: FlowScannerExecutionResult = JSON.parse(goldFileContents) as FlowScannerExecutionResult;
 
                     // When a Jest equality check fails, the expected and actual objects are logged in their entirety.
                     // Since the results objects are so big here, we'll compare their sub-objects one-at-a-time to keep
@@ -99,8 +99,8 @@ describe('FlowCommandWrapper implementations', () => {
                         return fakeResults;
                     });
 
-                    const wrapper: RunTimeFlowCommandWrapper = new RunTimeFlowCommandWrapper(PYTHON_COMMAND);
-                    await expect(wrapper.runFlowRules([PATH_TO_EXAMPLE1, PATH_TO_EXAMPLE2], tempLogFile, (_num: number) => {}))
+                    const wrapper: RunTimeFlowScannerCommandWrapper = new RunTimeFlowScannerCommandWrapper(PYTHON_COMMAND);
+                    await expect(wrapper.runFlowScannerRules([PATH_TO_EXAMPLE1, PATH_TO_EXAMPLE2], tempLogFile, (_num: number) => {}))
                         .rejects
                         .toThrow(expectedMessage);
                 });
