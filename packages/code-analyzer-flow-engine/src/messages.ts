@@ -2,17 +2,17 @@ import {getMessageFromCatalog} from "@salesforce/code-analyzer-engine-api";
 
 const MESSAGE_CATALOG: {[key: string]: string} = {
     ConfigOverview:
-        `FLOW ENGINE CONFIGURATION\n` +
+        `FLOW SCANNER ENGINE CONFIGURATION\n` +
         `To learn more about this configuration, visit:\n` +
-        `  https://developer.salesforce.com/docs/platform/salesforce-code-analyzer/guide/engine-flow.html#flow-configuration-reference`,
+        `  https://developer.salesforce.com/docs/platform/salesforce-code-analyzer/guide/engine-flow.html#flow-scanner-configuration-reference`,
 
     ConfigFieldDescription_python_command:
-        `Indicates the specific Python command to use for the 'flow' engine.\n` +
+        `Indicates the specific Python command to use for the 'Flow Scanner' engine.\n` +
         `May be provided as the name of a command that exists on the path, or an absolute file path location.\n` +
         `If unspecified, or specified as null, then an attempt will be made to automatically discover a Python command from your environment.`,
 
     UnsupportedEngineName:
-        `The FlowEnginePlugin does not support an engine with name '%s'.`,
+        `The FlowScannerEnginePlugin does not support an engine with name '%s'.`,
 
     CouldNotParseRuleDescriptions:
         `Unexpected error: Could not parse rule descriptions from Flow Scanner output: %s`,
@@ -41,13 +41,13 @@ const MESSAGE_CATALOG: {[key: string]: string} = {
         `%s: %s`,
 
     ConsolidatedRuleDescription:
-        `Avoid passing user data into flow elements in run mode: %s`,
+        `Avoid passing user data into Flow Scanner elements in run mode: %s`,
 
     SubsequentNodeComment:
         `%s influences %s: %s`,
 
     WritingFlowLogToFile:
-        `The separate flow log file, used for debugging purposes only, will be written to: %s`,
+        `The separate Flow Scanner log file, used for debugging purposes only, will be written to: %s`,
 
     PythonCommandError:
         `The following call to python exited with non-zero exit code.\n` +

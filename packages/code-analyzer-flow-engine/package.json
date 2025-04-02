@@ -34,7 +34,7 @@
   "files": [
     "dist",
     "LICENSE",
-    "Flow",
+    "FlowScanner",
     "package.json"
   ],
   "scripts": {

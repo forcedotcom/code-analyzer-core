@@ -7,7 +7,7 @@ import {
     SHARED_MESSAGE_CATALOG
 } from "@salesforce/code-analyzer-engine-api";
 import {FlowEnginePlugin} from "../src";
-import {FlowEngine} from "../src/engine";
+import {FlowScannerEngine} from "../src/engine";
 import {getMessage} from "../src/messages";
 import {changeWorkingDirectoryToPackageRoot} from "./test-helpers";
 import {SemVer} from "semver";
@@ -19,7 +19,7 @@ changeWorkingDirectoryToPackageRoot();
 describe('Tests for the FlowEnginePlugin', () => {
     it('When getAvailableNames is called, then it returns the FlowEngine name', () => {
         const plugin: EnginePluginV1 = new FlowEnginePlugin();
-        expect(plugin.getAvailableEngineNames()).toEqual([FlowEngine.NAME]);
+        expect(plugin.getAvailableEngineNames()).toEqual([FlowScannerEngine.NAME]);
     });
 
     it('When createEngineConfigDescription is called with an invalid engine name, then error is thrown', () => {
@@ -29,7 +29,7 @@ describe('Tests for the FlowEnginePlugin', () => {
 
     it('When createEngineConfigDescription is with a valid engine name, then return the correct ConfigDescription', async () => {
         const plugin: EnginePluginV1 = new FlowEnginePlugin();
-        expect(plugin.describeEngineConfig(FlowEngine.NAME)).toEqual(FLOW_ENGINE_CONFIG_DESCRIPTION);
+        expect(plugin.describeEngineConfig(FlowScannerEngine.NAME)).toEqual(FLOW_ENGINE_CONFIG_DESCRIPTION);
     });
 
     it('When createEngineConfig is called with an invalid engine name, then error is thrown', async () => {
@@ -49,7 +49,7 @@ describe('Tests for the FlowEnginePlugin', () => {
         const plugin: EnginePluginV1 = new FlowEnginePlugin(new StubPythonVersionIdentifier(new Map([['python', new SemVer('2.8.0')]])));
         const userProvidedOverrides: ConfigObject = {};
         await expect(callCreateEngineConfig(plugin, userProvidedOverrides)).rejects.toThrow(getMessage('CouldNotLocatePython',
-            '3.10.0', '["python3","python"]', 'engines.flow.python_command', FlowEngine.NAME, FlowEngine.NAME));
+            '3.10.0', '["python3","python"]', 'engines.flow.python_command', FlowScannerEngine.NAME, FlowScannerEngine.NAME));
     });
 
     it('When createEngineConfig is called an object that contains an invalid key, then error', async () => {
@@ -103,14 +103,14 @@ describe('Tests for the FlowEnginePlugin', () => {
     it('When createEngine is called with a valid engine name and config, then a FlowEngine is returned', async () => {
         const plugin: EnginePluginV1 = new FlowEnginePlugin();
         const resolvedConfig: ConfigObject = {python_command: 'python3'};
-        const engine: Engine = await plugin.createEngine(FlowEngine.NAME, resolvedConfig);
-        expect(engine).toBeInstanceOf(FlowEngine);
+        const engine: Engine = await plugin.createEngine(FlowScannerEngine.NAME, resolvedConfig);
+        expect(engine).toBeInstanceOf(FlowScannerEngine);
     });
 });
 
 async function callCreateEngineConfig(plugin: EnginePluginV1, userProvidedOverrides: ConfigObject): Promise<ConfigObject> {
-    const configValueExtractor: ConfigValueExtractor = new ConfigValueExtractor(userProvidedOverrides, `engines.${FlowEngine.NAME}`);
-    return await plugin.createEngineConfig(FlowEngine.NAME, configValueExtractor);
+    const configValueExtractor: ConfigValueExtractor = new ConfigValueExtractor(userProvidedOverrides, `engines.${FlowScannerEngine.NAME}`);
+    return await plugin.createEngineConfig(FlowScannerEngine.NAME, configValueExtractor);
 }
 
 class StubPythonVersionIdentifier implements PythonVersionIdentifier {

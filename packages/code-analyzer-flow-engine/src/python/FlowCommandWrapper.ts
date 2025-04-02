@@ -48,7 +48,7 @@ export class RunTimeFlowCommandWrapper implements FlowCommandWrapper {
         await fs.promises.writeFile(flowFilesToScanFile, flowFilesToScan.join('\n'), 'utf-8');
 
         const flowResultsFile: string = path.join(tempDir, 'flowResultsFile.json')
-        const commandName = 'flowtest'; //name set by internal team
+        const commandName = 'flowtest'; //pythonModuleName set by internal team
 
         const pythonArgs: string[] = [
             '-m',

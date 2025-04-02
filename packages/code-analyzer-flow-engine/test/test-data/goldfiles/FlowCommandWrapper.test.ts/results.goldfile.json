@@ -3,7 +3,7 @@
   "help_url" : null,
   "result_id" : "1fe99d91",
   "service_version" : "0.7.1",
-  "flow_version" : "0.7.1",
+  "flowtest_version" : "0.7.1",
   "report_label" : "flowscan of contains-multiple-flows",
   "email" : null,
   "scan_start" : "2025-01-15 16:26:13",

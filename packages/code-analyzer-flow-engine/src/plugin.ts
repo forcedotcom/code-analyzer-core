@@ -5,7 +5,7 @@ import {
     Engine,
     EnginePluginV1
 } from "@salesforce/code-analyzer-engine-api";
-import {FlowEngine} from "./engine";
+import {FlowScannerEngine} from "./engine";
 import {getMessage} from './messages';
 import {FLOW_ENGINE_CONFIG_DESCRIPTION, FlowConfig, validateAndNormalizeConfig} from "./config";
 import {RunTimeFlowCommandWrapper} from "./python/FlowCommandWrapper";
@@ -21,7 +21,7 @@ export class FlowEnginePlugin extends EnginePluginV1 {
     }
 
     public getAvailableEngineNames(): string[] {
-        return [FlowEngine.NAME];
+        return [FlowScannerEngine.NAME];
     }
 
     describeEngineConfig(engineName: string): ConfigDescription {
@@ -37,12 +37,12 @@ export class FlowEnginePlugin extends EnginePluginV1 {
     public async createEngine(engineName: string, resolvedConfig: ConfigObject): Promise<Engine> {
         validateEngineName(engineName);
         const wrapper: RunTimeFlowCommandWrapper = new RunTimeFlowCommandWrapper((resolvedConfig as FlowConfig).python_command);
-        return new FlowEngine(wrapper);
+        return new FlowScannerEngine(wrapper);
     }
 }
 
 function validateEngineName(engineName: string) {
-    if (engineName !== FlowEngine.NAME) {
+    if (engineName !== FlowScannerEngine.NAME) {
         throw new Error(getMessage('UnsupportedEngineName', engineName));
     }
 }

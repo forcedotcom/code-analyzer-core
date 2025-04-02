@@ -26,7 +26,7 @@ const PRE_INVOCATION_RUN_PERCENT = 10;
  */
 const POST_INVOCATION_RUN_PERCENT = 90;
 
-export class FlowEngine extends Engine {
+export class FlowScannerEngine extends Engine {
     public static readonly NAME: string = 'flow';
     private readonly commandWrapper: FlowCommandWrapper;
     private readonly clock: Clock;
@@ -39,7 +39,7 @@ export class FlowEngine extends Engine {
     }
 
     public getName(): string {
-        return FlowEngine.NAME;
+        return FlowScannerEngine.NAME;
     }
 
     public async getEngineVersion(): Promise<string> {

@@ -1,6 +1,6 @@
 import {ConfigDescription, ConfigValueExtractor} from "@salesforce/code-analyzer-engine-api";
 import {getMessage} from './messages';
-import {FlowEngine} from "./engine";
+import {FlowScannerEngine} from "./engine";
 import {PythonVersionIdentifier} from "./python/PythonVersionIdentifier";
 import {SemVer} from "semver";
 
@@ -85,6 +85,6 @@ class FlowEngineConfigValueExtractor {
         }
         throw new Error(getMessage('CouldNotLocatePython', MINIMUM_PYTHON_VERSION,
             JSON.stringify(possiblePythonCommands), this.delegateExtractor.getFieldPath(PYTHON_COMMAND),
-            FlowEngine.NAME, FlowEngine.NAME));
+            FlowScannerEngine.NAME, FlowScannerEngine.NAME));
     }
 }
