@@ -11,6 +11,8 @@ import com.salesforce.graph.ops.GraphUtil;
 import com.salesforce.rules.ApexFlsViolationRule;
 import com.salesforce.rules.Violation;
 import com.salesforce.rules.fls.apex.operations.FlsConstants;
+
+import java.nio.file.Path;
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
@@ -41,6 +43,11 @@ public class CustomSettingsInfoCollectorTest {
     @Test
     public void loadCustomSettings_testWithRootFolder(TestInfo testInfo) throws Exception {
         verifyBaseDirIsAvailable(testInfo, "root");
+    }
+
+    @Test
+    public void loadCustomSettings_testWithIndividualApexFiles(TestInfo testInfo) throws Exception {
+        verifyBaseDirIsAvailable(testInfo, Path.of("classes", "MyClass.cls").toString());
     }
 
     @Test
