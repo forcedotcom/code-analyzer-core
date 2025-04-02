@@ -1,8 +1,8 @@
 import {EnginePlugin} from "@salesforce/code-analyzer-engine-api";
-import {FlowEnginePlugin} from "./plugin";
+import {FlowScannerEnginePlugin} from "./plugin";
 
 function createEnginePlugin(): EnginePlugin {
-    return new FlowEnginePlugin();
+    return new FlowScannerEnginePlugin();
 }
 
-export {createEnginePlugin, FlowEnginePlugin};
+export {createEnginePlugin, FlowScannerEnginePlugin};

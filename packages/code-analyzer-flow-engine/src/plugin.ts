@@ -12,7 +12,7 @@ import {RunTimeFlowCommandWrapper} from "./python/FlowCommandWrapper";
 import {PythonVersionIdentifier, RuntimePythonVersionIdentifier} from "./python/PythonVersionIdentifier";
 
 
-export class FlowEnginePlugin extends EnginePluginV1 {
+export class FlowScannerEnginePlugin extends EnginePluginV1 {
     private readonly pythonVersionIdentifier: PythonVersionIdentifier;
 
     public constructor(pythonVersionIdentifier: PythonVersionIdentifier = new RuntimePythonVersionIdentifier()) {
