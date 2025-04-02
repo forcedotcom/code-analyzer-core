@@ -8,7 +8,7 @@ import {
 import {FlowScannerEngine} from "./engine";
 import {getMessage} from './messages';
 import {FLOW_SCANNER_ENGINE_CONFIG_DESCRIPTION, FlowScannerConfig, validateAndNormalizeConfig} from "./config";
-import {RunTimeFlowScannerCommandWrapper} from "./python/FlowCommandWrapper";
+import {RunTimeFlowScannerCommandWrapper} from "./python/FlowScannerCommandWrapper";
 import {PythonVersionIdentifier, RuntimePythonVersionIdentifier} from "./python/PythonVersionIdentifier";
 
 

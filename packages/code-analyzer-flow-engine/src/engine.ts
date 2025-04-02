@@ -12,7 +12,7 @@ import {
 } from "@salesforce/code-analyzer-engine-api";
 import {Clock, RealClock} from '@salesforce/code-analyzer-engine-api/utils';
 import {getMessage} from './messages';
-import {FlowNodeDescriptor, FlowScannerCommandWrapper, FlowScannerExecutionResult} from "./python/FlowCommandWrapper";
+import {FlowNodeDescriptor, FlowScannerCommandWrapper, FlowScannerExecutionResult} from "./python/FlowScannerCommandWrapper";
 import {getConsolidatedRuleByName, getConsolidatedRuleName, getConsolidatedRuleNames} from "./hardcoded-catalog";
 
 /**

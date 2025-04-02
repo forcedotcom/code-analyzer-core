@@ -1,11 +1,11 @@
 import fs from 'node:fs';
 import path from 'node:path';
-import {FlowScannerExecutionResult, RunTimeFlowScannerCommandWrapper} from "../../src/python/FlowCommandWrapper";
+import {FlowScannerExecutionResult, RunTimeFlowScannerCommandWrapper} from "../../src/python/FlowScannerCommandWrapper";
 import {PythonCommandExecutor} from '../../src/python/PythonCommandExecutor';
 import os from "node:os";
 
 const PYTHON_COMMAND = 'python3';
-const PATH_TO_GOLDFILES = path.join(__dirname, '..', 'test-data', 'goldfiles', 'FlowCommandWrapper.test.ts');
+const PATH_TO_GOLDFILES = path.join(__dirname, '..', 'test-data', 'goldfiles', 'FlowScannerCommandWrapper.test.ts');
 const PATH_TO_MULTIPLE_FLOWS_WORKSPACE = path.resolve(__dirname, '..', 'test-data', 'example-workspaces', 'contains-multiple-flows');
 const PATH_TO_EXAMPLE1: string = path.join(PATH_TO_MULTIPLE_FLOWS_WORKSPACE, 'example1_containsWithoutSharingViolations.flow-meta.xml');
 const PATH_TO_EXAMPLE2: string = path.join(PATH_TO_MULTIPLE_FLOWS_WORKSPACE, 'example2_containsWithSharingViolations.flow');
