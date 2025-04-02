@@ -6,7 +6,7 @@ import {getMessage} from "../messages";
 type ProcessStdOutFn = (stdoutMsg: string) => void;
 const NO_OP = () => {};
 
-const PATH_TO_FLOWTEST_ROOT = path.join(__dirname, '..', '..', 'FlowTest');
+const PATH_TO_FLOW_SCANNER_ROOT = path.join(__dirname, '..', '..', 'FlowScanner');
 
 export class PythonCommandExecutor {
     private readonly pythonCommand: string;
@@ -22,7 +22,7 @@ export class PythonCommandExecutor {
             const pythonProcess: ChildProcessWithoutNullStreams = spawn(this.pythonCommand, pythonCmdArgs, {
                 env: {
                     ...process.env,
-                    PYTHONPATH: PATH_TO_FLOWTEST_ROOT
+                    PYTHONPATH: PATH_TO_FLOW_SCANNER_ROOT
                 }
             });
 

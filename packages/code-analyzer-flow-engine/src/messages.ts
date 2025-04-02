@@ -2,20 +2,20 @@ import {getMessageFromCatalog} from "@salesforce/code-analyzer-engine-api";
 
 const MESSAGE_CATALOG: {[key: string]: string} = {
     ConfigOverview:
-        `FLOWTEST ENGINE CONFIGURATION\n` +
+        `FLOW SCANNER ENGINE CONFIGURATION\n` +
         `To learn more about this configuration, visit:\n` +
-        `  https://developer.salesforce.com/docs/platform/salesforce-code-analyzer/guide/engine-flowtest.html#flowtest-configuration-reference`,
+        `  https://developer.salesforce.com/docs/platform/salesforce-code-analyzer/guide/engine-flow.html#flow-scanner-configuration-reference`,
 
     ConfigFieldDescription_python_command:
-        `Indicates the specific Python command to use for the 'flowtest' engine.\n` +
+        `Indicates the specific Python command to use for the 'Flow Scanner' engine.\n` +
         `May be provided as the name of a command that exists on the path, or an absolute file path location.\n` +
         `If unspecified, or specified as null, then an attempt will be made to automatically discover a Python command from your environment.`,
 
     UnsupportedEngineName:
-        `The FlowTestEnginePlugin does not support an engine with name '%s'.`,
+        `The FlowScannerEnginePlugin does not support an engine with name '%s'.`,
 
     CouldNotParseRuleDescriptions:
-        `Unexpected error: Could not parse rule descriptions from FlowTest output: %s`,
+        `Unexpected error: Could not parse rule descriptions from Flow Scanner output: %s`,
 
     ResultsFileNotValidJson:
         `Unexpected error: Results file contents are not a valid JSON: %s`,
@@ -41,13 +41,13 @@ const MESSAGE_CATALOG: {[key: string]: string} = {
         `%s: %s`,
 
     ConsolidatedRuleDescription:
-        `Avoid passing user data into flow elements in run mode: %s`,
+        `Avoid passing user data into Flow Scanner elements in run mode: %s`,
 
     SubsequentNodeComment:
         `%s influences %s: %s`,
 
-    WritingFlowtestLogToFile:
-        `The separate flowtest log file, used for debugging purposes only, will be written to: %s`,
+    WritingFlowLogToFile:
+        `The separate Flow Scanner log file, used for debugging purposes only, will be written to: %s`,
 
     PythonCommandError:
         `The following call to python exited with non-zero exit code.\n` +

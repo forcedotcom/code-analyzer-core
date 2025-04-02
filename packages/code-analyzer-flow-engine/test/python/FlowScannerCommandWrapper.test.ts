@@ -1,36 +1,36 @@
 import fs from 'node:fs';
 import path from 'node:path';
-import {FlowTestExecutionResult, RunTimeFlowTestCommandWrapper} from "../../src/python/FlowTestCommandWrapper";
+import {FlowScannerExecutionResult, RunTimeFlowScannerCommandWrapper} from "../../src/python/FlowScannerCommandWrapper";
 import {PythonCommandExecutor} from '../../src/python/PythonCommandExecutor';
 import os from "node:os";
 
 const PYTHON_COMMAND = 'python3';
-const PATH_TO_GOLDFILES = path.join(__dirname, '..', 'test-data', 'goldfiles', 'FlowTestCommandWrapper.test.ts');
+const PATH_TO_GOLDFILES = path.join(__dirname, '..', 'test-data', 'goldfiles', 'FlowScannerCommandWrapper.test.ts');
 const PATH_TO_MULTIPLE_FLOWS_WORKSPACE = path.resolve(__dirname, '..', 'test-data', 'example workspaces', 'contains-multiple-flows');
 const PATH_TO_EXAMPLE1: string = path.join(PATH_TO_MULTIPLE_FLOWS_WORKSPACE, 'example1_containsWithoutSharingViolations.flow-meta.xml');
 const PATH_TO_EXAMPLE2: string = path.join(PATH_TO_MULTIPLE_FLOWS_WORKSPACE, 'example2_containsWithSharingViolations.flow');
 
-describe('FlowTestCommandWrapper implementations', () => {
-    describe('RunTimeFlowTestCommandWrapper', () => {
+describe('FlowScannerCommandWrapper implementations', () => {
+    describe('RunTimeFlowScannerCommandWrapper', () => {
         let tempLogFile: string;
 
         beforeAll(async() => {
             const tempFolder: string = await fs.promises.mkdtemp(path.join(os.tmpdir(), 'engine-test'));
-            tempLogFile = path.join(tempFolder, "flowtest_logfile.log");
+            tempLogFile = path.join(tempFolder, "flow_scanner_logfile.log");
         })
 
-        describe('#runFlowTestRules()', () => {
+        describe('#runFlowScannerRules()', () => {
 
             describe('Successful execution', () => {
-                const wrapper: RunTimeFlowTestCommandWrapper = new RunTimeFlowTestCommandWrapper(PYTHON_COMMAND);
-                let results: FlowTestExecutionResult;
+                const wrapper: RunTimeFlowScannerCommandWrapper = new RunTimeFlowScannerCommandWrapper(PYTHON_COMMAND);
+                let results: FlowScannerExecutionResult;
                 const completionPercentages: number[] = [];
                 const statusProcessorFunction = (completionPercentage: number) => {
                     completionPercentages.push(completionPercentage);
                 };
 
                 beforeAll(async () => {
-                    results = await wrapper.runFlowTestRules([PATH_TO_EXAMPLE1, PATH_TO_EXAMPLE2], tempLogFile, statusProcessorFunction);
+                    results = await wrapper.runFlowScannerRules([PATH_TO_EXAMPLE1, PATH_TO_EXAMPLE2], tempLogFile, statusProcessorFunction);
                     // The `counter` property is irrelevant to us, and causes problems across platforms. So delete it.
                     for (const queryName of Object.keys(results.results)) {
                         for (const queryResults of results.results[queryName]) {
@@ -45,7 +45,7 @@ describe('FlowTestCommandWrapper implementations', () => {
                         .replaceAll('"__PATH_TO_EXAMPLE1__"', JSON.stringify(PATH_TO_EXAMPLE1))
                         .replaceAll('"__PATH_TO_EXAMPLE2__"', JSON.stringify(PATH_TO_EXAMPLE2));
 
-                    const expectedResults: FlowTestExecutionResult = JSON.parse(goldFileContents) as FlowTestExecutionResult;
+                    const expectedResults: FlowScannerExecutionResult = JSON.parse(goldFileContents) as FlowScannerExecutionResult;
 
                     // When a Jest equality check fails, the expected and actual objects are logged in their entirety.
                     // Since the results objects are so big here, we'll compare their sub-objects one-at-a-time to keep
@@ -68,7 +68,7 @@ describe('FlowTestCommandWrapper implementations', () => {
                 });
 
                 it('Generates no local log file', async () => {
-                    const logFileMatcher = /\.flowtest_log_.+\.log/;
+                    const logFileMatcher = /\.flow_log_.+\.log/;
                     const logFiles = (await fs.promises.readdir('.')).filter(f => f.match(logFileMatcher));
                     expect(logFiles).toHaveLength(0);
                 });
@@ -88,7 +88,7 @@ describe('FlowTestCommandWrapper implementations', () => {
                     {problem: 'an unparseable JSON', fakeResults: '{asdfasdfe,;]eawe}', expectedMessage: 'Results file contents are not a valid JSON'},
                     {problem: 'a malformed JSON', fakeResults: '{"undesiredProperty": "beep"}', expectedMessage: 'Could not parse results from '}
                 ])('When execution produces $problem, an informative error is thrown', async ({fakeResults, expectedMessage}) => {
-                    // Stub out the underlying Exec method to fake a success without actually invoking FlowTest, since
+                    // Stub out the underlying Exec method to fake a success without actually invoking flow, since
                     // we don't care about the actual results.
                     jest.spyOn(PythonCommandExecutor.prototype, 'exec').mockImplementation(async (_args, _processStdout) => {
                         return Promise.resolve();
@@ -99,8 +99,8 @@ describe('FlowTestCommandWrapper implementations', () => {
                         return fakeResults;
                     });
 
-                    const wrapper: RunTimeFlowTestCommandWrapper = new RunTimeFlowTestCommandWrapper(PYTHON_COMMAND);
-                    await expect(wrapper.runFlowTestRules([PATH_TO_EXAMPLE1, PATH_TO_EXAMPLE2], tempLogFile, (_num: number) => {}))
+                    const wrapper: RunTimeFlowScannerCommandWrapper = new RunTimeFlowScannerCommandWrapper(PYTHON_COMMAND);
+                    await expect(wrapper.runFlowScannerRules([PATH_TO_EXAMPLE1, PATH_TO_EXAMPLE2], tempLogFile, (_num: number) => {}))
                         .rejects
                         .toThrow(expectedMessage);
                 });

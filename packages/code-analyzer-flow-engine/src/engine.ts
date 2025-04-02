@@ -12,34 +12,34 @@ import {
 } from "@salesforce/code-analyzer-engine-api";
 import {Clock, RealClock} from '@salesforce/code-analyzer-engine-api/utils';
 import {getMessage} from './messages';
-import {FlowNodeDescriptor, FlowTestCommandWrapper, FlowTestExecutionResult} from "./python/FlowTestCommandWrapper";
+import {FlowNodeDescriptor, FlowScannerCommandWrapper, FlowScannerExecutionResult} from "./python/FlowScannerCommandWrapper";
 import {getConsolidatedRuleByName, getConsolidatedRuleName, getConsolidatedRuleNames} from "./hardcoded-catalog";
 
 /**
- * An arbitrarily chosen value for how close the engine is to completion before the underlying FlowTest tool is invoked,
+ * An arbitrarily chosen value for how close the engine is to completion before the underlying Flow tool is invoked,
  * expressed as a percentage.
  */
 const PRE_INVOCATION_RUN_PERCENT = 10;
 /**
- * An arbitrarily chosen value for how close the engine is to completion after the underlying FlowTest tool has completed,
+ * An arbitrarily chosen value for how close the engine is to completion after the underlying Flow tool has completed,
  * expressed as a percentage.
  */
 const POST_INVOCATION_RUN_PERCENT = 90;
 
-export class FlowTestEngine extends Engine {
-    public static readonly NAME: string = 'flowtest';
-    private readonly commandWrapper: FlowTestCommandWrapper;
+export class FlowScannerEngine extends Engine {
+    public static readonly NAME: string = 'flow';
+    private readonly commandWrapper: FlowScannerCommandWrapper;
     private readonly clock: Clock;
     private relevantFilesCache: Map<string, string[]> = new Map();
 
-    public constructor(commandWrapper: FlowTestCommandWrapper, clock: Clock = new RealClock()) {
+    public constructor(commandWrapper: FlowScannerCommandWrapper, clock: Clock = new RealClock()) {
         super();
         this.commandWrapper =  commandWrapper;
         this.clock = clock;
     }
 
     public getName(): string {
-        return FlowTestEngine.NAME;
+        return FlowScannerEngine.NAME;
     }
 
     public async getEngineVersion(): Promise<string> {
@@ -51,7 +51,7 @@ export class FlowTestEngine extends Engine {
     public async describeRules(describeOptions: DescribeOptions): Promise<RuleDescription[]> {
         this.emitDescribeRulesProgressEvent(0);
         if (describeOptions.workspace && (await this.getRelevantFiles(describeOptions.workspace)).length == 0) {
-            this.emitLogEvent(LogLevel.Fine, 'Workspace contains no Flow files. Returning no flowtest rules.');
+            this.emitLogEvent(LogLevel.Fine, 'Workspace contains no Flow files. Returning no flow rules.');
             this.emitDescribeRulesProgressEvent(100);
             return [];
         }
@@ -70,14 +70,14 @@ export class FlowTestEngine extends Engine {
         }
 
         const dateTimeStr: string = this.clock.formatToDateTimeString();
-        const logFile: string = path.join(runOptions.logFolder, `sfca-flowtest-${dateTimeStr}.log`);
-        this.emitLogEvent(LogLevel.Debug, getMessage('WritingFlowtestLogToFile', logFile));
+        const logFile: string = path.join(runOptions.logFolder, `sfca-flow-${dateTimeStr}.log`);
+        this.emitLogEvent(LogLevel.Debug, getMessage('WritingFlowLogToFile', logFile));
 
         this.emitRunRulesProgressEvent(PRE_INVOCATION_RUN_PERCENT);
         const percentageUpdateHandler = /* istanbul ignore next */ (percentage: number) => {
             this.emitRunRulesProgressEvent(normalizeRelativeCompletionPercentage(percentage));
         }
-        const executionResults: FlowTestExecutionResult = await this.commandWrapper.runFlowTestRules(
+        const executionResults: FlowScannerExecutionResult = await this.commandWrapper.runFlowScannerRules(
             relevantFiles, logFile, percentageUpdateHandler);
         const convertedResults: EngineRunResults = toEngineRunResults(executionResults, ruleNames);
         this.emitRunRulesProgressEvent(100);
@@ -100,37 +100,37 @@ function fileIsFlowFile(fileName: string): boolean {
 }
 
 /**
- * Accepts a percentage indicating the completion percentage of the underlying FlowTest tool, and converts it into a
+ * Accepts a percentage indicating the completion percentage of the underlying Flow Scanner tool, and converts it into a
  * percentage representing the completion percentage of the engine as a whole.
- * @param flowTestPercentage Completion percentage received from the FlowTest tool.
+ * @param flowPercentage Completion percentage received from the Flow Scanner tool.
  */
 // istanbul ignore next
-function normalizeRelativeCompletionPercentage(flowTestPercentage: number): number {
+function normalizeRelativeCompletionPercentage(flowPercentage: number): number {
     const percentageSpread: number = POST_INVOCATION_RUN_PERCENT - PRE_INVOCATION_RUN_PERCENT;
-    return PRE_INVOCATION_RUN_PERCENT + ((flowTestPercentage * percentageSpread) / 100);
+    return PRE_INVOCATION_RUN_PERCENT + ((flowPercentage * percentageSpread) / 100);
 }
 
-function toEngineRunResults(flowTestExecutionResult: FlowTestExecutionResult, requestedRules: string[]): EngineRunResults {
+function toEngineRunResults(flowScannerExecutionResult: FlowScannerExecutionResult, requestedRules: string[]): EngineRunResults {
     const requestedRulesSet: Set<string> = new Set(requestedRules);
     const results: EngineRunResults = {
         violations: []
     };
 
-    for (const queryName of Object.keys(flowTestExecutionResult.results)) {
-        const flowTestRuleResults = flowTestExecutionResult.results[queryName];
-        for (const flowTestRuleResult of flowTestRuleResults) {
-            const ruleName = getConsolidatedRuleName(flowTestRuleResult.query_name);
-            // FlowTest runs extremely quickly, and its rule selection is fiddly. So it's easier to just run all the rules,
+    for (const queryName of Object.keys(flowScannerExecutionResult.results)) {
+        const flowScannerRuleResults = flowScannerExecutionResult.results[queryName];
+        for (const flowScannerRuleResult of flowScannerRuleResults) {
+            const ruleName = getConsolidatedRuleName(flowScannerRuleResult.query_name);
+            // Flow runs quickly, and its rule selection is fiddly. So it's easier to just run all the rules,
             // and then throw away results for rules that the user didn't request.
             if (!requestedRulesSet.has(ruleName)) {
                 continue;
             }
-            const flowNodes: FlowNodeDescriptor[] = flowTestRuleResult.flow;
+            const flowNodes: FlowNodeDescriptor[] = flowScannerRuleResult.flow;
             results.violations.push({
                 ruleName,
-                message: flowTestRuleResult.description,
+                message: flowScannerRuleResult.description,
                 codeLocations: toCodeLocationList(flowNodes),
-                primaryLocationIndex: flowTestRuleResult.flow.length - 1,
+                primaryLocationIndex: flowScannerRuleResult.flow.length - 1,
                 resourceUrls: []
             });
         }

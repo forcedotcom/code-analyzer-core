@@ -1,21 +1,21 @@
 import {ConfigDescription, ConfigValueExtractor} from "@salesforce/code-analyzer-engine-api";
 import {getMessage} from './messages';
-import {FlowTestEngine} from "./engine";
+import {FlowScannerEngine} from "./engine";
 import {PythonVersionIdentifier} from "./python/PythonVersionIdentifier";
 import {SemVer} from "semver";
 
 const MINIMUM_PYTHON_VERSION = '3.10.0';
 export const PYTHON_COMMAND = 'python_command';
 
-export type FlowTestConfig = {
-    // Indicates the specific Python command to use for the 'flowtest' engine.
+export type FlowScannerConfig = {
+    // Indicates the specific Python command to use for the 'flow' engine.
     // May be provided as the name of a command that exists on the path, or an absolute file path location.
     //   Example: '/Library/Frameworks/Python.framework/Versions/3.12/bin/python3'
     // If not defined, or equal to null, then an attempt will be made to automatically discover a Python command from your environment.
     python_command: string;
 }
 
-export const FLOWTEST_ENGINE_CONFIG_DESCRIPTION: ConfigDescription = {
+export const FLOW_SCANNER_ENGINE_CONFIG_DESCRIPTION: ConfigDescription = {
     overview: getMessage('ConfigOverview'),
     fieldDescriptions: {
         python_command: {
@@ -27,16 +27,16 @@ export const FLOWTEST_ENGINE_CONFIG_DESCRIPTION: ConfigDescription = {
 }
 
 export async function validateAndNormalizeConfig(configValueExtractor: ConfigValueExtractor,
-                                                 pythonVersionIdentifier: PythonVersionIdentifier): Promise<FlowTestConfig> {
+                                                 pythonVersionIdentifier: PythonVersionIdentifier): Promise<FlowScannerConfig> {
     configValueExtractor.validateContainsOnlySpecifiedKeys(['python_command']);
-    const valueExtractor: FlowTestEngineConfigValueExtractor = new FlowTestEngineConfigValueExtractor(
+    const valueExtractor: FlowScannerEngineConfigValueExtractor = new FlowScannerEngineConfigValueExtractor(
         configValueExtractor, pythonVersionIdentifier);
     return {
         python_command: await valueExtractor.extractPythonCommandPath()
     }
 }
 
-class FlowTestEngineConfigValueExtractor {
+class FlowScannerEngineConfigValueExtractor {
     private readonly pythonVersionIdentifier: PythonVersionIdentifier;
     private readonly delegateExtractor: ConfigValueExtractor;
 
@@ -85,6 +85,6 @@ class FlowTestEngineConfigValueExtractor {
         }
         throw new Error(getMessage('CouldNotLocatePython', MINIMUM_PYTHON_VERSION,
             JSON.stringify(possiblePythonCommands), this.delegateExtractor.getFieldPath(PYTHON_COMMAND),
-            FlowTestEngine.NAME, FlowTestEngine.NAME));
+            FlowScannerEngine.NAME, FlowScannerEngine.NAME));
     }
 }
