@@ -8,6 +8,7 @@ import {
     EventType,
     LogEvent,
     LogLevel,
+    PathPoint,
     RuleDescription,
     RunOptions,
     RunRulesProgressEvent,
@@ -182,10 +183,10 @@ describe('SfgeEngine', () => {
                     path.join(TEST_DATA_FOLDER, 'sampleRelevantWorkspace', 'SomeOtherClass.cls')
                 ]
             }
-        ])('When workspace is $case, those violations are returned', async () => {
+        ])('When workspace is $case, those violations are returned', async ({workspacePaths}) => {
             // ====== SETUP ======
             const engine: SfgeEngine = new SfgeEngine(DEFAULT_SFGE_ENGINE_CONFIG, fixedClock);
-            const workspace: Workspace = new Workspace([path.join(TEST_DATA_FOLDER, 'sampleRelevantWorkspace')]);
+            const workspace: Workspace = new Workspace(workspacePaths);
             const progressEvents: RunRulesProgressEvent[] = [];
             engine.onEvent(EventType.RunRulesProgressEvent, (e: RunRulesProgressEvent) => progressEvents.push(e));
             const ruleNames: string[] = ['ApexFlsViolationRule', 'UseWithSharingOnDatabaseOperation', 'UnimplementedTypeRule', 'RemoveUnusedMethod'];
@@ -194,7 +195,46 @@ describe('SfgeEngine', () => {
             const results: EngineRunResults = await engine.runRules(ruleNames, createRunOptions(workspace));
 
             // ====== ASSERTIONS ======
-            await expectResultsToMatchGoldfile(results, 'all_sampleRelevantWorkspace_violations.goldfile.json', path.join(TEST_DATA_FOLDER, 'sampleRelevantWorkspace'));
+            await expectResultsToMatchGoldfile(results, path.join('sampleRelevantWorkspace', 'all_violations.goldfile.json'), path.join(TEST_DATA_FOLDER, 'sampleRelevantWorkspace'));
+            const progressPercents: number[] = progressEvents.map(pe => pe.percentComplete);
+            expect(progressPercents[0]).toEqual(2);
+            expect(progressPercents[progressPercents.length - 1]).toEqual(100);
+            expectProgressEventsToAscend(progressPercents);
+        });
+
+        it.each([
+            {
+                case: 'a file that violates the selected rules',
+                pathStartPoints: [
+                    {
+                        file: path.join(TEST_DATA_FOLDER, 'sampleRelevantWorkspace2', 'EntryClass1.cls')
+                    }
+                ],
+                goldfile: 'EntryClass1_violations.goldfile.json'
+            },
+            {
+                case: 'a single method that violates the selected rules',
+                pathStartPoints: [
+                    {
+                        file: path.join(TEST_DATA_FOLDER, 'sampleRelevantWorkspace2', 'EntryClass1.cls'),
+                        methodName: 'entryPointMethod1'
+                    }
+                ],
+                goldfile: 'EntryClass1_entryPointMethod1_violations.goldfile.json'
+            }
+        ])('When path start point is $case, the appropriate violations are returned', async ({pathStartPoints, goldfile}) => {
+            // ====== SETUP ======
+            const engine: SfgeEngine = new SfgeEngine(DEFAULT_SFGE_ENGINE_CONFIG, fixedClock);
+            const workspace: Workspace = new Workspace([path.join(TEST_DATA_FOLDER, 'sampleRelevantWorkspace2')]);
+            const progressEvents: RunRulesProgressEvent[] = [];
+            engine.onEvent(EventType.RunRulesProgressEvent, (e: RunRulesProgressEvent) => progressEvents.push(e));
+            const ruleNames: string[] = ['ApexFlsViolationRule', 'UseWithSharingOnDatabaseOperation', 'UnimplementedTypeRule', 'RemoveUnusedMethod'];
+
+            // ====== TESTED BEHAVIOR ======
+            const results: EngineRunResults = await engine.runRules(ruleNames, createRunOptions(workspace, pathStartPoints));
+
+            // ====== ASSERTIONS ======
+            await expectResultsToMatchGoldfile(results, path.join('sampleRelevantWorkspace2', goldfile), path.join(TEST_DATA_FOLDER, 'sampleRelevantWorkspace2'));
             const progressPercents: number[] = progressEvents.map(pe => pe.percentComplete);
             expect(progressPercents[0]).toEqual(2);
             expect(progressPercents[progressPercents.length - 1]).toEqual(100);
@@ -213,7 +253,7 @@ describe('SfgeEngine', () => {
             const results: EngineRunResults = await engine.runRules(ruleNames, createRunOptions(workspace));
 
             // ====== ASSERTIONS ======
-            await expectResultsToMatchGoldfile(results, 'ApexFlsViolationRule_sampleRelevantWorkspace_violations.goldfile.json', path.join(TEST_DATA_FOLDER, 'sampleRelevantWorkspace'));
+            await expectResultsToMatchGoldfile(results, path.join('sampleRelevantWorkspace', 'ApexFlsViolationRule_violations.goldfile.json'), path.join(TEST_DATA_FOLDER, 'sampleRelevantWorkspace'));
             const expectedProgressDescriptors: {percent: number, message?: string}[] = [
                 {percent: 2, message: undefined},
                 {percent: 2.3, message: undefined},
@@ -292,7 +332,7 @@ describe('SfgeEngine', () => {
             const results: EngineRunResults = await engine.runRules(ruleNames, createRunOptions(workspace));
 
             // ====== ASSERTIONS ======
-            await expectResultsToMatchGoldfile(results, 'ApexFlsViolationRule_sampleRelevantWorkspace_violations.goldfile.json', path.join(TEST_DATA_FOLDER, 'sampleRelevantWorkspace'));
+            await expectResultsToMatchGoldfile(results, path.join('sampleRelevantWorkspace', 'ApexFlsViolationRule_violations.goldfile.json'), path.join(TEST_DATA_FOLDER, 'sampleRelevantWorkspace'));
             const warningLogEvents: LogEvent[] = logEvents.filter(e => e.logLevel === LogLevel.Warn);
             expect(warningLogEvents.length).toBeGreaterThanOrEqual(1);
             expect(warningLogEvents[0].message).toContain(`Specified workspace is missing 1 possibly-relevant file(s) from the folder ${path.join(TEST_DATA_FOLDER, 'sampleRelevantWorkspace')}.`);
@@ -333,9 +373,10 @@ function createDescribeOptions(workspace?: Workspace): DescribeOptions {
     };
 }
 
-function createRunOptions(workspace: Workspace): RunOptions {
+function createRunOptions(workspace: Workspace, pathStartPoints?: PathPoint[]): RunOptions {
     return {
         logFolder: os.tmpdir(),
-        workspace
+        workspace,
+        pathStartPoints
     };
 }

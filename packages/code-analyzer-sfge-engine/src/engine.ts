@@ -31,10 +31,9 @@ export class SfgeEngine extends Engine {
 
     public constructor(config: SfgeEngineConfig, clock: Clock = new RealClock()) {
         super();
-        // TODO: When we support custom Java commands, we'll need to use the config property instead of the hardcoded string here.
-        const javaCommandExecutor: JavaCommandExecutor = new JavaCommandExecutor('java', this.emitLogEvent.bind(this));
-        this.sfgeWrapper = new RuntimeSfgeWrapper(javaCommandExecutor, clock, this.emitLogEvent.bind(this));
         this.config = config;
+        const javaCommandExecutor: JavaCommandExecutor = new JavaCommandExecutor(this.config.java_command, this.emitLogEvent.bind(this));
+        this.sfgeWrapper = new RuntimeSfgeWrapper(javaCommandExecutor, clock, this.emitLogEvent.bind(this));
     }
 
     public override getName(): string {
@@ -96,7 +95,7 @@ export class SfgeEngine extends Engine {
 
         const sfgeResults: SfgeRunResult[] = await this.sfgeWrapper.invokeRunCommand(
             selectedRuleInfoList,
-            relevantFiles, // TODO: WHEN WE ADD PATH-START TARGETING, THIS NEEDS TO CHANGE.
+            runOptions.pathStartPoints ?? [],
             relevantFiles,
             sfgeRunOptions,
             (innerPerc: number, message?: string) => this.emitRunRulesProgressEvent(5 + 93*innerPerc/100, message) // 5%-98%

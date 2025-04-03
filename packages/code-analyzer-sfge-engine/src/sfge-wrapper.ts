@@ -3,6 +3,7 @@ import fs from 'node:fs';
 import {
     getMessageFromCatalog,
     LogLevel,
+    PathPoint,
     SHARED_MESSAGE_CATALOG
 } from '@salesforce/code-analyzer-engine-api';
 import {createTempDir, JavaCommandExecutor} from '@salesforce/code-analyzer-engine-api/utils';
@@ -108,7 +109,7 @@ export class RuntimeSfgeWrapper {
         }
     }
 
-    public async invokeRunCommand(selectedRuleInfos: SfgeRuleInfo[], targetPaths: string[], projectFilePaths: string[], sfgeRunOptions: SfgeRunOptions, emitProgress: (percComplete: number) => void): Promise<SfgeRunResult[]> {
+    public async invokeRunCommand(selectedRuleInfos: SfgeRuleInfo[], pathStarts: PathPoint[], projectFilePaths: string[], sfgeRunOptions: SfgeRunOptions, emitProgress: (percComplete: number) => void): Promise<SfgeRunResult[]> {
         const tmpDir: string = await this.getTemporaryWorkingDir();
         emitProgress(2);
 
@@ -116,7 +117,7 @@ export class RuntimeSfgeWrapper {
         const logFilePath: string = path.join(sfgeRunOptions.logFolder, this.logFileName);
         const ruleNames: string[] = selectedRuleInfos.map(sri => sri.name);
 
-        await this.createSfgeInputFile(inputFileName, ruleNames, targetPaths, projectFilePaths);
+        await this.createSfgeInputFile(inputFileName, ruleNames, pathStarts, projectFilePaths);
         const resultsOutputFile: string = path.join(tmpDir, 'resultsFile.json');
         this.emitLogEvent(LogLevel.Debug, getMessage('LoggingToFile', 'run', logFilePath));
         emitProgress(10);
@@ -163,15 +164,29 @@ export class RuntimeSfgeWrapper {
         return this.temporaryWorkingDir;
     }
 
-    private async createSfgeInputFile(filePath: string, rules: string[], targets: string[], allWorkspaceFiles: string[]): Promise<void> {
-        const sfgeTargets: SfgeTarget[] = targets.map(target => {
-            return {
-                targetFile: target,
-                targetMethods: []
-            };
-        });
+    private async createSfgeInputFile(filePath: string, rules: string[], pathStarts: PathPoint[], allWorkspaceFiles: string[]): Promise<void> {
+        const sfgeTargetsByFile: Map<string, SfgeTarget> = new Map();
+        if (pathStarts.length > 0) {
+            pathStarts.forEach(pathStart => {
+                const sfgeTarget: SfgeTarget = sfgeTargetsByFile.get(pathStart.file) ?? {
+                    targetFile: pathStart.file,
+                    targetMethods: []
+                };
+                if (pathStart.methodName) {
+                    sfgeTarget.targetMethods = [...sfgeTarget.targetMethods, pathStart.methodName];
+                }
+                sfgeTargetsByFile.set(pathStart.file, sfgeTarget);
+            });
+        } else {
+            allWorkspaceFiles.map(file => {
+                sfgeTargetsByFile.set(file, {
+                    targetFile: file,
+                    targetMethods: []
+                });
+            });
+        }
         const inputFileContents: SfgeInputFile = {
-            targets: sfgeTargets,
+            targets: [...sfgeTargetsByFile.values()],
             projectDirs: allWorkspaceFiles,
             rulesToRun: rules
         };
