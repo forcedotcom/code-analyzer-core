@@ -10,17 +10,18 @@ import {Workspace} from "./workspace";
 export type DescribeOptions = {
     /**
      * The absolute path where additional log files should be stored by engines when describing rules.
-     *     Note that engines should use the emitLogEvent method as a primary means of logging into the main Code
-     *     Analyzer log file, and should only use this log folder if additional log files need to be created. If files
-     *     are written to this folder, then we recommend that engines specify that the file was created by logging its
-     *     full path into the main log with the emitLogEvent method.
+     *
+     * Note that engines should use the emitLogEvent method as a primary means of logging into the main Code
+     * Analyzer log file, and should only use this log folder if additional log files need to be created. If files
+     * are written to this folder, then we recommend that engines specify that the file was created by logging its
+     * full path into the main log with the emitLogEvent method.
      */
     logFolder: string
 
     /**
      * The workspace may or may not be available. If available, then engines should use this workspace object to give a
-     * more accurate list of which of the engine's rules are relevant to the files in the workspace. That is
-     * if there are rules for this engine that are simply not applicable to the files available, then the rule
+     * more accurate list of which of the engine's rules are relevant to the targeted files in the workspace. That is
+     * if there are rules for this engine that are simply not applicable to the targeted files, then the rule
      * descriptions for those rules should not be returned in the output of the {@link Engine.describeRules} method.
      */
     workspace?: Workspace
@@ -32,35 +33,21 @@ export type DescribeOptions = {
 export type RunOptions = {
     /**
      * The absolute path where additional log files should be stored by engines when running rules.
-     *     Note that engines should use the emitLogEvent method as a primary means of logging into the main Code
-     *     Analyzer log file, and should only use this log folder if additional log files need to be created. If files
-     *     are written to this folder, then we recommend that engines specify that the file was created by logging its
-     *     full path into the main log with the emitLogEvent method.
+     *
+     * Note that engines should use the emitLogEvent method as a primary means of logging into the main Code
+     * Analyzer log file, and should only use this log folder if additional log files need to be created. If files
+     * are written to this folder, then we recommend that engines specify that the file was created by logging its
+     * full path into the main log with the emitLogEvent method.
      */
     logFolder: string
 
     /**
-     * The workspace object specifying the files that the engine's rules should run against.
+     * The workspace object specifying the files that make up the user's workspace and which files should be targeted.
+     *
+     * Note that engines should analyze the targeted files (returned by the getTargetedFiles method) but may also use
+     * the other workspace files (returned by the getWorkspaceFiles method) if needed to support the analysis.
      */
     workspace: Workspace
-
-    /**
-     * If the implementing engine has path based rules, then the engine can decide to reduce the number of paths to
-     * analyze if the user has provided a list of path start points here. Note that users may not always supply this
-     * option and so engines that want to leverage it must use it conditionally based on whether it is defined.
-     */
-    pathStartPoints?: PathPoint[]
-}
-
-/**
- * The point in a path to analyze - used for path-based engines/rules only.
- */
-export type PathPoint = {
-    /** The file associated with a path to analyze */
-    file: string
-
-    /** The method name associated with a path to analyze */
-    methodName?: string
 }
 
 /**

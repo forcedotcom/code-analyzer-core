@@ -64,6 +64,8 @@ export class CpdEngine extends Engine {
     }
 
     async runRules(ruleNames: string[], runOptions: RunOptions): Promise<EngineRunResults> {
+        await this.emitLogRegardingIgnoredMethodTargetsIfNeeded(runOptions.workspace);
+
         const workspaceLiaison: WorkspaceLiaison = this.getWorkspaceLiaison(runOptions.workspace);
         const relevantLanguageToFilesMap: Map<Language, string[]> = await workspaceLiaison.getRelevantLanguageToFilesMap();
         this.emitRunRulesProgressEvent(2);
@@ -126,6 +128,14 @@ export class CpdEngine extends Engine {
                 new WorkspaceLiaison(workspace, this.config.rule_languages as Language[], this.extensionToLanguageMap));
         }
         return this.workspaceLiaisonCache.get(cacheKey)!
+    }
+
+    private async emitLogRegardingIgnoredMethodTargetsIfNeeded(workspace: Workspace): Promise<void> {
+        const targetedMethods: string[] = await workspace.getTargetedMethods();
+        if (targetedMethods.length > 0) {
+            this.emitLogEvent(LogLevel.Info, getMessage('TargetedMethodsNotSupported', CPD_ENGINE_NAME,
+                JSON.stringify(targetedMethods)));
+        }
     }
 }
 

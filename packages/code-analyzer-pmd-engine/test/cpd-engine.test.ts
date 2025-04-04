@@ -42,9 +42,9 @@ describe('Tests for the describeRules method of PmdEngine', () => {
         expect(progressEvents.map(e => e.percentComplete)).toEqual([33, 100]);
     });
 
-    it('When using defaults with workspace that only contains apex code, then only apex rule is returned', async () => {
+    it('When using defaults with workspace that only targets apex code, then only apex rule is returned', async () => {
         const engine: CpdEngine = new CpdEngine(DEFAULT_CPD_ENGINE_CONFIG);
-        const workspace: Workspace = new Workspace([
+        const workspace: Workspace = new Workspace('id', [TEST_DATA_FOLDER], [
             path.join(TEST_DATA_FOLDER, 'sampleCpdWorkspace', 'ApexClass1_ItselfContainsDuplicateBlocksOfMoreThan100Tokens.cls')
         ]);
         const ruleDescriptions: RuleDescription[] = await engine.describeRules(createDescribeOptions(workspace));
@@ -60,7 +60,7 @@ describe('Tests for the describeRules method of PmdEngine', () => {
                 apex: ['.txt'],
             }
         });
-        const workspace: Workspace = new Workspace([
+        const workspace: Workspace = new Workspace('id', [
             path.join(TEST_DATA_FOLDER, 'sampleCpdWorkspace', 'dummy.txt')
         ]);
         const ruleDescriptions: RuleDescription[] = await engine.describeRules(createDescribeOptions(workspace));
@@ -95,7 +95,7 @@ describe('Tests for the describeRules method of PmdEngine', () => {
             ... DEFAULT_CPD_ENGINE_CONFIG,
             rule_languages: [Language.APEX, Language.HTML, Language.XML]
         });
-        const workspace: Workspace = new Workspace([
+        const workspace: Workspace = new Workspace('id', [
             path.join(TEST_DATA_FOLDER, 'sampleCpdWorkspace', 'ApexClass1_ItselfContainsDuplicateBlocksOfMoreThan100Tokens.cls'),
             path.join(TEST_DATA_FOLDER, 'sampleCpdWorkspace', 'someReplicatedFileWithOver100Tokens.html')
         ]);
@@ -116,18 +116,18 @@ async function expectRulesToMatchGoldFile(actualRuleDescriptions: RuleDescriptio
 describe('Tests for the runRules method of CpdEngine', () => {
     it('When zero rules names are provided then return zero violations', async () => {
         const engine: CpdEngine = new CpdEngine(DEFAULT_CPD_ENGINE_CONFIG);
-        expect(await engine.runRules([], createRunOptions(new Workspace([__dirname])))).toEqual({violations: []});
+        expect(await engine.runRules([], createRunOptions(new Workspace('id', [__dirname])))).toEqual({violations: []});
     });
 
     it('When rule name is not associated with a language that CPD knows about, then throw error', async () => {
         const engine: CpdEngine = new CpdEngine(DEFAULT_CPD_ENGINE_CONFIG);
-        await expect(engine.runRules(['DetectCopyPasteForOops'], createRunOptions(new Workspace([__dirname])))).rejects.toThrow(
+        await expect(engine.runRules(['DetectCopyPasteForOops'], createRunOptions(new Workspace('id', [__dirname])))).rejects.toThrow(
             /Unexpected error: The rule 'DetectCopyPasteForOops' does not map to a supported CPD language:.*/);
     });
 
     it('When specified rules are not relevant to users workspace, then return zero violations', async () => {
         const engine: CpdEngine = new CpdEngine(DEFAULT_CPD_ENGINE_CONFIG);
-        const workspace: Workspace = new Workspace([path.join(TEST_DATA_FOLDER, 'sampleCpdWorkspace', 'ApexClass1_ItselfContainsDuplicateBlocksOfMoreThan100Tokens.cls')]);
+        const workspace: Workspace = new Workspace('id', [path.join(TEST_DATA_FOLDER, 'sampleCpdWorkspace', 'ApexClass1_ItselfContainsDuplicateBlocksOfMoreThan100Tokens.cls')]);
         const ruleNames: string[] = ['DetectCopyPasteForHtml'];
         const results: EngineRunResults = await engine.runRules(ruleNames, createRunOptions(workspace));
 
@@ -136,7 +136,7 @@ describe('Tests for the runRules method of CpdEngine', () => {
 
     it('When specified rules contain relevant files containing no duplicate blocks using the default minimumToken value, then return zero violations', async () => {
         const engine: CpdEngine = new CpdEngine(DEFAULT_CPD_ENGINE_CONFIG);
-        const workspace: Workspace = new Workspace([
+        const workspace: Workspace = new Workspace('id', [
             path.join(TEST_DATA_FOLDER, 'sampleCpdWorkspace', 'sampleJavascript1_ItselfContainsDuplicateBlocksButWithVeryFewTokens.js'),
             path.join(TEST_DATA_FOLDER, 'sampleCpdWorkspace', 'sampleJavascript2_ContainsNearlyAllTheSameTokensAsSampleJavascript1.js') // duplicate blocks are smaller than default 100 tokens
         ]);
@@ -151,7 +151,7 @@ describe('Tests for the runRules method of CpdEngine', () => {
         const progressEvents: RunRulesProgressEvent[] = [];
         engine.onEvent(EventType.RunRulesProgressEvent, (e: RunRulesProgressEvent) => progressEvents.push(e));
 
-        const workspace: Workspace = new Workspace([path.join(TEST_DATA_FOLDER, 'sampleCpdWorkspace')]);
+        const workspace: Workspace = new Workspace('id', [path.join(TEST_DATA_FOLDER, 'sampleCpdWorkspace')]);
         const ruleNames: string[] = ['DetectCopyPasteForApex', 'DetectCopyPasteForHtml', 'DetectCopyPasteForJavascript'];
 
         const results: EngineRunResults = await engine.runRules(ruleNames, createRunOptions(workspace));
@@ -253,7 +253,7 @@ describe('Tests for the runRules method of CpdEngine', () => {
         const progressEvents: RunRulesProgressEvent[] = [];
         engine.onEvent(EventType.RunRulesProgressEvent, (e: RunRulesProgressEvent) => progressEvents.push(e));
 
-        const workspace: Workspace = new Workspace([path.join(TEST_DATA_FOLDER, 'sampleCpdWorkspace')]);
+        const workspace: Workspace = new Workspace('id', [path.join(TEST_DATA_FOLDER, 'sampleCpdWorkspace')]);
         const ruleNames: string[] = ['DetectCopyPasteForJavascript'];
 
         const results: EngineRunResults = await engine.runRules(ruleNames, createRunOptions(workspace));
@@ -329,7 +329,7 @@ describe('Tests for the runRules method of CpdEngine', () => {
         const progressEvents: RunRulesProgressEvent[] = [];
         engine.onEvent(EventType.RunRulesProgressEvent, (e: RunRulesProgressEvent) => progressEvents.push(e));
 
-        const workspace: Workspace = new Workspace([path.join(TEST_DATA_FOLDER, 'sampleCpdWorkspace')]);
+        const workspace: Workspace = new Workspace('id', [path.join(TEST_DATA_FOLDER, 'sampleCpdWorkspace')]);
         const ruleNames: string[] = ['DetectCopyPasteForHtml'];
 
         const results: EngineRunResults = await engine.runRules(ruleNames, createRunOptions(workspace));
@@ -345,7 +345,7 @@ describe('Tests for the runRules method of CpdEngine', () => {
                 apex: ['.txt']
             }
         });
-        const workspace: Workspace = new Workspace([path.join(TEST_DATA_FOLDER, 'sampleCpdWorkspace')]);
+        const workspace: Workspace = new Workspace('id', [path.join(TEST_DATA_FOLDER, 'sampleCpdWorkspace')]);
         const ruleNames: string[] = ['DetectCopyPasteForApex'];
         const results: EngineRunResults = await engine.runRules(ruleNames, createRunOptions(workspace));
 

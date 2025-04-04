@@ -86,7 +86,7 @@ describe('Tests for the describeRules method of ESLintEngine', () => {
         const engine: ESLintEngine = new ESLintEngine({...DEFAULT_CONFIG,
             auto_discover_eslint_config: true
         });
-        const ruleDescriptions: RuleDescription[] = await engine.describeRules(createDescribeOptions(new Workspace([caseObj.folder])));
+        const ruleDescriptions: RuleDescription[] = await engine.describeRules(createDescribeOptions(new Workspace('id', [caseObj.folder])));
         expect(ruleDescriptions).toEqual(caseObj.expectationRuleDescriptions);
     });
 
@@ -99,17 +99,20 @@ describe('Tests for the describeRules method of ESLintEngine', () => {
         expect(ruleDescriptions).toEqual(caseObj.expectationRuleDescriptions);
     });
 
-    it('When describing rules from a workspace with no javascript files, then no javascript rules should return', async () => {
+    it('When describing rules from a workspace targeting no javascript files, then no javascript rules should return', async () => {
         const engine: ESLintEngine = new ESLintEngine(DEFAULT_CONFIG);
-        const ruleDescriptions: RuleDescription[] = await engine.describeRules(createDescribeOptions(new Workspace([
+        const ruleDescriptions: RuleDescription[] = await engine.describeRules(createDescribeOptions(new Workspace('id',
+            [legacyConfigCasesFolder],
+            [
                 path.join(workspaceWithNoCustomConfig, 'dummy3.txt'),
-                path.join(workspaceWithNoCustomConfig, 'dummy2.ts')])));
+                path.join(workspaceWithNoCustomConfig, 'dummy2.ts')
+            ])));
         expect(ruleDescriptions).toEqual(TS_CONFIG_RULES);
     });
 
     it('When describing rules from a workspace with no typescript files, then no typescript rules should returned', async () => {
         const engine: ESLintEngine = new ESLintEngine(DEFAULT_CONFIG);
-        const ruleDescriptions: RuleDescription[] = await engine.describeRules(createDescribeOptions(new Workspace([
+        const ruleDescriptions: RuleDescription[] = await engine.describeRules(createDescribeOptions(new Workspace('id', [
                 path.join(workspaceWithNoCustomConfig, 'dummy1.js'),
                 path.join(workspaceWithNoCustomConfig, 'dummy3.txt')])));
         expect(ruleDescriptions).toEqual(makeUniqueAndSorted([...LWC_CONFIG_RULES, ...JS_CONFIG_RULES]));
@@ -118,13 +121,13 @@ describe('Tests for the describeRules method of ESLintEngine', () => {
     it('When describing rules from a workspace with no javascript or typescript files, then no rules should return', async () => {
         const engine: ESLintEngine = new ESLintEngine(DEFAULT_CONFIG);
         const ruleDescriptions: RuleDescription[] = await engine.describeRules(createDescribeOptions(
-            new Workspace([path.join(workspaceWithNoCustomConfig, 'dummy3.txt')])));
+            new Workspace('id', [path.join(workspaceWithNoCustomConfig, 'dummy3.txt')])));
         expect(ruleDescriptions).toHaveLength(0);
     });
 
     it('When describing rules from an empty workspace, then no rules should return', async () => {
         const engine: ESLintEngine = new ESLintEngine(DEFAULT_CONFIG);
-        const ruleDescriptions: RuleDescription[] = await engine.describeRules(createDescribeOptions(new Workspace([])));
+        const ruleDescriptions: RuleDescription[] = await engine.describeRules(createDescribeOptions(new Workspace('id', [])));
         expect(ruleDescriptions).toHaveLength(0);
     });
 
@@ -136,7 +139,7 @@ describe('Tests for the describeRules method of ESLintEngine', () => {
             eslint_config_file: path.join(workspaceThatHasCustomConfigWithNewRules, '.eslintrc.yml')
         });
         const ruleDescriptions: RuleDescription[] = await engine.describeRules(createDescribeOptions(
-            new Workspace([workspaceWithNoCustomConfig])));
+            new Workspace('id', [workspaceWithNoCustomConfig])));
 
         expect(ruleDescriptions).toEqual(makeUniqueAndSorted([...DEFAULT_RULES, ...CUSTOM_RULES]));
     });
@@ -153,7 +156,7 @@ describe('Tests for the describeRules method of ESLintEngine', () => {
             engine.onEvent(EventType.LogEvent, (event: LogEvent) => logEvents.push(event));
 
             const ruleDescriptions: RuleDescription[] = await engine.describeRules(createDescribeOptions(
-                new Workspace([workspaceThatHasCustomConfigModifyingExistingRules]))); // ... and include it in the workspace
+                new Workspace('id', [workspaceThatHasCustomConfigModifyingExistingRules]))); // ... and include it in the workspace
 
             expect(ruleDescriptions).toEqual(DEFAULT_RULES);
 
@@ -181,7 +184,7 @@ describe('Tests for the describeRules method of ESLintEngine', () => {
                 eslint_config_file: path.join(workspaceThatHasCustomConfigModifyingExistingRules, '.eslintrc.json')
             });
             const ruleDescriptions: RuleDescription[] = await engine.describeRules(createDescribeOptions(
-                new Workspace([workspaceThatHasCustomConfigWithNewRules]))); // ... and include it in the workspace
+                new Workspace('id', [workspaceThatHasCustomConfigWithNewRules]))); // ... and include it in the workspace
 
             expect(ruleDescriptions).toEqual(DEFAULT_RULES); // Modifying rule properties does not change rule descriptions
         } finally {
@@ -270,7 +273,7 @@ describe('Tests for the describeRules method of ESLintEngine', () => {
             disable_lwc_base_config: true
         });
         const ruleDescriptions: RuleDescription[] = await engine.describeRules(createDescribeOptions(
-            new Workspace([path.join(workspaceThatHasCustomConfigModifyingExistingRules, 'dummy1.js')])));
+            new Workspace('id', [path.join(workspaceThatHasCustomConfigModifyingExistingRules, 'dummy1.js')])));
         expect(ruleDescriptions).toEqual(loadRuleDescriptions('rules_OnlyCustomConfigModifyingExistingRules.goldfile.json'));
     });
 
@@ -342,7 +345,7 @@ describe('Tests for the describeRules method of ESLintEngine', () => {
             eslint_config_file: path.join(workspaceThatIgnoresFilesByConfig, '.eslintrc.json')
         });
         const ruleDescriptions: RuleDescription[] = await engine.describeRules(createDescribeOptions(
-            new Workspace([workspaceThatIgnoresFilesByConfig])));
+            new Workspace('id', [workspaceThatIgnoresFilesByConfig])));
         expect(ruleDescriptions).toEqual(TS_CONFIG_RULES);
     });
 
@@ -354,7 +357,7 @@ describe('Tests for the describeRules method of ESLintEngine', () => {
         engine.onEvent(EventType.LogEvent, (event: LogEvent) => logEvents.push(event));
 
         const ruleDescriptions: RuleDescription[] = await engine.describeRules(createDescribeOptions(
-            new Workspace([workspaceThatHasEslintIgnoreFile])));
+            new Workspace('id', [workspaceThatHasEslintIgnoreFile])));
         expect(ruleDescriptions).toEqual(makeUniqueAndSorted([...LWC_CONFIG_RULES, ...JS_CONFIG_RULES, ... TS_CONFIG_RULES]));
 
         const relPathFromCwd: string = path.join(workspaceThatHasEslintIgnoreFile.slice((process.cwd() + path.sep).length), '.eslintignore');
@@ -375,7 +378,7 @@ describe('Tests for the describeRules method of ESLintEngine', () => {
         engine.onEvent(EventType.LogEvent, (event: LogEvent) => logEvents.push(event));
 
         const ruleDescriptions: RuleDescription[] = await engine.describeRules(createDescribeOptions(
-            new Workspace([workspaceThatHasEslintIgnoreFile])));
+            new Workspace('id', [workspaceThatHasEslintIgnoreFile])));
         expect(ruleDescriptions).toEqual(TS_CONFIG_RULES);
     });
 
@@ -388,7 +391,7 @@ describe('Tests for the describeRules method of ESLintEngine', () => {
         engine.onEvent(EventType.LogEvent, (event: LogEvent) => logEvents.push(event));
 
         const ruleDescriptions: RuleDescription[] = await engine.describeRules(createDescribeOptions(
-            new Workspace([workspaceThatHasEslintIgnoreFile])));
+            new Workspace('id', [workspaceThatHasEslintIgnoreFile])));
         expect(ruleDescriptions).toEqual(TS_CONFIG_RULES);
     });
 
@@ -401,7 +404,7 @@ describe('Tests for the describeRules method of ESLintEngine', () => {
             eslint_config_file: path.join(workspaceThatHasCustomConfigWithNewRules, '.eslintrc_customLanguage.yml')
         });
         const ruleDescriptions: RuleDescription[] = await engine.describeRules(createDescribeOptions(
-            new Workspace([workspaceThatHasCustomConfigWithNewRules])));
+            new Workspace('id', [workspaceThatHasCustomConfigWithNewRules])));
 
         expect(ruleDescriptions).toHaveLength(0);
     });
@@ -419,7 +422,7 @@ describe('Tests for the describeRules method of ESLintEngine', () => {
             }
         });
         const ruleDescriptions: RuleDescription[] = await engine.describeRules(createDescribeOptions(
-            new Workspace([workspaceThatHasCustomConfigWithNewRules])));
+            new Workspace('id', [workspaceThatHasCustomConfigWithNewRules])));
 
         expect(ruleDescriptions).toHaveLength(3);
         expect(ruleDescriptions.map(rd => rd.name)).toEqual(["dummy/my-rule-1", "dummy/my-rule-2", "dummy/my-rule-3"]);
@@ -466,7 +469,7 @@ describe('Typical tests for the runRules method of ESLintEngine', () => {
 
     it('When running with defaults and no customizations, then violations for javascript and typescript are found correctly', async () => {
         const engine: ESLintEngine = new ESLintEngine(DEFAULT_CONFIG);
-        const runOptions: RunOptions = createRunOptions(new Workspace([workspaceWithNoCustomConfig]));
+        const runOptions: RunOptions = createRunOptions(new Workspace('id', [workspaceWithNoCustomConfig]));
         const results: EngineRunResults = await engine.runRules(['no-invalid-regexp', '@typescript-eslint/no-wrapper-object-types'], runOptions);
 
         expect(results.violations).toHaveLength(3);
@@ -475,9 +478,10 @@ describe('Typical tests for the runRules method of ESLintEngine', () => {
         expect(results.violations).toContainEqual(expectedTsViolation_noWrapperObjectTypes);
     });
 
-    it('When workspace only contains javascript files, then only javascript violations are returned', async () => {
+    it('When workspace only targets javascript files, then only javascript violations are returned', async () => {
         const engine: ESLintEngine = new ESLintEngine(DEFAULT_CONFIG);
-        const runOptions: RunOptions = createRunOptions(new Workspace([path.join(workspaceWithNoCustomConfig, 'dummy1.js')]));
+        const runOptions: RunOptions = createRunOptions(new Workspace('id', [workspaceWithNoCustomConfig],
+            [path.join(workspaceWithNoCustomConfig, 'dummy1.js')]));
         const results: EngineRunResults = await engine.runRules(['no-invalid-regexp'], runOptions);
 
         expect(results.violations).toEqual([expectedJsViolation_noInvalidRegexp]);
@@ -485,7 +489,7 @@ describe('Typical tests for the runRules method of ESLintEngine', () => {
 
     it('When workspace only contains typescript files, then only typescript violations are returned', async () => {
         const engine: ESLintEngine = new ESLintEngine(DEFAULT_CONFIG);
-        const runOptions: RunOptions = createRunOptions(new Workspace([path.join(workspaceWithNoCustomConfig, 'dummy2.ts')]));
+        const runOptions: RunOptions = createRunOptions(new Workspace('id', [path.join(workspaceWithNoCustomConfig, 'dummy2.ts')]));
         const results: EngineRunResults = await engine.runRules(['no-invalid-regexp'], runOptions);
 
         expect(results.violations).toEqual([expectedTsViolation_noInvalidRegexp]);
@@ -493,7 +497,7 @@ describe('Typical tests for the runRules method of ESLintEngine', () => {
 
     it('When workspace does not contains javascript or typescript files, then zero violations are returned', async () => {
         const engine: ESLintEngine = new ESLintEngine(DEFAULT_CONFIG);
-        const runOptions: RunOptions = createRunOptions(new Workspace([path.join(workspaceWithNoCustomConfig, 'dummy3.txt')]));
+        const runOptions: RunOptions = createRunOptions(new Workspace('id', [path.join(workspaceWithNoCustomConfig, 'dummy3.txt')]));
         const results: EngineRunResults = await engine.runRules(['no-invalid-regexp'], runOptions);
 
         expect(results.violations).toHaveLength(0);
@@ -503,7 +507,7 @@ describe('Typical tests for the runRules method of ESLintEngine', () => {
         const engine: ESLintEngine = new ESLintEngine({...DEFAULT_CONFIG,
             auto_discover_eslint_config: true
         });
-        const runOptions: RunOptions = createRunOptions(new Workspace([path.join(workspaceThatHasCustomConfigWithNewRules, 'dummy1.js')]));
+        const runOptions: RunOptions = createRunOptions(new Workspace('id', [path.join(workspaceThatHasCustomConfigWithNewRules, 'dummy1.js')]));
         const results: EngineRunResults = await engine.runRules(['dummy/my-rule-1', 'dummy/my-rule-2'], runOptions);
 
         expect(results.violations).toHaveLength(2);
@@ -543,7 +547,7 @@ describe('Typical tests for the runRules method of ESLintEngine', () => {
             }
         });
 
-        const runOptions: RunOptions = createRunOptions(new Workspace([path.join(workspaceThatHasCustomConfigWithNewRules)]));
+        const runOptions: RunOptions = createRunOptions(new Workspace('id', [path.join(workspaceThatHasCustomConfigWithNewRules)]));
 
         const results: EngineRunResults = await engine.runRules(['dummy/my-rule-1'], runOptions);
 
@@ -569,7 +573,7 @@ describe('Typical tests for the runRules method of ESLintEngine', () => {
         const logEvents: LogEvent[] = [];
         engine.onEvent(EventType.LogEvent, (event: LogEvent) => logEvents.push(event));
 
-        const runOptions: RunOptions = createRunOptions(new Workspace([path.join(workspaceThatHasCustomConfigWithNewRules, 'dummy1.js')]));
+        const runOptions: RunOptions = createRunOptions(new Workspace('id', [path.join(workspaceThatHasCustomConfigWithNewRules, 'dummy1.js')]));
         const results: EngineRunResults = await engine.runRules(['no-invalid-regexp'], runOptions);
         expect(results.violations).toHaveLength(0);
 
@@ -586,7 +590,7 @@ describe('Typical tests for the runRules method of ESLintEngine', () => {
         const engine: ESLintEngine = new ESLintEngine({...DEFAULT_CONFIG,
             auto_discover_eslint_config: true
         });
-        const runOptions: RunOptions = createRunOptions(new Workspace([workspaceThatIgnoresFilesByConfig]));
+        const runOptions: RunOptions = createRunOptions(new Workspace('id', [workspaceThatIgnoresFilesByConfig]));
         const results: EngineRunResults = await engine.runRules(['no-invalid-regexp', '@typescript-eslint/no-wrapper-object-types'], runOptions);
         expect(results.violations).toHaveLength(2); // Should not contain js violations but should contain ts violations
         expect(path.extname(results.violations[0].codeLocations[0].file)).toEqual('.ts');
@@ -597,7 +601,7 @@ describe('Typical tests for the runRules method of ESLintEngine', () => {
         const engine: ESLintEngine = new ESLintEngine({...DEFAULT_CONFIG,
             eslint_ignore_file: path.join(workspaceThatHasEslintIgnoreFile, '.eslintignore')
         });
-        const runOptions: RunOptions = createRunOptions(new Workspace([workspaceThatHasEslintIgnoreFile]));
+        const runOptions: RunOptions = createRunOptions(new Workspace('id', [workspaceThatHasEslintIgnoreFile]));
         const results: EngineRunResults = await engine.runRules(['no-invalid-regexp', '@typescript-eslint/no-wrapper-object-types'], runOptions);
         expect(results.violations).toHaveLength(2); // Should not contain js violations but should contain ts violations
         expect(path.extname(results.violations[0].codeLocations[0].file)).toEqual('.ts');
@@ -611,7 +615,7 @@ describe('Typical tests for the runRules method of ESLintEngine', () => {
         const origWorkingDir: string = process.cwd();
         process.chdir(folderContainingBabelConfigFile);
         try {
-            const runOptions: RunOptions = createRunOptions(new Workspace([folderContainingBabelConfigFile]));
+            const runOptions: RunOptions = createRunOptions(new Workspace('id', [folderContainingBabelConfigFile]));
             engine.onEvent(EventType.LogEvent, (event: LogEvent) => logEvents.push(event));
             await engine.runRules(['@lwc/lwc/no-unexpected-wire-adapter-usages'], runOptions);
             expect(logEvents.filter(ev => ev.logLevel === LogLevel.Error)).toHaveLength(0);
@@ -647,7 +651,7 @@ describe('Tests for emitting events', () => {
 
     it('When workspace contains an unparsable javascript file, then we emit an error log event and continue to next file', async () => {
         const workspaceFolder: string = path.join(__dirname, 'test-data', 'workspaceWithUnparsableCode');
-        const runOptions: RunOptions = createRunOptions(new Workspace([workspaceFolder]));
+        const runOptions: RunOptions = createRunOptions(new Workspace('id', [workspaceFolder]));
         const results: EngineRunResults = await engine.runRules(['no-unused-vars'], runOptions);
 
         const errorEvents: LogEvent[] = logEvents.filter(e => e.logLevel === LogLevel.Error);
@@ -669,7 +673,7 @@ describe('Tests for emitting events', () => {
     });
 
     it('When runRules is called, then it emits correct progress events', async () => {
-        const runOptions: RunOptions = createRunOptions(new Workspace([workspaceWithNoCustomConfig]));
+        const runOptions: RunOptions = createRunOptions(new Workspace('id', [workspaceWithNoCustomConfig]));
         await engine.runRules(['no-unused-vars'], runOptions);
         expect(runRulesProgressEvents.map(e => e.percentComplete)).toEqual([0, 30, 95, 100]);
     });

@@ -24,8 +24,11 @@ import * as engApi from "@salesforce/code-analyzer-engine-api"
 import {FixedClock} from "@salesforce/code-analyzer-engine-api/utils"
 import {UnexpectedEngineErrorRule} from "../src/rules";
 import {UndefinedCodeLocation} from "../src/results";
+import {StubWorkspace} from "./stubs";
 
 changeWorkingDirectoryToPackageRoot();
+
+const SAMPLE_WORKSPACE_FOLDER: string = path.join(__dirname, 'test-data', 'sampleWorkspace')
 
 describe("Tests for CodeAnalyzer constructor", () => {
     it.each([
@@ -67,6 +70,150 @@ describe("Tests for getConfig method", () => {
     });
 });
 
+describe("Tests for the createWorkspace method", () => {
+    const codeAnalyzer = new CodeAnalyzer(CodeAnalyzerConfig.withDefaults());
+
+    it('When creating multiple workspaces, then they each get a unique id', async () => {
+        const workspace1: Workspace = await codeAnalyzer.createWorkspace([SAMPLE_WORKSPACE_FOLDER]);
+        const workspace2: Workspace = await codeAnalyzer.createWorkspace([SAMPLE_WORKSPACE_FOLDER]);
+        expect(workspace1.getWorkspaceId()).not.toEqual(workspace2.getWorkspaceId());
+    });
+
+    it('When creating a workspace with no files or folders or targets, then error', async () => {
+        await expect(codeAnalyzer.createWorkspace([])).rejects.toThrow(
+            getMessage('AtLeastOneFileOrFolderMustBeIncludedInWorkspace'));
+    });
+
+    it('When creating a workspace with no files or folders but some targets, then still error', async () => {
+        // It is each client's responsibility to always fill in something for the workspace. If the CLI for example
+        // has a users only provide target values but not workspace paths, then it might decide to use the target
+        // information as the workspace information (minus the method level targets).
+        await expect(codeAnalyzer.createWorkspace([],[SAMPLE_WORKSPACE_FOLDER])).rejects.toThrow(
+            getMessage('AtLeastOneFileOrFolderMustBeIncludedInWorkspace'));
+    });
+
+    it('When creating a workspace with a file or folder that does not exist, then error', async () => {
+        await expect(codeAnalyzer.createWorkspace(['/some/missing/folder'])).rejects.toThrow(
+            /The file or folder .*some.*missing.*folder.* does not exist./); // should work on unix and windows
+    });
+
+    it('When creating a workspace with a target that does not exist, then error', async () => {
+        const targetThatExists: string = path.join(SAMPLE_WORKSPACE_FOLDER,'someFile.cls#SomeMethod');
+        const targetThatDoesntExist: string = path.join(SAMPLE_WORKSPACE_FOLDER,'doesNotExist.cls#SomeMethod');
+        const promise: Promise<Workspace> = codeAnalyzer.createWorkspace(
+            [SAMPLE_WORKSPACE_FOLDER], [targetThatExists, targetThatDoesntExist]);
+        await expect(promise).rejects.toThrow(
+            getMessage('FileOrFolderDoesNotExist', path.join(SAMPLE_WORKSPACE_FOLDER,'doesNotExist.cls')));
+    });
+
+    it('When a target that has multiple # characters, then error', async () => {
+        const invalidTarget: string = path.join(SAMPLE_WORKSPACE_FOLDER, 'someFile.cls#SomeMethod1#oops');
+        await expect(codeAnalyzer.createWorkspace([SAMPLE_WORKSPACE_FOLDER], [invalidTarget])).rejects.toThrow(
+            getMessage('InvalidMethodTarget', invalidTarget));
+    });
+
+    it('When a target method name contains non-alpha-numeric characters, then error', async () => {
+        const invalidTarget: string = path.join(SAMPLE_WORKSPACE_FOLDER,
+            'someFile.cls#SomeMethod1;SomeMethod2'); // not supported by core
+        await expect(codeAnalyzer.createWorkspace([SAMPLE_WORKSPACE_FOLDER], [invalidTarget])).rejects.toThrow(
+            getMessage('InvalidMethodTarget', invalidTarget));
+    });
+
+    it('When a target method name starts with a number, then error', async () => {
+        const invalidTarget: string = path.join(SAMPLE_WORKSPACE_FOLDER, 'someFile.cls#3SomeMethod');
+        await expect(codeAnalyzer.createWorkspace([SAMPLE_WORKSPACE_FOLDER], [invalidTarget])).rejects.toThrow(
+            getMessage('InvalidMethodTarget', invalidTarget));
+    });
+
+    it('When a target method name is attached to a file that does not end with .cls, then error', async () => {
+        const invalidTarget: string = path.join(SAMPLE_WORKSPACE_FOLDER, 'sub1', 'someFileInSub1.txt#SomeMethod');
+        await expect(codeAnalyzer.createWorkspace([SAMPLE_WORKSPACE_FOLDER], [invalidTarget])).rejects.toThrow(
+            getMessage('InvalidMethodTarget', invalidTarget));
+    });
+
+    it('When a target method name is attached to folder instead of a file, then error', async () => {
+        const invalidTarget: string = path.join(SAMPLE_WORKSPACE_FOLDER, 'folderWithExt.cls#SomeMethod');
+        await expect(codeAnalyzer.createWorkspace([SAMPLE_WORKSPACE_FOLDER], [invalidTarget])).rejects.toThrow(
+            getMessage('TargetWithMethodMustNotBeFolder', invalidTarget,
+                path.join(SAMPLE_WORKSPACE_FOLDER, 'folderWithExt.cls')));
+    });
+
+    it('When a target does not live underneath of the workspace files and folders, then error', async() => {
+        const target: string = path.join(__dirname, 'code-analyzer.test.ts');
+        await expect(codeAnalyzer.createWorkspace([SAMPLE_WORKSPACE_FOLDER], [target])).rejects.toThrow(
+            getMessage('TargetMustLiveWithinWorkspace', target, JSON.stringify([SAMPLE_WORKSPACE_FOLDER])));
+    });
+
+    it('When workspace files and folders are provided as relative paths, then they are converted to absolute paths', async () => {
+        // Since changeWorkingDirectoryToPackageRoot() was used above, the pwd should be the code-analyzer-core directory
+        const workspace: Workspace = await codeAnalyzer.createWorkspace([SAMPLE_WORKSPACE_FOLDER, 'src', 'test/code-analyzer.test.ts']);
+        expect(workspace.getRawFilesAndFolders()).toEqual([
+            path.resolve('.', 'src'),
+            path.resolve('.', 'test', 'code-analyzer.test.ts'),
+            SAMPLE_WORKSPACE_FOLDER
+        ]);
+    });
+
+    it('When targets are provided as relative paths, then they are converted to absolute paths', async () => {
+        // Since changeWorkingDirectoryToPackageRoot() was used above, the pwd should be the code-analyzer-core directory
+        const workspace: Workspace = await codeAnalyzer.createWorkspace(['test'], [
+            'test/code-analyzer.test.ts',
+            'test/test-data/sampleWorkspace/someFile.cls#SomeMethod']);
+        expect(workspace.getRawTargets()).toEqual([
+            path.resolve('.', 'test', 'code-analyzer.test.ts'),
+            path.resolve('.', 'test', 'test-data', 'sampleWorkspace', 'someFile.cls#SomeMethod')
+        ]);
+    });
+
+    it("When provided a windows based path, it resolves correctly", async () => {
+        const workspace: Workspace = await codeAnalyzer.createWorkspace(['test\\code-analyzer.test.ts']);
+        expect(workspace.getRawFilesAndFolders()).toEqual([path.resolve('test/code-analyzer.test.ts')]);
+    });
+
+    it("When including a parent folder and child paths under that folder, then the redundant children are removed", async () => {
+        const workspace: Workspace = await codeAnalyzer.createWorkspace(['test/test-data', 'test', 'test/code-analyzer.test.ts']);
+        expect(workspace.getRawFilesAndFolders()).toEqual([path.resolve('test')]);
+    });
+
+    it("When explicitly including files that we normally would ignore, then they are still included since they were explicitly added", async () => {
+        const workspace: Workspace = await codeAnalyzer.createWorkspace([
+            'test/test-data/sampleWorkspace/node_modules/place_holder.txt',
+            'test/test-data/sampleWorkspace/someFile.cls',
+            'test/test-data/sampleWorkspace/.gitignore']);
+        expect(workspace.getRawFilesAndFolders()).toEqual([
+            path.resolve('test', 'test-data', 'sampleWorkspace', 'node_modules', 'place_holder.txt'),
+            path.resolve('test', 'test-data', 'sampleWorkspace', 'someFile.cls'),
+            path.resolve('test', 'test-data', 'sampleWorkspace', '.gitignore')
+        ].sort());
+    });
+
+    it("When providing files, folders, and targets, then returned workspace can expand everything correctly and remove redundant information", async () => {
+        const workspace: Workspace = await codeAnalyzer.createWorkspace([SAMPLE_WORKSPACE_FOLDER], [
+            path.join(SAMPLE_WORKSPACE_FOLDER, 'sub1', 'sub3'),
+            path.join(SAMPLE_WORKSPACE_FOLDER, 'sub1', 'sub3', 'someFileInSub3.cls#SomeMethod'), // method redundant with its parent folder and should go away
+            path.join(SAMPLE_WORKSPACE_FOLDER, 'someFile.cls#Method1'),
+            path.join(SAMPLE_WORKSPACE_FOLDER, 'someFile.cls#Method1'), // duplicate
+            path.join(SAMPLE_WORKSPACE_FOLDER, 'someFile.cls#Method2')
+        ]);
+
+        expect(await workspace.getWorkspaceFiles()).toEqual([
+            path.join(SAMPLE_WORKSPACE_FOLDER, 'folderWithExt.cls', 'placeholder.txt'),
+            path.join(SAMPLE_WORKSPACE_FOLDER, 'someFile.cls'),
+            path.join(SAMPLE_WORKSPACE_FOLDER, 'sub1', 'someFileInSub1.txt'),
+            path.join(SAMPLE_WORKSPACE_FOLDER, 'sub1','sub2', 'someFile1InSub2.txt'),
+            path.join(SAMPLE_WORKSPACE_FOLDER, 'sub1','sub2', 'someFile2InSub2.txt'),
+            path.join(SAMPLE_WORKSPACE_FOLDER, 'sub1','sub3', 'someFileInSub3.cls')
+        ]);
+        expect(await workspace.getTargetedFiles()).toEqual([
+            path.join(SAMPLE_WORKSPACE_FOLDER, 'sub1','sub3', 'someFileInSub3.cls') // should just have the file only, not the method
+        ]);
+        expect(await workspace.getTargetedMethods()).toEqual([
+            path.join(SAMPLE_WORKSPACE_FOLDER, 'someFile.cls#Method1'), // only 1 of these
+            path.join(SAMPLE_WORKSPACE_FOLDER, 'someFile.cls#Method2')
+        ]);
+    });
+});
+
 describe("Tests for the run method of CodeAnalyzer", () => {
     let sampleRunOptions: RunOptions;
     let sampleTimestamp: Date;
@@ -90,149 +237,17 @@ describe("Tests for the run method of CodeAnalyzer", () => {
         selection = await codeAnalyzer.selectRules([]);
     });
 
-    it("When run options contains a path start point (without method) with a file that does not exist, then error", async () => {
-        const runOptions: RunOptions = {
-            ... sampleRunOptions,
-            pathStartPoints: [path.resolve(__dirname, 'doesNotExist.xml')],
-        };
-        await expect(codeAnalyzer.run(selection, runOptions)).rejects.toThrow(
-            getMessage('FileOrFolderDoesNotExist', path.resolve(__dirname, 'doesNotExist.xml')));
-    });
-
-    it("When run options contains a path start point (with method) with a file that does not exist, then error", async () => {
-        const badPathStartPoint: string = path.resolve(__dirname, 'doesNotExist.xml#someMethod');
-        const runOptions: RunOptions = {
-            ... sampleRunOptions,
-            pathStartPoints: [path.resolve(__dirname, 'code-analyzer.test.ts'), badPathStartPoint]
-        };
-        await expect(codeAnalyzer.run(selection, runOptions)).rejects.toThrow(
-            getMessage('PathStartPointFileDoesNotExist', badPathStartPoint, path.resolve(__dirname, 'doesNotExist.xml')));
-    });
-
-    it("When path starting point is a folder with methods specified, then error", async () => {
-        const badPathStartPoint: string = "test/test-data#method1;method2";
-        const runOptions: RunOptions = {
-            ... sampleRunOptions,
-            pathStartPoints: [badPathStartPoint],
-        };
-        await expect(codeAnalyzer.run(selection, runOptions)).rejects.toThrow(
-            getMessage('PathStartPointWithMethodMustNotBeFolder', badPathStartPoint, path.resolve('test', 'test-data')));
-    });
-
-    it("When path starting point has too many hashtags specified, then error", async () => {
-        const badPathStartPoint: string = "test/test-helpers.ts#method1#method2";
-        const runOptions: RunOptions = {
-            ... sampleRunOptions,
-            pathStartPoints: [badPathStartPoint],
-        };
-        await expect(codeAnalyzer.run(selection, runOptions)).rejects.toThrow(
-            getMessage('InvalidPathStartPoint', badPathStartPoint));
-    });
-
-    it("When specifying a path starting point that has an invalid character in its method name, then error", async () => {
-        const badPathStartPoint: string = "test/test-helpers.ts#someMethod,oopsCommaIsInvalidHere";
-        const runOptions: RunOptions = {
-            ... sampleRunOptions,
-            pathStartPoints: [badPathStartPoint],
-        };
-        await expect(codeAnalyzer.run(selection, runOptions)).rejects.toThrow(
-            getMessage('InvalidPathStartPoint', badPathStartPoint));
-    });
-
-    it("When files to include is an empty array, then error", async () => {
-        const runOptions: RunOptions = {
-            workspace: await codeAnalyzer.createWorkspace([]),
-        };
-        await expect(codeAnalyzer.run(selection, runOptions)).rejects.toThrow(
-            getMessage('AtLeastOneFileOrFolderMustBeIncluded'));
-    });
-
-    it("When path start point does not live under one of the specified paths, then error", async () => {
-        const badPathStartPoint: string = "test/test-helpers.ts#someMethod";
-        const runOptions: RunOptions = {
-            workspace: await codeAnalyzer.createWorkspace(['src', 'package.json']),
-            pathStartPoints: [badPathStartPoint],
-        };
-        await expect(codeAnalyzer.run(selection, runOptions)).rejects.toThrow(
-            getMessage('PathStartPointMustBeInsideWorkspace', path.resolve('test', 'test-helpers.ts'),
-                JSON.stringify([path.resolve('package.json'), path.resolve('src')])));
-    });
-
-    it("When specifying path start points as an empty array, then no path start points are passed to engines", async () => {
+    it("When run options contains workspace with targets, then they are passed to each engine successfully", async () => {
         await codeAnalyzer.run(selection, {
-            workspace: await codeAnalyzer.createWorkspace(['src']),
-            pathStartPoints: []
+            workspace: await codeAnalyzer.createWorkspace([SAMPLE_WORKSPACE_FOLDER],[
+                path.join(SAMPLE_WORKSPACE_FOLDER, 'someFile.cls#SomeMethod')
+            ]),
         });
 
         const expectedEngineRunOptions: engApi.RunOptions = {
             logFolder: codeAnalyzer.getConfig().getLogFolder(),
-            workspace: new engApi.Workspace([path.resolve('src')], "FixedId")
-        };
-        expect(stubEngine1.runRulesCallHistory).toHaveLength(1);
-        expect(stubEngine1.runRulesCallHistory[0].ruleNames).toEqual(expectedStubEngine1RuleNames);
-        expectEquivalentRunOptions(stubEngine1.runRulesCallHistory[0].runOptions, expectedEngineRunOptions);
-        expect(stubEngine2.runRulesCallHistory).toHaveLength(1);
-        expect(stubEngine2.runRulesCallHistory[0].ruleNames).toEqual(expectedStubEngine2RuleNames);
-        expectEquivalentRunOptions(stubEngine2.runRulesCallHistory[0].runOptions, expectedEngineRunOptions);
-    });
-
-    it("When specifying path start points as files and subfolders, then they are passed to each engine successfully", async () => {
-        await codeAnalyzer.run(selection, {
-            workspace: await codeAnalyzer.createWorkspace(['test']),
-            pathStartPoints: ['test/test-data', 'test/code-analyzer.test.ts']
-        });
-
-        const expectedEngineRunOptions: engApi.RunOptions = {
-            logFolder: codeAnalyzer.getConfig().getLogFolder(),
-            workspace: new engApi.Workspace([path.resolve('test')], "FixedId"),
-            pathStartPoints: [
-                { file: path.resolve("test", "test-data") },
-                { file: path.resolve("test", "code-analyzer.test.ts")}
-            ]
-        };
-        expect(stubEngine1.runRulesCallHistory).toHaveLength(1);
-        expect(stubEngine1.runRulesCallHistory[0].ruleNames).toEqual(expectedStubEngine1RuleNames);
-        expectEquivalentRunOptions(stubEngine1.runRulesCallHistory[0].runOptions, expectedEngineRunOptions);
-        expect(stubEngine2.runRulesCallHistory).toHaveLength(1);
-        expect(stubEngine2.runRulesCallHistory[0].ruleNames).toEqual(expectedStubEngine2RuleNames);
-        expectEquivalentRunOptions(stubEngine2.runRulesCallHistory[0].runOptions, expectedEngineRunOptions);
-    });
-
-    it("When specifying path start points individual methods, then they are passed to each engine successfully", async () => {
-        await codeAnalyzer.run(selection, {
-            workspace: await codeAnalyzer.createWorkspace(['test', 'src/utils.ts', 'src/index.ts']),
-            pathStartPoints: ['test/code-analyzer.test.ts#someMethod','test/stubs.ts#method1;method2;method3','src/utils.ts']
-        });
-
-        const expectedEngineRunOptions: engApi.RunOptions = {
-            logFolder: codeAnalyzer.getConfig().getLogFolder(),
-            workspace: new engApi.Workspace([
-                    path.resolve("src", "index.ts"),
-                    path.resolve("src", "utils.ts"),
-                    path.resolve('test')
-                ],
-                "FixedId"),
-            pathStartPoints: [
-                {
-                    file: path.resolve("test", "code-analyzer.test.ts"),
-                    methodName: 'someMethod'
-                },
-                {
-                    file: path.resolve("test", "stubs.ts"),
-                    methodName: 'method1'
-                },
-                {
-                    file: path.resolve("test", "stubs.ts"),
-                    methodName: 'method2'
-                },
-                {
-                    file: path.resolve("test", "stubs.ts"),
-                    methodName: 'method3'
-                },
-                {
-                    file: path.resolve("src", "utils.ts")
-                }
-            ]
+            workspace: new engApi.Workspace("FixedId", [SAMPLE_WORKSPACE_FOLDER], [
+                path.join(SAMPLE_WORKSPACE_FOLDER, 'someFile.cls#SomeMethod')])
         };
         expect(stubEngine1.runRulesCallHistory).toHaveLength(1);
         expect(stubEngine1.runRulesCallHistory[0].ruleNames).toEqual(expectedStubEngine1RuleNames);
@@ -243,16 +258,17 @@ describe("Tests for the run method of CodeAnalyzer", () => {
     });
 
     it("When the workspace provided is one that is not constructed from CodeAnalyzer's createWorkspace method, then it should still work", async () => {
-        const dummyWorkspace: Workspace = new DummyWorkspace();
+        const dummyWorkspace: Workspace = new StubWorkspace();
         await codeAnalyzer.run(selection, {
-            workspace: new DummyWorkspace()
+            workspace: dummyWorkspace
         });
 
         expect(stubEngine1.runRulesCallHistory).toEqual([{
             ruleNames: expectedStubEngine1RuleNames,
             runOptions: {
                 logFolder: codeAnalyzer.getConfig().getLogFolder(),
-                workspace: new engApi.Workspace(dummyWorkspace.getFilesAndFolders(), dummyWorkspace.getWorkspaceId())
+                workspace: new engApi.Workspace(dummyWorkspace.getWorkspaceId(), dummyWorkspace.getRawFilesAndFolders(),
+                    dummyWorkspace.getRawTargets())
             }
         }]);
     });
@@ -263,7 +279,7 @@ describe("Tests for the run method of CodeAnalyzer", () => {
 
         const expectedEngineRunOptions: engApi.RunOptions = {
             logFolder: codeAnalyzer.getConfig().getLogFolder(),
-            workspace: new engApi.Workspace([__dirname], "FixedId")
+            workspace: new engApi.Workspace("FixedId", [__dirname])
         };
         expect(stubEngine1.runRulesCallHistory).toHaveLength(1);
         expect(stubEngine1.runRulesCallHistory[0].ruleNames).toEqual(expectedStubEngine1RuleNames);
@@ -733,23 +749,14 @@ function assertCodeLocation(codeLocation: CodeLocation, file: string, startLine:
     expect(codeLocation.getEndColumn()).toEqual(endColumn);
 }
 
-class DummyWorkspace implements Workspace {
-    getWorkspaceId(): string {
-        return "dummy";
-    }
-
-    getFilesAndFolders(): string[] {
-        return [__dirname];
-    }
-}
 
 function expectEquivalentRunOptions(actual: engApi.RunOptions, expected: engApi.RunOptions): void {
     expect(actual.logFolder).toEqual(expected.logFolder);
     expectEquivalentWorkspaces(actual.workspace, expected.workspace);
-    expect(actual.pathStartPoints).toEqual(expected.pathStartPoints);
 }
 
 function expectEquivalentWorkspaces(actual: engApi.Workspace, expected: engApi.Workspace): void {
     expect(actual.getWorkspaceId()).toEqual(expected.getWorkspaceId());
-    expect(actual.getFilesAndFolders()).toEqual(expected.getFilesAndFolders());
+    expect(actual.getRawFilesAndFolders()).toEqual(expected.getRawFilesAndFolders());
+    expect(actual.getRawTargets()).toEqual(expected.getRawTargets());
 }

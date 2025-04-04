@@ -145,7 +145,7 @@ export class PresentESLintWorkspace implements ESLintWorkspace {
         }
 
         this.filesOfInterest = { javascriptFiles: [], typescriptFiles: [], otherFiles: [] };
-        for (const file of await this.delegateWorkspace.getExpandedFiles()) {
+        for (const file of await this.delegateWorkspace.getTargetedFiles()) {
             const fileExt = path.extname(file).toLowerCase();
             if (this.config.file_extensions.javascript.includes(fileExt)) {
                 this.filesOfInterest.javascriptFiles.push(file);

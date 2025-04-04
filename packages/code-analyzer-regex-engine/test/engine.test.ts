@@ -97,7 +97,7 @@ const EXPECTED_MinVersionForAbstractVirtualClassesWithPrivateMethod_RULE_DESCRIP
 const SAMPLE_DATE: Date = new Date(Date.UTC(2024, 8, 1, 0, 0, 0));
 
 let engine: RegexEngine;
-beforeAll(() => {
+beforeEach(() => {
     engine = new RegexEngine({
         ... createBaseRegexRules(SAMPLE_DATE),
         ... SAMPLE_CUSTOM_RULES
@@ -122,15 +122,16 @@ describe("Tests for RegexEngine's getName and describeRules methods", () => {
         expect(rulesDescriptions[6]).toMatchObject(EXPECTED_NoHellos_RULE_DESCRIPTION);
     });
 
-    it("When workspace contains zero applicable files, then describeRules returns no rules", async () => {
+    it("When workspace targeting zero applicable files, then describeRules returns no rules", async () => {
         const rulesDescriptions: RuleDescription[] = await engine.describeRules(createDescribeOptions(
-            new Workspace([path.resolve(__dirname, 'test-data', 'workspaceWithNoTextFiles')])));
+            new Workspace('id', [path.resolve(__dirname, 'test-data')],
+                [path.resolve(__dirname, 'test-data', 'workspaceWithNoTextFiles')])));
         expect(rulesDescriptions).toHaveLength(0);
     });
 
     it("When workspace contains files only applicable to only some of the rules, then describeRules only returns those rules", async () => {
         const rulesDescriptions: RuleDescription[] = await engine.describeRules(createDescribeOptions(
-            new Workspace([path.resolve(__dirname, 'test-data', 'sampleWorkspace', 'dummy3.js')])));
+            new Workspace('id', [path.resolve(__dirname, 'test-data', 'sampleWorkspace', 'dummy3.js')])));
 
         expect(rulesDescriptions).toHaveLength(3);
         expect(rulesDescriptions[0]).toMatchObject(EXPECTED_AvoidTermsWithImplicitBias_RULE_DESCRIPTION);
@@ -140,7 +141,7 @@ describe("Tests for RegexEngine's getName and describeRules methods", () => {
 
     it("When workspace contains files are applicable to all available rules, then describeRules returns all rules", async () => {
         const rulesDescriptions: RuleDescription[] = await engine.describeRules(createDescribeOptions(
-            new Workspace([path.resolve(__dirname, 'test-data', 'sampleWorkspace')])));
+            new Workspace('id', [path.resolve(__dirname, 'test-data', 'sampleWorkspace')])));
         expect(rulesDescriptions).toHaveLength(7);
         expect(rulesDescriptions[0]).toMatchObject(EXPECTED_NoTrailingWhitespace_RULE_DESCRIPTION);
         expect(rulesDescriptions[1]).toMatchObject(EXPECTED_AvoidTermsWithImplicitBias_RULE_DESCRIPTION);
@@ -155,14 +156,14 @@ describe("Tests for RegexEngine's getName and describeRules methods", () => {
 describe('Tests for runRules', () => {
     it('if runRules() is called on a directory with no Apex files, it should correctly return no violations', async () => {
         const runOptions: RunOptions = createRunOptions(
-            new Workspace([path.resolve(__dirname, "test-data", "apexClassWhitespace", "1_notApexClassWithWhitespace")]));
+            new Workspace('id', [path.resolve(__dirname, "test-data", "apexClassWhitespace", "1_notApexClassWithWhitespace")]));
         const runResults: EngineRunResults = await engine.runRules( ["NoTrailingWhitespace"], runOptions);
         expect(runResults.violations).toHaveLength(0);
     });
 
-    it("Ensure runRules when called on a directory of Apex classes, it properly emits violations", async () => {
+    it("Ensure runRules when called on a workspapce that targets Apex classes, it properly emits violations", async () => {
         const runOptions: RunOptions = createRunOptions(
-            new Workspace([path.resolve(__dirname, "test-data", "apexClassWhitespace")]));
+            new Workspace('id', [path.resolve(__dirname, "test-data")], [path.resolve(__dirname, "test-data", "apexClassWhitespace")]));
         const runResults: EngineRunResults = await engine.runRules(["NoTrailingWhitespace", "NoTodos", "AvoidOldSalesforceApiVersions"], runOptions);
 
         const expectedViolations: Violation[] = [
@@ -263,7 +264,7 @@ describe('Tests for runRules', () => {
 
     it("Ensure runRules when called on a directory of Apex classes with getHeapSize in a loop, it properly emits violations", async () => {
         const runOptions: RunOptions = createRunOptions(
-            new Workspace([path.resolve(__dirname, "test-data", "apexClassGetLimitsInLoop")]));
+            new Workspace('id', [path.resolve(__dirname, "test-data", "apexClassGetLimitsInLoop")]));
         const runResults: EngineRunResults = await engine.runRules(["AvoidGetHeapSizeInLoop"], runOptions);
 
         const expectedViolations: Violation[] = [
@@ -361,7 +362,7 @@ describe('Tests for runRules', () => {
 
     it("Ensure runRules when called on a directory of Apex classes with private method in abstract/private class, it properly emits violations", async () => {
         const runOptions: RunOptions = createRunOptions(
-            new Workspace([path.resolve(__dirname, "test-data", "apexClassWithPrivateMethod")]));
+            new Workspace('id', [path.resolve(__dirname, "test-data", "apexClassWithPrivateMethod")]));
         const runResults: EngineRunResults = await engine.runRules(["MinVersionForAbstractVirtualClassesWithPrivateMethod"], runOptions);
 
         const expectedViolations: Violation[] = [
@@ -431,7 +432,7 @@ describe('Tests for runRules', () => {
 
     it("Ensure when runRules is called on a directory of files with inclusivity rule violations, engine emits violations correctly", async () => {
         const runOptions: RunOptions = createRunOptions(
-            new Workspace([path.resolve(__dirname, "test-data", "inclusivityRuleWorkspace")]));
+            new Workspace('id', [path.resolve(__dirname, "test-data", "inclusivityRuleWorkspace")]));
         const runResults: EngineRunResults = await engine.runRules(["AvoidTermsWithImplicitBias"], runOptions);
         const expectedViolations: Violation[] = [
             {
@@ -668,7 +669,7 @@ describe('Tests for runRules', () => {
 
     it("When workspace contains files that violate custom rules, then emit violation correctly", async () => {
         const runOptions: RunOptions = createRunOptions(
-            new Workspace([path.resolve(__dirname, "test-data", "sampleWorkspace")]));
+            new Workspace('id', [path.resolve(__dirname, "test-data", "sampleWorkspace")]));
         const runResults: EngineRunResults = await engine.runRules(["NoTodos", "NoHellos"], runOptions);
 
         const expectedViolations: Violation[] = [
@@ -739,7 +740,7 @@ describe('Tests for runRules', () => {
 
     it("When running all rules compared to some rules, then output correctly returns what the correct violations according to specified rules", async () => {
         const runOptions: RunOptions = createRunOptions(
-            new Workspace([path.resolve(__dirname, "test-data", "sampleWorkspace")]));
+            new Workspace('id', [path.resolve(__dirname, "test-data", "sampleWorkspace")]));
         const ruleNames: string[] = ['NoTrailingWhitespace', 'AvoidTermsWithImplicitBias', 'AvoidOldSalesforceApiVersions', 'NoHellos', 'NoTodos']
         const individualRunViolations: Violation[] = []
 

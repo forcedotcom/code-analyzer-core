@@ -84,7 +84,7 @@ export class SfgeEngine extends Engine {
             return { violations: [] };
         }
 
-        const relevantFiles: string[] = await this.getRelevantFilesInWorkspace(runOptions.workspace);
+        const relevantWorkspaceFiles: string[] = await this.getRelevantFilesInWorkspace(runOptions.workspace);
 
         const sfgeRunOptions: SfgeRunOptions = {
             heapSizeArg: this.config.java_max_heap_size,
@@ -96,8 +96,9 @@ export class SfgeEngine extends Engine {
 
         const sfgeResults: SfgeRunResult[] = await this.sfgeWrapper.invokeRunCommand(
             selectedRuleInfoList,
-            relevantFiles, // TODO: WHEN WE ADD PATH-START TARGETING, THIS NEEDS TO CHANGE.
-            relevantFiles,
+            relevantWorkspaceFiles, // TODO: THIS SHOULD CHANGE TO relevantTargetedFiles (i.e. the relevant files from runOptions.workspace.getTargetedFiles) VERY VERY SOON!
+                                    //       Also we'll need to use the runOptions.workspace.getTargetedMethods as well.
+            relevantWorkspaceFiles,
             sfgeRunOptions,
             (innerPerc: number, message?: string) => this.emitRunRulesProgressEvent(5 + 93*innerPerc/100, message) // 5%-98%
         );
@@ -172,7 +173,7 @@ export class SfgeEngine extends Engine {
 
     private async getRelevantFilesInWorkspace(workspace: Workspace): Promise<string[]> {
         if (!this.relevantFilesByWorkspaceId.has(workspace.getWorkspaceId())) {
-            const relevantFiles: string[] = (await workspace.getExpandedFiles()).filter(isFileRelevantToSfge);
+            const relevantFiles: string[] = (await workspace.getWorkspaceFiles()).filter(isFileRelevantToSfge);
             this.relevantFilesByWorkspaceId.set(workspace.getWorkspaceId(), relevantFiles);
         }
         return this.relevantFilesByWorkspaceId.get(workspace.getWorkspaceId())!;

@@ -3,7 +3,6 @@ import {
     DescribeOptions,
     Engine,
     EngineRunResults,
-    PathPoint,
     RuleDescription,
     RunOptions,
     SeverityLevel,
@@ -79,7 +78,7 @@ const EXPECTED_VIOLATION_4: Violation = {
     ]
 }
 
-const DUMMY_WORKSPACE: Workspace = new Workspace([path.resolve(__dirname,'test-data','scenarios','1_hasJsLibraryWithVulnerability')]);
+const DUMMY_WORKSPACE: Workspace = new Workspace('dummy', [path.resolve(__dirname,'test-data','scenarios','1_hasJsLibraryWithVulnerability')]);
 const DUMMY_DESCRIBE_OPTIONS: DescribeOptions = createDescribeOptions(DUMMY_WORKSPACE);
 const DUMMY_RUN_OPTIONS: RunOptions = createRunOptions(DUMMY_WORKSPACE);
 
@@ -140,9 +139,8 @@ describe('Tests for the RetireJsEngine', () => {
         const spyExecutor: SpyRetireJsExecutor = new SpyRetireJsExecutor();
         engine = new RetireJsEngine(spyExecutor);
 
-        const workspace: Workspace = new Workspace([path.resolve('build-tools'), path.resolve('test/test-helpers.ts')]);
-        const pathStartPoints: PathPoint[] = [{file: 'test/test-helpers.ts'}]; // Sanity check that this should be ignored by this engine
-        const runOptions: RunOptions = createRunOptions(workspace, pathStartPoints);
+        const workspace: Workspace = new Workspace('id', [path.resolve('build-tools'), path.resolve('test/test-helpers.ts')]);
+        const runOptions: RunOptions = createRunOptions(workspace);
         const results: EngineRunResults = await engine.runRules(allRuleNames, runOptions);
 
         expect(spyExecutor.executeCallHistory).toEqual([{targetFiles: [
@@ -183,26 +181,26 @@ describe('Tests for the RetireJsEngine', () => {
         expect(engineRunResults3).toEqual({violations: []});
     });
 
-    it('When vulnerable file is underneath a node_modules or bower_components folder, then they are not included in the target files to scan', async () => {
+    it('When vulnerable targeted file is underneath a node_modules or bower_components folder, then they are not included in the target files to scan', async () => {
         const spyExecutor: SpyRetireJsExecutor = new SpyRetireJsExecutor();
         engine = new RetireJsEngine(spyExecutor);
-        const workspace: Workspace = new Workspace([
+        const workspace: Workspace = new Workspace('id', [path.resolve('test', 'test-data')], [
             path.resolve('test','test-data','scenarios','8_hasVulnerabilitiesUnderFoldersToSkip')]);
         await engine.runRules(allRuleNames, createRunOptions(workspace));
         expect(spyExecutor.executeCallHistory).toEqual([{targetFiles: []}]);
     });
 
-    it('When vulnerable file is a non-targeted text file, then they are not included in the target files to scan', async () => {
+    it('When vulnerable file is a non-relevant text file, then they are not included in the relevant files to scan', async () => {
         const spyExecutor: SpyRetireJsExecutor = new SpyRetireJsExecutor();
         engine = new RetireJsEngine(spyExecutor);
-        const workspace: Workspace = new Workspace([
+        const workspace: Workspace = new Workspace('id', [
             path.resolve('test','test-data','scenarios','9_hasVulnerabilityInNonTargetedTextFile')]);
         await engine.runRules(allRuleNames, createRunOptions(workspace));
         expect(spyExecutor.executeCallHistory).toEqual([{targetFiles: []}]);
     });
 
-    it('When no targeted files are in workspace, then describeRules returns zero rules', async () => {
-        const workspace: Workspace = new Workspace([
+    it('When no relevant files are targeted, then describeRules returns zero rules', async () => {
+        const workspace: Workspace = new Workspace('id', [path.resolve('test','test-data')], [
             path.resolve('test','test-data','scenarios','9_hasVulnerabilityInNonTargetedTextFile')
         ]);
         const ruleDescriptions: RuleDescription[] = await engine.describeRules(createDescribeOptions(workspace));
@@ -234,10 +232,9 @@ function createDescribeOptions(workspace?: Workspace): DescribeOptions {
     }
 }
 
-function createRunOptions(workspace: Workspace, pathStartPoints?: PathPoint[]): RunOptions {
+function createRunOptions(workspace: Workspace): RunOptions {
     return {
         logFolder: os.tmpdir(),
-        workspace: workspace,
-        pathStartPoints: pathStartPoints
+        workspace: workspace
     }
 }

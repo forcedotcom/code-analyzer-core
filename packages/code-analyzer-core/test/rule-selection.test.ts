@@ -286,7 +286,7 @@ describe('Tests for selecting rules', () => {
 
         const expectedDescribeOptions: engApi.DescribeOptions = {
             logFolder: codeAnalyzer.getConfig().getLogFolder(),
-            workspace: new engApi.Workspace([path.resolve('src'), path.resolve('test')], "FixedId")
+            workspace: new engApi.Workspace('FixedId', [path.resolve('src'), path.resolve('test')])
         };
         const stubEngine1: stubs.StubEngine1 = plugin.getCreatedEngine('stubEngine1') as stubs.StubEngine1;
         expect(stubEngine1.describeRulesCallHistory).toEqual([{describeOptions: expectedDescribeOptions}]);

@@ -33,7 +33,7 @@ export class WorkspaceLiaison {
             return this.relevantLanguageToFilesMap;
         }
 
-        const files: string[] = await this.workspace.getExpandedFiles();
+        const files: string[] = await this.workspace.getTargetedFiles();
         this.relevantLanguageToFilesMap = new Map<Language, string[]>();
 
         for (const file of files) {

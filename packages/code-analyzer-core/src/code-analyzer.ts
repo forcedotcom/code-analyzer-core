@@ -27,15 +27,53 @@ import path from 'node:path';
  * Interface for workspaces
  */
 export interface Workspace {
+    /**
+     * Returns the identifier associated with the workspace
+     */
     getWorkspaceId(): string
-    getFilesAndFolders(): string[]
+
+    /**
+     * Returns the unique list of files and folders that were used to construct the workspace.
+     */
+    getRawFilesAndFolders(): string[]
+
+    /**
+     * Returns the unique list of targets that were provided when constructing the workspace or undefined if none were provided.
+     */
+    getRawTargets(): string[] | undefined;
+
+    /**
+     * Returns list of files that an engine should target in its analysis.
+     *
+     * This method returns the full list of the absolute file paths recursively found within the provided targets (not
+     * including targeted methods).
+     */
+    getTargetedFiles(): Promise<string[]>
+
+    /**
+     * Returns a list of targeted methods, separate from the targeted files and folders, that an engine may analyse.
+     *
+     * Not all engines will be able to target individual methods. If an engine does support the file associated with the
+     * targeted method but does not support method level targeting, then the engine may emit an info or warning log
+     * event when it is running to say that the method level target is being ignored.
+     *
+     * The format of each targeted method is `<filePath>#<methodName>` (ex: '/path/to/SomeApexFile.cls#SomeMethod').
+     */
+    getTargetedMethods(): Promise<string[]>
+
+    /**
+     * The list of files that make up a user's workspace that engines may use to support its analysis of the targeted files.
+     *
+     * This method returns the full list of the absolute file paths recursively found within the workspace.
+     */
+    getWorkspaceFiles(): Promise<string[]>
 }
 
 /**
  * Optional options available to the selectRules method of the CodeAnalyzer class
  */
 export type SelectOptions = {
-    /** The workspace containing the files used to determine the applicable rules for the files within it */
+    /** Object that specifies the user's workspace and which files should be targeted in order to select only the relevant rules. */
     workspace?: Workspace
 }
 
@@ -43,15 +81,8 @@ export type SelectOptions = {
  * Options available to the run method of the CodeAnalyzer class
  */
 export type RunOptions = {
-    /** The workspace containing the files to run the selected rules against */
+    /** Object that specifies the user's workspace and which files should be targeted in the run analysis. */
     workspace: Workspace
-
-    /** Starting points within your workspace to restrict any path-based analysis rules to.
-     * If you don't specify this option, then any path-based analysis rules automatically discover and use all starting
-     * points found in your workspace. Use this option to restrict the starting points to only those you want in your
-     * code analysis. This option only applies to path-based analysis rules which are only available from some engines.
-     */
-    pathStartPoints?: string[]
 }
 
 /**
@@ -109,14 +140,35 @@ export class CodeAnalyzer {
     }
 
     /**
-     * Creates a {@link Workspace} instance associated with a specified list of files and folders
-     * @param filesAndFolders string array of files and/or folders to include
+     * Creates a {@link Workspace} instance associated with a specified list of files and folders.
+     *
+     * Additionally, an array of targets can be provided which helps engines limit which files they should perform a
+     * scan on while still being fully aware of all the files in the workspace. For example, some engines may depend on
+     * other files in your project to properly analyze the few files that you are targeting. If a targets array is not
+     * specified, then the entire list of workspaces files and folders will be targeted.
+     *
+     * Note that some engines may allow for method level targeting. To specify a method level target in your target
+     * array, use the following syntax: '/path/to/ApexClass.cls#methodName'. Currently, only Apex class (.cls) files are
+     * supported for method level targeting. Engines that do not support method level targets may simply ignore them.
+     *
+     * @param workspaceFilesAndFolders string array of files and/or folders to include in the workspace
+     * @param targets optional string array of files, folders, and/or apex methods
      */
-    public async createWorkspace(filesAndFolders: string[]): Promise<Workspace> {
+    public async createWorkspace(workspaceFilesAndFolders: string[], targets?: string[]): Promise<Workspace> {
         const workspaceId: string = this.uniqueIdGenerator.getUniqueId('workspace');
-        const fileValidationPromises: Promise<string>[] = filesAndFolders.map(validateFileOrFolder);
-        const validatedFilesAndFolders: string[] = (await Promise.all(fileValidationPromises)).flat();
-        return new WorkspaceImpl(validatedFilesAndFolders, workspaceId);
+        const workspaceValidationPromises: Promise<string>[] = workspaceFilesAndFolders.map(validateFileOrFolder);
+        const validatedWorkspaceFilesAndFolders: string[] = (await Promise.all(workspaceValidationPromises)).flat();
+        if (validatedWorkspaceFilesAndFolders.length === 0) {
+            throw new Error(getMessage('AtLeastOneFileOrFolderMustBeIncludedInWorkspace'));
+        }
+
+        let validatedTargets: string[] | undefined = undefined;
+        if (targets != undefined && targets.length > 0) {
+            const targetPromises: Promise<string>[] = targets.map(t => validateTarget(t, validatedWorkspaceFilesAndFolders));
+            validatedTargets = (await Promise.all(targetPromises)).flat();
+        }
+
+        return  new WorkspaceImpl(workspaceId, validatedWorkspaceFilesAndFolders, validatedTargets);
     }
 
     /**
@@ -247,9 +299,11 @@ export class CodeAnalyzer {
         //  up a bunch of RunResults promises and then does a Promise.all on them. Otherwise, the progress events may
         //  override each other.
 
-        const engineRunOptions: engApi.RunOptions = await extractEngineRunOptions(runOptions, this.config.getLogFolder());
-        this.emitLogEvent(LogLevel.Debug, getMessage('RunningWithRunOptions', JSON.stringify(engineRunOptions,
-            (key, value) => key === "expandedFiles" ? undefined : value))); // omit the expandedFiles since it is very large
+        const engineRunOptions: engApi.RunOptions = extractEngineRunOptions(runOptions, this.config.getLogFolder());
+        this.emitLogEvent(LogLevel.Debug, getMessage('RunningWithWorkspace', JSON.stringify({
+            filesAndFolders: runOptions.workspace.getRawFilesAndFolders(),
+            targets: runOptions.workspace.getRawTargets()
+        })));
 
         const runPromises: Promise<EngineRunResults>[] = ruleSelection.getEngineNames().map(
             engineName => this.runEngineAndValidateResults(engineName, ruleSelection, engineRunOptions));
@@ -464,16 +518,32 @@ export class CodeAnalyzer {
  */
 class WorkspaceImpl implements Workspace {
     private readonly delegate: engApi.Workspace;
-    constructor(absFilesAndFolders: string[], workspaceId: string) {
-        this.delegate = new engApi.Workspace(absFilesAndFolders, workspaceId);
+    constructor(workspaceId: string, absWorkspaceFilesAndFolders: string[], absTargets?: string[]) {
+        this.delegate = new engApi.Workspace(workspaceId, absWorkspaceFilesAndFolders, absTargets);
     }
 
     getWorkspaceId(): string {
         return this.delegate.getWorkspaceId();
     }
 
-    getFilesAndFolders(): string[] {
-        return this.delegate.getFilesAndFolders();
+    getRawFilesAndFolders(): string[] {
+        return this.delegate.getRawFilesAndFolders();
+    }
+
+    getRawTargets(): string[] | undefined {
+        return this.delegate.getRawTargets();
+    }
+
+    getWorkspaceFiles(): Promise<string[]> {
+        return this.delegate.getWorkspaceFiles();
+    }
+
+    getTargetedFiles(): Promise<string[]> {
+        return this.delegate.getTargetedFiles();
+    }
+
+    getTargetedMethods(): Promise<string[]> {
+        return this.delegate.getTargetedMethods();
     }
 
     _toEngApiWorkspace(): engApi.Workspace {
@@ -485,7 +555,7 @@ function toEngApiWorkspace(workspace: Workspace): engApi.Workspace {
     if (workspace instanceof WorkspaceImpl) {
         return (workspace as WorkspaceImpl)._toEngApiWorkspace();
     }
-    return new engApi.Workspace(workspace.getFilesAndFolders(), workspace.getWorkspaceId());
+    return new engApi.Workspace(workspace.getWorkspaceId(), workspace.getRawFilesAndFolders(), workspace.getRawTargets());
 }
 
 function getAvailableEngineNamesFromPlugin(enginePlugin: engApi.EnginePluginV1): string[] {
@@ -506,20 +576,11 @@ function validateRuleDescriptions(ruleDescriptions: engApi.RuleDescription[], en
     }
 }
 
-async function extractEngineRunOptions(runOptions: RunOptions, logFolder: string): Promise<engApi.RunOptions> {
-    if(runOptions.workspace.getFilesAndFolders().length == 0) {
-        throw new Error(getMessage('AtLeastOneFileOrFolderMustBeIncluded'));
-    }
-    const engineRunOptions: engApi.RunOptions = {
+function extractEngineRunOptions(runOptions: RunOptions, logFolder: string): engApi.RunOptions {
+    return {
         logFolder: logFolder,
         workspace: toEngApiWorkspace(runOptions.workspace),
     };
-    if (runOptions.pathStartPoints && runOptions.pathStartPoints.length > 0) {
-        const pathStartPointPromises: Promise<engApi.PathPoint[]>[] = runOptions.pathStartPoints.map(extractEnginePathStartPoints);
-        engineRunOptions.pathStartPoints = (await Promise.all(pathStartPointPromises)).flat();
-    }
-    validatePathStartPointsAreInsideWorkspace(engineRunOptions);
-    return engineRunOptions;
 }
 
 async function validateFileOrFolder(fileOrFolder: string): Promise<string> {
@@ -533,53 +594,36 @@ async function validateFileOrFolder(fileOrFolder: string): Promise<string> {
     return absFileOrFolder;
 }
 
-function validatePathStartPointFile(file: string, pathStartPointStr: string): string {
-    const absFile: string = toAbsolutePath(file);
-    if (!fs.existsSync(absFile)) {
-        throw new Error(getMessage('PathStartPointFileDoesNotExist', pathStartPointStr, absFile));
-    } else if (fs.statSync(absFile).isDirectory()) {
-        throw new Error(getMessage('PathStartPointWithMethodMustNotBeFolder', pathStartPointStr, absFile));
-    }
-    return absFile;
-}
-
-async function extractEnginePathStartPoints(pathStartPointStr: string): Promise<engApi.PathPoint[]> {
-    const parts: string[] = pathStartPointStr.split('#');
-    if (parts.length == 1) {
-        return [{
-            file: await validateFileOrFolder(pathStartPointStr)
-        }];
+async function validateTarget(fileFolderOrMethod: string, workspaceFilesAndFolders: string[]): Promise<string> {
+    const parts: string[] = fileFolderOrMethod.split('#');
+    if (parts.length === 1) {
+        const absFileOrFolderTarget: string = await validateFileOrFolder(fileFolderOrMethod);
+        validateTargetLivesWithinWorkspace(absFileOrFolderTarget, workspaceFilesAndFolders);
+        return absFileOrFolderTarget;
     } else if (parts.length > 2) {
-        throw new Error(getMessage('InvalidPathStartPoint', pathStartPointStr));
+        throw new Error(getMessage('InvalidMethodTarget', fileFolderOrMethod));
     }
 
-    const pathStartPointFile: string = validatePathStartPointFile(parts[0], pathStartPointStr);
+    // At this point it must be a method level target
     const VALID_METHOD_NAME_REGEX = /^[A-Za-z][A-Za-z0-9_]*$/;
-    const TRAILING_SPACES_AND_SEMICOLONS_REGEX = /\s+;*$/;
-    const methodNames: string = parts[1].replace(TRAILING_SPACES_AND_SEMICOLONS_REGEX, '');
-    return methodNames.split(";").map(methodName => {
-        if (! VALID_METHOD_NAME_REGEX.test(methodName) ) {
-            throw new Error(getMessage('InvalidPathStartPoint', pathStartPointStr));
-        }
-        return { file: pathStartPointFile, methodName: methodName };
-    });
+    const file: string = parts[0];
+    const methodName: string = parts[1];
+    if (!file.toLowerCase().endsWith('.cls') || !VALID_METHOD_NAME_REGEX.test(methodName)) {
+        throw new Error(getMessage('InvalidMethodTarget', fileFolderOrMethod));
+    }
+    const absFile: string = await validateFileOrFolder(file);
+    if ((await fs.promises.stat(absFile)).isDirectory()) {
+        throw new Error(getMessage('TargetWithMethodMustNotBeFolder', fileFolderOrMethod, absFile));
+    }
+    const absMethodTarget: string = absFile + '#' + methodName;
+    validateTargetLivesWithinWorkspace(absMethodTarget, workspaceFilesAndFolders);
+    return absMethodTarget;
 }
 
-function validatePathStartPointsAreInsideWorkspace(engineRunOptions: engApi.RunOptions): void {
-    if (!engineRunOptions.pathStartPoints) {
-        return;
+function validateTargetLivesWithinWorkspace(target: string, workspaceFilesAndFolders: string[]): void {
+    if (!workspaceFilesAndFolders.some(workspacePath => target.startsWith(workspacePath))) {
+        throw new Error(getMessage('TargetMustLiveWithinWorkspace', target, JSON.stringify(workspaceFilesAndFolders)));
     }
-    for (const enginePathStartPoint of engineRunOptions.pathStartPoints) {
-        if (!fileIsUnderneath(enginePathStartPoint.file, engineRunOptions.workspace.getFilesAndFolders())) {
-            throw new Error(getMessage('PathStartPointMustBeInsideWorkspace', enginePathStartPoint.file,
-                JSON.stringify(engineRunOptions.workspace.getFilesAndFolders())));
-        }
-    }
-}
-
-function fileIsUnderneath(file: string, filesOrFolders: string[]): boolean {
-    return filesOrFolders.some(fileOrFolder => fileOrFolder == file ||
-        (fs.statSync(fileOrFolder).isDirectory() && file.startsWith(fileOrFolder)));
 }
 
 function validateEngineRunResults(engineName: string, apiEngineRunResults: engApi.EngineRunResults, ruleSelection: RuleSelection): void {
