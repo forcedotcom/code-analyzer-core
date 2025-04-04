@@ -1,0 +1,11 @@
+[
+    {
+      "name": "Example Rule",
+      "severityLevel": 5,
+      "tags": [
+        "Recommended"
+      ],
+      "description": "The description of your rule",
+      "resourceUrls": []
+    }
+]
