@@ -64,13 +64,13 @@ public abstract class AbstractMetaInfoCollector implements MetaInfoCollector {
     private void processSourceFolder(String sourceFolder) throws MetaInfoLoadException {
         Path path = new File(sourceFolder).toPath();
         if (isDirectoryContainingApex(path)) {
-            // If the path is a directory with apex files in it, we should assume it's the class folder, and that project
-            // files are in a sibling. So we'll go up a level before walking the file tree.
+            // If the path is a directory with apex files in it, we should assume it's the `classes` folder, and that project
+            // files like VF components or object metadata are in a sibling. So we'll go up a level before walking the file tree.
             path = path.getParent();
         } else if (isApexFile(path)) {
-            // If the path itself is an apex file, we should assume that it is contained in the class folder, and that
-            // project files are in a sibling of its parent directory. So we'll go up two levels before walking the file
-            // tree.
+            // If the path itself is an apex file, we should assume that it is contained in the `classes` folder, and that
+            // project files like VF components or object metadata are in a sibling of its parent directory. So we'll go
+            // up two levels before walking the file tree.
             path = path.getParent().getParent();
         }
         final ProjectFileVisitor projectFileVisitor = new ProjectFileVisitor();
