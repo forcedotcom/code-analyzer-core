@@ -52,7 +52,7 @@ describe('Template Engine Tests', () => {
         // add more checks for specific rules, describe options, and logging events
         it('When zero rule names are provided then return zero violations', async () => {
             const engine: TemplateEngine = new TemplateEngine();
-            const results: EngineRunResults = await engine.runRules([], createRunOptions(new Workspace([TEST_DATA_FOLDER])));
+            const results: EngineRunResults = await engine.runRules([], createRunOptions(new Workspace([TEST_DATA_FOLDER], 'id' )));
             expect(results.violations).toHaveLength(0);
         });
 
