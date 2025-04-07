@@ -39,7 +39,8 @@ import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversalSo
  *
  * <ol>
  *   <li>rulesToRun: an array of rule names.
- *   <li>projectDirs: an array of directories from which the graph should be built.
+ *   TODO: projectDirs should be renamed
+ *   <li>projectDirs: an array of files from which the graph should be built.
  *   <li>targets: an array of objects with a `targetFile` property indicating the file to be
  *       analyzed and a `targetMethods` property that may optionally indicate individual methods
  *       within that file.

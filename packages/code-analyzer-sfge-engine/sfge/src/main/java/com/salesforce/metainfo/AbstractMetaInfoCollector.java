@@ -40,6 +40,9 @@ public abstract class AbstractMetaInfoCollector implements MetaInfoCollector {
     /** Process file to collect meta info from non-apex project file */
     protected abstract void processProjectFile(Path path);
 
+    // TODO: The variables in this method should be renamed to clarify that they are lists of files instead of folders.
+    // TODO: The method should (if possible) be rewritten so that it searches the provided workspace files for relevant files,
+    //       instead of checking parent directories. It is possible that this may cause test failures. We will see what happens.
     @Override
     public synchronized void loadProjectFiles(List<String> sourceFolders)
             throws MetaInfoLoadException {
