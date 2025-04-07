@@ -21,6 +21,10 @@ export class TemplateEnginePlugin extends EnginePluginV1 {
         return new TemplateEngine();
     }
 
+    // *** Methods available for use if user-configuration is desired
+    //describeEngineConfig(engineName: string): ConfigDescription;
+    //createEngineConfig(engineName: string, configValueExtractor: ConfigValueExtractor): Promise<ConfigObject>;
+
 }
 
 // *** Best Practice - validate the engine name in every public method

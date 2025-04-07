@@ -8,7 +8,7 @@ export class TemplateEngine extends Engine {
     // *** Change the NAME to match your engine's name
     static readonly NAME = "template";
 
-    // *** Update by setting config settings, if user-configuration is desired
+    // *** Consider passing in a configuration object from your engine's plugin if you want to provide user-configuration
     constructor() {
         super();
     }
@@ -26,13 +26,31 @@ export class TemplateEngine extends Engine {
 
     // *** Remove underscore for private naming convention if you need any of the DescribeOptions
     async describeRules(_describeOptions: DescribeOptions): Promise<RuleDescription[]> {
+        // *** Best Practice - Use RunRulesProgressEvents to keep users informed on the scan progress
+        this.emitRunRulesProgressEvent(0);
+
         // *** Parse out relevant file types if you engine is language-specific
         //const relevantFiles: string[] | undefined;
 
         // *** Get your rules!
         const ruleDescriptions: RuleDescription[] = [];
-        // *** Retrieval Implementation is up to you, but you'll need to map them into RuleDescription form.
+
+        this.emitRunRulesProgressEvent(50);
+
+        // *** Retrieval Implementation is up to you, but you'll need to map them into RuleDescription form, such as:
+        const exampleRule: RuleDescription = {
+            name: "Example Rule",
+            severityLevel: 5,
+            tags: [
+              "Recommended"
+            ],
+            description: "The description of your rule",
+            resourceUrls: []
+        };
+        ruleDescriptions.push(exampleRule);
         
+        // *** Best Practice - Set RunRulesProgressEvents to 100 before completing
+        this.emitDescribeRulesProgressEvent(100);
         return ruleDescriptions;
     }
 
@@ -55,7 +73,7 @@ export class TemplateEngine extends Engine {
 
         this.emitRunRulesProgressEvent(100);
         return {
-            violations
+            violations: violations
         };
     }
 }

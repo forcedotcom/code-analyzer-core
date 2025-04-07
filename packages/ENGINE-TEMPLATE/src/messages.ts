@@ -5,7 +5,11 @@ const MESSAGE_CATALOG : { [key: string]: string } = {
         `This message has one variable, '%s', in its message.`,
 
     TemplateMessage2:
-        `This message has two variables, '%s' and %d, in its message.`
+        `This message has two variables, '%s' and %d, in its message.`,
+
+    // *** Update this for the engine name
+    UnsupportedEngineName:
+        `The TemplateEnginePlugin does not support an engine with name '%s'.`
 }
 
 /**

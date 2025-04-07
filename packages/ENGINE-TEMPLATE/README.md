@@ -14,22 +14,22 @@ Copy this entire template folder, and rename the directory to `code-analyzer-x-e
 Add any dependencies you might need for external rule retrieval or other functionality. Important to note in the included dependencies is the code analyzer engine api, which is also published from this monorepo:
 
 ```
-"@salesforce/code-analyzer-engine-api": "0.21.0-SNAPSHOT"
+"@salesforce/code-analyzer-engine-api": "<MUST_MATCH_ENGINE_API_VERSION>"
 ```
 
-Use the value provided in the template today, and do not try to modify it. It may say "SNAPSHOT" which is what indicates a new version will be available with our next release, but the value should match whatever the template uses, and will keep this up to date.
+Use the value provided in the template today, and do not try to modify it. It may include "SNAPSHOT", such as "0.21.0-SNAPSHOT" which is what indicates a new version will be available with our next release, but the value should match whatever the template uses.
 
 3. Create Your Engine
 
 Open the [engine](src/engine.ts) file. Set your engine name, which should match the name of `x` above. Follow the rest of the instructions in the file.
 
-4. Create Your Plugin Provider
+4. Create Your Plugin (which acts as a Factory or Provider of one or more engines)
 
 Open the [plugin.ts](src/plugin.ts) file. This currently extends EnginePluginV1, managed from the Engine API. Set your available engine name, which should match the name of `x` above (thought there is the option of adding multiple engines within your plugin as well).
 
 5. Export Your Plugin
 
-Update the [index.ts](src/index.ts) to update your imports. This will allow for dynamic JIT loading when users decide which engines they want to use to scan their projects.
+Update the [index.ts](src/index.ts) to export your plugin and a `createEnginePlugin` function which returns an instance of your plugin. This will allow for dynamic JIT loading when users decide which engines they want to use to scan their projects.
 
 6. Add Configuration (Optional)
 
@@ -38,6 +38,10 @@ With v5 of Code Analyzer, users are able to add engine-specific [configuration](
 ## About Rules and Violations
 
 When building out the implementation of your rules and violations, we are less prescriptive about how rules need to be stored and written, but encourage flexible solutions that are easy to maintain. Testing is also a must, and note that this monorepo requires 100% testing coverage. We recommend working with [goldfiles](test/test-data/temp-goldfile.json) for reference test data.
+
+## Messaging
+
+Any customer-facing messaging should live in the [`messages.ts`](src/messages.ts) file. Example messages are there to get started.
 
 ## Request Build Support
 
