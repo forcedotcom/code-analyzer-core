@@ -24,10 +24,12 @@ public abstract class AbstractMetaInfoCollector implements MetaInfoCollector {
     private static final String APEX_FILE_EXTENSION = ".cls";
     protected final TreeSet<String> collectedMetaInfo;
     private final TreeSet<String> acceptedExtensions = getAcceptedExtensions();
+    private final TreeSet<String> pathsWalked;
     private boolean projectFilesLoaded;
 
     AbstractMetaInfoCollector() {
         this.collectedMetaInfo = CollectionUtil.newTreeSet();
+        this.pathsWalked = CollectionUtil.newTreeSet();
     }
 
     /**
@@ -38,6 +40,9 @@ public abstract class AbstractMetaInfoCollector implements MetaInfoCollector {
     /** Process file to collect meta info from non-apex project file */
     protected abstract void processProjectFile(Path path);
 
+    // TODO: The variables in this method should be renamed to clarify that they are lists of files instead of folders.
+    // TODO: The method should (if possible) be rewritten so that it searches the provided workspace files for relevant files,
+    //       instead of checking parent directories. It is possible that this may cause test failures. We will see what happens.
     @Override
     public synchronized void loadProjectFiles(List<String> sourceFolders)
             throws MetaInfoLoadException {
@@ -61,13 +66,21 @@ public abstract class AbstractMetaInfoCollector implements MetaInfoCollector {
 
     private void processSourceFolder(String sourceFolder) throws MetaInfoLoadException {
         Path path = new File(sourceFolder).toPath();
-        // If the directory has any apex files, we should assume it's the class folder and that
-        // project files are in a sibling.
-        // So we'll go up a level before walking the file tree.
-        if (directoryContainsApex(path)) {
+        if (isDirectoryContainingApex(path)) {
+            // If the path is a directory with apex files in it, we should assume it's the `classes` folder, and that project
+            // files like VF components or object metadata are in a sibling. So we'll go up a level before walking the file tree.
             path = path.getParent();
+        } else if (isApexFile(path)) {
+            // If the path itself is an apex file, we should assume that it is contained in the `classes` folder, and that
+            // project files like VF components or object metadata are in a sibling of its parent directory. So we'll go
+            // up two levels before walking the file tree.
+            path = path.getParent().getParent();
         }
         final ProjectFileVisitor projectFileVisitor = new ProjectFileVisitor();
+        if (this.pathsWalked.contains(path.toString())) {
+            return;
+        }
+        this.pathsWalked.add(path.toString());
         try {
             Files.walkFileTree(path, projectFileVisitor);
         } catch (IOException ex) {
@@ -78,7 +91,7 @@ public abstract class AbstractMetaInfoCollector implements MetaInfoCollector {
         }
     }
 
-    private boolean directoryContainsApex(Path path) {
+    private boolean isDirectoryContainingApex(Path path) {
         final File dir = path.toFile();
         // Non-directories obviously don't have any apex.
         if (!dir.isDirectory()) {
@@ -93,6 +106,15 @@ public abstract class AbstractMetaInfoCollector implements MetaInfoCollector {
 
         // If the directory contains any '.cls' files, then it's got apex.
         return Arrays.stream(dirContents).anyMatch(f -> f.getName().endsWith(APEX_FILE_EXTENSION));
+    }
+
+    private boolean isApexFile(Path path) {
+        final File file = path.toFile();
+
+        if (!file.isFile()) {
+            return false;
+        }
+        return file.getName().endsWith(APEX_FILE_EXTENSION);
     }
 
     protected boolean pathMatches(Path path) {
