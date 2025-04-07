@@ -87,7 +87,7 @@ describe("Tests for the createWorkspace method", () => {
     it('When creating a workspace with no files or folders but some targets, then still error', async () => {
         // It is each client's responsibility to always fill in something for the workspace. If the CLI for example
         // has a users only provide target values but not workspace paths, then it might decide to use the target
-        // information as the workspace information (minus the method level targets).
+        // information as the workspace information.
         await expect(codeAnalyzer.createWorkspace([],[SAMPLE_WORKSPACE_FOLDER])).rejects.toThrow(
             getMessage('AtLeastOneFileOrFolderMustBeIncludedInWorkspace'));
     });
@@ -98,44 +98,12 @@ describe("Tests for the createWorkspace method", () => {
     });
 
     it('When creating a workspace with a target that does not exist, then error', async () => {
-        const targetThatExists: string = path.join(SAMPLE_WORKSPACE_FOLDER,'someFile.cls#SomeMethod');
-        const targetThatDoesntExist: string = path.join(SAMPLE_WORKSPACE_FOLDER,'doesNotExist.cls#SomeMethod');
+        const targetThatExists: string = path.join(SAMPLE_WORKSPACE_FOLDER,'someFile.cls');
+        const targetThatDoesntExist: string = path.join(SAMPLE_WORKSPACE_FOLDER,'doesNotExist.cls');
         const promise: Promise<Workspace> = codeAnalyzer.createWorkspace(
             [SAMPLE_WORKSPACE_FOLDER], [targetThatExists, targetThatDoesntExist]);
         await expect(promise).rejects.toThrow(
             getMessage('FileOrFolderDoesNotExist', path.join(SAMPLE_WORKSPACE_FOLDER,'doesNotExist.cls')));
-    });
-
-    it('When a target that has multiple # characters, then error', async () => {
-        const invalidTarget: string = path.join(SAMPLE_WORKSPACE_FOLDER, 'someFile.cls#SomeMethod1#oops');
-        await expect(codeAnalyzer.createWorkspace([SAMPLE_WORKSPACE_FOLDER], [invalidTarget])).rejects.toThrow(
-            getMessage('InvalidMethodTarget', invalidTarget));
-    });
-
-    it('When a target method name contains non-alpha-numeric characters, then error', async () => {
-        const invalidTarget: string = path.join(SAMPLE_WORKSPACE_FOLDER,
-            'someFile.cls#SomeMethod1;SomeMethod2'); // not supported by core
-        await expect(codeAnalyzer.createWorkspace([SAMPLE_WORKSPACE_FOLDER], [invalidTarget])).rejects.toThrow(
-            getMessage('InvalidMethodTarget', invalidTarget));
-    });
-
-    it('When a target method name starts with a number, then error', async () => {
-        const invalidTarget: string = path.join(SAMPLE_WORKSPACE_FOLDER, 'someFile.cls#3SomeMethod');
-        await expect(codeAnalyzer.createWorkspace([SAMPLE_WORKSPACE_FOLDER], [invalidTarget])).rejects.toThrow(
-            getMessage('InvalidMethodTarget', invalidTarget));
-    });
-
-    it('When a target method name is attached to a file that does not end with .cls, then error', async () => {
-        const invalidTarget: string = path.join(SAMPLE_WORKSPACE_FOLDER, 'sub1', 'someFileInSub1.txt#SomeMethod');
-        await expect(codeAnalyzer.createWorkspace([SAMPLE_WORKSPACE_FOLDER], [invalidTarget])).rejects.toThrow(
-            getMessage('InvalidMethodTarget', invalidTarget));
-    });
-
-    it('When a target method name is attached to folder instead of a file, then error', async () => {
-        const invalidTarget: string = path.join(SAMPLE_WORKSPACE_FOLDER, 'folderWithExt.cls#SomeMethod');
-        await expect(codeAnalyzer.createWorkspace([SAMPLE_WORKSPACE_FOLDER], [invalidTarget])).rejects.toThrow(
-            getMessage('TargetWithMethodMustNotBeFolder', invalidTarget,
-                path.join(SAMPLE_WORKSPACE_FOLDER, 'folderWithExt.cls')));
     });
 
     it('When a target does not live underneath of the workspace files and folders, then error', async() => {
@@ -158,10 +126,10 @@ describe("Tests for the createWorkspace method", () => {
         // Since changeWorkingDirectoryToPackageRoot() was used above, the pwd should be the code-analyzer-core directory
         const workspace: Workspace = await codeAnalyzer.createWorkspace(['test'], [
             'test/code-analyzer.test.ts',
-            'test/test-data/sampleWorkspace/someFile.cls#SomeMethod']);
+            'test/test-data/sampleWorkspace/someFile.cls']);
         expect(workspace.getRawTargets()).toEqual([
             path.resolve('.', 'test', 'code-analyzer.test.ts'),
-            path.resolve('.', 'test', 'test-data', 'sampleWorkspace', 'someFile.cls#SomeMethod')
+            path.resolve('.', 'test', 'test-data', 'sampleWorkspace', 'someFile.cls')
         ]);
     });
 
@@ -190,10 +158,9 @@ describe("Tests for the createWorkspace method", () => {
     it("When providing files, folders, and targets, then returned workspace can expand everything correctly and remove redundant information", async () => {
         const workspace: Workspace = await codeAnalyzer.createWorkspace([SAMPLE_WORKSPACE_FOLDER], [
             path.join(SAMPLE_WORKSPACE_FOLDER, 'sub1', 'sub3'),
-            path.join(SAMPLE_WORKSPACE_FOLDER, 'sub1', 'sub3', 'someFileInSub3.cls#SomeMethod'), // method redundant with its parent folder and should go away
-            path.join(SAMPLE_WORKSPACE_FOLDER, 'someFile.cls#Method1'),
-            path.join(SAMPLE_WORKSPACE_FOLDER, 'someFile.cls#Method1'), // duplicate
-            path.join(SAMPLE_WORKSPACE_FOLDER, 'someFile.cls#Method2')
+            path.join(SAMPLE_WORKSPACE_FOLDER, 'sub1', 'sub3', 'someFileInSub3.cls'), // redundant with its parent folder and should go away
+            path.join(SAMPLE_WORKSPACE_FOLDER, 'someFile.cls'),
+            path.join(SAMPLE_WORKSPACE_FOLDER, 'someFile.cls') // duplicate
         ]);
 
         expect(await workspace.getWorkspaceFiles()).toEqual([
@@ -205,11 +172,8 @@ describe("Tests for the createWorkspace method", () => {
             path.join(SAMPLE_WORKSPACE_FOLDER, 'sub1','sub3', 'someFileInSub3.cls')
         ]);
         expect(await workspace.getTargetedFiles()).toEqual([
-            path.join(SAMPLE_WORKSPACE_FOLDER, 'sub1','sub3', 'someFileInSub3.cls') // should just have the file only, not the method
-        ]);
-        expect(await workspace.getTargetedMethods()).toEqual([
-            path.join(SAMPLE_WORKSPACE_FOLDER, 'someFile.cls#Method1'), // only 1 of these
-            path.join(SAMPLE_WORKSPACE_FOLDER, 'someFile.cls#Method2')
+            path.join(SAMPLE_WORKSPACE_FOLDER, 'someFile.cls'),
+            path.join(SAMPLE_WORKSPACE_FOLDER, 'sub1','sub3', 'someFileInSub3.cls')
         ]);
     });
 });
@@ -240,14 +204,14 @@ describe("Tests for the run method of CodeAnalyzer", () => {
     it("When run options contains workspace with targets, then they are passed to each engine successfully", async () => {
         await codeAnalyzer.run(selection, {
             workspace: await codeAnalyzer.createWorkspace([SAMPLE_WORKSPACE_FOLDER],[
-                path.join(SAMPLE_WORKSPACE_FOLDER, 'someFile.cls#SomeMethod')
+                path.join(SAMPLE_WORKSPACE_FOLDER, 'someFile.cls')
             ]),
         });
 
         const expectedEngineRunOptions: engApi.RunOptions = {
             logFolder: codeAnalyzer.getConfig().getLogFolder(),
             workspace: new engApi.Workspace("FixedId", [SAMPLE_WORKSPACE_FOLDER], [
-                path.join(SAMPLE_WORKSPACE_FOLDER, 'someFile.cls#SomeMethod')])
+                path.join(SAMPLE_WORKSPACE_FOLDER, 'someFile.cls')])
         };
         expect(stubEngine1.runRulesCallHistory).toHaveLength(1);
         expect(stubEngine1.runRulesCallHistory[0].ruleNames).toEqual(expectedStubEngine1RuleNames);

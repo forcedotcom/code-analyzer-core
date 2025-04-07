@@ -126,12 +126,6 @@ const MESSAGE_CATALOG : MessageCatalog = {
     AtLeastOneFileOrFolderMustBeIncludedInWorkspace:
         `At least one file or folder must be included in the workspace.`,
 
-    InvalidMethodTarget:
-        `The value '%s' is not a valid method target. Expected method target to be an Apex Class file path followed by '#' and a single method name. For example: '/path/to/SomeApexClass.cls#SomeMethodName'.`,
-
-    TargetWithMethodMustNotBeFolder:
-        `The value '%s' is not a valid target since '%s' is a folder instead of a file.`,
-
     TargetMustLiveWithinWorkspace:
         `The specified target '%s' does not exist underneath any of the specified workspace paths: %s`,
 

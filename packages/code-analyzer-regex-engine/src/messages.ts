@@ -83,10 +83,7 @@ const MESSAGE_CATALOG : { [key: string]: string } = {
         `The value '%s' could not be converted into a regular expression since the required 'g' modifier is missing. Please use '%s' instead.`,
 
     InvalidRegexDueToError:
-        `The value '%s' could not be converted into a regular expression due to the error: %s`,
-
-    TargetedMethodsNotSupported:
-        `The '%s' engine does not support targeting methods. So it has ignored the following method targets: %s`
+        `The value '%s' could not be converted into a regular expression due to the error: %s`
 }
 
 /**

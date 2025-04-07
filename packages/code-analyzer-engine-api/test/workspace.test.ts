@@ -182,11 +182,11 @@ describe('Tests for the Workspace class', () => {
             const workspace: Workspace = new Workspace('id', [__dirname], [
                 path.join(__dirname, 'tEst-data'),
                 path.join(__dirname, 'test-dAta'),
-                path.join(__dirname, 'someFile.cls#SomeMethod'),
-                path.join(__dirname, 'someFile.cls#SomeMethod')
+                path.join(__dirname, 'someFile.cls'),
+                path.join(__dirname, 'someFile.cls')
             ]);
             expect(workspace.getRawTargets()).toEqual([
-                path.join(__dirname, 'someFile.cls#SomeMethod'),
+                path.join(__dirname, 'someFile.cls'),
                 path.join(__dirname, 'tEst-data')
             ]);
         });
@@ -196,22 +196,18 @@ describe('Tests for the Workspace class', () => {
                 path.join(__dirname, 'tEst-data'),
                 path.join(__dirname, 'test-dAta'),
                 __dirname,
-                path.join(__dirname, 'someFile.cls#SomeMethod')
+                path.join(__dirname, 'someFile.cls')
             ]);
             expect(workspace.getRawTargets()).toEqual([__dirname]);
         });
 
-        it("When including a parent file and child methods from that file, then the redundant children methods are removed", async () => {
+        it("When including a parent folder and child files from that folder, then the redundant files methods are removed", async () => {
             const workspace: Workspace = new Workspace('id', [__dirname], [
+                __dirname,
                 path.join(__dirname, 'someFile1.cls'),
-                path.join(__dirname, 'someFile1.cls#SomeMethod1'),
-                path.join(__dirname, 'someFile1.cls#SomeMethod2'),
-                path.join(__dirname, 'someFile2.cls#SomeMethod3')
+                path.join(__dirname, 'someFile2.cls')
             ]);
-            expect(workspace.getRawTargets()).toEqual([
-                path.join(__dirname, 'someFile1.cls'),
-                path.join(__dirname, 'someFile2.cls#SomeMethod3')
-            ]);
+            expect(workspace.getRawTargets()).toEqual([__dirname]);
         });
 
         it('When workspace folder ends in path.sep, then getRawTargets removes the path.sep', () => {
@@ -257,14 +253,14 @@ describe('Tests for the Workspace class', () => {
                 path.join(SAMPLE_WORKSPACE_FOLDER, 'someFile.cls'),
                 path.join(SAMPLE_WORKSPACE_FOLDER, 'sub1', 'sub3'), // We want everything from the parent folder and to exclude the normal candidates except for the explicitly included files:
                 path.join(SAMPLE_WORKSPACE_FOLDER, 'sub1', 'sub3', '.someDotFolder', 'subFolder'), // This is not redundant since normally it would be excluded
-                path.join(SAMPLE_WORKSPACE_FOLDER, 'sub1', 'sub3', 'node_modules', 'subFolder', 'someFile.cls#SomeMethod'), // This is not redundant since normally it would be excluded
+                path.join(SAMPLE_WORKSPACE_FOLDER, 'sub1', 'sub3', 'node_modules', 'subFolder', 'someFile.cls'), // This is not redundant since normally it would be excluded
                 path.join(SAMPLE_WORKSPACE_FOLDER, 'sub1', 'sub3', 'someFileInSub3.cls'), // This is redundant since we already have its parent
             ]);
             expect(workspace.getRawTargets()).toEqual([
                 path.join(SAMPLE_WORKSPACE_FOLDER, 'someFile.cls'),
                 path.join(SAMPLE_WORKSPACE_FOLDER, 'sub1', 'sub3'),
                 path.join(SAMPLE_WORKSPACE_FOLDER, 'sub1', 'sub3', '.someDotFolder', 'subFolder'),
-                path.join(SAMPLE_WORKSPACE_FOLDER, 'sub1', 'sub3', 'node_modules', 'subFolder', 'someFile.cls#SomeMethod'),
+                path.join(SAMPLE_WORKSPACE_FOLDER, 'sub1', 'sub3', 'node_modules', 'subFolder', 'someFile.cls'),
             ].sort());
         });
     });
@@ -373,34 +369,13 @@ describe('Tests for the Workspace class', () => {
             expect(await workspace.getTargetedFiles()).toEqual([]);
         });
 
-        it("When targeted methods are the only targets provided, then getTargetedFiles returns empty", async () => {
-            const workspace: Workspace = new Workspace('id', [SAMPLE_WORKSPACE_FOLDER], [
-                path.join(SAMPLE_WORKSPACE_FOLDER, 'sub1', 'sub3', 'someFileInSub3.cls#SomeMethod1'),
-                path.join(SAMPLE_WORKSPACE_FOLDER, 'sub1', 'sub3', 'someOtherFileInSub3.cls#SomeMethod2')
-            ]);
-            expect(await workspace.getTargetedFiles()).toEqual([]);
-        });
-
-        it("When targeted methods are provided among targeted files and folders, then getTargetedFiles excludes them", async () => {
-            const workspace: Workspace = new Workspace('id', [SAMPLE_WORKSPACE_FOLDER], [
-                path.join(SAMPLE_WORKSPACE_FOLDER, 'sub1', 'sub2', 'someFile'),
-                path.join(SAMPLE_WORKSPACE_FOLDER, 'sub1', 'sub2', 'anotherFile.cls'),
-                path.join(SAMPLE_WORKSPACE_FOLDER, 'sub1', 'sub3', 'someFileInSub3.cls#SomeMethod1'),
-                path.join(SAMPLE_WORKSPACE_FOLDER, 'sub1', 'sub3', 'someOtherFileInSub3.cls#SomeMethod2')
-            ]);
-            expect(await workspace.getTargetedFiles()).toEqual([
-                path.join(SAMPLE_WORKSPACE_FOLDER, 'sub1', 'sub2', 'anotherFile.cls'),
-                path.join(SAMPLE_WORKSPACE_FOLDER, 'sub1', 'sub2', 'someFile', 'dummy.cls')
-            ]);
-        });
-
         it("When redundant targets are provided, then they are filtered out", async () => {
             const workspace: Workspace = new Workspace('id', [SAMPLE_WORKSPACE_FOLDER], [
                 path.join(SAMPLE_WORKSPACE_FOLDER, 'sub1', 'sub2', 'anotherFile.cls'),
                 path.join(SAMPLE_WORKSPACE_FOLDER, 'sub1', 'sub2', 'anotherFile.cls'),
                 path.join(SAMPLE_WORKSPACE_FOLDER, 'sub1', 'sub3'),
                 path.join(SAMPLE_WORKSPACE_FOLDER, 'sub1', 'sub3', 'someFileInSub3.cls'),
-                path.join(SAMPLE_WORKSPACE_FOLDER, 'sub1', 'sub3', 'someFileInSub3.cls#SomeMethod2')
+                path.join(SAMPLE_WORKSPACE_FOLDER, 'sub1', 'sub3', 'someFileInSub3.cls')
             ]);
             expect(await workspace.getTargetedFiles()).toEqual([
                 path.join(SAMPLE_WORKSPACE_FOLDER, 'sub1', 'sub2', 'anotherFile.cls'),
@@ -467,47 +442,6 @@ describe('Tests for the Workspace class', () => {
                 path.join(nodeModulesFolder, 'placeholder.txt'),
                 path.join(nodeModulesFolder, 'subFolder', 'someFile.cls')
             ].sort());
-        });
-    });
-
-    describe('Tests for getTargetedMethods', () => {
-        it('When targets are undefined, return empty array', async () => {
-            const workspace: Workspace = new Workspace('id', [SAMPLE_WORKSPACE_FOLDER]);
-            expect(await workspace.getTargetedMethods()).toEqual([]);
-        });
-
-        it('When targets are provided with no method level targets, return empty array', async () => {
-            const workspace: Workspace = new Workspace('id', [SAMPLE_WORKSPACE_FOLDER], [
-                path.join(SAMPLE_WORKSPACE_FOLDER, 'someFile.cls'),
-                path.join(SAMPLE_WORKSPACE_FOLDER, 'sub1', 'sub3')
-            ]);
-            expect(await workspace.getTargetedMethods()).toEqual([]);
-        });
-
-        it('When targeted methods are already accounted for by parent file or folder, then remove them', async () => {
-            const workspace: Workspace = new Workspace('id', [SAMPLE_WORKSPACE_FOLDER], [
-                path.join(SAMPLE_WORKSPACE_FOLDER, 'someFile.cls'),
-                path.join(SAMPLE_WORKSPACE_FOLDER, 'someFile.cls#SomeMethod'),
-                path.join(SAMPLE_WORKSPACE_FOLDER, 'sub1', 'sub2', 'someFile1InSub2.cls#SomeMethod'), // Only this one isn't redundant
-                path.join(SAMPLE_WORKSPACE_FOLDER, 'sub1', 'sub3'),
-                path.join(SAMPLE_WORKSPACE_FOLDER, 'sub1', 'sub3', 'someFileInSub3.cls#SomeMethod'),
-                path.join(SAMPLE_WORKSPACE_FOLDER, 'sub1', 'sub3', 'someOtherFileInSub3.cls#SomeMethod'),
-            ]);
-            expect(await workspace.getTargetedMethods()).toEqual([
-                path.join(SAMPLE_WORKSPACE_FOLDER, 'sub1', 'sub2', 'someFile1InSub2.cls#SomeMethod')
-            ]);
-        });
-
-        it('When targeting multiple methods from same file, return all unique', async () => {
-            const workspace: Workspace = new Workspace('id', [SAMPLE_WORKSPACE_FOLDER], [
-                path.join(SAMPLE_WORKSPACE_FOLDER, 'someFile.cls#SomeMethod1'),
-                path.join(SAMPLE_WORKSPACE_FOLDER, 'someFile.cls#SomeMethod2'),
-                path.join(SAMPLE_WORKSPACE_FOLDER, 'someFile.cls#SomeMethod1')
-            ]);
-            expect(await workspace.getTargetedMethods()).toEqual([
-                path.join(SAMPLE_WORKSPACE_FOLDER, 'someFile.cls#SomeMethod1'),
-                path.join(SAMPLE_WORKSPACE_FOLDER, 'someFile.cls#SomeMethod2'),
-            ]);
         });
     });
 });

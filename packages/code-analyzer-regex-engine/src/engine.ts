@@ -2,7 +2,7 @@ import {
     CodeLocation,
     DescribeOptions,
     Engine,
-    EngineRunResults, LogLevel,
+    EngineRunResults,
     RuleDescription,
     RunOptions,
     Violation,
@@ -15,7 +15,6 @@ import os from "node:os";
 import {RegexRule, RegexRules} from "./config";
 import {isBinaryFile} from "isbinaryfile";
 import {convertToRegex} from "./utils";
-import {getMessage} from "./messages";
 
 const TEXT_BASED_FILE_EXTS = new Set<string>(
     [
@@ -99,8 +98,6 @@ export class RegexEngine extends Engine {
     }
 
     async runRules(ruleNames: string[], runOptions: RunOptions): Promise<EngineRunResults> {
-        await this.emitLogRegardingIgnoredMethodTargetsIfNeeded(runOptions.workspace);
-
         const textFiles: string[] = await this.getTextFiles(runOptions.workspace);
         let batchMultiplier = 0;
         const violations: Violation[] = [];
@@ -175,14 +172,6 @@ export class RegexEngine extends Engine {
             });
         }
         return violations;
-    }
-
-    private async emitLogRegardingIgnoredMethodTargetsIfNeeded(workspace: Workspace): Promise<void> {
-        const targetedMethods: string[] = await workspace.getTargetedMethods();
-        if (targetedMethods.length > 0) {
-            this.emitLogEvent(LogLevel.Info, getMessage('TargetedMethodsNotSupported', RegexEngine.NAME,
-                JSON.stringify(targetedMethods)));
-        }
     }
 }
 

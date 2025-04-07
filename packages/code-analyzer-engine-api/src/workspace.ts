@@ -20,7 +20,6 @@ export class Workspace {
 
     private cachedWorkspaceFiles?: string[];
     private cachedTargetedFiles?: string[];
-    private cachedTargetedMethods?: string[];
 
     private workspaceRoot?: string | null;
 
@@ -32,10 +31,6 @@ export class Workspace {
      * other files in your project to properly analyze the few files that you are targeting. If a targets array is not
      * specified, then the entire list of workspaces files and folders will be targeted.
      *
-     * Note that some engines may allow for method level targeting. To specify a method level target in your target
-     * array, use the following syntax: '/path/to/ApexClass.cls#methodName'. Currently, only Apex class (.cls) files are
-     * supported for method level targeting. Engines that do not support method level targets may simply ignore them.
-     *
      *  Note: This constructor assumes that you have already validated the following:
      *  - that the list of files and folder paths exists and that they are absolute paths
      *  - that each of the targets (if defined) exist and that they are absolute paths
@@ -43,7 +38,7 @@ export class Workspace {
      *
      * @param workspaceId Optional workspace identifier
      * @param absFilesAndFolders Absolute file and folder paths that make up the workspace
-     * @param absTargets optional string array of files, folders, and/or apex methods
+     * @param absTargets optional string array of files and/or folders
      */
     constructor(workspaceId: string, absFilesAndFolders: string[], absTargets?: string[]) {
         this.workspaceId = workspaceId;
@@ -90,26 +85,14 @@ export class Workspace {
     /**
      * Returns the unique list of targets that were provided when constructing the workspace or undefined if none were provided.
      *
-     * Redundant targets are removed. For example, if a user provided a method and its parent file separately, then the
-     * method is removed since the method already is included with the file. Otherwise, no other filtering is done.
+     * Redundant paths are removed. For example, if a user provided a file and its parent folder, then the file is
+     * removed since the file is already included with the parent folder. Otherwise, no other filtering is done.
      * For example, if a user explicitly provided to the Workspace constructor a .dotFile then we will not exclude this
      * file.
      */
     getRawTargets(): string[] | undefined {
         if (!this.cachedRawTargets && this.rawAbsTargets) {
-            const fileAndFolderTargets: string[] = extractFileAndFolderTargetsFrom(this.rawAbsTargets);
-            const methodTargets: string[] = extractMethodTargetsFrom(this.rawAbsTargets);
-
-            // To allow the reuse of the removeRedundantPaths (which only works on files and folders) to effectively
-            // remove method level targets that also have a parent file or folder listed, we do a trick of converting
-            // method level targets to look like fake folders temporarily so the existing algorithm can work its magic.
-            const fakeFolder: string = path.sep + '__FAKE_FOLDER__' + path.sep;
-            const convertedMethodTargets: string[] = methodTargets.map(t => t.replace('#', fakeFolder));
-            const unfilteredTargets: string[] = [...fileAndFolderTargets, ...new Set(convertedMethodTargets)];
-            const filteredTargets: string[] = this.removeRedundantPaths(unfilteredTargets).map(removeTrailingPathSep);
-
-            // Then we convert the fake folders back to restore the method level targets.
-            this.cachedRawTargets = filteredTargets.map(t => t.replace(fakeFolder, '#'));
+            this.cachedRawTargets = this.removeRedundantPaths(this.rawAbsTargets).map(removeTrailingPathSep);
         }
         return this.cachedRawTargets;
     }
@@ -137,15 +120,14 @@ export class Workspace {
     /**
      * The list of files that an engine should target in its analysis.
      *
-     * This method returns the full list of the absolute file paths recursively found within the provided targets (not
-     * including targeted methods).
+     * This method returns the full list of the absolute file paths recursively found within the provided targets.
      *
      * If no targets where provided when constructing the workspace, then all the workspace files from the
-     * getWorkspaceFiles method are returned. If only method targets were provided, then an empty array is returned.
+     * getWorkspaceFiles method are returned.
      *
-     * This list is composed of the files that getRawTargets() returns (not including targeted methods) plus any
-     * files found recursively inside any of the folders that getRawTargets() returns. That is, the folders are expanded
-     * so that the resulting list only contains file paths.
+     * This list is composed of the files that getRawTargets() returns plus any files found recursively inside any of
+     * the folders that getRawTargets() returns. That is, the folders are expanded so that the resulting list only
+     * contains file paths.
      *
      * Any files underneath the workspace root that Code Analyzer chooses to ignore (like .gitignore files, files in
      * node_modules folders, etc.) are automatically excluded unless they were explicitly provided when constructing
@@ -156,26 +138,9 @@ export class Workspace {
             return await this.getWorkspaceFiles();
         }
         if (!this.cachedTargetedFiles) {
-            const targetedFilesAndFolders: string[] = extractFileAndFolderTargetsFrom(this.getRawTargets()!);
-            this.cachedTargetedFiles = (await expandToListAllFiles(targetedFilesAndFolders)).filter(f => !this.shouldExclude(f));
+            this.cachedTargetedFiles = (await expandToListAllFiles(this.getRawTargets()!)).filter(f => !this.shouldExclude(f));
         }
         return this.cachedTargetedFiles;
-    }
-
-    /**
-     * Returns a list of targeted methods, separate from the targeted files and folders, that an engine may analyse.
-     *
-     * Not all engines will be able to target individual methods. If an engine does support the file associated with the
-     * targeted method but does not support method level targeting, then the engine should emit an info or warning log
-     * event by its runRules method saying that the method level target is being ignored.
-     *
-     * The format of each targeted method is `<filePath>#<methodName>` (ex: '/path/to/SomeApexFile.cls#SomeMethod').
-     */
-    async getTargetedMethods(): Promise<string[]> {
-        if (!this.cachedTargetedMethods) {
-            this.cachedTargetedMethods = this.getRawTargets() ? extractMethodTargetsFrom(this.getRawTargets()!) : [];
-        }
-        return Promise.resolve(this.cachedTargetedMethods);
     }
 
     /**
@@ -329,12 +294,4 @@ function includesAFileThatIsNotAFolderThatStartsWith(partialPathStr:string, allP
     // For example if "/root/abc/def.txt" and "/root/abcDef.txt" both exist, then we need to know when we can select
     // "/root/abc" as a folder or when we should be selecting "/root" because "/root/abc" just came from "/root/abcDef.txt"
     return allPaths.some(p => p.startsWith(partialPathStr) && p.length > partialPathStr.length && p[partialPathStr.length] !== path.sep);
-}
-
-function extractFileAndFolderTargetsFrom(rawTargets: string[]): string[] {
-    return rawTargets.filter(t => !t.includes('#'));
-}
-
-function extractMethodTargetsFrom(rawTargets: string[]): string[] {
-    return rawTargets.filter(t => t.includes('#'));
 }

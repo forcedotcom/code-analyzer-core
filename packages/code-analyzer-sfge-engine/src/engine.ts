@@ -97,7 +97,6 @@ export class SfgeEngine extends Engine {
         const sfgeResults: SfgeRunResult[] = await this.sfgeWrapper.invokeRunCommand(
             selectedRuleInfoList,
             relevantWorkspaceFiles, // TODO: THIS SHOULD CHANGE TO relevantTargetedFiles (i.e. the relevant files from runOptions.workspace.getTargetedFiles) VERY VERY SOON!
-                                    //       Also we'll need to use the runOptions.workspace.getTargetedMethods as well.
             relevantWorkspaceFiles,
             sfgeRunOptions,
             (innerPerc: number, message?: string) => this.emitRunRulesProgressEvent(5 + 93*innerPerc/100, message) // 5%-98%

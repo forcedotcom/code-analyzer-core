@@ -91,10 +91,7 @@ const MESSAGE_CATALOG : { [key: string]: string } = {
         `The '%s' configuration value is invalid. The value must be a positive integer.`,
 
     InvalidFileExtensionDueToItBeingListedTwice:
-        `The '%s' configuration object is invalid. The file extension '%s' is currently listed under more than one language: %s`,
-
-    TargetedMethodsNotSupported:
-        `The '%s' engine does not support targeting methods. So it has ignored the following method targets: %s`
+        `The '%s' configuration object is invalid. The file extension '%s' is currently listed under more than one language: %s`
 }
 
 /**
