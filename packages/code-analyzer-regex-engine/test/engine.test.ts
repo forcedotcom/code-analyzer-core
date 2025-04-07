@@ -161,7 +161,7 @@ describe('Tests for runRules', () => {
         expect(runResults.violations).toHaveLength(0);
     });
 
-    it("Ensure runRules when called on a workspapce that targets Apex classes, it properly emits violations", async () => {
+    it("Ensure runRules when called on a workspace that targets Apex classes, it properly emits violations", async () => {
         const runOptions: RunOptions = createRunOptions(
             new Workspace('id', [path.resolve(__dirname, "test-data")], [path.resolve(__dirname, "test-data", "apexClassWhitespace")]));
         const runResults: EngineRunResults = await engine.runRules(["NoTrailingWhitespace", "NoTodos", "AvoidOldSalesforceApiVersions"], runOptions);
