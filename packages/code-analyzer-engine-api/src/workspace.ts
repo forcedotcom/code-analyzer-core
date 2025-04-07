@@ -6,25 +6,44 @@ const NON_DOT_FILES_TO_EXCLUDE: string[] = ['code_analyzer_config.yml', 'code_an
 
 /**
  * Class that describes a users workspace of files and folders that should be scanned
+ *
+ * Note that outside of testing, engines should not construct their own Workspace instances but instead use the
+ * Workspace instances provided by the {@link DescribeOptions} and {@link RunOptions}.
  */
 export class Workspace {
-    private static nextId: number = 0;
     private readonly workspaceId: string;
-    private readonly rawFilesAndFolders: string[];
+    private readonly rawAbsFilesAndFolders: string[];
+    private readonly rawAbsTargets?: string[];
 
-    private filesAndFolders?: string[];
-    private expandedFiles?: string[];
+    private cachedRawFilesAndFolders?: string[];
+    private cachedRawTargets?: string[];
+
+    private cachedWorkspaceFiles?: string[];
+    private cachedTargetedFiles?: string[];
+
     private workspaceRoot?: string | null;
 
     /**
-     * Constructs a workspace with a list of absolute file and folder paths
-     *   This constructor assumes that the list of files and folder paths exists and that they are absolute paths
-     * @param absoluteFileAndFolderPaths Absolute file and folder paths
+     * Creates a {@link Workspace} instance associated with a specified list of files and folders.
+     *
+     * Additionally, an array of targets can be provided which helps engines limit which files they should perform a
+     * scan on while still being fully aware of all the files in the workspace. For example, some engines may depend on
+     * other files in your project to properly analyze the few files that you are targeting. If a targets array is not
+     * specified, then the entire list of workspaces files and folders will be targeted.
+     *
+     *  Note: This constructor assumes that you have already validated the following:
+     *  - that the list of files and folder paths exists and that they are absolute paths
+     *  - that each of the targets (if defined) exist and that they are absolute paths
+     *  - that the targets live on disk within of the list of files and folder paths
+     *
      * @param workspaceId Optional workspace identifier
+     * @param absFilesAndFolders Absolute file and folder paths that make up the workspace
+     * @param absTargets optional string array of files and/or folders
      */
-    constructor(absoluteFileAndFolderPaths: string[], workspaceId?: string) {
-        this.workspaceId = workspaceId || `workspace${++Workspace.nextId}`;
-        this.rawFilesAndFolders = absoluteFileAndFolderPaths;
+    constructor(workspaceId: string, absFilesAndFolders: string[], absTargets?: string[]) {
+        this.workspaceId = workspaceId;
+        this.rawAbsFilesAndFolders = absFilesAndFolders;
+        this.rawAbsTargets = absTargets;
     }
 
     /**
@@ -32,18 +51,6 @@ export class Workspace {
      */
     getWorkspaceId(): string {
         return this.workspaceId;
-    }
-
-    /**
-     * Returns the unique list of files and folders that were used to construct the workspace.
-     *   Note that besides removing redundant paths, no other filtering is done. For example, if a user explicitly
-     *   provided to the Workspace constructor a .dotFile then we will not exclude this file.
-     */
-    getFilesAndFolders(): string[] {
-        if (!this.filesAndFolders) {
-            this.filesAndFolders = this.removeRedundantPaths(this.rawFilesAndFolders).map(removeTrailingPathSep);
-        }
-        return this.filesAndFolders;
     }
 
     /**
@@ -55,25 +62,85 @@ export class Workspace {
      */
     getWorkspaceRoot(): string | null {
         if (this.workspaceRoot === undefined) {
-            this.workspaceRoot = calculateLongestCommonParentFolderOf(this.rawFilesAndFolders);
+            this.workspaceRoot = calculateLongestCommonParentFolderOf(this.rawAbsFilesAndFolders);
         }
         return this.workspaceRoot;
     }
 
     /**
-     * Returns the full list of the files recursively found within the workspace.
-     *   This list is composed of the files that getFilesAndFolders() returns plus any files found recursively inside
-     *   any of the folders that getFilesAndFolders() returns. That is, the folders are expanded so that the resulting
-     *   list only contains file paths.
-     *   Any files underneath the workspace root that Code Analyzer chooses to ignore (like .gitignore files,
-     *   files in node_modules folders, etc.) are automatically excluded unless they were explicitly provided when
-     *   constructing the workspace.
+     * Returns the unique list of files and folders that were used to construct the workspace.
+     *
+     * Redundant paths are removed. For example, if a user provided a file and its parent folder, then the file is
+     * removed since the file is already included with the parent folder. Otherwise, no other filtering is done.
+     * For example, if a user explicitly provided to the Workspace constructor a .dotFile then we will not exclude this
+     * file.
      */
-    async getExpandedFiles(): Promise<string[]> {
-        if (!this.expandedFiles) {
-            this.expandedFiles = (await expandToListAllFiles(this.getFilesAndFolders())).filter(f => !this.shouldExclude(f));
+    getRawFilesAndFolders(): string[] {
+        if (!this.cachedRawFilesAndFolders) {
+            this.cachedRawFilesAndFolders = this.removeRedundantPaths(this.rawAbsFilesAndFolders).map(removeTrailingPathSep);
         }
-        return this.expandedFiles as string[];
+        return this.cachedRawFilesAndFolders;
+    }
+
+    /**
+     * Returns the unique list of targets that were provided when constructing the workspace or undefined if none were provided.
+     *
+     * Redundant paths are removed. For example, if a user provided a file and its parent folder, then the file is
+     * removed since the file is already included with the parent folder. Otherwise, no other filtering is done.
+     * For example, if a user explicitly provided to the Workspace constructor a .dotFile then we will not exclude this
+     * file.
+     */
+    getRawTargets(): string[] | undefined {
+        if (!this.cachedRawTargets && this.rawAbsTargets) {
+            this.cachedRawTargets = this.removeRedundantPaths(this.rawAbsTargets).map(removeTrailingPathSep);
+        }
+        return this.cachedRawTargets;
+    }
+
+    /**
+     * The list of files that make up a user's workspace that engines may use to support its analysis of the targeted files.
+     *
+     * This method returns the full list of the absolute file paths recursively found within the workspace.
+     *
+     * This list is composed of the files that getRawFilesAndFolders() returns plus any files found recursively inside
+     * any of the folders that getRawFilesAndFolders() returns. That is, the folders are expanded so that the
+     * resulting list only contains file paths.
+     *
+     * Any files underneath the workspace root that Code Analyzer chooses to ignore (like .gitignore files, files in
+     * node_modules folders, etc.) are automatically excluded unless they were explicitly provided when constructing
+     * the workspace.
+     */
+    async getWorkspaceFiles(): Promise<string[]> {
+        if (!this.cachedWorkspaceFiles) {
+            this.cachedWorkspaceFiles = (await expandToListAllFiles(this.getRawFilesAndFolders())).filter(f => !this.shouldExclude(f));
+        }
+        return this.cachedWorkspaceFiles;
+    }
+
+    /**
+     * The list of files that an engine should target in its analysis.
+     *
+     * This method returns the full list of the absolute file paths recursively found within the provided targets.
+     *
+     * If no targets where provided when constructing the workspace, then all the workspace files from the
+     * getWorkspaceFiles method are returned.
+     *
+     * This list is composed of the files that getRawTargets() returns plus any files found recursively inside any of
+     * the folders that getRawTargets() returns. That is, the folders are expanded so that the resulting list only
+     * contains file paths.
+     *
+     * Any files underneath the workspace root that Code Analyzer chooses to ignore (like .gitignore files, files in
+     * node_modules folders, etc.) are automatically excluded unless they were explicitly provided when constructing
+     * the workspace.
+     */
+    async getTargetedFiles(): Promise<string[]> {
+        if (!this.getRawTargets()) {
+            return await this.getWorkspaceFiles();
+        }
+        if (!this.cachedTargetedFiles) {
+            this.cachedTargetedFiles = (await expandToListAllFiles(this.getRawTargets()!)).filter(f => !this.shouldExclude(f));
+        }
+        return this.cachedTargetedFiles;
     }
 
     /**
@@ -100,7 +167,7 @@ export class Workspace {
             relativeFileOrFolder.includes(`${path.sep}.`);
     }
     private excludeCandidateWasExplicitlyProvided(fileOrFolder: string): boolean {
-        if (this.rawFilesAndFolders.includes(fileOrFolder)) {
+        if (this.rawAbsFilesAndFolders.includes(fileOrFolder) || this.rawAbsTargets?.includes(fileOrFolder)) {
             return true;
         }
         const parentFolder: string = path.dirname(fileOrFolder);

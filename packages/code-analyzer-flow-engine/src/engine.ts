@@ -51,7 +51,7 @@ export class FlowScannerEngine extends Engine {
     public async describeRules(describeOptions: DescribeOptions): Promise<RuleDescription[]> {
         this.emitDescribeRulesProgressEvent(0);
         if (describeOptions.workspace && (await this.getRelevantFiles(describeOptions.workspace)).length == 0) {
-            this.emitLogEvent(LogLevel.Fine, 'Workspace contains no Flow files. Returning no flow rules.');
+            this.emitLogEvent(LogLevel.Fine, 'No Flow files have been targeted in the workspace. Returning no flow rules.');
             this.emitDescribeRulesProgressEvent(100);
             return [];
         }
@@ -77,6 +77,10 @@ export class FlowScannerEngine extends Engine {
         const percentageUpdateHandler = /* istanbul ignore next */ (percentage: number) => {
             this.emitRunRulesProgressEvent(normalizeRelativeCompletionPercentage(percentage));
         }
+
+        // TODO: Note that currently we are only passing to flow scanner the targeted files, but ideally we should
+        // be passing in the relevant workspace files to be the search area from which flow scanner may look for sub flows
+        // while we still pass in the targeted flow files.
         const executionResults: FlowScannerExecutionResult = await this.commandWrapper.runFlowScannerRules(
             relevantFiles, logFile, percentageUpdateHandler);
         const convertedResults: EngineRunResults = toEngineRunResults(executionResults, ruleNames);
@@ -87,7 +91,7 @@ export class FlowScannerEngine extends Engine {
     private async getRelevantFiles(workspace: Workspace): Promise<string[]> {
         const cacheKey: string = workspace.getWorkspaceId();
         if (!this.relevantFilesCache.has(cacheKey)) {
-            const relevantFiles: string[] = (await workspace.getExpandedFiles()).filter(fileIsFlowFile);
+            const relevantFiles: string[] = (await workspace.getTargetedFiles()).filter(fileIsFlowFile);
             this.relevantFilesCache.set(cacheKey, relevantFiles);
         }
         return this.relevantFilesCache.get(cacheKey)!;

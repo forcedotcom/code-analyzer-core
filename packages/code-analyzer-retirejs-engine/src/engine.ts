@@ -46,7 +46,7 @@ const SeverityMap: Map<RetireJsSeverity, SeverityLevel> = new Map([
 export class RetireJsEngine extends Engine {
     static readonly NAME = "retire-js";
     private readonly retireJsExecutor: RetireJsExecutor;
-    private targetFilesCache: Map<string, string[]> = new Map();
+    private relevantFilesCache: Map<string, string[]> = new Map();
 
     constructor(retireJsExecutor?: RetireJsExecutor) {
         super();
@@ -66,28 +66,28 @@ export class RetireJsEngine extends Engine {
     }
 
     async describeRules(describeOptions: DescribeOptions): Promise<RuleDescription[]> {
-        if (describeOptions.workspace && (await this.getTargetFiles(describeOptions.workspace)).length === 0) {
+        if (describeOptions.workspace && (await this.getRelevantFiles(describeOptions.workspace)).length === 0) {
             return [];
         }
         return Object.values(RetireJsSeverity).map(createRuleDescription);
     }
 
     async runRules(ruleNames: string[], runOptions: RunOptions): Promise<EngineRunResults> {
-        const targetFiles: string[] = await this.getTargetFiles(runOptions.workspace);
+        const targetFiles: string[] = await this.getRelevantFiles(runOptions.workspace);
         const findings: Finding[] = await this.retireJsExecutor.execute(targetFiles);
         return {
             violations: toViolations(findings).filter(v => ruleNames.includes(v.ruleName))
         };
     }
 
-    private async getTargetFiles(workspace: Workspace): Promise<string[]> {
+    private async getRelevantFiles(workspace: Workspace): Promise<string[]> {
         const cacheKey: string = workspace.getWorkspaceId();
-        if (!this.targetFilesCache.has(cacheKey)) {
-            const allFiles: string[] = await workspace.getExpandedFiles();
-            const targetFiles: string[] = reduceToTargetFiles(allFiles);
-            this.targetFilesCache.set(cacheKey, targetFiles);
+        if (!this.relevantFilesCache.has(cacheKey)) {
+            const allFiles: string[] = await workspace.getTargetedFiles();
+            const relevantFiles: string[] = reduceToRelevantFiles(allFiles);
+            this.relevantFilesCache.set(cacheKey, relevantFiles);
         }
-        return this.targetFilesCache.get(cacheKey)!;
+        return this.relevantFilesCache.get(cacheKey)!;
     }
 }
 
@@ -154,11 +154,11 @@ function toViolation(vulnerability: Vulnerability, library: string, fileOrZipArc
     };
 }
 
-function reduceToTargetFiles(files: string[]): string[] {
+function reduceToRelevantFiles(files: string[]): string[] {
     const filesSet: Set<string> = new Set(files);
-    return files.filter(file => shouldTarget(file, filesSet));
+    return files.filter(file => isRelevantFile(file, filesSet));
 }
-function shouldTarget(file: string, filesSet: Set<string>): boolean {
+function isRelevantFile(file: string, filesSet: Set<string>): boolean {
     const fileInfo: path.ParsedPath = path.parse(file);
     if (fileIsInFolderToSkip(file)) {
         return false;

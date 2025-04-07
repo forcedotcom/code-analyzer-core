@@ -1,4 +1,40 @@
 import * as engApi from "@salesforce/code-analyzer-engine-api"
+import {Workspace} from "../src";
+import path from "node:path";
+
+const SAMPLE_WORKSPACE_FOLDER: string = path.join(__dirname, 'test-data', 'sampleWorkspace');
+
+/**
+ * StubWorkspace - A workspace stub with preconfigured outputs to help with testing
+ */
+export class StubWorkspace implements Workspace {
+    getWorkspaceId(): string {
+        return "dummyId";
+    }
+
+    getRawFilesAndFolders(): string[] {
+        return [path.join(SAMPLE_WORKSPACE_FOLDER)];
+    }
+
+    getRawTargets(): string[] | undefined {
+        return [path.join(SAMPLE_WORKSPACE_FOLDER, 'someFile.txt')];
+    }
+
+    getWorkspaceFiles(): Promise<string[]> {
+        return Promise.resolve([
+            path.join(SAMPLE_WORKSPACE_FOLDER, 'sub1', 'someFileInSub1.txt'),
+            path.join(SAMPLE_WORKSPACE_FOLDER, 'someFile.txt')
+        ]);
+    }
+
+    getTargetedFiles(): Promise<string[]> {
+        return Promise.resolve([path.join(SAMPLE_WORKSPACE_FOLDER, 'someFile.txt')]);
+    }
+
+    getTargetedMethods(): Promise<string[]> {
+        return Promise.resolve([]);
+    }
+}
 
 /**
  * StubEnginePlugin - A plugin stub with preconfigured outputs to help with testing

@@ -127,10 +127,10 @@ describe("Tests for ValueValidator", () => {
     });
 
     it("When an relative file is given to validateFile with a correct root, then it is returned", () => {
-        const inputFile: string = 'test-data/sampleWorkspace/someFile.txt';
+        const inputFile: string = 'test-data/sampleWorkspace/someFile.cls';
         const inputRoot: string = __dirname;
         expect(ValueValidator.validateFile(inputFile, 'someFieldName', [inputRoot])).toEqual(
-            path.resolve(__dirname, 'test-data', 'sampleWorkspace', 'someFile.txt'));
+            path.resolve(__dirname, 'test-data', 'sampleWorkspace', 'someFile.cls'));
     });
 
     it("When an non-string value is given to validateFile, then error", () => {
@@ -532,9 +532,9 @@ describe("Tests for ConfigValueExtractor", () => {
 
     it("When calling extractRequiredFile on valid file, then return it as absolute", () => {
         const extractor: ConfigValueExtractor = new ConfigValueExtractor({
-            some_field: 'test-data\\sampleWorkspace\\someFile.txt'
+            some_field: 'test-data\\sampleWorkspace\\someFile.cls'
         }, 'engines.dummy', __dirname);
-        const expectedFile: string = path.resolve(__dirname, 'test-data', 'sampleWorkspace', 'someFile.txt');
+        const expectedFile: string = path.resolve(__dirname, 'test-data', 'sampleWorkspace', 'someFile.cls');
         expect(extractor.extractRequiredFile('some_fieLd')).toEqual(expectedFile); // Sanity check key match is case-insensitive
     });
 
@@ -561,9 +561,9 @@ describe("Tests for ConfigValueExtractor", () => {
 
     it("When calling extractFile on valid file, then return it as absolute", () => {
         const extractor: ConfigValueExtractor = new ConfigValueExtractor({
-            some_field: 'test-data\\sampleWorkspace\\someFile.txt'
+            some_field: 'test-data\\sampleWorkspace\\someFile.cls'
         }, 'engines.dummy', __dirname);
-        const expectedFile: string = path.resolve(__dirname, 'test-data', 'sampleWorkspace', 'someFile.txt');
+        const expectedFile: string = path.resolve(__dirname, 'test-data', 'sampleWorkspace', 'someFile.cls');
         expect(extractor.extractFile('some_field')).toEqual(expectedFile);
         expect(extractor.extractFile('some_field', 'someDefault')).toEqual(expectedFile);
     });
@@ -636,11 +636,11 @@ describe("Tests for ConfigValueExtractor", () => {
 
     it("When calling extractRequiredFolder on a field that is a file, then error", () => {
         const extractor: ConfigValueExtractor = new ConfigValueExtractor({
-            some_field: 'test-data/sampleWorkspace/someFile.txt'
+            some_field: 'test-data/sampleWorkspace/someFile.cls'
         }, 'engines.dummy', __dirname);
         expect(() => extractor.extractRequiredFolder('some_field')).toThrow(
             getMessage('ConfigFolderValueMustNotBeFile','engines.dummy.some_field',
-                path.resolve(__dirname, 'test-data', 'sampleWorkspace', 'someFile.txt')));
+                path.resolve(__dirname, 'test-data', 'sampleWorkspace', 'someFile.cls')));
     });
 
     it("When calling extractFolder on a field that does not exist, then return the default", () => {
@@ -687,11 +687,11 @@ describe("Tests for ConfigValueExtractor", () => {
 
     it("When calling extractFolder on a field that is a file, then error", () => {
         const extractor: ConfigValueExtractor = new ConfigValueExtractor({
-            some_field: 'test-data/sampleWorkspace/someFile.txt'
+            some_field: 'test-data/sampleWorkspace/someFile.cls'
         }, 'engines.dummy', __dirname);
         expect(() => extractor.extractFolder('some_field')).toThrow(
             getMessage('ConfigFolderValueMustNotBeFile','engines.dummy.some_field',
-                path.resolve(__dirname, 'test-data', 'sampleWorkspace', 'someFile.txt')));
+                path.resolve(__dirname, 'test-data', 'sampleWorkspace', 'someFile.cls')));
     });
 
     it("When calling extractRequiredObjectAsExtractor on a field that does not exist, then error", () => {

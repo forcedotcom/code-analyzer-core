@@ -69,7 +69,7 @@ describe('SfgeEngine', () => {
 
         it('When a workspace without Apex files is provided, no rules are returned', async () => {
             const engine: SfgeEngine = new SfgeEngine(DEFAULT_SFGE_ENGINE_CONFIG, fixedClock);
-            const workspace: Workspace = new Workspace([
+            const workspace: Workspace = new Workspace('id', [
                 path.join(TEST_DATA_FOLDER, 'sampleIrrelevantWorkspace')
             ]);
             const ruleDescriptions: RuleDescription[] = await engine.describeRules(createDescribeOptions(workspace));
@@ -78,7 +78,7 @@ describe('SfgeEngine', () => {
 
         it('When a workspace with Apex files is provided, all rules are returned', async () => {
             const engine: SfgeEngine = new SfgeEngine(DEFAULT_SFGE_ENGINE_CONFIG, fixedClock);
-            const workspace: Workspace = new Workspace([
+            const workspace: Workspace = new Workspace('id', [
                 path.join(TEST_DATA_FOLDER, 'sampleRelevantWorkspace')
             ]);
             const ruleDescriptions: RuleDescription[] = await engine.describeRules(createDescribeOptions(workspace));
@@ -91,7 +91,7 @@ describe('SfgeEngine', () => {
         it('When no rule names are provided, no violations are returned', async () => {
             // ====== SETUP ======
             const engine: SfgeEngine = new SfgeEngine(DEFAULT_SFGE_ENGINE_CONFIG, fixedClock);
-            const workspace: Workspace = new Workspace([path.join(TEST_DATA_FOLDER, 'sampleRelevantWorkspace')]);
+            const workspace: Workspace = new Workspace('id', [path.join(TEST_DATA_FOLDER, 'sampleRelevantWorkspace')]);
             const logEvents: LogEvent[] = [];
             engine.onEvent(EventType.LogEvent, (e: LogEvent) => logEvents.push(e));
             const progressEvents: RunRulesProgressEvent[] = [];
@@ -115,7 +115,7 @@ describe('SfgeEngine', () => {
         ])('When workspace is $case, no violations are returned', async ({workspacePath}) => {
             // ====== SETUP ======
             const engine: SfgeEngine = new SfgeEngine(DEFAULT_SFGE_ENGINE_CONFIG, fixedClock);
-            const workspace: Workspace = new Workspace([workspacePath]);
+            const workspace: Workspace = new Workspace('id', [workspacePath]);
             const logEvents: LogEvent[] = [];
             engine.onEvent(EventType.LogEvent, (e: LogEvent) => logEvents.push(e));
             const progressEvents: RunRulesProgressEvent[] = [];
@@ -146,7 +146,7 @@ describe('SfgeEngine', () => {
         ])('When workspace is $case, no violations are returned', async ({workspacePaths}) => {
             // ====== SETUP ======
             const engine: SfgeEngine = new SfgeEngine(DEFAULT_SFGE_ENGINE_CONFIG, fixedClock);
-            const workspace: Workspace = new Workspace(workspacePaths);
+            const workspace: Workspace = new Workspace('id', workspacePaths);
             const logEvents: LogEvent[] = [];
             engine.onEvent(EventType.LogEvent, (e: LogEvent) => logEvents.push(e));
             const progressEvents: RunRulesProgressEvent[] = [];
@@ -185,7 +185,7 @@ describe('SfgeEngine', () => {
         ])('When workspace is $case, those violations are returned', async () => {
             // ====== SETUP ======
             const engine: SfgeEngine = new SfgeEngine(DEFAULT_SFGE_ENGINE_CONFIG, fixedClock);
-            const workspace: Workspace = new Workspace([path.join(TEST_DATA_FOLDER, 'sampleRelevantWorkspace')]);
+            const workspace: Workspace = new Workspace('id', [path.join(TEST_DATA_FOLDER, 'sampleRelevantWorkspace')]);
             const progressEvents: RunRulesProgressEvent[] = [];
             engine.onEvent(EventType.RunRulesProgressEvent, (e: RunRulesProgressEvent) => progressEvents.push(e));
             const ruleNames: string[] = ['ApexFlsViolationRule', 'UseWithSharingOnDatabaseOperation', 'UnimplementedTypeRule', 'RemoveUnusedMethod'];
@@ -204,7 +204,7 @@ describe('SfgeEngine', () => {
         it('When only one of several selected rules is violated, violations are returned for only that rule', async () => {
             // ====== SETUP ======
             const engine: SfgeEngine = new SfgeEngine(DEFAULT_SFGE_ENGINE_CONFIG, fixedClock);
-            const workspace: Workspace = new Workspace([path.join(TEST_DATA_FOLDER, 'sampleRelevantWorkspace')]);
+            const workspace: Workspace = new Workspace('id', [path.join(TEST_DATA_FOLDER, 'sampleRelevantWorkspace')]);
             const progressEvents: RunRulesProgressEvent[] = [];
             engine.onEvent(EventType.RunRulesProgressEvent, (e: RunRulesProgressEvent) => progressEvents.push(e));
             const ruleNames: string[] = ['ApexFlsViolationRule', 'AvoidDatabaseOperationInLoop'];
@@ -252,7 +252,7 @@ describe('SfgeEngine', () => {
                 [prop]: value
             };
             const engine: SfgeEngine = new SfgeEngine(config);
-            const workspace: Workspace = new Workspace([path.join(TEST_DATA_FOLDER, 'sampleRelevantWorkspace')]);
+            const workspace: Workspace = new Workspace('id', [path.join(TEST_DATA_FOLDER, 'sampleRelevantWorkspace')]);
             const logEvents: LogEvent[] = [];
             engine.onEvent(EventType.LogEvent, (e: LogEvent) => logEvents.push(e));
             // Use a static rule, because we don't actually care about the results and we're trying to keep runtimes
@@ -272,7 +272,7 @@ describe('SfgeEngine', () => {
         it('When a file cannot be scanned, an appropriate error is thrown', async () => {
             // ====== SETUP ======
             const engine: SfgeEngine = new SfgeEngine(DEFAULT_SFGE_ENGINE_CONFIG, fixedClock);
-            const workspace: Workspace = new Workspace([path.join(TEST_DATA_FOLDER, 'sampleInvalidWorkspace')]);
+            const workspace: Workspace = new Workspace('id', [path.join(TEST_DATA_FOLDER, 'sampleInvalidWorkspace')]);
             const ruleNames: string[] = ['ApexFlsViolationRule', 'RemoveUnusedMethod'];
 
             // ====== TESTED BEHAVIOR/ASSERTIONS ======
@@ -283,7 +283,7 @@ describe('SfgeEngine', () => {
         it('When workspace is one relevant file in a folder with other relevant files, a warning is logged', async () => {
             // ====== SETUP ======
             const engine: SfgeEngine = new SfgeEngine(DEFAULT_SFGE_ENGINE_CONFIG, fixedClock);
-            const workspace: Workspace = new Workspace([path.join(TEST_DATA_FOLDER, 'sampleRelevantWorkspace', 'SomeClass.cls')]);
+            const workspace: Workspace = new Workspace('id', [path.join(TEST_DATA_FOLDER, 'sampleRelevantWorkspace', 'SomeClass.cls')]);
             const logEvents: LogEvent[] = [];
             engine.onEvent(EventType.LogEvent, (e: LogEvent) => logEvents.push(e));
             const ruleNames: string[] = ['ApexFlsViolationRule'];

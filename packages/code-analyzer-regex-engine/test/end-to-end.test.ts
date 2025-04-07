@@ -30,7 +30,7 @@ describe('End to end test', () => {
         }
         const resolvedConfig: ConfigObject = await plugin.createEngineConfig(availableEngineNames[0], new ConfigValueExtractor(customConfig, 'engines.regex'));
         const engine: Engine = await plugin.createEngine(availableEngineNames[0], resolvedConfig);
-        const workspace: Workspace = new Workspace([path.resolve(__dirname, 'test-data', 'workspaceWithPythonFile')]);
+        const workspace: Workspace = new Workspace('id', [path.resolve(__dirname, 'test-data', 'workspaceWithPythonFile')]);
         const ruleDescriptions: RuleDescription[] = await engine.describeRules({logFolder: os.tmpdir(), workspace: workspace});
         const recommendedRuleNames: string[] = ruleDescriptions.filter(rd => rd.tags.includes('Recommended')).map(rd => rd.name);
         const engineRunResults: EngineRunResults = await engine.runRules(recommendedRuleNames, {logFolder: os.tmpdir(), workspace: workspace});

@@ -54,16 +54,16 @@ const MESSAGE_CATALOG : { [key: string]: string } = {
 
     AvoidOldSalesforceApiVersionsRuleMessage:
         `Found the use of a Salesforce API version that is 3 or more years old. Avoid using an API version that is <= %d.0.`,
-    
+
     AvoidGetHeapSizeInLoopRuleDescription:
         `Detects usage of Limits.getHeapSize() in loops`,
-    
+
     AvoidGetHeapSizeInLoopRuleMessage:
         `Found the use of Limits.getHeapSize() in a loop. We recommend you avoid this pattern due to performance and resource reasons.`,
 
     MinVersionForAbstractVirtualClassesWithPrivateMethodRuleDescription:
         `Detects private methods within abstract/virtual classes when the corresponding API version of the class is less than v61.0.`,
-    
+
     MinVersionForAbstractVirtualClassesWithPrivateMethodRuleMessage:
         `Found private methods within abstract/virtual classes. Make sure the corresponding API version of the class is at least v61.0.`,
 

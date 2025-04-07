@@ -49,7 +49,7 @@ describe('Tests for v1', () => {
             runRulesProgressEvents.push(event);
         });
 
-        const workspace: Workspace = new Workspace([]);
+        const workspace: Workspace = new Workspace('id', []);
         await dummyEngine.describeRules({workspace: workspace, logFolder: os.tmpdir()});
         await dummyEngine.runRules(["dummy"], {workspace: workspace, logFolder: os.tmpdir()});
 

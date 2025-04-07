@@ -30,7 +30,7 @@ describe('End to end test', () => {
         const configValueExtractor: ConfigValueExtractor = new ConfigValueExtractor({}, 'engines.eslint');
         const defaultConfig: ConfigObject = await plugin.createEngineConfig('eslint', configValueExtractor);
         const engine: Engine = await plugin.createEngine(availableEngineNames[0], defaultConfig);
-        const workspace: Workspace = new Workspace([
+        const workspace: Workspace = new Workspace('id', [
             path.resolve('test', 'test-data', 'legacyConfigCases', 'workspace_NoCustomConfig')
         ]);
         const ruleDescriptions: RuleDescription[] = await engine.describeRules({logFolder: os.tmpdir(), workspace: workspace});

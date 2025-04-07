@@ -17,7 +17,6 @@ export {
 export {
     DescribeOptions,
     Engine,
-    PathPoint,
     RunOptions
 } from "./engines"
 

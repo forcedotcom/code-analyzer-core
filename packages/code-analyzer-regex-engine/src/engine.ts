@@ -81,7 +81,7 @@ export class RegexEngine extends Engine {
         if (this.textFilesCache.has(cacheKey)){
             return this.textFilesCache.get(cacheKey)!;
         }
-        const fullFileList: string[] = await workspace.getExpandedFiles();
+        const fullFileList: string[] = await workspace.getTargetedFiles();
         const workspaceTextFiles: string[] =  await filterAsync(fullFileList, isTextFile);
         this.textFilesCache.set(cacheKey, workspaceTextFiles);
         return workspaceTextFiles;

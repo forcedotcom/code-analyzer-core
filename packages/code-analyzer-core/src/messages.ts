@@ -123,20 +123,11 @@ const MESSAGE_CATALOG : MessageCatalog = {
     FileOrFolderDoesNotExist:
         `The file or folder '%s' does not exist.`,
 
-    AtLeastOneFileOrFolderMustBeIncluded:
-        `At least one file or folder must be included.`,
+    AtLeastOneFileOrFolderMustBeIncludedInWorkspace:
+        `At least one file or folder must be included in the workspace.`,
 
-    PathStartPointFileDoesNotExist:
-        `The value '%s' is not a valid path starting point since the file '%s' does not exist.`,
-
-    PathStartPointWithMethodMustNotBeFolder:
-        `The value '%s' is not a valid path starting point since '%s' is a folder instead of a file.`,
-
-    InvalidPathStartPoint:
-        `The value '%s' is not a valid path starting point. Expected value to be of the format '<fileOrFolder>', '<file>#<methodName>', or '<file>#<methodName1>;<methodName2>;...'.`,
-
-    PathStartPointMustBeInsideWorkspace:
-        `The specified path starting point of '%s' does not that exists underneath any of the specified paths: %s`,
+    TargetMustLiveWithinWorkspace:
+        `The specified target '%s' does not exist underneath any of the specified workspace paths: %s`,
 
     GatheringRulesFromEngine:
         `Gathering all available rules from engine '%s'.`,
@@ -144,8 +135,8 @@ const MESSAGE_CATALOG : MessageCatalog = {
     FinishedGatheringRulesFromEngine:
         `Finished gathering %d available rule(s) from engine '%s'.`,
 
-    RunningWithRunOptions:
-        `Running with the following run options: %s`,
+    RunningWithWorkspace:
+        `Running with the following workspace: %s`,
 
     RunningEngineWithRules:
         `Running engine '%s' with the following rules: %s`,
