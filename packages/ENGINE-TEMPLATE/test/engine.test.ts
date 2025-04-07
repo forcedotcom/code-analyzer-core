@@ -1,5 +1,6 @@
-import { EngineRunResults, RuleDescription, Workspace } from "@salesforce/code-analyzer-engine-api";
+import { EngineRunResults, RuleDescription, RunOptions, Workspace } from "@salesforce/code-analyzer-engine-api";
 import fs from "node:fs";
+import * as os from "node:os";
 import path from "path";
 import { TemplateEngine } from "../src/engine";
 import { changeWorkingDirectoryToPackageRoot } from "./test-helpers";
@@ -40,7 +41,7 @@ describe('Template Engine Tests', () => {
         // add more checks for specific rules, describe options, and logging events
         it('Returns all rules', async () => {
             const engine: TemplateEngine = new TemplateEngine();
-            const rules: RuleDescription[] = await engine.describeRules({logFolder: '/path'});
+            const rules: RuleDescription[] = await engine.describeRules({logFolder: os.tmpdir()});
     
             expect(rules).toEqual(ALL_EXPECTED_RULES);
         });
@@ -51,8 +52,7 @@ describe('Template Engine Tests', () => {
         // add more checks for specific rules, describe options, and logging events
         it('When zero rule names are provided then return zero violations', async () => {
             const engine: TemplateEngine = new TemplateEngine();
-            const workspace: Workspace = new Workspace([path.join(TEST_DATA_FOLDER, 'sampleWorkspace')]);
-            const results: EngineRunResults = await engine.runRules([], {workspace, logFolder: '/path'});
+            const results: EngineRunResults = await engine.runRules([], createRunOptions(new Workspace([TEST_DATA_FOLDER])));
             expect(results.violations).toHaveLength(0);
         });
 
@@ -63,5 +63,12 @@ describe('Template Engine Tests', () => {
     async function getExpectedRulesFromGoldFile(relativeExpectedFile: string): Promise<RuleDescription[]> {
         const expectedRulesJsonStr: string =  (await fs.promises.readFile(path.join(TEST_DATA_FOLDER, relativeExpectedFile), 'utf-8'));
         return JSON.parse(expectedRulesJsonStr) as RuleDescription[];
+    }
+
+    function createRunOptions(workspace: Workspace): RunOptions {
+        return {
+            logFolder: os.tmpdir(),
+            workspace: workspace
+        }
     }
 });
