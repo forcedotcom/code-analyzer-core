@@ -1,6 +1,6 @@
 [
     {
-      "name": "Example Rule",
+      "name": "ExampleRule",
       "severityLevel": 5,
       "tags": [
         "Recommended"

@@ -36,7 +36,7 @@ export class StylelintEngine extends Engine {
 
         // *** Retrieval Implementation is up to you, but you'll need to map them into RuleDescription form, such as:
         const exampleRule: RuleDescription = {
-            name: "Example Stylelint Rule",
+            name: "ExampleStylelintRule",
             severityLevel: 5,
             tags: [
               "Recommended"

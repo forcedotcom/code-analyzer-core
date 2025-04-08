@@ -39,7 +39,7 @@ export class TemplateEngine extends Engine {
 
         // *** Retrieval Implementation is up to you, but you'll need to map them into RuleDescription form, such as:
         const exampleRule: RuleDescription = {
-            name: "Example Rule",
+            name: "ExampleRule",
             severityLevel: 5,
             tags: [
               "Recommended"

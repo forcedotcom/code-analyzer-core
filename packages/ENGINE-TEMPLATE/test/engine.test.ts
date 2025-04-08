@@ -39,7 +39,7 @@ describe('Template Engine Tests', () => {
     describe('describeRules', () => {
         // *** Update to your new engine;
         // add more checks for specific rules, describe options, and logging events
-        it('Returns all rules', async () => {
+        it('When no workspace is provided, then all rules are returned', async () => {
             const engine: TemplateEngine = new TemplateEngine();
             const rules: RuleDescription[] = await engine.describeRules({logFolder: os.tmpdir()});
     
