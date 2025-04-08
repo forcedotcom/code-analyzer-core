@@ -3,10 +3,8 @@ import * as fsp from 'node:fs/promises';
 import path from "path";
 import { getMessage } from "./messages";
 
-// *** Change the Class Name to match your engine's name
-export class TemplateEngine extends Engine {
-    // *** Change the NAME to match your engine's name
-    static readonly NAME = "template";
+export class StylelintEngine extends Engine {
+    static readonly NAME = "stylelint";
 
     // *** Consider passing in a configuration object from your engine's plugin if you want to provide user-configuration
     constructor() {
@@ -14,10 +12,9 @@ export class TemplateEngine extends Engine {
     }
 
     getName(): string {
-        return TemplateEngine.NAME;
+        return StylelintEngine.NAME;
     }
 
-    // *** Update if you want to get your engine version any other way
     public async getEngineVersion(): Promise<string> {
         const pathToPackageJson: string = path.join(__dirname, '..', 'package.json');
         const packageJson: {version: string} = JSON.parse(await fsp.readFile(pathToPackageJson, 'utf-8'));
@@ -39,7 +36,7 @@ export class TemplateEngine extends Engine {
 
         // *** Retrieval Implementation is up to you, but you'll need to map them into RuleDescription form, such as:
         const exampleRule: RuleDescription = {
-            name: "ExampleRule",
+            name: "ExampleStylelintRule",
             severityLevel: 5,
             tags: [
               "Recommended"

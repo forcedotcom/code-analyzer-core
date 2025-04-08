@@ -2,15 +2,14 @@ import { EngineRunResults, RuleDescription, RunOptions, Workspace } from "@sales
 import fs from "node:fs";
 import * as os from "node:os";
 import path from "path";
-import { TemplateEngine } from "../src/engine";
+import { StylelintEngine } from "../src/engine";
 import { changeWorkingDirectoryToPackageRoot } from "./test-helpers";
 
 changeWorkingDirectoryToPackageRoot();
 
 const TEST_DATA_FOLDER: string = path.join(__dirname, 'test-data');
 
-// *** Update to your new name
-describe('Template Engine Tests', () => {
+describe('Stylelint Engine Tests', () => {
 
     let ALL_EXPECTED_RULES: RuleDescription[];
 
@@ -19,17 +18,16 @@ describe('Template Engine Tests', () => {
     });
 
     describe('getName', () => {
-        // *** Update to your new name + engine
-        it('When getName is called, then name is returned', () => {
-            const engine: TemplateEngine = new TemplateEngine();
-            expect(engine.getName()).toEqual('template');
+        it('When getName is called, then stylelint name is returned', () => {
+            const engine: StylelintEngine = new StylelintEngine();
+            expect(engine.getName()).toEqual('stylelint');
         });
     });
 
     describe('getVersion', () => {
         // *** Update to your new engine
         it('Outputs something resembling a semantic version', async () => {
-            const engine: TemplateEngine = new TemplateEngine();
+            const engine: StylelintEngine = new StylelintEngine();
             const version: string = await engine.getEngineVersion();
     
             expect(version).toMatch(/\d+\.\d+\.\d+.*/);
@@ -40,7 +38,7 @@ describe('Template Engine Tests', () => {
         // *** Update to your new engine;
         // add more checks for specific rules, describe options, and logging events
         it('When no workspace is provided, then all rules are returned', async () => {
-            const engine: TemplateEngine = new TemplateEngine();
+            const engine: StylelintEngine = new StylelintEngine();
             const rules: RuleDescription[] = await engine.describeRules({logFolder: os.tmpdir()});
     
             expect(rules).toEqual(ALL_EXPECTED_RULES);
@@ -48,10 +46,9 @@ describe('Template Engine Tests', () => {
     });
 
     describe('runRules', () => {
-        // *** Update to your new engine;
-        // add more checks for specific rules, describe options, and logging events
+        // *** Add more checks for specific rules, describe options, and logging events
         it('When zero rule names are provided then return zero violations', async () => {
-            const engine: TemplateEngine = new TemplateEngine();
+            const engine: StylelintEngine = new StylelintEngine();
             const results: EngineRunResults = await engine.runRules([], createRunOptions(new Workspace('id', [TEST_DATA_FOLDER])));
             expect(results.violations).toHaveLength(0);
         });

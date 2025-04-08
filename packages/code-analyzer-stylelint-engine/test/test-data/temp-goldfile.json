@@ -1,6 +1,6 @@
 [
     {
-      "name": "ExampleRule",
+      "name": "ExampleStylelintRule",
       "severityLevel": 5,
       "tags": [
         "Recommended"
