@@ -5,12 +5,12 @@
       "message": "FLS validation is missing for [READ] operation on [Account] with field(s) [Name].",
       "codeLocations": [
         {
-          "file": "{{RUNDIR}}classes/MyClass1.cls",
+          "file": "{{RUNDIR}}classes{{PATHSEP}}MyClass1.cls",
           "startLine": 2,
           "startColumn": 16
         },
         {
-          "file": "{{RUNDIR}}classes/MyClass1.cls",
+          "file": "{{RUNDIR}}classes{{PATHSEP}}MyClass1.cls",
           "startLine": 6,
           "startColumn": 23
         }
