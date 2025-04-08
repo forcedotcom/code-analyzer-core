@@ -9,7 +9,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.SimpleFileVisitor;
 import java.nio.file.attribute.BasicFileAttributes;
-import java.util.Arrays;
 import java.util.List;
 import java.util.TreeSet;
 import org.apache.logging.log4j.LogManager;
@@ -21,15 +20,12 @@ import org.apache.logging.log4j.Logger;
  */
 public abstract class AbstractMetaInfoCollector implements MetaInfoCollector {
     private static final Logger LOGGER = LogManager.getLogger(AbstractMetaInfoCollector.class);
-    private static final String APEX_FILE_EXTENSION = ".cls";
     protected final TreeSet<String> collectedMetaInfo;
     private final TreeSet<String> acceptedExtensions = getAcceptedExtensions();
-    private final TreeSet<String> pathsWalked;
     private boolean projectFilesLoaded;
 
     AbstractMetaInfoCollector() {
         this.collectedMetaInfo = CollectionUtil.newTreeSet();
-        this.pathsWalked = CollectionUtil.newTreeSet();
     }
 
     /**
@@ -40,18 +36,17 @@ public abstract class AbstractMetaInfoCollector implements MetaInfoCollector {
     /** Process file to collect meta info from non-apex project file */
     protected abstract void processProjectFile(Path path);
 
-    // TODO: The variables in this method should be renamed to clarify that they are lists of files instead of folders.
     // TODO: The method should (if possible) be rewritten so that it searches the provided workspace files for relevant files,
     //       instead of checking parent directories. It is possible that this may cause test failures. We will see what happens.
     @Override
-    public synchronized void loadProjectFiles(List<String> sourceFolders)
+    public synchronized void loadProjectFiles(List<String> sourceFoldersAndFiles)
             throws MetaInfoLoadException {
         if (projectFilesLoaded) {
             throw new ProgrammingException("Project files already loaded");
         }
         final long start = System.currentTimeMillis();
-        for (String sourceFolder : sourceFolders) {
-            processSourceFolder(sourceFolder);
+        for (String sourceFolderOrFile : sourceFoldersAndFiles) {
+            processSourceFolderOrFile(sourceFolderOrFile);
         }
         if (LOGGER.isInfoEnabled()) {
             LOGGER.info("Took: " + (System.currentTimeMillis() - start) + "ms");
@@ -64,23 +59,9 @@ public abstract class AbstractMetaInfoCollector implements MetaInfoCollector {
         return collectedMetaInfo;
     }
 
-    private void processSourceFolder(String sourceFolder) throws MetaInfoLoadException {
+    private void processSourceFolderOrFile(String sourceFolder) throws MetaInfoLoadException {
         Path path = new File(sourceFolder).toPath();
-        if (isDirectoryContainingApex(path)) {
-            // If the path is a directory with apex files in it, we should assume it's the `classes` folder, and that project
-            // files like VF components or object metadata are in a sibling. So we'll go up a level before walking the file tree.
-            path = path.getParent();
-        } else if (isApexFile(path)) {
-            // If the path itself is an apex file, we should assume that it is contained in the `classes` folder, and that
-            // project files like VF components or object metadata are in a sibling of its parent directory. So we'll go
-            // up two levels before walking the file tree.
-            path = path.getParent().getParent();
-        }
         final ProjectFileVisitor projectFileVisitor = new ProjectFileVisitor();
-        if (this.pathsWalked.contains(path.toString())) {
-            return;
-        }
-        this.pathsWalked.add(path.toString());
         try {
             Files.walkFileTree(path, projectFileVisitor);
         } catch (IOException ex) {
@@ -89,32 +70,6 @@ public abstract class AbstractMetaInfoCollector implements MetaInfoCollector {
             // exception.
             throw new MetaInfoLoadException("Failed to load project files", ex);
         }
-    }
-
-    private boolean isDirectoryContainingApex(Path path) {
-        final File dir = path.toFile();
-        // Non-directories obviously don't have any apex.
-        if (!dir.isDirectory()) {
-            return false;
-        }
-
-        final File[] dirContents = dir.listFiles();
-        // If the directory has no contents, it doesn't contain any apex.
-        if (dirContents == null) {
-            return false;
-        }
-
-        // If the directory contains any '.cls' files, then it's got apex.
-        return Arrays.stream(dirContents).anyMatch(f -> f.getName().endsWith(APEX_FILE_EXTENSION));
-    }
-
-    private boolean isApexFile(Path path) {
-        final File file = path.toFile();
-
-        if (!file.isFile()) {
-            return false;
-        }
-        return file.getName().endsWith(APEX_FILE_EXTENSION);
     }
 
     protected boolean pathMatches(Path path) {

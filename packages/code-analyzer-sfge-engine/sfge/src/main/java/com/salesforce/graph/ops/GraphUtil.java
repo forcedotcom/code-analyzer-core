@@ -120,11 +120,11 @@ public final class GraphUtil {
     }
 
     /** Loads all .cls files from the given directories and subdirectories into the graph. */
-    public static void loadSourceFolders(GraphTraversalSource g, List<String> sourceFolders)
+    public static void loadSourceFilesAndFolders(GraphTraversalSource g, List<String> sourceFilesAndFolders)
             throws GraphLoadException {
         List<Util.CompilationDescriptor> comps = new ArrayList<>();
-        for (String sourceFolder : sourceFolders) {
-            comps.addAll(buildFolderComps(sourceFolder));
+        for (String sourceFileOrFolder : sourceFilesAndFolders) {
+            comps.addAll(buildFileAndFolderComps(sourceFileOrFolder));
         }
 
         // Verify TopLevelWrappers have appropriately unique names
@@ -171,10 +171,10 @@ public final class GraphUtil {
         progressListener.completedBuildingGraph();
     }
 
-    private static List<Util.CompilationDescriptor> buildFolderComps(String sourceFolder)
+    private static List<Util.CompilationDescriptor> buildFileAndFolderComps(String sourceFileOrFolder)
             throws GraphLoadException {
         List<Util.CompilationDescriptor> comps = new ArrayList<>();
-        Path path = new File(sourceFolder).toPath();
+        Path path = new File(sourceFileOrFolder).toPath();
         SourceFileVisitor sourceFileVisitor = new SourceFileVisitor(comps);
         try {
             Files.walkFileTree(path, sourceFileVisitor);

@@ -38,7 +38,7 @@ type SfgeTarget = {
 
 type SfgeInputFile = {
     targets: SfgeTarget[];
-    projectDirs: string[];
+    projectFilesAndFolders: string[];
     rulesToRun: string[];
 };
 
@@ -172,7 +172,7 @@ export class RuntimeSfgeWrapper {
         });
         const inputFileContents: SfgeInputFile = {
             targets: sfgeTargets,
-            projectDirs: allWorkspaceFiles,
+            projectFilesAndFolders: allWorkspaceFiles,
             rulesToRun: rules
         };
         return fs.promises.writeFile(filePath, JSON.stringify(inputFileContents));

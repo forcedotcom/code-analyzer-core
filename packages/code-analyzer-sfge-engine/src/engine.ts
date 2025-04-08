@@ -18,7 +18,7 @@ import {getMessage} from './messages';
 import {RuntimeSfgeWrapper, SfgeRuleInfo, SfgeRunOptions, SfgeRunResult} from "./sfge-wrapper";
 import {SfgeEngineConfig} from "./config";
 
-const SFGE_RELEVANT_FILE_EXTENSIONS = ['.cls'];
+const SFGE_RELEVANT_FILE_EXTENSIONS = ['.cls', '.trigger', '-meta.xml', '.page', '.component'];
 const DEV_PREVIEW_TAG: string = 'DevPreview';
 
 export class SfgeEngine extends Engine {

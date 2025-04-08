@@ -222,10 +222,31 @@ describe('SfgeEngine', () => {
 
         it.each([
             {
-                case: 'a file that violates the selected rules',
-                targetPaths: []
+                case: 'workspace includes all project files',
+                expectation: 'SFGE properly utilizes them',
+                workspacePath: path.join(TEST_DATA_FOLDER, 'sampleRelevantWorkspace3'),
+                goldfile: 'EntireWorkspace_violations.goldfile.json'
+            },
+            {
+                case: 'workspace excludes non-apex project files',
+                expectation: 'SFGE correctly ignores them',
+                workspacePath: path.join(TEST_DATA_FOLDER, 'sampleRelevantWorkspace3', 'classes'),
+                goldfile: 'ApexFilesOnly_violations.goldfile.json'
             }
-        ])
+        ])('When $case, $expectation', async ({workspacePath, goldfile}) => {
+            // ====== SETUP ======
+            const engine: SfgeEngine = new SfgeEngine(DEFAULT_SFGE_ENGINE_CONFIG, fixedClock);
+            const workspace: Workspace = new Workspace('id', [workspacePath]);
+            const progressEvents: RunRulesProgressEvent[] = [];
+            engine.onEvent(EventType.RunRulesProgressEvent, (e: RunRulesProgressEvent) => progressEvents.push(e));
+            const ruleNames: string[] = ['ApexFlsViolationRule', 'AvoidDatabaseOperationInLoop'];
+
+            // ====== TESTED BEHAVIOR ======
+            const results: EngineRunResults = await engine.runRules(ruleNames, createRunOptions(workspace));
+
+            // ====== ASSERTIONS ======
+            await expectResultsToMatchGoldfile(results, path.join('sampleRelevantWorkspace3', goldfile), path.join(TEST_DATA_FOLDER, 'sampleRelevantWorkspace3'));
+        });
 
         it('When only one of several selected rules is violated, violations are returned for only that rule', async () => {
             // ====== SETUP ======
