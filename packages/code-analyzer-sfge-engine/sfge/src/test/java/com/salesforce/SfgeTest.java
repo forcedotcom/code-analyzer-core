@@ -36,7 +36,7 @@ public class SfgeTest {
             Lists.newArrayList(
                     "{\n",
                     "   \"rulesToRun\": [\"ApexFlsViolationRule\"],\n",
-                    "   \"projectDirs\": [\"/path/to/project/dir/\"],\n",
+                    "   \"projectFilesAndFolders\": [\"/path/to/project/dir/\"],\n",
                     "   \"targets\": [{\n",
                     "       \"targetFile\": \"/path/to/DemoExample.cls\",\n",
                     "       \"targetMethods\": [\"exampleMethod\"]\n",

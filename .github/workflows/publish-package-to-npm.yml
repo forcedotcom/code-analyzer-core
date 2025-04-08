@@ -58,6 +58,8 @@ jobs:
     outputs:
       packages-to-release: ${{ steps.main.outputs.packages_to_release }}
     steps:
+      - name: Support long paths
+        run: git config --global core.longpaths true
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
@@ -104,6 +106,8 @@ jobs:
     outputs:
       branch-name: ${{ steps.create-release-branch.outputs.branch_name }}
     steps:
+      - name: Support long paths
+        run: git config --global core.longpaths true
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
@@ -223,6 +227,8 @@ jobs:
     runs-on: ubuntu-latest
     needs: [validate-packages-as-releasable, prepare-release-branch]
     steps:
+      - name: Support long paths
+        run: git config --global core.longpaths true
       - uses: actions/checkout@v4
         with:
           ref: ${{ needs.prepare-release-branch.outputs.branch-name }}
@@ -264,6 +270,8 @@ jobs:
       contents: write
       pull-requests: write
     steps:
+      - name: Support long paths
+        run: git config --global core.longpaths true
       - uses: actions/checkout@v4
         with:
           ref: ${{ needs.prepare-release-branch.outputs.branch-name }}

@@ -13,12 +13,14 @@ import com.salesforce.rules.Violation;
 import com.salesforce.rules.fls.apex.operations.FlsConstants;
 
 import java.nio.file.Path;
-import java.util.Collections;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+import java.util.stream.Collectors;
+
 import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversalSource;
 import org.hamcrest.MatcherAssert;
 import org.hamcrest.Matchers;
@@ -37,17 +39,26 @@ public class CustomSettingsInfoCollectorTest {
 
     @Test
     public void loadCustomSettings_testWithClassFolder(TestInfo testInfo) throws Exception {
-        verifyBaseDirIsAvailable(testInfo, "classes");
+        verifyCustomSettingsInfoNotFound(testInfo, new String[]{Path.of("classes").toString()});
     }
 
     @Test
     public void loadCustomSettings_testWithRootFolder(TestInfo testInfo) throws Exception {
-        verifyBaseDirIsAvailable(testInfo, "root");
+        verifyCustomSettingsInfoFound(testInfo, new String[]{Path.of("root").toString()});
     }
 
     @Test
     public void loadCustomSettings_testWithIndividualApexFiles(TestInfo testInfo) throws Exception {
-        verifyBaseDirIsAvailable(testInfo, Path.of("classes", "MyClass.cls").toString());
+        verifyCustomSettingsInfoNotFound(testInfo, new String[]{Path.of("classes", "MyClass.cls").toString()});
+    }
+
+    @Test
+    public void loadCustomSettings_testWithIndividualApexAndObjectFiles(TestInfo testInfo) throws Exception {
+        verifyCustomSettingsInfoFound(testInfo, new String[]{
+            Path.of("classes", "MyClass.cls").toString(),
+            Path.of("objects", "My_Cust_Set__c.object-meta.xml").toString(),
+            Path.of("objects", "Simple_SObject__c.object-meta.xml").toString()
+        });
     }
 
     @Test
@@ -55,7 +66,7 @@ public class CustomSettingsInfoCollectorTest {
         final MetaInfoCollector metaInfoCollector =
                 MetaInfoCollectorProvider.getCustomSettingsInfoCollector();
         try {
-            loadProjectFiles(testInfo, "classes", (CustomSettingInfoCollector) metaInfoCollector);
+            loadProjectFiles(testInfo, new String[]{Path.of("root").toString()}, (CustomSettingInfoCollector) metaInfoCollector);
 
             final MetadataInfo metadataInfo = MetadataInfoProvider.get();
             metadataInfo.initialize(g);
@@ -75,7 +86,7 @@ public class CustomSettingsInfoCollectorTest {
         final CustomSettingInfoCollector customSettingsInfoCollector =
                 (CustomSettingInfoCollector)
                         MetaInfoCollectorProvider.getCustomSettingsInfoCollector();
-        loadProjectFiles(testInfo, "classes", customSettingsInfoCollector);
+        loadProjectFiles(testInfo, new String[]{Path.of("root").toString()}, customSettingsInfoCollector);
 
         Runnable runnable =
                 () -> {
@@ -105,7 +116,7 @@ public class CustomSettingsInfoCollectorTest {
 
             // This does not contain the actual class we want to compile.
             // Only loads custom settings information from project files.
-            loadProjectFiles(testInfo, "classes", customSettingInfoCollector);
+            loadProjectFiles(testInfo, new String[]{Path.of("root").toString()}, customSettingInfoCollector);
 
             // Make sure we have the custom settings registered
             MatcherAssert.assertThat(
@@ -145,13 +156,13 @@ public class CustomSettingsInfoCollectorTest {
         }
     }
 
-    private void verifyBaseDirIsAvailable(TestInfo testInfo, String baseDir)
+    private void verifyCustomSettingsInfoFound(TestInfo testInfo, String[] filesAndFolders)
             throws GraphUtil.GraphLoadException {
         TestUtil.compileTestFiles(g, testInfo);
         try {
             final CustomSettingInfoCollector customSettingsInfoCollector =
                     new CustomSettingInfoCollector();
-            loadProjectFiles(testInfo, baseDir, customSettingsInfoCollector);
+            loadProjectFiles(testInfo, filesAndFolders, customSettingsInfoCollector);
             Set<String> referencedNames = customSettingsInfoCollector.getMetaInfoCollected();
 
             MatcherAssert.assertThat(referencedNames, hasSize(equalTo(1)));
@@ -161,13 +172,30 @@ public class CustomSettingsInfoCollectorTest {
         }
     }
 
+    private void verifyCustomSettingsInfoNotFound(TestInfo testInfo, String[] filesAndFolders)
+            throws GraphUtil.GraphLoadException {
+        TestUtil.compileTestFiles(g, testInfo);
+        try {
+            final CustomSettingInfoCollector customSettingsInfoCollector =
+                new CustomSettingInfoCollector();
+            loadProjectFiles(testInfo, filesAndFolders, customSettingsInfoCollector);
+            Set<String> referencedNames = customSettingsInfoCollector.getMetaInfoCollected();
+
+            MatcherAssert.assertThat(referencedNames, hasSize(equalTo(0)));
+        } finally {
+            MetaInfoCollectorTestProvider.removeCustomSettingsInfoCollector();
+        }
+    }
+
     private void loadProjectFiles(
             TestInfo testInfo,
-            String baseDir,
+            String[] filesAndFolders,
             CustomSettingInfoCollector customSettingsInfoCollector) {
         MetaInfoCollectorTestProvider.setCustomSettingsInfoCollector(customSettingsInfoCollector);
-        String classesFolder = TestUtil.getTestFileDirectory(testInfo).resolve(baseDir).toString();
-        customSettingsInfoCollector.loadProjectFiles(Collections.singletonList(classesFolder));
-        return;
+        List<String> absoluteFilesAndFolders = Arrays
+            .stream(filesAndFolders)
+            .map((String s) -> TestUtil.getTestFileDirectory(testInfo).resolve(s).toString())
+            .collect(Collectors.toList());
+        customSettingsInfoCollector.loadProjectFiles(absoluteFilesAndFolders);
     }
 }

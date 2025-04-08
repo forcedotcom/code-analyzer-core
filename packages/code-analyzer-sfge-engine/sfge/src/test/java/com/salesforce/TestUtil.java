@@ -741,7 +741,7 @@ public final class TestUtil {
                     "The graph passed to TestUtil.compileTestFiles() must be empty");
         }
         Path path = getTestFileDirectory(testInfo);
-        GraphUtil.loadSourceFolders(g, Collections.singletonList(path.toString()));
+        GraphUtil.loadSourceFilesAndFolders(g, Collections.singletonList(path.toString()));
     }
 
     public static RuleRunnerTarget createTarget(String targetFile, List<String> targetMethods) {

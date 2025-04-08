@@ -36,8 +36,8 @@ public class VisualForceHandlerImplTest {
             MetaInfoCollector metaInfoCollector = MetaInfoCollectorProvider.getVisualForceHandler();
             metaInfoCollector.loadProjectFiles(Collections.singletonList(rootFolder));
             Set<String> referencedNames = metaInfoCollector.getMetaInfoCollected();
-            // When given a folder containing no Apex, that folder and its descendents should be
-            // scanned for VF files.
+            // When given a folder whose subdirectories contain VF pages and corresponding VF controllers,
+            // the appropriate controllers are picked up.
             MatcherAssert.assertThat(referencedNames, hasSize(equalTo(1)));
             MatcherAssert.assertThat(referencedNames, contains("MyController"));
         } finally {
@@ -54,11 +54,8 @@ public class VisualForceHandlerImplTest {
             MetaInfoCollector metaInfoCollector = MetaInfoCollectorProvider.getVisualForceHandler();
             metaInfoCollector.loadProjectFiles(Collections.singletonList(classes));
             Set<String> referencedNames = metaInfoCollector.getMetaInfoCollected();
-            // When provided with a folder that contains apex, that folder and its siblings should
-            // be scanned for VF
-            // files.
-            MatcherAssert.assertThat(referencedNames, hasSize(equalTo(1)));
-            MatcherAssert.assertThat(referencedNames, contains("MyController"));
+            // When provided with just a folder containing Apex, we don't identify any controllers.
+            MatcherAssert.assertThat(referencedNames, hasSize(equalTo(0)));
         } finally {
             MetaInfoCollectorTestProvider.removeVisualForceHandler();
         }
@@ -76,9 +73,27 @@ public class VisualForceHandlerImplTest {
             MetaInfoCollector metaInfoCollector = MetaInfoCollectorProvider.getVisualForceHandler();
             metaInfoCollector.loadProjectFiles(Arrays.asList(sourceFiles));
             Set<String> referencedNames = metaInfoCollector.getMetaInfoCollected();
-            // When provided with a folder that contains apex, that folder and its siblings should
-            // be scanned for VF
-            // files.
+            // When provided with individual apex files, the controllers will not be automatically identified.
+            MatcherAssert.assertThat(referencedNames, hasSize(equalTo(0)));
+        } finally {
+            MetaInfoCollectorTestProvider.removeVisualForceHandler();
+        }
+    }
+
+    @Test
+    public void loadVisualForce_testWithIndividualApexAndVfFiles(TestInfo testInfo) throws Exception {
+        TestUtil.compileTestFiles(g, testInfo);
+        try {
+            MetaInfoCollectorTestProvider.setVisualForceHandler(new VisualForceHandlerImpl());
+            String[] sourceFiles = new String[]{
+                TestUtil.getTestFileDirectory(testInfo).resolve(Path.of("classes", "MyController.cls")).toString(),
+                TestUtil.getTestFileDirectory(testInfo).resolve(Path.of("classes", "MyNonController.cls")).toString(),
+                TestUtil.getTestFileDirectory(testInfo).resolve(Path.of("pages", "MyVfPage.page")).toString()
+            };
+            MetaInfoCollector metaInfoCollector = MetaInfoCollectorProvider.getVisualForceHandler();
+            metaInfoCollector.loadProjectFiles(Arrays.asList(sourceFiles));
+            Set<String> referencedNames = metaInfoCollector.getMetaInfoCollected();
+            // When provided with individual apex and vf files, the controllers will be automatically identified.
             MatcherAssert.assertThat(referencedNames, hasSize(equalTo(1)));
             MatcherAssert.assertThat(referencedNames, contains("MyController"));
         } finally {
@@ -91,7 +106,7 @@ public class VisualForceHandlerImplTest {
         TestUtil.compileTestFiles(g, testInfo);
         try {
             MetaInfoCollectorTestProvider.setVisualForceHandler(new VisualForceHandlerImpl());
-            String classes = TestUtil.getTestFileDirectory(testInfo).resolve("classes").toString();
+            String classes = TestUtil.getTestFileDirectory(testInfo).resolve("root").toString();
             MetaInfoCollector metaInfoCollector = MetaInfoCollectorProvider.getVisualForceHandler();
             metaInfoCollector.loadProjectFiles(Collections.singletonList(classes));
             Set<String> referencedNames = metaInfoCollector.getMetaInfoCollected();
@@ -108,7 +123,7 @@ public class VisualForceHandlerImplTest {
         TestUtil.compileTestFiles(g, testInfo);
         try {
             MetaInfoCollectorTestProvider.setVisualForceHandler(new VisualForceHandlerImpl());
-            String classes = TestUtil.getTestFileDirectory(testInfo).resolve("classes").toString();
+            String classes = TestUtil.getTestFileDirectory(testInfo).resolve("root").toString();
             MetaInfoCollector metaInfoCollector = MetaInfoCollectorProvider.getVisualForceHandler();
             metaInfoCollector.loadProjectFiles(Collections.singletonList(classes));
 

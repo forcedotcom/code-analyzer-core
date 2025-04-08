@@ -99,7 +99,7 @@ public class CliArgParser {
     public static class ExecuteArgParser {
         private static final int ARG_COUNT = 3;
 
-        private final List<String> projectDirs;
+        private final List<String> projectFilesAndFolders;
         private final List<RuleRunnerTarget> targets;
         private final List<AbstractRule> selectedRules;
         private String outfile;
@@ -112,7 +112,7 @@ public class CliArgParser {
 
         @VisibleForTesting
         public ExecuteArgParser(Dependencies dependencies) {
-            projectDirs = new ArrayList<>();
+            projectFilesAndFolders = new ArrayList<>();
             targets = new ArrayList<>();
             selectedRules = new ArrayList<>();
             this.dependencies = dependencies;
@@ -136,13 +136,13 @@ public class CliArgParser {
             }
             ExecuteInput input = readInputFile(args[1]);
             targets.addAll(input.targets);
-            projectDirs.addAll(input.projectDirs);
+            projectFilesAndFolders.addAll(input.projectFilesAndFolders);
             identifyRules(input.rulesToRun);
             outfile = args[2];
         }
 
-        public List<String> getProjectDirs() {
-            return projectDirs;
+        public List<String> getProjectFilesAndFolders() {
+            return projectFilesAndFolders;
         }
 
         public List<RuleRunnerTarget> getTargets() {
@@ -206,7 +206,7 @@ public class CliArgParser {
 
     public static class ExecuteInput {
         private List<String> rulesToRun;
-        private List<String> projectDirs;
+        private List<String> projectFilesAndFolders;
         private List<RuleRunnerTarget> targets;
     }
 

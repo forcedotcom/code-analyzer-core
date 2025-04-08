@@ -1,0 +1,2 @@
+<apex:page controller="MyClass1" layout="none">
+</apex:page>
