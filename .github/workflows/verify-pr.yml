@@ -104,7 +104,7 @@ jobs:
           git push --set-upstream origin experiment/$NOW_TIMESTAMP
           echo "branch_name=experiment/$NOW_TIMESTAMP" >> "$GITHUB_OUTPUT"
           PACKAGES_TO_UPDATE="code-analyzer-core code-analyzer-engine-api code-analyzer-eslint-engine code-analyzer-flow-engine"
-          node ./.github/workflows/publish-package-to-npm/update-versions "${PACKAGES_TO_UPDATE}"
+          node ./.github/workflows/publish-package-to-npm/update-versions-in-released-packages.js "${PACKAGES_TO_UPDATE}"
           cd packages
           ALL_PACKAGES=`ls`
           cd ..
