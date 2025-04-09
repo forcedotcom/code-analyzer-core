@@ -14,7 +14,7 @@ function main() {
     scriptLines.push(...generateGraphQlDashFFlagsForPackages(packageNames));
     scriptLines.push(`-F packagelock="$PACKAGE_LOCK" \\`);
     scriptLines.push(`-f query='`);
-    scriptLines.push(`mutation = (${createMutationParameters(packageNames).join(', ')}) {`);
+    scriptLines.push(`mutation (${createMutationParameters(packageNames).join(', ')}) {`);
     scriptLines.push(`  createCommitOnBranch(input: {`);
     scriptLines.push(`    branch: {`);
     scriptLines.push(`      repositoryNameWithOwner: "forcedotcom/code-analyzer-core",`);
