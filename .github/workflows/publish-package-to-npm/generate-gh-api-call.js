@@ -68,7 +68,7 @@ function createGraphQlParameters(oldOid, branchName, descriptorMap) {
     for (const [name, descriptor] of descriptorMap.entries()) {
         params.push('-F', `${name}="${descriptor.fileEncoding}"`);
     }
-    params.push('-f', `query=${createMutation(descriptorMap)}`);
+    params.push('-f', `query='${createMutation(descriptorMap)}'`);
     return params.join(' ');
 }
 
@@ -82,7 +82,7 @@ function createMutation(descriptorMap) {
     for (const [name, descriptor] of descriptorMap.entries()) {
         fileChanges.push(
           `path: "${descriptor.filePath}",\n` +
-          `contents: $${name}\n`
+          `contents: $${name}`
         );
     }
     return `
