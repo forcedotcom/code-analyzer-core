@@ -111,9 +111,8 @@ jobs:
           node ./.github/workflows/publish-package-to-npm/update-dependencies-on-released-packages.js "$PACKAGES_TO_UPDATE" "$ALL_PACKAGES"
           npm install
           npm run build
-          BRANCH_NAME=$(git rev-parse --abbrev-ref HEAD)
-          OLD_OID=`git rev-parse HEAD`
-          node ./.github/workflows/publish-package-to-npm/generate-gh-api-call.js "$OLD_OID" "$BRANCH_NAME" "$ALL_PACKAGES"
-          GRAPHQLQUERY=`cat graphQlQuery.txt`
-          eval $GRAPHQLQUERY
+          node ./.github/workflows/publish-package-to-npm/create-branch-commit-script.js "$ALL_PACKAGES"
+
+          SCRIPT=`cat graphQlScript.txt`
+          eval $SCRIPT
 
