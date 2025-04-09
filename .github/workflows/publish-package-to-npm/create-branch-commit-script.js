@@ -56,9 +56,9 @@ function generatePackageVarDeclarations(packageNames) {
 
 function generateGraphQlDashFFlagsForPackages(packageNames) {
     const dashFFlags = [];
-    for (const packageName of packageNames) {
-        dashFFlags.push(`-F ${toMutationParamName(packageName)}="$${toPackageVarName(packageName)}" \\`);
-    }
+    //for (const packageName of packageNames) {
+    //    dashFFlags.push(`-F ${toMutationParamName(packageName)}="$${toPackageVarName(packageName)}" \\`);
+    //}
     return dashFFlags;
 }
 
@@ -67,21 +67,21 @@ function createMutationParameters(packageNames) {
     mutationParameters.push('$message: String!');
     mutationParameters.push('$oldOid: GitObjectID!');
     mutationParameters.push('$branch: String!');
-    for (const packageName of packageNames) {
-        mutationParameters.push(`$${toMutationParamName(packageName)}: Base64String!`);
-    }
+    //for (const packageName of packageNames) {
+    //    mutationParameters.push(`$${toMutationParamName(packageName)}: Base64String!`);
+    //}
     mutationParameters.push(`$packagelock: Base64String!`);
     return mutationParameters;
 }
 
 function createAdditionsArray(packageNames) {
     const additions = [];
-    for (const packageName of packageNames) {
-        additions.push(
-            `            path: "packages/${packageName}/package.json",\n` +
-            `            contents: $${toMutationParamName(packageName)}\n`
-        );
-    }
+    //for (const packageName of packageNames) {
+    //    additions.push(
+    //        `            path: "packages/${packageName}/package.json",\n` +
+    //        `            contents: $${toMutationParamName(packageName)}\n`
+    //    );
+    //}
     additions.push(
         `            path: "package-lock.json",\n` +
         `            contents: $packagelock`
