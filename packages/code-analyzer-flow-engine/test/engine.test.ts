@@ -32,6 +32,7 @@ const PATH_TO_EXAMPLE2: string = path.join(PATH_TO_MULTIPLE_FLOWS_WORKSPACE, 'ex
 const PATH_TO_EXAMPLE3: string = path.join(PATH_TO_MULTIPLE_FLOWS_WORKSPACE, 'example3_containsNoViolations.flow');
 const PATH_TO_EXAMPLE4_PARENTFLOW: string = path.join(PATH_TO_MULTIPLE_FLOWS_WORKSPACE, 'example4_parentFlow.flow-meta.xml');
 const PATH_TO_EXAMPLE4_SUBFLOW: string = path.join(PATH_TO_MULTIPLE_FLOWS_WORKSPACE, 'example4_subflow.flow-meta.xml');
+const PATH_TO_EXAMPLE5: string = path.join(PATH_TO_MULTIPLE_FLOWS_WORKSPACE, 'shouldNotGetPickedUpByFlowScanner.xml');
 
 describe('Tests for the TestEngine', () => {
     const flowScannerCommandWrapper: RunTimeFlowScannerCommandWrapper = new RunTimeFlowScannerCommandWrapper('python3');
@@ -466,6 +467,70 @@ describe('Tests for the TestEngine', () => {
 
                 const engineResults1: EngineRunResults = await engine.runRules(selectedRuleNames, createRunOptions(tempFolder, workspace));
                 expect(engineResults1.violations).toHaveLength(0);
+            });
+
+            it("When no targeted files have violations but non-targeted files do, then no violations are returned.", async () => {
+                const engine: FlowScannerEngine = new FlowScannerEngine(flowScannerCommandWrapper);
+
+                const selectedRuleNames: string[] = [
+                    "PreventPassingUserDataIntoElementWithSharing",
+                    "PreventPassingUserDataIntoElementWithoutSharing"
+                ];
+
+                const engineResults: EngineRunResults = await engine.runRules(
+                    selectedRuleNames,
+                    createRunOptions(tempFolder, new Workspace("id", [PATH_TO_MULTIPLE_FLOWS_WORKSPACE], [PATH_TO_EXAMPLE3]))
+                );
+
+                expect(engineResults.violations).toHaveLength(0);
+            });
+
+            it("When only non-flow files are targeted in a workspace with violations, then no violations are returned.", async () => {
+                const engine: FlowScannerEngine = new FlowScannerEngine(flowScannerCommandWrapper);
+
+                const selectedRuleNames: string[] = [
+                    "PreventPassingUserDataIntoElementWithSharing",
+                    "PreventPassingUserDataIntoElementWithoutSharing"
+                ];
+
+                const engineResults: EngineRunResults = await engine.runRules(
+                    selectedRuleNames,
+                    createRunOptions(tempFolder, new Workspace("id", [PATH_TO_MULTIPLE_FLOWS_WORKSPACE], [PATH_TO_EXAMPLE5]))
+                );
+
+                expect(engineResults.violations).toHaveLength(0);
+            });
+
+            it("When both targeted files and non-targeted files have violations, then only the violations for the targeted files are returned.", async () => {
+                const engine: FlowScannerEngine = new FlowScannerEngine(flowScannerCommandWrapper);
+
+                const selectedRuleNames: string[] = [
+                    "PreventPassingUserDataIntoElementWithSharing",
+                    "PreventPassingUserDataIntoElementWithoutSharing"
+                ];
+
+                const engineResults: EngineRunResults = await engine.runRules(
+                    selectedRuleNames,
+                    createRunOptions(tempFolder, new Workspace("id", [PATH_TO_MULTIPLE_FLOWS_WORKSPACE], [PATH_TO_EXAMPLE1]))
+                );
+
+                expect(engineResults.violations).toHaveLength(2);
+            });
+
+            it("When all files in a workspace are targeted and have violations, all of the violations are returned.", async () => {
+                const engine: FlowScannerEngine = new FlowScannerEngine(flowScannerCommandWrapper);
+
+                const selectedRuleNames: string[] = [
+                    "PreventPassingUserDataIntoElementWithSharing",
+                    "PreventPassingUserDataIntoElementWithoutSharing"
+                ];
+
+                const engineResults: EngineRunResults = await engine.runRules(
+                    selectedRuleNames,
+                    createRunOptions(tempFolder, new Workspace("id", [PATH_TO_EXAMPLE1], [PATH_TO_EXAMPLE1]))
+                );
+
+                expect(engineResults.violations).toHaveLength(2);
             });
 
             // TODO: Add in tests for case of scanning 2 folders with the exact same flows.
