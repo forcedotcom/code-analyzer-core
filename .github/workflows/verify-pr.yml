@@ -84,3 +84,36 @@ jobs:
           python-version: 3.12
       - run: npm install
       - run: npm run all
+  run_experiment:
+    runs-on: macos-latest
+    env:
+      GH_TOKEN: ${{ github.token }}
+    permissions:
+      contents: write
+    steps:
+      - name: support long paths
+        run: git config --global core.longpaths true
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 'lts/*'
+      - name: create experimental branch
+        run: |
+          NOW_TIMESTAMP=$(date +%s)
+          git checkout -b experiment/$NOW_TIMESTAMP
+          git push --set-upstream origin experiment/$NOW_TIMESTAMP
+          echo "branch_name=experiment/$NOW_TIMESTAMP" >> "$GITHUB_OUTPUT"
+          PACKAGES_TO_UPDATE="code-analyzer-core code-analyzer-engine-api code-analyzer-eslint-engine code-analyzer-flow-engine"
+          node ./.github/workflows/publish-package-to-npm/update-versions "${PACKAGES_TO_UPDATE}"
+          cd packages
+          ALL_PACKAGES=`ls`
+          cd ..
+          node ./.github/workflows/publish-package-to-npm/update-dependencies-on-released-packages.js "$PACKAGES_TO_UPDATE" "$ALL_PACKAGES"
+          npm install
+          npm run build
+          BRANCH_NAME=$(git rev-parse --abbrev-ref HEAD)
+          OLD_OID=`git rev-parse HEAD`
+          node ./.github/workflows/publish-package-to-npm/generate-gh-api-call.js "$OLD_OID" "$BRANCH_NAME" "$ALL_PACKAGES"
+          GRAPHQLQUERY=`cat graphQlQuery.txt`
+          eval $GRAPHQLQUERY
+
