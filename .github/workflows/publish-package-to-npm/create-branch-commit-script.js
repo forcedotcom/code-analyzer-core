@@ -14,22 +14,22 @@ function main() {
     scriptLines.push(...generateGraphQlDashFFlagsForPackages(packageNames));
     scriptLines.push(`-F packagelock="$PACKAGE_LOCK" \\`);
     scriptLines.push(`-f query='`);
-    scriptLines.push(`mutation (${createMutationParameters(packageNames).join(', ')}) {`);
-    scriptLines.push(`  createCommitOnBranch(input: {`);
-    scriptLines.push(`    branch: {`);
-    scriptLines.push(`      repositoryNameWithOwner: "forcedotcom/code-analyzer-core",`);
-    scriptLines.push(`      branchName: $branch`);
-    scriptLines.push(`    },`);
-    scriptLines.push(`    message: {`);
-    scriptLines.push(`      headline: $message`);
-    scriptLines.push(`    },`);
-    scriptLines.push(`    fileChanges: {`);
-    scriptLines.push(`      additions: [`);
-    scriptLines.push(`        {`);
-    scriptLines.push(createAdditionsArray(packageNames).join('}\n, {\n'));
-    scriptLines.push(`        }`);
-    scriptLines.push(`      ]`);
-    scriptLines.push(`    },`);
+    scriptLines.push(`  mutation (${createMutationParameters(packageNames).join(', ')}) {`);
+    scriptLines.push(`    createCommitOnBranch(input: {`);
+    scriptLines.push(`      branch: {`);
+    scriptLines.push(`        repositoryNameWithOwner: "forcedotcom/code-analyzer-core",`);
+    scriptLines.push(`        branchName: $branch`);
+    scriptLines.push(`      },`);
+    scriptLines.push(`      message: {`);
+    scriptLines.push(`        headline: $message`);
+    scriptLines.push(`      },`);
+    scriptLines.push(`      fileChanges: {`);
+    scriptLines.push(`        additions: [`);
+    scriptLines.push(`          {`);
+    scriptLines.push(createAdditionsArray(packageNames).join('          }, {\n'));
+    scriptLines.push(`          }`);
+    scriptLines.push(`        ]`);
+    scriptLines.push(`      },`);
     scriptLines.push(`      expectedHeadOid: $oldOid`);
     scriptLines.push(`    }) {`);
     scriptLines.push(`      commit {`);
@@ -65,7 +65,7 @@ function generateGraphQlDashFFlagsForPackages(packageNames) {
 function createMutationParameters(packageNames) {
     const mutationParameters = [];
     mutationParameters.push('$message: String!');
-    mutationParameters.push('$oldOid: GitObject!');
+    mutationParameters.push('$oldOid: GitObjectID!');
     mutationParameters.push('$branch: String!');
     for (const packageName of packageNames) {
         mutationParameters.push(`$${toMutationParamName(packageName)}: Base64String!`);
@@ -78,13 +78,13 @@ function createAdditionsArray(packageNames) {
     const additions = [];
     for (const packageName of packageNames) {
         additions.push(
-            `          path: "packages/${packageName}/package.json",\n` +
-            `          contents: $${toMutationParamName(packageName)}\n`
+            `            path: "packages/${packageName}/package.json",\n` +
+            `            contents: $${toMutationParamName(packageName)}\n`
         );
     }
     additions.push(
-        `          path: "package-lock.json",\n` +
-        `          contents: $packagelock\n`
+        `            path: "package-lock.json",\n` +
+        `            contents: $packagelock`
     );
     return additions;
 }
