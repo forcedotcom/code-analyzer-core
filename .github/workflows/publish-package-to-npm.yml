@@ -152,6 +152,8 @@ jobs:
           REGEX_PACKAGE_JSON="$(cat packages/code-analyzer-regex-engine/package.json | base64)"
           RETIREJS_PACKAGE_JSON="$(cat packages/code-analyzer-retirejs-engine/package.json | base64)"
           SFGE_PACKAGE_JSON="$(cat packages/code-analyzer-sfge-engine/package.json | base64)"
+          STYLELINT_PACKAGE_JSON="$(cat packages/code-analyzer-stylelint-engine/package.json | base64)"
+          ENGINE_TEMPLATE_PACKAGE_JSON="$(cat packages/ENGINE-TEMPLATE/package.json | base64)"
           TEMPLATE_PACKAGE_JSON="$(cat packages/T-E-M-P-L-A-T-E/package.json | base64)"
           # GraphQL also needs the top-level package-lock.json
           PACKAGE_LOCK_JSON="$(cat package-lock.json | base64)"
@@ -165,14 +167,16 @@ jobs:
           -F regexPackage="$REGEX_PACKAGE_JSON" \
           -F retirejsPackage="$RETIREJS_PACKAGE_JSON" \
           -F sfgePackage="$SFGE_PACKAGE_JSON" \
+          -F stylelintPackage="$STYLELINT_PACKAGE_JSON" \
+          -F engineTemplatePackage="$ENGINE_TEMPLATE_PACKAGE_JSON" \
           -F templatePackage="$TEMPLATE_PACKAGE_JSON" \
           -F packageLock="$PACKAGE_LOCK_JSON" \
           -f query='
             mutation ($message: String!, $oldOid: GitObjectID!, $branch: String!,
                       $corePackage: Base64String!, $apiPackage: Base64String!, $eslintPackage: Base64String!,
                       $flowPackage: Base64String!, $pmdPackage: Base64String!, $regexPackage: Base64String!,
-                      $retirejsPackage: Base64String!, $sfgePackage: Base64String!, $templatePackage: Base64String!,
-                      $packageLock: Base64String!) {
+                      $retirejsPackage: Base64String!, $sfgePackage: Base64String!, $stylelintPackage: Base64String!,
+                      $engineTemplatePackage: Base64String!, $templatePackage: Base64String!, $packageLock: Base64String!) {
               createCommitOnBranch(input: {
                 branch: {
                   repositoryNameWithOwner: "forcedotcom/code-analyzer-core",
@@ -207,6 +211,12 @@ jobs:
                     }, {
                       path: "packages/code-analyzer-sfge-engine/package.json",
                       contents: $sfgePackage
+                    }, {
+                      path: "packages/code-analyzer-stylelint-engine/package.json",
+                      contents: $stylelintPackage
+                    }, {
+                      path: "packages/ENGINE-TEMPLATE/package.json",
+                      contents: $engineTemplatePackage
                     }, {
                       path: "packages/T-E-M-P-L-A-T-E/package.json",
                       contents: $templatePackage
