@@ -70,6 +70,9 @@ const MESSAGE_CATALOG : { [key: string]: string } = {
     LoggingToFile:
         `Invoking SFGE's %s command. Logs being written to %s.`,
 
+    InternalExecutionErrorMessageTemplate:
+        `Internal execution error while scanning entry point: %s:%d:%d: %s`,
+
     debug_sfgeInfoLog:
         `%s`,
 

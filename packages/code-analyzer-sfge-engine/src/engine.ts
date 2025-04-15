@@ -103,7 +103,10 @@ export class SfgeEngine extends Engine {
 
         const violations: Violation[] = [];
         for (const sfgeViolation of sfgeResults) {
-            violations.push(this.toViolation(sfgeViolation));
+            const convertedViolation: Violation|undefined = this.toViolation(sfgeViolation);
+            if (convertedViolation) {
+                violations.push(convertedViolation);
+            }
         }
 
         this.emitRunRulesProgressEvent(100);
@@ -148,7 +151,18 @@ export class SfgeEngine extends Engine {
         return this.sfgeRuleInfoListCache.get(cacheKey)!;
     }
 
-    private toViolation(sfgeViolation: SfgeRunResult): Violation {
+    private toViolation(sfgeViolation: SfgeRunResult): Violation|undefined {
+        if (sfgeViolation.ruleName === 'InternalExecutionError') {
+            const msg = getMessage(
+                'InternalExecutionErrorMessageTemplate',
+                sfgeViolation.sourceFileName,
+                sfgeViolation.sourceLineNumber,
+                sfgeViolation.sourceColumnNumber,
+                sfgeViolation.message
+            );
+            this.emitLogEvent(LogLevel.Error, msg);
+            return undefined;
+        }
         const codeLocations: CodeLocation[] = [{
             file: sfgeViolation.sourceFileName,
             startLine: sfgeViolation.sourceLineNumber,

@@ -344,6 +344,26 @@ describe('SfgeEngine', () => {
             expect(warningLogEvents.length).toBeGreaterThanOrEqual(1);
             expect(warningLogEvents[0].message).toContain(`Specified workspace is missing 1 possibly-relevant file(s) from the folder ${path.join(TEST_DATA_FOLDER, 'sampleRelevantWorkspace')}.`);
         });
+
+        it('InternalErrorViolations are thrown as non-fatal errors', async () => {
+            // ====== SETUP ======
+            const configWithLowTimeout: SfgeEngineConfig = JSON.parse(JSON.stringify(DEFAULT_SFGE_ENGINE_CONFIG)) as SfgeEngineConfig;
+            configWithLowTimeout.java_thread_timeout = 10; // Set the timeout to an extremely low value, to increase the likelihood of getting a timeout.
+            const engine: SfgeEngine = new SfgeEngine(configWithLowTimeout, fixedClock);
+            const workspace: Workspace = new Workspace('id', [path.join(TEST_DATA_FOLDER, 'sampleRelevantWorkspace')]);
+            const logEvents: LogEvent[] = [];
+            engine.onEvent(EventType.LogEvent, (e: LogEvent) => logEvents.push(e));
+            const ruleNames: string[] = ['ApexFlsViolationRule'];
+
+            // ====== TESTED BEHAVIOR ======
+            const results: EngineRunResults = await engine.runRules(ruleNames, createRunOptions(workspace));
+
+            // ====== ASSERTIONS ======
+            expect(results.violations).toHaveLength(0);
+            const errorLogEvents: LogEvent[] = logEvents.filter(e => e.logLevel === LogLevel.Error);
+            expect(errorLogEvents.length).toBeGreaterThanOrEqual(1);
+            expect(errorLogEvents[0].message).toEqual(`Internal execution error while scanning entry point: ${path.join(__dirname, 'test-data', 'sampleRelevantWorkspace', 'SomeClass.cls')}:5:24: Path evaluation timed out after 10 ms`);
+        });
     });
 })
 
