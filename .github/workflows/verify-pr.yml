@@ -90,9 +90,11 @@ jobs:
       - name: create script
         run: echo "echo $JBF" > myscript.txt
       - name: declare var
-        run: JFB=`cat myscript.txt`
+        run: JFS=`cat myscript.txt`
       - name: eval thing
-        run: eval $JFB
+        run: |
+          JFB=beep boop
+          eval $JFS
   run_experiment:
     runs-on: macos-latest
     env:
