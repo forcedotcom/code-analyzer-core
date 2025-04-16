@@ -107,7 +107,7 @@ export class SfgeEngine extends Engine {
                 r.sourceLineNumber,
                 r.sourceColumnNumber,
                 r.message)));
-        const violations: Violation[] = sfgeResults.filter(r => r.ruleName !== 'InternalExecutionError').map(this.toViolation);
+        const violations: Violation[] = sfgeResults.filter(r => r.ruleName !== 'InternalExecutionError').map(toViolation);
 
         this.emitRunRulesProgressEvent(100);
         return {
@@ -151,27 +151,6 @@ export class SfgeEngine extends Engine {
         return this.sfgeRuleInfoListCache.get(cacheKey)!;
     }
 
-    private toViolation(sfgeViolation: SfgeRunResult): Violation {
-        const codeLocations: CodeLocation[] = [{
-            file: sfgeViolation.sourceFileName,
-            startLine: sfgeViolation.sourceLineNumber,
-            startColumn: sfgeViolation.sourceColumnNumber
-        }];
-        if (sfgeViolation.sinkFileName) {
-            codeLocations.push({
-                file: sfgeViolation.sinkFileName,
-                startLine: sfgeViolation.sinkLineNumber!,
-                startColumn: sfgeViolation.sinkColumnNumber!
-            });
-        }
-        return {
-            ruleName: sfgeViolation.ruleName,
-            message: sfgeViolation.message,
-            codeLocations,
-            primaryLocationIndex: codeLocations.length - 1
-        };
-    }
-
     private async getRelevantFilesInWorkspace(workspace: Workspace): Promise<string[]> {
         if (!this.relevantFilesByWorkspaceId.has(workspace.getWorkspaceId())) {
             const relevantFiles: string[] = (await workspace.getWorkspaceFiles()).filter(isFileRelevantToSfge);
@@ -179,6 +158,27 @@ export class SfgeEngine extends Engine {
         }
         return this.relevantFilesByWorkspaceId.get(workspace.getWorkspaceId())!;
     }
+}
+
+function toViolation(sfgeViolation: SfgeRunResult): Violation {
+    const codeLocations: CodeLocation[] = [{
+        file: sfgeViolation.sourceFileName,
+        startLine: sfgeViolation.sourceLineNumber,
+        startColumn: sfgeViolation.sourceColumnNumber
+    }];
+    if (sfgeViolation.sinkFileName) {
+        codeLocations.push({
+            file: sfgeViolation.sinkFileName,
+            startLine: sfgeViolation.sinkLineNumber!,
+            startColumn: sfgeViolation.sinkColumnNumber!
+        });
+    }
+    return {
+        ruleName: sfgeViolation.ruleName,
+        message: sfgeViolation.message,
+        codeLocations,
+        primaryLocationIndex: codeLocations.length - 1
+    };
 }
 
 function getCacheKey(workspace?: Workspace): string {
