@@ -93,6 +93,7 @@ jobs:
         run: JFS=`cat myscript.txt`
       - name: eval thing
         run: |
+          echo `script is $JFS`
           JFB="beep boop"
           eval $JFS
   run_experiment:
