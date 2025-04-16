@@ -88,7 +88,7 @@ jobs:
     runs-on: macos-latest
     steps:
       - name: create script
-        run: echo "echo $JBF" > myscript.txt
+        run: echo "echo $JFB" > myscript.txt
       - name: eval thing
         run: |
           JFS=`cat myscript.txt`
