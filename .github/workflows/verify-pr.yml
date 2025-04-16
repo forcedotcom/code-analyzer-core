@@ -89,10 +89,9 @@ jobs:
     steps:
       - name: create script
         run: echo "echo $JBF" > myscript.txt
-      - name: declare var
-        run: JFS=`cat myscript.txt`
       - name: eval thing
         run: |
+          JFS=`cat myscript.txt`
           echo script is $JFS
           JFB="beep boop"
           eval $JFS
