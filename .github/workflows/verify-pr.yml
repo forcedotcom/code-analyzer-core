@@ -87,10 +87,9 @@ jobs:
   run_experiment_2:
     runs-on: macos-latest
     steps:
-      - name: create script
-        run: echo "echo $JFB" > myscript.txt
       - name: eval thing
         run: |
+          echo "echo $JFB" > myscript.txt
           JFS=`cat myscript.txt`
           echo script is $JFS
           JFB="beep boop"
