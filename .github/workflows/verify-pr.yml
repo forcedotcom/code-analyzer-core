@@ -89,7 +89,7 @@ jobs:
     steps:
       - name: eval thing
         run: |
-          echo 'JFB=beep\necho $JFB' > myscript.txt
+          echo 'JFB=beep;echo $JFB' > myscript.txt
           JFS=`cat myscript.txt`
           echo script is $JFS
           eval $JFS
