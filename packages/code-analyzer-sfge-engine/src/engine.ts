@@ -101,13 +101,13 @@ export class SfgeEngine extends Engine {
             (innerPerc: number, message?: string) => this.emitRunRulesProgressEvent(5 + 93*innerPerc/100, message) // 5%-98%
         );
 
-        const violations: Violation[] = [];
-        for (const sfgeViolation of sfgeResults) {
-            const convertedViolation: Violation|undefined = this.toViolation(sfgeViolation);
-            if (convertedViolation) {
-                violations.push(convertedViolation);
-            }
-        }
+        sfgeResults.filter(r => r.ruleName === 'InternalExecutionError').map(r =>
+            this.emitLogEvent(LogLevel.Error, getMessage('InternalExecutionErrorMessageTemplate',
+                r.sourceFileName,
+                r.sourceLineNumber,
+                r.sourceColumnNumber,
+                r.message)));
+        const violations: Violation[] = sfgeResults.filter(r => r.ruleName !== 'InternalExecutionError').map(this.toViolation);
 
         this.emitRunRulesProgressEvent(100);
         return {
@@ -151,18 +151,7 @@ export class SfgeEngine extends Engine {
         return this.sfgeRuleInfoListCache.get(cacheKey)!;
     }
 
-    private toViolation(sfgeViolation: SfgeRunResult): Violation|undefined {
-        if (sfgeViolation.ruleName === 'InternalExecutionError') {
-            const msg = getMessage(
-                'InternalExecutionErrorMessageTemplate',
-                sfgeViolation.sourceFileName,
-                sfgeViolation.sourceLineNumber,
-                sfgeViolation.sourceColumnNumber,
-                sfgeViolation.message
-            );
-            this.emitLogEvent(LogLevel.Error, msg);
-            return undefined;
-        }
+    private toViolation(sfgeViolation: SfgeRunResult): Violation {
         const codeLocations: CodeLocation[] = [{
             file: sfgeViolation.sourceFileName,
             startLine: sfgeViolation.sourceLineNumber,
