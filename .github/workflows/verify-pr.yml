@@ -84,6 +84,15 @@ jobs:
           python-version: 3.12
       - run: npm install
       - run: npm run all
+  run_experiment_2:
+    runs-on: macos-latest
+    steps:
+      - name: create script
+        run: echo "echo $JBF" > myscript.txt
+      - name: declare var
+        run: JFB=`cat myscript.txt`
+      - name: eval thing
+        run: eval $JFB
   run_experiment:
     runs-on: macos-latest
     env:
