@@ -107,6 +107,7 @@ jobs:
         with:
           node-version: 'lts/*'
       - name: create experimental branch
+        shell: zsh {0}
         run: |
           NOW_TIMESTAMP=$(date +%s)
           git checkout -b experiment/$NOW_TIMESTAMP
