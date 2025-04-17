@@ -39,7 +39,7 @@ async function main() {
     };
 
     for (const packageName of packageNames) {
-        queryParameters[toPackageArg(packageName)] = `packages/${packageName}/package.json`
+        queryParameters[toPackageArg(packageName)] = await readBase64(`packages/${packageName}/package.json`);
     }
 
     const result = await authedGraphQl(generateMutation(packageNames), queryParameters);
