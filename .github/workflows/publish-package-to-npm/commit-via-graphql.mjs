@@ -1,7 +1,7 @@
-const fs = require('fs/promises');
-const child_process = require('child_process');
-const graphql = require('@octokit/graphql');
-const path = require('path');
+import * as fs from 'node:fs/promises';
+import * as child_process from 'node:child_process';
+import path from 'node:path';
+import {graphql} from '@octokit/graphql';
 
 const pathToRoot = path.resolve(__dirname, '..', '..', '..');
 
@@ -21,7 +21,7 @@ async function main() {
     }
 
     // Authenticate GraphQL client
-    const authedGraphQl = graphql.graphql.defaults({
+    const authedGraphQl = graphql.defaults({
         headers: {
             authorization: `token ${token}`
         }
