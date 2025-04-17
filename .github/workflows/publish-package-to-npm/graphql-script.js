@@ -5,8 +5,6 @@ const path = require('path');
 
 const pathToRoot = path.resolve(__dirname, '..', '..', '..');
 
-main();
-
 async function main() {
     // Get the package names from the argument, splitting on `\n` instead of ` ` because the argument comes from $(ls).
     const packageNames = process.argv[2].split("\n");
@@ -72,6 +70,9 @@ function generateMutation(packageNames) {
 function readBase64(filePath) {
     return fs.readFile(path.resolve(pathToRoot, filePath), 'base64');
 }
+
+main();
+
 /*
 
 import { execSync } from 'child_process';
