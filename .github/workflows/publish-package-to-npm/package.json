@@ -1,0 +1,8 @@
+{
+    "name": "publish-package-to-npm",
+    "version": "1.0.0",
+    "private": true,
+    "dependencies": {
+        "@octokit/graphql": "^8.2.2"
+    }
+}

@@ -348,7 +348,7 @@ describe('SfgeEngine', () => {
         it('InternalErrorViolations are thrown as non-fatal errors', async () => {
             // ====== SETUP ======
             const configWithLowTimeout: SfgeEngineConfig = JSON.parse(JSON.stringify(DEFAULT_SFGE_ENGINE_CONFIG)) as SfgeEngineConfig;
-            configWithLowTimeout.java_thread_timeout = 10; // Set the timeout to an extremely low value, to increase the likelihood of getting a timeout.
+            configWithLowTimeout.java_thread_timeout = 3; // Set the timeout to an extremely low value, to increase the likelihood of getting a timeout.
             const engine: SfgeEngine = new SfgeEngine(configWithLowTimeout, fixedClock);
             const workspace: Workspace = new Workspace('id', [path.join(TEST_DATA_FOLDER, 'sampleRelevantWorkspace')]);
             const logEvents: LogEvent[] = [];
@@ -362,7 +362,7 @@ describe('SfgeEngine', () => {
             expect(results.violations).toHaveLength(0);
             const errorLogEvents: LogEvent[] = logEvents.filter(e => e.logLevel === LogLevel.Error);
             expect(errorLogEvents.length).toBeGreaterThanOrEqual(1);
-            expect(errorLogEvents[0].message).toEqual(`Internal execution error while scanning entry point: ${path.join(__dirname, 'test-data', 'sampleRelevantWorkspace', 'SomeClass.cls')}:5:24: Path evaluation timed out after 10 ms`);
+            expect(errorLogEvents[0].message).toEqual(`Internal execution error while scanning entry point: ${path.join(__dirname, 'test-data', 'sampleRelevantWorkspace', 'SomeClass.cls')}:5:24: Path evaluation timed out after 3 ms`);
         });
     });
 })
