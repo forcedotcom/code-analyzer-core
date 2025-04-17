@@ -13,14 +13,14 @@ async function main() {
         process.exit(1);
     }
 
-// Get the Github Token from the GH_TOKEN environment variable and use it to authenticate a client.
+    // Get the Github Token from the GH_TOKEN environment variable and use it to authenticate a client.
     const token = process.env.GH_TOKEN;
     if (!token) {
         console.error("❌ GH_TOKEN is not set");
         process.exit(1);
     }
 
-// Authenticate GraphQL client
+    // Authenticate GraphQL client
     const authedGraphQl = graphql.graphql.defaults({
         headers: {
             authorization: `token ${token}`
@@ -31,19 +31,27 @@ async function main() {
     const oldOid = child_process.execSync('git rev-parse HEAD').toString().trim();
     const message = `Preparing Core Ecosystem for release`;
 
-    const result = await authedGraphQl(generateMutation(packageNames), {
+    const queryParameters = {
         message,
         oldOid,
         branch,
         packageLock: await readBase64('package-lock.json')
-    });
+    };
+
+    for (const packageName of packageNames) {
+        queryParameters[toPackageArg(packageName)] = `packages/${packageName}/package.json`
+    }
+
+    const result = await authedGraphQl(generateMutation(packageNames), queryParameters);
 
     console.log('✅ Commit created! ID:', result.createCommitOnBranch.commit.id);
 }
 
 function generateMutation(packageNames) {
+    const packageArgs = packageNames.map(toPackageArg);
     return `
-    mutation ($message: String!, $oldOid: GitObjectID!, $branch: String!, $packageLock: Base64String!) {
+    mutation ($message: String!, $oldOid: GitObjectID!, $branch: String!, $packageLock: Base64String!
+    ${packageArgs.map(arg => `$${arg}: Base64String!`).join (', ')}) {
       createCommitOnBranch(input: {
         branch: {
           repositoryNameWithOwner: "forcedotcom/code-analyzer-core",
@@ -54,6 +62,7 @@ function generateMutation(packageNames) {
         },
         fileChanges: {
           additions: [
+${packageArgs.map((arg, idx) => `{ path: "packages/${packageNames[idx]}/package.json", contents: $${arg} }`).join('\n')}
             { path: "package-lock.json", contents: $packageLock }
           ]
         },
@@ -69,6 +78,10 @@ function generateMutation(packageNames) {
 
 function readBase64(filePath) {
     return fs.readFile(path.resolve(pathToRoot, filePath), 'base64');
+}
+
+function toPackageArg(packageName) {
+    return packageName.toLowerCase().replaceAll('-', '');
 }
 
 main();
