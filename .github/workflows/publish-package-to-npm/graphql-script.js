@@ -31,7 +31,7 @@ async function main() {
     const oldOid = child_process.execSync('git rev-parse HEAD').toString().trim();
     const message = `Preparing Core Ecosystem for release`;
 
-    await authedGraphQl(generateMutation(packageNames), {
+    const result = await authedGraphQl(generateMutation(packageNames), {
         message,
         oldOid,
         branch,
