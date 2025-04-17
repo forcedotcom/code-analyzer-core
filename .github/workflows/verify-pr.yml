@@ -113,7 +113,11 @@ jobs:
       - name: update version dependencies
         run: |
           PACKAGES_TO_UPDATE="code-analyzer-core code-analyzer-engine-api code-analyzer-eslint-engine code-analyzer-flow-engine"
+          cd packages
+          ALL_PACKAGES=`ls`
+          cd ..
           node ./.github/workflows/publish-package-to-npm/update-versions-in-released-packages.js "${PACKAGES_TO_UPDATE}"
+          node ./.github/workflows/publish-package-to-npm/update-dependencies-on-released-packages.js "${PACKAGES_TO_UPDATE}" "${ALL_PACKAGES}"
       - name: build packages
         run: |
           npm install
@@ -122,9 +126,7 @@ jobs:
         run: |
           cd packages
           ALL_PACKAGES=`ls`
-          cd ..
-          node ./.github/workflows/publish-package-to-npm/update-dependencies-on-released-packages.js "${PACKAGES_TO_UPDATE}"
-          cd .github/workflows/publish-package-to-npm
+          cd ../.github/workflows/publish-package-to-npm
           npm install
           node graphql-script.js "$ALL_PACKAGES"
   run_experiment:
