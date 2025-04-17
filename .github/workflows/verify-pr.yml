@@ -109,7 +109,7 @@ jobs:
           NOW_TIMESTAMP=$(date +%s)
           git checkout -b experiment_2/$NOW_TIMESTAMP
           git push --set-upstream origin experiment_2/$NOW_TIMESTAMP
-          echo "branch_name=experiment_2/$NOW_TIMESTAMP" >> $GITHUB_OUTPUT"
+          echo "branch_name=experiment_2/$NOW_TIMESTAMP" >> "$GITHUB_OUTPUT"
       - name: update version dependencies
         run: |
           PACKAGES_TO_UPDATE="code-analyzer-core code-analyzer-engine-api code-analyzer-eslint-engine code-analyzer-flow-engine"
