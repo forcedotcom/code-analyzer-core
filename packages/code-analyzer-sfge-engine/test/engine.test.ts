@@ -362,7 +362,7 @@ describe('SfgeEngine', () => {
             expect(results.violations).toHaveLength(0);
             const errorLogEvents: LogEvent[] = logEvents.filter(e => e.logLevel === LogLevel.Error);
             expect(errorLogEvents.length).toBeGreaterThanOrEqual(1);
-            expect(errorLogEvents[0].message).toEqual(`Internal execution error while scanning entry point: ${path.join(__dirname, 'test-data', 'sampleRelevantWorkspace', 'SomeClass.cls')}:5:24: Path evaluation timed out after 10 ms`);
+            expect(errorLogEvents[0].message).toEqual(`Internal execution error while scanning entry point: ${path.join(__dirname, 'test-data', 'sampleRelevantWorkspace', 'SomeClass.cls')}:5:24: Path evaluation timed out after 3 ms`);
         });
     });
 })
