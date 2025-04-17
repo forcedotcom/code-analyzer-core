@@ -348,7 +348,7 @@ describe('SfgeEngine', () => {
         it('InternalErrorViolations are thrown as non-fatal errors', async () => {
             // ====== SETUP ======
             const configWithLowTimeout: SfgeEngineConfig = JSON.parse(JSON.stringify(DEFAULT_SFGE_ENGINE_CONFIG)) as SfgeEngineConfig;
-            configWithLowTimeout.java_thread_timeout = 10; // Set the timeout to an extremely low value, to increase the likelihood of getting a timeout.
+            configWithLowTimeout.java_thread_timeout = 3; // Set the timeout to an extremely low value, to increase the likelihood of getting a timeout.
             const engine: SfgeEngine = new SfgeEngine(configWithLowTimeout, fixedClock);
             const workspace: Workspace = new Workspace('id', [path.join(TEST_DATA_FOLDER, 'sampleRelevantWorkspace')]);
             const logEvents: LogEvent[] = [];
