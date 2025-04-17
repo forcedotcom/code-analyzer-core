@@ -48,10 +48,9 @@ async function main() {
 }
 
 function generateMutation(packageNames) {
-    const packageArgs = packageNames.map(toPackageArg);
     return `
     mutation ($message: String!, $oldOid: GitObjectID!, $branch: String!, $packageLock: Base64String!
-    ${packageArgs.map(arg => `$${arg}: Base64String!`).join (', ')}) {
+    ${packageNames.map(packageName => `$${toPackageArg(packageName)}: Base64String!`).join (', ')}) {
       createCommitOnBranch(input: {
         branch: {
           repositoryNameWithOwner: "forcedotcom/code-analyzer-core",
@@ -62,7 +61,7 @@ function generateMutation(packageNames) {
         },
         fileChanges: {
           additions: [
-${packageArgs.map((arg, idx) => `{ path: "packages/${packageNames[idx]}/package.json", contents: $${arg} }`).join('\n')}
+${packageNames.map(packageName => `{ path: "packages/${packageName}/package.json", contents: $${toPackageArg(packageName)} }`).join('\n')}
             { path: "package-lock.json", contents: $packageLock }
           ]
         },
