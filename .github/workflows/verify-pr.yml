@@ -146,7 +146,7 @@ jobs:
         shell: zsh {0}
         run: |
           NOW_TIMESTAMP=$(date +%s)
-          git checkout -b experiment-1/$NOW_TIMESTAMP
+          git checkout -b experiment_1/$NOW_TIMESTAMP
           git push --set-upstream origin experiment_1/$NOW_TIMESTAMP
           echo "branch_name=experiment_1/$NOW_TIMESTAMP" >> "$GITHUB_OUTPUT"
           PACKAGES_TO_UPDATE="code-analyzer-core code-analyzer-engine-api code-analyzer-eslint-engine code-analyzer-flow-engine"
