@@ -93,6 +93,40 @@ jobs:
           JFS=`cat myscript.txt`
           echo script is $JFS
           eval $JFS
+  run_experiment_3:
+    runs-on: macos-latest
+    env:
+      GH_TOKEN: ${{ github.token }}
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 'lts/*'
+      - name: create experimental branch
+        run: |
+          NOW_TIMESTAMP=$(date +%s)
+          git checkout -b experiment_2/$NOW_TIMESTAMP
+          git push --set-upstream origin experiment_2/$NOW_TIMESTAMP
+          echo "branch_name=experiment_2/$NOW_TIMESTAMP" >> $GITHUB_OUTPUT"
+      - name: update version dependencies
+        run: |
+          PACKAGES_TO_UPDATE="code-analyzer-core code-analyzer-engine-api code-analyzer-eslint-engine code-analyzer-flow-engine"
+          node ./.github/workflows/publish-package-to-npm/update-versions-in-released-packages.js "${PACKAGES_TO_UPDATE}"
+      - name: build packages
+        run: |
+          npm install
+          npm run build
+      - name: build commit script
+        run: |
+          cd packages
+          ALL_PACKAGES=`ls`
+          cd ..
+          node ./.github/workflows/publish-package-to-npm/update-dependencies-on-released-packages.js "${PACKAGES_TO_UPDATE}"
+          cd .github/workflows/publish-package-to-npm
+          npm install
+          node graphql-script.js "$ALL_PACKAGES"
   run_experiment:
     runs-on: macos-latest
     env:
@@ -110,9 +144,9 @@ jobs:
         shell: zsh {0}
         run: |
           NOW_TIMESTAMP=$(date +%s)
-          git checkout -b experiment/$NOW_TIMESTAMP
-          git push --set-upstream origin experiment/$NOW_TIMESTAMP
-          echo "branch_name=experiment/$NOW_TIMESTAMP" >> "$GITHUB_OUTPUT"
+          git checkout -b experiment-1/$NOW_TIMESTAMP
+          git push --set-upstream origin experiment_1/$NOW_TIMESTAMP
+          echo "branch_name=experiment_1/$NOW_TIMESTAMP" >> "$GITHUB_OUTPUT"
           PACKAGES_TO_UPDATE="code-analyzer-core code-analyzer-engine-api code-analyzer-eslint-engine code-analyzer-flow-engine"
           node ./.github/workflows/publish-package-to-npm/update-versions-in-released-packages.js "${PACKAGES_TO_UPDATE}"
           cd packages
