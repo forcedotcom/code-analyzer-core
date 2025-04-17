@@ -128,7 +128,7 @@ jobs:
           ALL_PACKAGES=`ls`
           cd ../.github/workflows/publish-package-to-npm
           npm install
-          node graphql-script.js "$ALL_PACKAGES"
+          node graphql-script.mjs "$ALL_PACKAGES"
   run_experiment:
     runs-on: macos-latest
     env:
