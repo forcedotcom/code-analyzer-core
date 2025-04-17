@@ -143,7 +143,7 @@ jobs:
           ALL_PACKAGES=`ls`
           cd ../.github/workflows/publish-package-to-npm
           npm install
-          node commit-via-graphql.js "$ALL_PACKAGES"
+          node commit-via-graphql.mjs "$ALL_PACKAGES"
   build-and-test-and-publish:
     runs-on: ubuntu-latest
     needs: [validate-packages-as-releasable, prepare-release-branch]

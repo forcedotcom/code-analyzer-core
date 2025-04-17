@@ -1,8 +1,11 @@
 import * as fs from 'node:fs/promises';
 import * as child_process from 'node:child_process';
 import path from 'node:path';
+import { fileURLToPath } from 'url';
 import {graphql} from '@octokit/graphql';
 
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 const pathToRoot = path.resolve(__dirname, '..', '..', '..');
 
 async function main() {
