@@ -5,6 +5,8 @@ const path = require('path');
 
 const pathToRoot = path.resolve(__dirname, '..', '..', '..');
 
+main();
+
 async function main() {
     // Get the package names from the argument, splitting on `\n` instead of ` ` because the argument comes from $(ls).
     const packageNames = process.argv[2].split("\n");
