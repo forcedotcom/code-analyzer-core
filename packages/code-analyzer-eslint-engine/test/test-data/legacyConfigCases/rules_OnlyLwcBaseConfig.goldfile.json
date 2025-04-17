@@ -334,7 +334,7 @@
     ],
     "description": "prevent public property reassignments",
     "resourceUrls": [
-      "https://github.com/salesforce/eslint-plugin-lwc/blob/v2.1.0/docs/rules/no-api-reassignments.md"
+      "https://github.com/salesforce/eslint-plugin-lwc/blob/v2.2.0/docs/rules/no-api-reassignments.md"
     ]
   },
   {
@@ -348,7 +348,7 @@
     ],
     "description": "restrict usage of async operations",
     "resourceUrls": [
-      "https://github.com/salesforce/eslint-plugin-lwc/blob/v2.1.0/docs/rules/no-async-operation.md"
+      "https://github.com/salesforce/eslint-plugin-lwc/blob/v2.2.0/docs/rules/no-async-operation.md"
     ]
   },
   {
@@ -362,7 +362,7 @@
     ],
     "description": "no attributes during construction",
     "resourceUrls": [
-      "https://github.com/salesforce/eslint-plugin-lwc/blob/v2.1.0/docs/rules/no-attributes-during-construction.md"
+      "https://github.com/salesforce/eslint-plugin-lwc/blob/v2.2.0/docs/rules/no-attributes-during-construction.md"
     ]
   },
   {
@@ -376,7 +376,7 @@
     ],
     "description": "disallow usage of deprecated LWC APIs",
     "resourceUrls": [
-      "https://github.com/salesforce/eslint-plugin-lwc/blob/v2.1.0/docs/rules/no-deprecated.md"
+      "https://github.com/salesforce/eslint-plugin-lwc/blob/v2.2.0/docs/rules/no-deprecated.md"
     ]
   },
   {
@@ -390,7 +390,7 @@
     ],
     "description": "restrict unexpected imports from the lwc package",
     "resourceUrls": [
-      "https://github.com/salesforce/eslint-plugin-lwc/blob/v2.1.0/docs/rules/no-disallowed-lwc-imports.md"
+      "https://github.com/salesforce/eslint-plugin-lwc/blob/v2.2.0/docs/rules/no-disallowed-lwc-imports.md"
     ]
   },
   {
@@ -404,7 +404,7 @@
     ],
     "description": "disallow DOM query at the document level.",
     "resourceUrls": [
-      "https://github.com/salesforce/eslint-plugin-lwc/blob/v2.1.0/docs/rules/no-document-query.md"
+      "https://github.com/salesforce/eslint-plugin-lwc/blob/v2.2.0/docs/rules/no-document-query.md"
     ]
   },
   {
@@ -418,7 +418,7 @@
     ],
     "description": "disallow usage of \"innerHtml\"",
     "resourceUrls": [
-      "https://github.com/salesforce/eslint-plugin-lwc/blob/v2.1.0/docs/rules/no-inner-html.md"
+      "https://github.com/salesforce/eslint-plugin-lwc/blob/v2.2.0/docs/rules/no-inner-html.md"
     ]
   },
   {
@@ -432,7 +432,7 @@
     ],
     "description": "disallow public property to start with an upper case character",
     "resourceUrls": [
-      "https://github.com/salesforce/eslint-plugin-lwc/blob/v2.1.0/docs/rules/no-leading-uppercase-api-name.md"
+      "https://github.com/salesforce/eslint-plugin-lwc/blob/v2.2.0/docs/rules/no-leading-uppercase-api-name.md"
     ]
   },
   {
@@ -446,7 +446,7 @@
     ],
     "description": "prevent accessing the immediate children of this.template",
     "resourceUrls": [
-      "https://github.com/salesforce/eslint-plugin-lwc/blob/v2.1.0/docs/rules/no-template-children.md"
+      "https://github.com/salesforce/eslint-plugin-lwc/blob/v2.2.0/docs/rules/no-template-children.md"
     ]
   },
   {
@@ -460,7 +460,7 @@
     ],
     "description": "restrict unexpected wire adapter usages",
     "resourceUrls": [
-      "https://github.com/salesforce/eslint-plugin-lwc/blob/v2.1.0/docs/rules/no-unexpected-wire-adapter-usages.md"
+      "https://github.com/salesforce/eslint-plugin-lwc/blob/v2.2.0/docs/rules/no-unexpected-wire-adapter-usages.md"
     ]
   },
   {
@@ -474,7 +474,7 @@
     ],
     "description": "restrict usage of unknown wire adapters",
     "resourceUrls": [
-      "https://github.com/salesforce/eslint-plugin-lwc/blob/v2.1.0/docs/rules/no-unknown-wire-adapters.md"
+      "https://github.com/salesforce/eslint-plugin-lwc/blob/v2.2.0/docs/rules/no-unknown-wire-adapters.md"
     ]
   },
   {
@@ -488,7 +488,7 @@
     ],
     "description": "suggest usage of \"CustomEvent\" over \"Event\" constructor",
     "resourceUrls": [
-      "https://github.com/salesforce/eslint-plugin-lwc/blob/v2.1.0/docs/rules/prefer-custom-event.md"
+      "https://github.com/salesforce/eslint-plugin-lwc/blob/v2.2.0/docs/rules/prefer-custom-event.md"
     ]
   },
   {
@@ -502,7 +502,7 @@
     ],
     "description": "validate api decorator usage",
     "resourceUrls": [
-      "https://github.com/salesforce/eslint-plugin-lwc/blob/v2.1.0/docs/rules/valid-api.md"
+      "https://github.com/salesforce/eslint-plugin-lwc/blob/v2.2.0/docs/rules/valid-api.md"
     ]
   },
   {
@@ -516,7 +516,7 @@
     ],
     "description": "validate graphql error callback parameter",
     "resourceUrls": [
-      "https://github.com/salesforce/eslint-plugin-lwc/blob/v2.1.0/docs/rules/valid-graphql-wire-adapter-callback-parameters.md"
+      "https://github.com/salesforce/eslint-plugin-lwc/blob/v2.2.0/docs/rules/valid-graphql-wire-adapter-callback-parameters.md"
     ]
   },
   {
@@ -530,7 +530,7 @@
     ],
     "description": "validate track decorator usage",
     "resourceUrls": [
-      "https://github.com/salesforce/eslint-plugin-lwc/blob/v2.1.0/docs/rules/valid-track.md"
+      "https://github.com/salesforce/eslint-plugin-lwc/blob/v2.2.0/docs/rules/valid-track.md"
     ]
   },
   {
@@ -544,7 +544,7 @@
     ],
     "description": "validate wire decorator usage",
     "resourceUrls": [
-      "https://github.com/salesforce/eslint-plugin-lwc/blob/v2.1.0/docs/rules/valid-wire.md"
+      "https://github.com/salesforce/eslint-plugin-lwc/blob/v2.2.0/docs/rules/valid-wire.md"
     ]
   },
   {
