@@ -366,9 +366,7 @@ public abstract class Violation implements Comparable<Violation>, RuleThrowable 
         /** Used as a hardcoded message for {@link InternalErrorViolation} objects. */
         private static final String MESSAGE_TEMPLATE =
                 "Graph Engine identified your source and sink, but you must manually verify that you have a sanitizer in this path."
-                        + " Then, add an engine directive to skip the path. Next, create a Github issue for the"
-                        + " Code Analyzer team that includes the error and stack trace. After we fix this issue,"
-                        + " check the Code Analyzer release notes for more info. Error and stacktrace: %s";
+                        + " Then, add an engine directive to skip the path. Error and stacktrace: %s";
         /**
          * A more thorough description of the violation than {@link #message}, not displayed to
          * users of the plugin, but useful for internal debugging and analysis.
