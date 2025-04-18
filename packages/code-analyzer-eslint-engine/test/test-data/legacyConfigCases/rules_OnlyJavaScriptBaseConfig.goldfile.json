@@ -2195,8 +2195,7 @@
     "tags": [
       "Recommended",
       "BestPractices",
-      "JavaScript",
-      "TypeScript"
+      "JavaScript"
     ],
     "description": "Disallow `with` statements",
     "resourceUrls": [
