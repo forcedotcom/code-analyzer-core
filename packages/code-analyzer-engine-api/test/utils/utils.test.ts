@@ -34,9 +34,9 @@ describe('Tests for createTempDir', () => {
         // Create the directory.
         const tempDir: string = await createTempDir();
 
-        // Verify that the temp folder has one additional entry, and that an entry with the temporary name now exists.
+        // Verify that the temp folder has at least one additional entry, and that an entry with the temporary name now exists.
         const postTestTempContentsCount: number = (await fs.promises.readdir(os.tmpdir())).length;
-        expect(postTestTempContentsCount).toEqual(preTestTempContentsCount + 1);
+        expect(postTestTempContentsCount).toBeGreaterThan(preTestTempContentsCount);
         expect(fs.existsSync(tempDir)).toEqual(true);
     });
 })

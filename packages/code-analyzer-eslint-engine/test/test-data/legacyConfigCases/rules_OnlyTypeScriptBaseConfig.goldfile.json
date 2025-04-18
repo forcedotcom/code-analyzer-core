@@ -3236,20 +3236,6 @@
     ]
   },
   {
-    "name": "no-with",
-    "severityLevel": 3,
-    "tags": [
-      "Recommended",
-      "BestPractices",
-      "JavaScript",
-      "TypeScript"
-    ],
-    "description": "Disallow `with` statements",
-    "resourceUrls": [
-      "https://eslint.org/docs/latest/rules/no-with"
-    ]
-  },
-  {
     "name": "object-shorthand",
     "severityLevel": 3,
     "tags": [
