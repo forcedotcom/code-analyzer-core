@@ -13,7 +13,7 @@
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "dependencies": {
-    "@salesforce/code-analyzer-engine-api": "0.21.0",
+    "@salesforce/code-analyzer-engine-api": "0.21.0-SNAPSHOT",
     "@types/node": "^20.0.0",
     "isbinaryfile": "^5.0.4",
     "node-stream-zip": "^1.15.0",

@@ -686,7 +686,7 @@ export const RULE_MAPPINGS: Record<string, {severity: SeverityLevel, tags: strin
     },
     "no-with": {
         severity: SeverityLevel.Moderate,
-        tags: [COMMON_TAGS.RECOMMENDED, COMMON_TAGS.CATEGORIES.BEST_PRACTICES, COMMON_TAGS.LANGUAGES.JAVASCRIPT]
+        tags: [COMMON_TAGS.RECOMMENDED, COMMON_TAGS.CATEGORIES.BEST_PRACTICES, COMMON_TAGS.LANGUAGES.JAVASCRIPT] // Not available with TypeScript
     },
     "object-shorthand": {
         severity: SeverityLevel.Moderate,
