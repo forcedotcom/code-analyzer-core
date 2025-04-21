@@ -29,6 +29,8 @@ export type LogEvent = {
     message: string
 }
 
+export type TelemetryData = Record<string, string|boolean|number>;
+
 /**
  * Event emitted when an engine wants to send telemetry data back up through Core.
  * These events are received by callbacks provided to the {@link Engine.onEvent} method for {@link EventType.TelemetryEvent}.
@@ -36,7 +38,7 @@ export type LogEvent = {
 export type TelemetryEvent = {
     type: EventType.TelemetryEvent,
     eventName: string,
-    data: {[key: string]: null|string|boolean|number}
+    data: TelemetryData
 }
 
 /**

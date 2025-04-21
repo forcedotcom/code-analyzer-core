@@ -1,3 +1,4 @@
+import * as engApi from "@salesforce/code-analyzer-engine-api"
 import { EngineRunResults } from "./results"
 
 /**
@@ -34,6 +35,8 @@ export type LogEvent = {
     message: string
 }
 
+export type TelemetryData = engApi.TelemetryData;
+
 /**
  * Event emitted to report the progress of an invocation of {@link CodeAnalyzer.selectRules}
  *   These events are received by callbacks provided to the {@link CodeAnalyzer.onEvent} for {@link EventType.RuleSelectionProgressEvent}.
@@ -65,7 +68,7 @@ export type EngineTelemetryEvent = {
     timestamp: Date,
     engineName: string,
     eventName: string,
-    data: {[key: string]: null|boolean|string|number}
+    data: TelemetryData
 }
 
 /**

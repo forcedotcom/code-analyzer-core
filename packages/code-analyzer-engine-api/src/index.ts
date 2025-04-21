@@ -27,6 +27,7 @@ export {
     LogEvent,
     LogLevel,
     RunRulesProgressEvent,
+    TelemetryData,
     TelemetryEvent
 } from "./events"
 

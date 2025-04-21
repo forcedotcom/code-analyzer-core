@@ -24,7 +24,8 @@ export {
     EventType,
     LogEvent,
     LogLevel,
-    RuleSelectionProgressEvent
+    RuleSelectionProgressEvent,
+    TelemetryData
 } from "./events"
 
 export {

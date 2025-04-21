@@ -1,6 +1,6 @@
 import { RuleDescription } from "./rules";
 import { EngineRunResults } from "./results";
-import {Event, EventType, LogLevel} from "./events";
+import {Event, EventType, LogLevel, TelemetryData} from "./events";
 import { EventEmitter } from "node:events";
 import {Workspace} from "./workspace";
 
@@ -120,7 +120,7 @@ export abstract class Engine {
      * @param data A flexible payload of relevant data
      * @protected
      */
-    protected emitTelemetryEvent(eventName: string, data: {[key: string]: null|boolean|number|string}): void {
+    protected emitTelemetryEvent(eventName: string, data: TelemetryData): void {
         this.emitEvent({
             type: EventType.TelemetryEvent,
             eventName,
