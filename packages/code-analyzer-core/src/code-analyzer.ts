@@ -22,7 +22,7 @@ import * as engApi from "@salesforce/code-analyzer-engine-api"
 import {Clock, RealClock} from '@salesforce/code-analyzer-engine-api/utils';
 import {EventEmitter} from "node:events";
 import {CodeAnalyzerConfig, ConfigDescription, EngineOverrides, FIELDS, RuleOverride} from "./config";
-import {EngineProgressAggregator, SimpleUniqueIdGenerator, toAbsolutePath, UniqueIdGenerator} from "./utils";
+import {EngineProgressAggregator, RuntimeUniqueIdGenerator, toAbsolutePath, UniqueIdGenerator} from "./utils";
 import fs from "node:fs";
 import path from 'node:path';
 
@@ -92,7 +92,7 @@ const MINIMUM_SUPPORTED_NODE = 20;
 export class CodeAnalyzer {
     private readonly config: CodeAnalyzerConfig;
     private clock: Clock = new RealClock();
-    private uniqueIdGenerator: UniqueIdGenerator = new SimpleUniqueIdGenerator();
+    private uniqueIdGenerator: UniqueIdGenerator = new RuntimeUniqueIdGenerator();
     private readonly eventEmitter: EventEmitter = new EventEmitter();
     private readonly engines: Map<string, engApi.Engine> = new Map();
     private readonly uninstantiableEnginesMap: Map<string, Error> = new Map();
@@ -143,7 +143,7 @@ export class CodeAnalyzer {
      * @param targets optional string array of files and/or folders
      */
     public async createWorkspace(workspaceFilesAndFolders: string[], targets?: string[]): Promise<Workspace> {
-        const workspaceId: string = this.uniqueIdGenerator.getUniqueId('workspace');
+        const workspaceId: string = this.uniqueIdGenerator.getLocallyUniqueId('workspace');
         const workspaceValidationPromises: Promise<string>[] = workspaceFilesAndFolders.map(validateFileOrFolder);
         const validatedWorkspaceFilesAndFolders: string[] = (await Promise.all(workspaceValidationPromises)).flat();
         if (validatedWorkspaceFilesAndFolders.length === 0) {
@@ -470,6 +470,7 @@ export class CodeAnalyzer {
                 engineName: engine.getName(),
                 type: EventType.EngineTelemetryEvent,
                 eventName: event.eventName,
+                uuid: this.uniqueIdGenerator.getUniversallyUniqueId(),
                 data: event.data
             });
         });

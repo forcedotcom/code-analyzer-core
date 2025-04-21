@@ -6,6 +6,7 @@ import { EngineRunResults } from "./results"
  */
 export enum EventType {
     LogEvent = "LogEvent",
+    TelemetryEvent = "TelemetryEvent",
     RuleSelectionProgressEvent = "RuleSelectionProgressEvent",
     EngineLogEvent = "EngineLogEvent",
     EngineTelemetryEvent = "EngineTelemetryEvent",
@@ -68,6 +69,7 @@ export type EngineTelemetryEvent = {
     timestamp: Date,
     engineName: string,
     eventName: string,
+    uuid: string,
     data: TelemetryData
 }
 

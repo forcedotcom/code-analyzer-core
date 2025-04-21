@@ -711,6 +711,7 @@ describe("Tests for the run method of CodeAnalyzer", () => {
             timestamp: sampleTimestamp,
             engineName: "stubEngine1",
             eventName: 'Engine1RunKey',
+            uuid: "FixedUUID",
             data: {
                 someProperty: 1,
                 someOtherProperty: 'abcde',
@@ -722,6 +723,7 @@ describe("Tests for the run method of CodeAnalyzer", () => {
             timestamp: sampleTimestamp,
             engineName: "stubEngine2",
             eventName: 'Engine2RunKey',
+            uuid: "FixedUUID",
             data: {
                 someProperty: 2,
                 someOtherProperty: 'fghij',

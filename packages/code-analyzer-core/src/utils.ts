@@ -1,4 +1,5 @@
 import path from "node:path";
+import crypto from "node:crypto";
 
 // THIS FILE CONTAINS UTILITIES WHICH ARE USED INTERNALLY ONLY.
 // None of the following exported interfaces and functions should be exported from the index file.
@@ -9,14 +10,20 @@ export function toAbsolutePath(fileOrFolder: string): string {
 }
 
 export interface UniqueIdGenerator {
-    getUniqueId(prefix: string): string;
+    getLocallyUniqueId(prefix: string): string;
+
+    getUniversallyUniqueId(): string;
 }
 
-export class SimpleUniqueIdGenerator implements UniqueIdGenerator {
+export class RuntimeUniqueIdGenerator implements UniqueIdGenerator {
     private counter: number = 0;
 
-    getUniqueId(prefix: string): string {
+    getLocallyUniqueId(prefix: string): string {
         return `${prefix}${++this.counter}`;
+    }
+
+    getUniversallyUniqueId(): string {
+        return crypto.randomUUID();
     }
 }
 

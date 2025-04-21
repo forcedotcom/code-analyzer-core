@@ -395,6 +395,7 @@ describe('Tests for selecting rules', () => {
             timestamp: sampleTimestamp,
             engineName: "stubEngine1",
             eventName: 'Engine1DescribeKey',
+            uuid: "FixedUUID",
             data: {
                 someProperty: 4,
                 someOtherProperty: 'klmno',
@@ -406,6 +407,7 @@ describe('Tests for selecting rules', () => {
             timestamp: sampleTimestamp,
             engineName: "stubEngine2",
             eventName: 'Engine2DescribeKey',
+            uuid: "FixedUUID",
             data: {
                 someProperty: 5,
                 someOtherProperty: 'pqrst',

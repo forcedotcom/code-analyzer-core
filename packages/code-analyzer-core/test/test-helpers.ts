@@ -19,8 +19,11 @@ export function changeWorkingDirectoryToPackageRoot() {
 }
 
 export class FixedUniqueIdGenerator implements UniqueIdGenerator {
-    getUniqueId(_prefix: string): string {
+    getLocallyUniqueId(_prefix: string): string {
         return "FixedId";
     }
 
+    getUniversallyUniqueId(): string {
+        return "FixedUUID";
+    }
 }
