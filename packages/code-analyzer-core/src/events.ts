@@ -64,9 +64,8 @@ export type EngineTelemetryEvent = {
     type: EventType.EngineTelemetryEvent,
     timestamp: Date,
     engineName: string,
-    key: string,
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    data: {[key: string]: any}
+    eventName: string,
+    data: {[key: string]: null|boolean|string|number}
 }
 
 /**

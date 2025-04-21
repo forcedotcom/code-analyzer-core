@@ -35,9 +35,8 @@ export type LogEvent = {
  */
 export type TelemetryEvent = {
     type: EventType.TelemetryEvent,
-    key: string,
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    data: {[key: string]: any}
+    eventName: string,
+    data: {[key: string]: null|string|boolean|number}
 }
 
 /**

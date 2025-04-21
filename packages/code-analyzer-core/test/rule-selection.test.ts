@@ -394,7 +394,7 @@ describe('Tests for selecting rules', () => {
             type: EventType.EngineTelemetryEvent,
             timestamp: sampleTimestamp,
             engineName: "stubEngine1",
-            key: 'Engine1DescribeKey',
+            eventName: 'Engine1DescribeKey',
             data: {
                 someProperty: 4,
                 someOtherProperty: 'klmno',
@@ -405,7 +405,7 @@ describe('Tests for selecting rules', () => {
             type: EventType.EngineTelemetryEvent,
             timestamp: sampleTimestamp,
             engineName: "stubEngine2",
-            key: 'Engine2DescribeKey',
+            eventName: 'Engine2DescribeKey',
             data: {
                 someProperty: 5,
                 someOtherProperty: 'pqrst',

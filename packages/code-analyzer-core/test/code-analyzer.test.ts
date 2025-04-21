@@ -710,7 +710,7 @@ describe("Tests for the run method of CodeAnalyzer", () => {
             type: EventType.EngineTelemetryEvent,
             timestamp: sampleTimestamp,
             engineName: "stubEngine1",
-            key: 'Engine1RunKey',
+            eventName: 'Engine1RunKey',
             data: {
                 someProperty: 1,
                 someOtherProperty: 'abcde',
@@ -721,7 +721,7 @@ describe("Tests for the run method of CodeAnalyzer", () => {
             type: EventType.EngineTelemetryEvent,
             timestamp: sampleTimestamp,
             engineName: "stubEngine2",
-            key: 'Engine2RunKey',
+            eventName: 'Engine2RunKey',
             data: {
                 someProperty: 2,
                 someOtherProperty: 'fghij',

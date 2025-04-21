@@ -72,7 +72,7 @@ describe('Tests for v1', () => {
         expect(telemetryEvents).toHaveLength(2);
         expect(telemetryEvents[0]).toEqual({
             type: EventType.TelemetryEvent,
-            key: 'DescribeRulesTelemetry',
+            eventName: 'DescribeRulesTelemetry',
             data: {
                 someKey: 1,
                 someOtherKey: true,
@@ -81,7 +81,7 @@ describe('Tests for v1', () => {
         });
         expect(telemetryEvents[1]).toEqual({
             type: EventType.TelemetryEvent,
-            key: 'RunRulesTelemetry',
+            eventName: 'RunRulesTelemetry',
             data: {
                 someKey: 2,
                 someOtherKey: false,

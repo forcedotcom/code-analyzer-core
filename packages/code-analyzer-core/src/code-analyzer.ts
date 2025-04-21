@@ -469,7 +469,7 @@ export class CodeAnalyzer {
                 timestamp: this.clock.now(),
                 engineName: engine.getName(),
                 type: EventType.EngineTelemetryEvent,
-                key: event.key,
+                eventName: event.eventName,
                 data: event.data
             });
         });

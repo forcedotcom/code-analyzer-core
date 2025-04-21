@@ -116,15 +116,14 @@ export abstract class Engine {
 
     /**
      * Convenience method that subclasses can use to easily emit an event of type {@link TelemetryEvent}
-     * @param key A (preferably unique) key to associate with this event
+     * @param eventName A (preferably unique) key to associate with this event
      * @param data A flexible payload of relevant data
      * @protected
      */
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    protected emitTelemetryEvent(key: string, data: {[key: string]: any}): void {
+    protected emitTelemetryEvent(eventName: string, data: {[key: string]: null|boolean|number|string}): void {
         this.emitEvent({
             type: EventType.TelemetryEvent,
-            key,
+            eventName,
             data
         });
     }
