@@ -118,6 +118,11 @@ export class StubEngine1 extends engApi.Engine {
         this.describeRulesCallHistory.push({describeOptions});
         this.emitDescribeRulesProgressEvent(20);
         this.emitLogEvent(engApi.LogLevel.Warn, "someMiscWarnMessageFromStubEngine1");
+        this.emitTelemetryEvent('Engine1DescribeKey', {
+            someProperty: 4,
+            someOtherProperty: 'klmno',
+            someThirdProperty: true
+        });
         this.emitDescribeRulesProgressEvent(80);
         return [
             {
@@ -162,6 +167,11 @@ export class StubEngine1 extends engApi.Engine {
         this.runRulesCallHistory.push({ruleNames, runOptions});
         this.emitRunRulesProgressEvent(0);
         this.emitLogEvent(engApi.LogLevel.Fine, "someMiscFineMessageFromStubEngine1");
+        this.emitTelemetryEvent('Engine1RunKey', {
+            someProperty: 1,
+            someOtherProperty: 'abcde',
+            someThirdProperty: true
+        });
         this.emitRunRulesProgressEvent(50, "someProgressMessage");
         this.emitRunRulesProgressEvent(100);
         return this.resultsToReturn;
@@ -199,6 +209,11 @@ export class StubEngine2 extends engApi.Engine {
         this.describeRulesCallHistory.push({describeOptions});
         this.emitDescribeRulesProgressEvent(30);
         this.emitLogEvent(engApi.LogLevel.Error, "someMiscErrorMessageFromStubEngine2");
+        this.emitTelemetryEvent('Engine2DescribeKey', {
+            someProperty: 5,
+            someOtherProperty: 'pqrst',
+            someThirdProperty: false
+        });
         this.emitDescribeRulesProgressEvent(90);
         return [
             {
@@ -228,6 +243,11 @@ export class StubEngine2 extends engApi.Engine {
     async runRules(ruleNames: string[], runOptions: engApi.RunOptions): Promise<engApi.EngineRunResults> {
         this.runRulesCallHistory.push({ruleNames, runOptions});
         this.emitLogEvent(engApi.LogLevel.Info, "someMiscInfoMessageFromStubEngine2");
+        this.emitTelemetryEvent('Engine2RunKey', {
+            someProperty: 2,
+            someOtherProperty: 'fghij',
+            someThirdProperty: false
+        });
         this.emitRunRulesProgressEvent(5);
         this.emitRunRulesProgressEvent(63);
         return this.resultsToReturn;

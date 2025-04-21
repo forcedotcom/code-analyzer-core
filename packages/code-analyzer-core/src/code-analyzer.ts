@@ -8,18 +8,21 @@ import {
     UninstantiableEngineRunResults
 } from "./results"
 import {SemVer} from 'semver';
-import {EngineLogEvent, EngineResultsEvent, EngineRunProgressEvent, Event, EventType, LogLevel} from "./events"
+import {
+    EngineLogEvent,
+    EngineResultsEvent,
+    EngineRunProgressEvent,
+    EngineTelemetryEvent,
+    Event,
+    EventType,
+    LogLevel
+} from "./events"
 import {getMessage} from "./messages";
 import * as engApi from "@salesforce/code-analyzer-engine-api"
 import {Clock, RealClock} from '@salesforce/code-analyzer-engine-api/utils';
 import {EventEmitter} from "node:events";
 import {CodeAnalyzerConfig, ConfigDescription, EngineOverrides, FIELDS, RuleOverride} from "./config";
-import {
-    EngineProgressAggregator,
-    SimpleUniqueIdGenerator,
-    toAbsolutePath,
-    UniqueIdGenerator
-} from "./utils";
+import {EngineProgressAggregator, SimpleUniqueIdGenerator, toAbsolutePath, UniqueIdGenerator} from "./utils";
 import fs from "node:fs";
 import path from 'node:path';
 
@@ -458,6 +461,16 @@ export class CodeAnalyzer {
                 engineName: engine.getName(),
                 logLevel: event.logLevel as LogLevel,
                 message: event.message
+            });
+        });
+
+        engine.onEvent(engApi.EventType.TelemetryEvent, (event: engApi.TelemetryEvent) => {
+            this.emitEvent<EngineTelemetryEvent>({
+                timestamp: this.clock.now(),
+                engineName: engine.getName(),
+                type: EventType.EngineTelemetryEvent,
+                key: event.key,
+                data: event.data
             });
         });
 

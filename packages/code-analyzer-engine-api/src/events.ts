@@ -3,6 +3,7 @@
  */
 export enum EventType {
     LogEvent = "LogEvent",
+    TelemetryEvent = "TelemetryEvent",
     RunRulesProgressEvent = "RunRulesProgressEvent",
     DescribeRulesProgressEvent = "DescribeRulesProgressEvent"
 }
@@ -29,6 +30,17 @@ export type LogEvent = {
 }
 
 /**
+ * Event emitted when an engine wants to send telemetry data back up through Core.
+ * These events are received by callbacks provided to the {@link Engine.onEvent} method for {@link EventType.TelemetryEvent}.
+ */
+export type TelemetryEvent = {
+    type: EventType.TelemetryEvent,
+    key: string,
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    data: {[key: string]: any}
+}
+
+/**
  * Event that engines should emit during {@link Engine.runRules} to report the progress of the run.
  * These events are received by callbacks provided to the {@link Engine.onEvent} for {@link EventType.RunRulesProgressEvent}.
  */
@@ -50,4 +62,4 @@ export type DescribeRulesProgressEvent = {
 /**
  * Convenience type corresponding to each of the various events that can be emitted by an engine
  */
-export type Event = LogEvent | RunRulesProgressEvent | DescribeRulesProgressEvent;
+export type Event = LogEvent | TelemetryEvent | RunRulesProgressEvent | DescribeRulesProgressEvent;

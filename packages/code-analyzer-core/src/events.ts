@@ -7,6 +7,7 @@ export enum EventType {
     LogEvent = "LogEvent",
     RuleSelectionProgressEvent = "RuleSelectionProgressEvent",
     EngineLogEvent = "EngineLogEvent",
+    EngineTelemetryEvent = "EngineTelemetryEvent",
     EngineRunProgressEvent = "EngineRunProgressEvent",
     EngineResultsEvent = "EngineResultsEvent"
 }
@@ -56,6 +57,19 @@ export type EngineLogEvent = {
 }
 
 /**
+ * Event emitted when an engine wants to send a telemetry event.
+ * These events are received by callbacks provided to the {@link CodeAnalyzer.onEvent} method for {@link EventType.EngineTelemetryEvent}.
+ */
+export type EngineTelemetryEvent = {
+    type: EventType.EngineTelemetryEvent,
+    timestamp: Date,
+    engineName: string,
+    key: string,
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    data: {[key: string]: any}
+}
+
+/**
  * Event emitted when an engine reports on its run progress
  *   These events are received by callbacks provided to the {@link CodeAnalyzer.onEvent} for {@link EventType.EngineRunProgressEvent}.
  */
@@ -80,4 +94,4 @@ export type EngineResultsEvent = {
 /**
  * Convenience type corresponding to each of the various events that can be emitted by Code Analyzer
  */
-export type Event = LogEvent | RuleSelectionProgressEvent | EngineLogEvent | EngineRunProgressEvent | EngineResultsEvent;
+export type Event = LogEvent | RuleSelectionProgressEvent | EngineLogEvent | EngineTelemetryEvent | EngineRunProgressEvent | EngineResultsEvent;

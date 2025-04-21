@@ -115,6 +115,20 @@ export abstract class Engine {
     }
 
     /**
+     * Convenience method that subclasses can use to easily emit an event of type {@link TelemetryEvent}
+     * @param key A (preferably unique) key to associate with this event
+     * @param data A flexible payload of relevant data
+     * @protected
+     */
+    protected emitTelemetryEvent(key: string, data: {[key: string]: any}): void {
+        this.emitEvent({
+            type: EventType.TelemetryEvent,
+            key,
+            data
+        });
+    }
+
+    /**
      * Convenience method that subclasses can use to easily emit an event of type {@link DescribeRulesProgressEvent}
      * @param percentComplete the percent of completion between 0 and 100
      * @protected

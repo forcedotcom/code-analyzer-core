@@ -19,6 +19,7 @@ export {
     EngineLogEvent,
     EngineRunProgressEvent,
     EngineResultsEvent,
+    EngineTelemetryEvent,
     Event,
     EventType,
     LogEvent,
