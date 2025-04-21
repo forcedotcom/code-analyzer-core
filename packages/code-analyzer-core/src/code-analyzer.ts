@@ -15,7 +15,9 @@ import {
     EngineTelemetryEvent,
     Event,
     EventType,
-    LogLevel
+    LogLevel,
+    TelemetryData,
+    TelemetryEvent
 } from "./events"
 import {getMessage} from "./messages";
 import * as engApi from "@salesforce/code-analyzer-engine-api"
@@ -396,6 +398,17 @@ export class CodeAnalyzer {
             logLevel: logLevel,
             message: message
         })
+    }
+
+    // istanbul ignore next
+    private emitTelemetryEvent(eventName: string, data: TelemetryData): void {
+        this.emitEvent({
+            type: EventType.TelemetryEvent,
+            timestamp: this.clock.now(),
+            eventName,
+            uuid: this.uniqueIdGenerator.getUniversallyUniqueId(),
+            data
+        });
     }
 
     private async createAndAddEngineIfValid(engineName: string, enginePluginV1: engApi.EnginePluginV1): Promise<void> {

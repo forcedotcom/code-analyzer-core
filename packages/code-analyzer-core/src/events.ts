@@ -38,6 +38,14 @@ export type LogEvent = {
 
 export type TelemetryData = engApi.TelemetryData;
 
+export type TelemetryEvent = {
+    type: EventType.TelemetryEvent,
+    timestamp: Date,
+    eventName: string,
+    uuid: string,
+    data: TelemetryData
+}
+
 /**
  * Event emitted to report the progress of an invocation of {@link CodeAnalyzer.selectRules}
  *   These events are received by callbacks provided to the {@link CodeAnalyzer.onEvent} for {@link EventType.RuleSelectionProgressEvent}.
@@ -98,4 +106,4 @@ export type EngineResultsEvent = {
 /**
  * Convenience type corresponding to each of the various events that can be emitted by Code Analyzer
  */
-export type Event = LogEvent | RuleSelectionProgressEvent | EngineLogEvent | EngineTelemetryEvent | EngineRunProgressEvent | EngineResultsEvent;
+export type Event = LogEvent | TelemetryEvent | RuleSelectionProgressEvent | EngineLogEvent | EngineTelemetryEvent | EngineRunProgressEvent | EngineResultsEvent;
