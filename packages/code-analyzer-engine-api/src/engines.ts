@@ -120,6 +120,7 @@ export abstract class Engine {
      * @param data A flexible payload of relevant data
      * @protected
      */
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     protected emitTelemetryEvent(key: string, data: {[key: string]: any}): void {
         this.emitEvent({
             type: EventType.TelemetryEvent,
