@@ -67,7 +67,7 @@ const MESSAGE_CATALOG : MessageCatalog = {
         `This rule reports a violation when engine '%s' cannot be instantiated.`,
 
     UninstantiableEngineErrorViolationMessage:
-        `The engine with name '%s' could not be instantiated. Error: %s`,
+        `The engine with name '%s' could not be instantiated. %s`,
 
     PluginErrorFromGetAvailableEngineNames:
         `Failed to add engine plugin. The plugin's getAvailableNames method threw an error:\n%s`,
