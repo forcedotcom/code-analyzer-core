@@ -406,7 +406,7 @@ export class CodeAnalyzer {
         this.emitEvent({
             type: EventType.TelemetryEvent,
             timestamp: this.clock.now(),
-            eventName,k
+            eventName,
             uuid: this.uniqueIdGenerator.getUniversallyUniqueId(),
             data
         });
