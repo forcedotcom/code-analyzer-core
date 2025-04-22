@@ -1,5 +1,5 @@
-import path from "node:path";
-import crypto from "node:crypto";
+import * as path from "node:path";
+import * as crypto from "node:crypto";
 
 // THIS FILE CONTAINS UTILITIES WHICH ARE USED INTERNALLY ONLY.
 // None of the following exported interfaces and functions should be exported from the index file.

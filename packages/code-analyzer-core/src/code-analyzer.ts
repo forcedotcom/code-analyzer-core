@@ -16,8 +16,7 @@ import {
     Event,
     EventType,
     LogLevel,
-    TelemetryData,
-    TelemetryEvent
+    TelemetryData
 } from "./events"
 import {getMessage} from "./messages";
 import * as engApi from "@salesforce/code-analyzer-engine-api"
@@ -400,12 +399,14 @@ export class CodeAnalyzer {
         })
     }
 
+    // This method is currently unused, so no coverage is possible. However, it's going to be used very shortly, so we're
+    // adding it now and just disabling the coverage check for it.
     // istanbul ignore next
     private emitTelemetryEvent(eventName: string, data: TelemetryData): void {
         this.emitEvent({
             type: EventType.TelemetryEvent,
             timestamp: this.clock.now(),
-            eventName,
+            eventName,k
             uuid: this.uniqueIdGenerator.getUniversallyUniqueId(),
             data
         });
