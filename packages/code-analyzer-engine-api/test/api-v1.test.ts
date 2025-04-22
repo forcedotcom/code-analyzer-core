@@ -12,6 +12,7 @@ import {
     RuleDescription,
     RunOptions,
     RunRulesProgressEvent,
+    TelemetryEvent,
     Workspace
 } from "../src";
 import * as os from "node:os";
@@ -40,6 +41,10 @@ describe('Tests for v1', () => {
         dummyEngine.onEvent(EventType.LogEvent, (event: LogEvent): void => {
             logEvents.push(event);
         });
+        const telemetryEvents: TelemetryEvent[] = [];
+        dummyEngine.onEvent(EventType.TelemetryEvent, (event: TelemetryEvent): void => {
+            telemetryEvents.push(event);
+        });
         const describeRulesProgressEvents: DescribeRulesProgressEvent[] = [];
         dummyEngine.onEvent(EventType.DescribeRulesProgressEvent, (event: DescribeRulesProgressEvent): void => {
             describeRulesProgressEvents.push(event);
@@ -64,7 +69,25 @@ describe('Tests for v1', () => {
             logLevel: LogLevel.Fine,
             message: "runRules called"
         });
-
+        expect(telemetryEvents).toHaveLength(2);
+        expect(telemetryEvents[0]).toEqual({
+            type: EventType.TelemetryEvent,
+            eventName: 'DescribeRulesTelemetry',
+            data: {
+                someKey: 1,
+                someOtherKey: true,
+                someThirdKey: 'beep'
+            }
+        });
+        expect(telemetryEvents[1]).toEqual({
+            type: EventType.TelemetryEvent,
+            eventName: 'RunRulesTelemetry',
+            data: {
+                someKey: 2,
+                someOtherKey: false,
+                someThirdKey: 'boop'
+            }
+        });
         expect(describeRulesProgressEvents).toHaveLength(2);
         expect(describeRulesProgressEvents).toHaveLength(2);
         expect(describeRulesProgressEvents[0]).toEqual({
@@ -103,6 +126,11 @@ class DummyEngineV1 extends Engine {
     async describeRules(_describeOptions: DescribeOptions): Promise<RuleDescription[]> {
         this.emitDescribeRulesProgressEvent(30);
         this.emitLogEvent(LogLevel.Debug, "describeRules called");
+        this.emitTelemetryEvent('DescribeRulesTelemetry', {
+            someKey: 1,
+            someOtherKey: true,
+            someThirdKey: 'beep'
+        });
         this.emitDescribeRulesProgressEvent(99);
         return [];
     }
@@ -118,6 +146,11 @@ class DummyEngineV1 extends Engine {
     async runRules(_ruleNames: string[], _runOptions: RunOptions): Promise<EngineRunResults> {
         this.emitRunRulesProgressEvent(5.0);
         this.emitLogEvent(LogLevel.Fine, "runRules called");
+        this.emitTelemetryEvent('RunRulesTelemetry', {
+            someKey: 2,
+            someOtherKey: false,
+            someThirdKey: 'boop'
+        });
         this.emitRunRulesProgressEvent(100.0);
         return {
             violations: []

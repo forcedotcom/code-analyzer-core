@@ -8,18 +8,22 @@ import {
     UninstantiableEngineRunResults
 } from "./results"
 import {SemVer} from 'semver';
-import {EngineLogEvent, EngineResultsEvent, EngineRunProgressEvent, Event, EventType, LogLevel} from "./events"
+import {
+    EngineLogEvent,
+    EngineResultsEvent,
+    EngineRunProgressEvent,
+    EngineTelemetryEvent,
+    Event,
+    EventType,
+    LogLevel,
+    TelemetryData
+} from "./events"
 import {getMessage} from "./messages";
 import * as engApi from "@salesforce/code-analyzer-engine-api"
 import {Clock, RealClock} from '@salesforce/code-analyzer-engine-api/utils';
 import {EventEmitter} from "node:events";
 import {CodeAnalyzerConfig, ConfigDescription, EngineOverrides, FIELDS, RuleOverride} from "./config";
-import {
-    EngineProgressAggregator,
-    SimpleUniqueIdGenerator,
-    toAbsolutePath,
-    UniqueIdGenerator
-} from "./utils";
+import {EngineProgressAggregator, RuntimeUniqueIdGenerator, toAbsolutePath, UniqueIdGenerator} from "./utils";
 import fs from "node:fs";
 import path from 'node:path';
 
@@ -89,7 +93,7 @@ const MINIMUM_SUPPORTED_NODE = 20;
 export class CodeAnalyzer {
     private readonly config: CodeAnalyzerConfig;
     private clock: Clock = new RealClock();
-    private uniqueIdGenerator: UniqueIdGenerator = new SimpleUniqueIdGenerator();
+    private uniqueIdGenerator: UniqueIdGenerator = new RuntimeUniqueIdGenerator();
     private readonly eventEmitter: EventEmitter = new EventEmitter();
     private readonly engines: Map<string, engApi.Engine> = new Map();
     private readonly uninstantiableEnginesMap: Map<string, Error> = new Map();
@@ -140,7 +144,7 @@ export class CodeAnalyzer {
      * @param targets optional string array of files and/or folders
      */
     public async createWorkspace(workspaceFilesAndFolders: string[], targets?: string[]): Promise<Workspace> {
-        const workspaceId: string = this.uniqueIdGenerator.getUniqueId('workspace');
+        const workspaceId: string = this.uniqueIdGenerator.getLocallyUniqueId('workspace');
         const workspaceValidationPromises: Promise<string>[] = workspaceFilesAndFolders.map(validateFileOrFolder);
         const validatedWorkspaceFilesAndFolders: string[] = (await Promise.all(workspaceValidationPromises)).flat();
         if (validatedWorkspaceFilesAndFolders.length === 0) {
@@ -395,6 +399,19 @@ export class CodeAnalyzer {
         })
     }
 
+    // This method is currently unused, so no coverage is possible. However, it's going to be used very shortly, so we're
+    // adding it now and just disabling the coverage check for it.
+    // istanbul ignore next
+    private emitTelemetryEvent(eventName: string, data: TelemetryData): void {
+        this.emitEvent({
+            type: EventType.TelemetryEvent,
+            timestamp: this.clock.now(),
+            eventName,
+            uuid: this.uniqueIdGenerator.getUniversallyUniqueId(),
+            data
+        });
+    }
+
     private async createAndAddEngineIfValid(engineName: string, enginePluginV1: engApi.EnginePluginV1): Promise<void> {
         if (this.engines.has(engineName)) {
             this.emitLogEvent(LogLevel.Error, getMessage('DuplicateEngine', engineName));
@@ -458,6 +475,17 @@ export class CodeAnalyzer {
                 engineName: engine.getName(),
                 logLevel: event.logLevel as LogLevel,
                 message: event.message
+            });
+        });
+
+        engine.onEvent(engApi.EventType.TelemetryEvent, (event: engApi.TelemetryEvent) => {
+            this.emitEvent<EngineTelemetryEvent>({
+                timestamp: this.clock.now(),
+                engineName: engine.getName(),
+                type: EventType.EngineTelemetryEvent,
+                eventName: event.eventName,
+                uuid: this.uniqueIdGenerator.getUniversallyUniqueId(),
+                data: event.data
             });
         });
 

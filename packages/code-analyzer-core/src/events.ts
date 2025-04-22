@@ -1,3 +1,4 @@
+import * as engApi from "@salesforce/code-analyzer-engine-api"
 import { EngineRunResults } from "./results"
 
 /**
@@ -5,8 +6,10 @@ import { EngineRunResults } from "./results"
  */
 export enum EventType {
     LogEvent = "LogEvent",
+    TelemetryEvent = "TelemetryEvent",
     RuleSelectionProgressEvent = "RuleSelectionProgressEvent",
     EngineLogEvent = "EngineLogEvent",
+    EngineTelemetryEvent = "EngineTelemetryEvent",
     EngineRunProgressEvent = "EngineRunProgressEvent",
     EngineResultsEvent = "EngineResultsEvent"
 }
@@ -33,6 +36,16 @@ export type LogEvent = {
     message: string
 }
 
+export type TelemetryData = engApi.TelemetryData;
+
+export type TelemetryEvent = {
+    type: EventType.TelemetryEvent,
+    timestamp: Date,
+    eventName: string,
+    uuid: string,
+    data: TelemetryData
+}
+
 /**
  * Event emitted to report the progress of an invocation of {@link CodeAnalyzer.selectRules}
  *   These events are received by callbacks provided to the {@link CodeAnalyzer.onEvent} for {@link EventType.RuleSelectionProgressEvent}.
@@ -53,6 +66,19 @@ export type EngineLogEvent = {
     engineName: string
     logLevel: LogLevel,
     message: string
+}
+
+/**
+ * Event emitted when an engine wants to send a telemetry event.
+ * These events are received by callbacks provided to the {@link CodeAnalyzer.onEvent} method for {@link EventType.EngineTelemetryEvent}.
+ */
+export type EngineTelemetryEvent = {
+    type: EventType.EngineTelemetryEvent,
+    timestamp: Date,
+    engineName: string,
+    eventName: string,
+    uuid: string,
+    data: TelemetryData
 }
 
 /**
@@ -80,4 +106,4 @@ export type EngineResultsEvent = {
 /**
  * Convenience type corresponding to each of the various events that can be emitted by Code Analyzer
  */
-export type Event = LogEvent | RuleSelectionProgressEvent | EngineLogEvent | EngineRunProgressEvent | EngineResultsEvent;
+export type Event = LogEvent | TelemetryEvent | RuleSelectionProgressEvent | EngineLogEvent | EngineTelemetryEvent | EngineRunProgressEvent | EngineResultsEvent;

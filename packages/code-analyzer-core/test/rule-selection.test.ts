@@ -2,6 +2,7 @@ import {
     CodeAnalyzer,
     CodeAnalyzerConfig,
     EngineLogEvent,
+    EngineTelemetryEvent,
     EventType,
     LogEvent,
     LogLevel,
@@ -354,7 +355,7 @@ describe('Tests for selecting rules', () => {
         }
     });
 
-    it("When selecting rules, then engine specific log events are wired up and emitted correctly", async () => {
+    it("When selecting rules, then engine-specific log events are wired up and emitted correctly", async () => {
         const engineLogEvents: EngineLogEvent[] = [];
         codeAnalyzer.onEvent(EventType.EngineLogEvent, (event: EngineLogEvent) => engineLogEvents.push(event));
         await codeAnalyzer.selectRules([]);
@@ -380,6 +381,38 @@ describe('Tests for selecting rules', () => {
             engineName: "stubEngine3",
             logLevel: LogLevel.Error,
             message: "someMiscErrorMessageFromStubEngine3"
+        });
+    });
+
+    it("When selecting rules, then engine-level telemetry events are wired up and emitted correctly from the engines", async () => {
+        const engineTelemetryEvents: EngineTelemetryEvent[] = [];
+        codeAnalyzer.onEvent(EventType.EngineTelemetryEvent, (event: EngineTelemetryEvent) => engineTelemetryEvents.push(event));
+        await codeAnalyzer.selectRules([]);
+
+        expect(engineTelemetryEvents).toHaveLength(2);
+        expect(engineTelemetryEvents).toContainEqual({
+            type: EventType.EngineTelemetryEvent,
+            timestamp: sampleTimestamp,
+            engineName: "stubEngine1",
+            eventName: 'Engine1DescribeKey',
+            uuid: "FixedUUID",
+            data: {
+                someProperty: 4,
+                someOtherProperty: 'klmno',
+                someThirdProperty: true
+            }
+        });
+        expect(engineTelemetryEvents).toContainEqual({
+            type: EventType.EngineTelemetryEvent,
+            timestamp: sampleTimestamp,
+            engineName: "stubEngine2",
+            eventName: 'Engine2DescribeKey',
+            uuid: "FixedUUID",
+            data: {
+                someProperty: 5,
+                someOtherProperty: 'pqrst',
+                someThirdProperty: false
+            }
         });
     });
 });

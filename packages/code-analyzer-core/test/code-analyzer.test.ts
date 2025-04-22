@@ -6,6 +6,7 @@ import {
     EngineLogEvent,
     EngineRunProgressEvent,
     EngineResultsEvent,
+    EngineTelemetryEvent,
     EventType,
     LogEvent,
     LogLevel,
@@ -647,7 +648,7 @@ describe("Tests for the run method of CodeAnalyzer", () => {
         }
     });
 
-    it("When running engines, then engine run results events are emitted correctly when the enginges complete", async () => {
+    it("When running engines, then engine run results events are emitted correctly when the engines complete", async () => {
         const engineResultsEvents: EngineResultsEvent[] = [];
         codeAnalyzer.onEvent(EventType.EngineResultsEvent, (event: EngineResultsEvent) => engineResultsEvents.push(event));
         const runResults: RunResults = await codeAnalyzer.run(selection, sampleRunOptions);
@@ -670,7 +671,7 @@ describe("Tests for the run method of CodeAnalyzer", () => {
         });
     });
 
-    it("When running engines, then engine specific events are wired up and emitted correctly from the engines", async () => {
+    it("When running engines, then engine-specific log events are wired up and emitted correctly from the engines", async () => {
         const engineLogEvents: EngineLogEvent[] = [];
         codeAnalyzer.onEvent(EventType.EngineLogEvent, (event: EngineLogEvent) => engineLogEvents.push(event));
         await codeAnalyzer.run(selection, sampleRunOptions);
@@ -696,6 +697,38 @@ describe("Tests for the run method of CodeAnalyzer", () => {
             engineName: "stubEngine3",
             logLevel: LogLevel.Info,
             message: "someMiscInfoMessageFromStubEngine3"
+        });
+    });
+
+    it("When running engines, then engine-level telemetry events are wired up and emitted correctly from the engines", async () => {
+        const engineTelemetryEvents: EngineTelemetryEvent[] = [];
+        codeAnalyzer.onEvent(EventType.EngineTelemetryEvent, (event: EngineTelemetryEvent) => engineTelemetryEvents.push(event));
+        await codeAnalyzer.run(selection, sampleRunOptions);
+
+        expect(engineTelemetryEvents).toHaveLength(2);
+        expect(engineTelemetryEvents).toContainEqual({
+            type: EventType.EngineTelemetryEvent,
+            timestamp: sampleTimestamp,
+            engineName: "stubEngine1",
+            eventName: 'Engine1RunKey',
+            uuid: "FixedUUID",
+            data: {
+                someProperty: 1,
+                someOtherProperty: 'abcde',
+                someThirdProperty: true
+            }
+        });
+        expect(engineTelemetryEvents).toContainEqual({
+            type: EventType.EngineTelemetryEvent,
+            timestamp: sampleTimestamp,
+            engineName: "stubEngine2",
+            eventName: 'Engine2RunKey',
+            uuid: "FixedUUID",
+            data: {
+                someProperty: 2,
+                someOtherProperty: 'fghij',
+                someThirdProperty: false
+            }
         });
     });
 });

@@ -19,11 +19,14 @@ export {
     EngineLogEvent,
     EngineRunProgressEvent,
     EngineResultsEvent,
+    EngineTelemetryEvent,
     Event,
     EventType,
     LogEvent,
     LogLevel,
-    RuleSelectionProgressEvent
+    RuleSelectionProgressEvent,
+    TelemetryData,
+    TelemetryEvent
 } from "./events"
 
 export {
