@@ -33,7 +33,7 @@ export class SfgeEngine extends Engine {
         super();
         this.config = config;
         const javaCommandExecutor: JavaCommandExecutor = new JavaCommandExecutor(this.config.java_command, this.emitLogEvent.bind(this));
-        this.sfgeWrapper = new RuntimeSfgeWrapper(javaCommandExecutor, clock, this.emitLogEvent.bind(this));
+        this.sfgeWrapper = new RuntimeSfgeWrapper(javaCommandExecutor, clock, this.emitLogEvent.bind(this), this.emitTelemetryEvent.bind(this));
     }
 
     public override getName(): string {

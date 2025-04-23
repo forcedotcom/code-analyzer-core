@@ -110,7 +110,10 @@ const MESSAGE_CATALOG : { [key: string]: string } = {
         `%s`,
 
     error_external_sfgeIncompleteAnalysis:
-        `Salesforce Graph Engine encountered an error and couldn't complete analysis: %s`
+        `Salesforce Graph Engine encountered an error and couldn't complete analysis: %s`,
+
+    error_failed_to_parse_telemetry:
+        `Failed to parse telemetry object: %s`
 }
 
 /**
