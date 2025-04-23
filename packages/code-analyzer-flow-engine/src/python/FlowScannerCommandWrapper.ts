@@ -5,7 +5,12 @@ import path from "node:path";
 import fs from "node:fs";
 
 export interface FlowScannerCommandWrapper {
-    runFlowScannerRules(flowFilesToScan: string[], absLogFilePath: string, completionPercentageHandler: (percentage: number) => void): Promise<FlowScannerExecutionResult>;
+    runFlowScannerRules(
+        targetedFilesToScan: string[],
+        workspaceFilesToScan: string[],
+        absLogFilePath: string,
+        completionPercentageHandler: (percentage: number) => void
+    ): Promise<FlowScannerExecutionResult>;
 }
 
 export type FlowScannerExecutionResult = {
@@ -41,11 +46,17 @@ export class RunTimeFlowScannerCommandWrapper implements FlowScannerCommandWrapp
         this.pythonCommandExecutor = new PythonCommandExecutor(pythonCommand);
     }
 
-    public async runFlowScannerRules(flowFilesToScan: string[], absLogFilePath: string,
-                                  completionPercentageHandler: (percentage: number) => void): Promise<FlowScannerExecutionResult> {
+    public async runFlowScannerRules(
+        workspaceFilesToScan: string[],
+        targetedFilesToScan: string[],
+        absLogFilePath: string,
+        completionPercentageHandler: (percentage: number) => void
+    ): Promise<FlowScannerExecutionResult> {
         const tempDir: string = await createTempDir();
-        const flowFilesToScanFile: string = path.join(tempDir, 'flowFilesToScan.txt');
-        await fs.promises.writeFile(flowFilesToScanFile, flowFilesToScan.join('\n'), 'utf-8');
+        const workspaceFilesToScanFile: string = path.join(tempDir, 'workspaceFilesToScan.txt');
+        const targetedFilesToScanFile: string = path.join(tempDir, 'targetedFilesToScan.txt');
+        await fs.promises.writeFile(workspaceFilesToScanFile, workspaceFilesToScan.join('\n'), 'utf-8');
+        await fs.promises.writeFile(targetedFilesToScanFile, targetedFilesToScan.join('\n'), 'utf-8');
 
         const flowScannerResultsFile: string = path.join(tempDir, 'flowScannerResultsFile.json')
         const commandName = 'flowtest'; //pythonModuleName set by internal team
@@ -56,8 +67,10 @@ export class RunTimeFlowScannerCommandWrapper implements FlowScannerCommandWrapp
             '--debug',
             '--log_file',
             absLogFilePath,
-            '--infile',
-            flowFilesToScanFile,
+            '--workspace',
+            workspaceFilesToScanFile,
+            '--target',
+            targetedFilesToScanFile,
             '--json',
             flowScannerResultsFile
         ];

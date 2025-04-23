@@ -118,44 +118,53 @@ def get_flow_paths(args: argparse.Namespace) -> (list[str], {str: str}):
         a tuple of (list of all flows to scan, dict: flow_name ->
         flow_path)
     """
-    arg_file = args.infile
+    arg_file = args.target
+    arg_workspace = args.workspace
     arg_flow = args.flow
     arg_dir = args.dir
     count = 0
-    flow_map = None
+    resolver_map = None
+
+    flow_workspace = None
+    flow_paths = None
 
     # file takes precedence and others are ignored
     if arg_file is not None:
         flow_paths = get_flow_paths_from_file(arg_file)
+    if arg_workspace is not None:
+        flow_workspace = get_flow_paths_from_file(arg_workspace)
 
     # next are the flows passed as a csv list in an argument
-    elif arg_flow is not None:
+    if arg_flow is not None and arg_file is None:
         flow_paths = [os.path.abspath(x) for x in arg_flow.split(",")]
 
     # finally we scan an entire directory (including subdirectories)
-    else:
+    if flow_paths is None:
         if arg_dir is None:
             arg_dir = CURR_DIR
 
-        flow_map = util.get_flows_in_dir(arg_dir)
-        flows = list(flow_map.values())
+        resolver_map = util.get_flows_in_dir(arg_dir)
+        flows = list(resolver_map.values())
         flow_paths = [os.path.abspath(x) for x in flows]
 
+    if flow_workspace is None:
+        flow_workspace = flow_paths
+
     # Once we have flow paths, we determine labels and namespaces
-    if flow_map is None:
-        flow_map = {}
-        for a_flow in flow_paths:
+    if resolver_map is None:
+        resolver_map = {}
+        for a_flow in flow_workspace:
             label = util.get_label(os.path.dirname(a_flow), os.path.basename(a_flow))
             if label is not None:
-                if label in flow_map:
+                if label in resolver_map:
                     print(f"alert, label {label} in map already")
                 else:
-                    flow_map[label] = a_flow
+                    resolver_map[label] = a_flow
 
     count = len(flow_paths)
     if count > 0:
         print(f"found {count} flows to scan")
-        return flow_paths, flow_map
+        return flow_paths, resolver_map
     else:
         print("No flow files found to scan. Exiting...")
         sys.exit(1)
@@ -194,7 +203,7 @@ def parse_args(my_args: list[str], default: str = None) -> argparse.Namespace:
     paths = parser.add_mutually_exclusive_group()
 
     paths.add_argument("-f", "--flow", help=("path of flow files scan, csv separated. "
-                                             "If provided, only these will be scanned."),
+                                             "If provided, only these will be scanned or used for resolution."),
                        required=False)
     paths.add_argument("-d", "--dir", help=("directory containing flow-meta.xml files "
                                             "subdirectories are also searched. Defaults to working directory. If no"
@@ -202,8 +211,17 @@ def parse_args(my_args: list[str], default: str = None) -> argparse.Namespace:
                                             "subflows in this directory will be scanned"),
                        type=check_dir_exists)
 
-    paths.add_argument("--infile", help="path of file containing csv separated lists of flows to scan."
+    paths.add_argument("--target", help="path of file containing csv separated lists of flows to scan."
                                         "No other flows will be processed", type=check_file_exists)
+    """
+        Option for specifying the workspace path list
+    """
+
+    parser.add_argument("--workspace", help=("path of file containing csv separated lists of "
+                                            "flows in workspace that may be resolved as subflow targets. "
+                                            "If empty this defaults to flows target csv file, the specified directory, "
+                                            "or contents of flow directory or flows listed in commandline."),
+                       type=check_file_exists)
 
     """
         Options for debug/log handling
@@ -312,7 +330,7 @@ def main(argv: list[str] = None) -> str | None:
         else:
             tmp = args.dir or CURR_DIR
             tmp = tmp.split(os.path.sep)[-1]
-            label = f"flowscan of {tmp}"
+            label = f"scan of {tmp}"
     else:
         label = args.label
 
