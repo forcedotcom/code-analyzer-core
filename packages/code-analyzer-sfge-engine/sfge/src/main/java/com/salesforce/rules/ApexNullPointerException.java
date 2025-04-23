@@ -13,18 +13,18 @@ import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversalSo
  * Rule for detecting NPEs. Operates by checking paths that were rejected from analysis, and seeing
  * which ones were rejected because they terminated in an NPE.
  */
-public final class ApexNullPointerExceptionRule extends AbstractPathAnomalyRule {
+public final class ApexNullPointerException extends AbstractPathAnomalyRule {
     private static final String URL =
-            "https://developer.salesforce.com/docs/platform/salesforce-code-analyzer/guide/apexnullpointerexception-rule.html";
-    // ApexNullPointerExceptionRule cares about all sources, since they're all equally capable
+            "https://developer.salesforce.com/docs/platform/salesforce-code-analyzer/guide/rules-sfge.html#apexnullpointerexception";
+    // ApexNullPointerException cares about all sources, since they're all equally capable
     // of throwing NPEs.
     private static final ImmutableSet<Type> SOURCE_TYPES = ImmutableSet.copyOf(Type.values());
 
-    private ApexNullPointerExceptionRule() {
+    private ApexNullPointerException() {
         super();
     }
 
-    public static ApexNullPointerExceptionRule getInstance() {
+    public static ApexNullPointerException getInstance() {
         return LazyHolder.INSTANCE;
     }
 
@@ -96,7 +96,7 @@ public final class ApexNullPointerExceptionRule extends AbstractPathAnomalyRule 
 
     private static final class LazyHolder {
         // Postpone initialization until first use.
-        private static final ApexNullPointerExceptionRule INSTANCE =
-                new ApexNullPointerExceptionRule();
+        private static final ApexNullPointerException INSTANCE =
+                new ApexNullPointerException();
     }
 }

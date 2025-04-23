@@ -32,7 +32,7 @@ public class MultipleRuleViolationsScenarioTest extends BasePathBasedRuleTest {
                         "MyClass",
                         "foo",
                         false,
-                        ApexFlsViolationRule.getInstance(),
+                        ApexFlsViolation.getInstance(),
                         AvoidMultipleMassSchemaLookups.getInstance());
 
         // Including an additional step that happens in the actual process.

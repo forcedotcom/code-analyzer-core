@@ -1,6 +1,6 @@
 package com.salesforce.rules.fls.apex;
 
-import com.salesforce.rules.ApexFlsViolationRule;
+import com.salesforce.rules.ApexFlsViolation;
 import com.salesforce.rules.fls.apex.operations.FlsConstants.FlsValidationType;
 import com.salesforce.testutils.BaseFlsTest;
 import java.util.stream.Stream;
@@ -11,12 +11,12 @@ import org.junit.jupiter.params.provider.MethodSource;
 
 /** Tests FLS rules using SObjects */
 public class CommonFLSViolationRuleObjectPropertiesTest extends BaseFlsTest {
-    private ApexFlsViolationRule rule;
+    private ApexFlsViolation rule;
 
     @BeforeEach
     public void setup() {
         super.setup();
-        this.rule = ApexFlsViolationRule.getInstance();
+        this.rule = ApexFlsViolation.getInstance();
     }
 
     public static Stream<Arguments> input() {

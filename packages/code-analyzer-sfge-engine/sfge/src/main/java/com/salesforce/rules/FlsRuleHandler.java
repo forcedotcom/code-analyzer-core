@@ -8,7 +8,7 @@ import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversalSo
 
 /**
  * Interface that defines operations that an FLS handler needs to implement so that they can be
- * invoked through {@link ApexFlsViolationRule}
+ * invoked through {@link ApexFlsViolation}
  */
 public interface FlsRuleHandler {
 

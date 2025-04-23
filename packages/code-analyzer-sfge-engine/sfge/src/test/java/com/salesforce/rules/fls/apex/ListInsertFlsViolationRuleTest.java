@@ -1,7 +1,7 @@
 package com.salesforce.rules.fls.apex;
 
 import com.salesforce.rules.AbstractPathBasedRule;
-import com.salesforce.rules.ApexFlsViolationRule;
+import com.salesforce.rules.ApexFlsViolation;
 import com.salesforce.rules.fls.apex.operations.FlsConstants.FlsValidationType;
 import com.salesforce.testutils.BaseFlsTest;
 import java.util.stream.Stream;
@@ -12,11 +12,11 @@ import org.junit.jupiter.params.provider.MethodSource;
 public class ListInsertFlsViolationRuleTest extends BaseFlsTest {
     public static Stream<Arguments> input() {
         return Stream.of(
-                Arguments.of(ApexFlsViolationRule.getInstance(), "DML", "insert %s;\n"),
+                Arguments.of(ApexFlsViolation.getInstance(), "DML", "insert %s;\n"),
                 Arguments.of(
-                        ApexFlsViolationRule.getInstance(), "Database", "Database.insert(%s);\n"),
+                        ApexFlsViolation.getInstance(), "Database", "Database.insert(%s);\n"),
                 Arguments.of(
-                        ApexFlsViolationRule.getInstance(),
+                        ApexFlsViolation.getInstance(),
                         "Database with boolean",
                         "Database.insert(%s, false);\n"));
     }
@@ -145,7 +145,7 @@ public class ListInsertFlsViolationRuleTest extends BaseFlsTest {
         String sourceCode =
                 "public class MyClass {\n"
                         + "   public void foo() {\n"
-                        + "		 /* sfge-disable-next-line ApexFlsViolationRule */\n"
+                        + "		 /* sfge-disable-next-line ApexFlsViolation */\n"
                         + "        List<Account> accounts = [SELECT Name, Phone from Account];\n"
                         + "        List<Account> newAccounts = new List<Account>();\n"
                         + "        for (Account acc: accounts) {\n"
@@ -171,7 +171,7 @@ public class ListInsertFlsViolationRuleTest extends BaseFlsTest {
         String sourceCode =
                 "public class MyClass {\n"
                         + "   public void foo() {\n"
-                        + "		 /* sfge-disable-next-line ApexFlsViolationRule */\n"
+                        + "		 /* sfge-disable-next-line ApexFlsViolation */\n"
                         + "        List<Account> accounts = [SELECT Name, Phone from Account];\n"
                         + "        List<Account> newAccounts = new List<Account>();\n"
                         + "        for (Account acc: accounts) {\n"

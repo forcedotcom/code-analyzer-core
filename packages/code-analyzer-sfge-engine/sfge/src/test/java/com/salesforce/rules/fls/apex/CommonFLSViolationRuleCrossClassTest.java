@@ -5,7 +5,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import com.salesforce.TestUtil;
 import com.salesforce.rules.AbstractPathBasedRule;
-import com.salesforce.rules.ApexFlsViolationRule;
+import com.salesforce.rules.ApexFlsViolation;
 import com.salesforce.rules.fls.apex.operations.FlsConstants;
 import com.salesforce.rules.fls.apex.operations.FlsConstants.FlsValidationType;
 import com.salesforce.testutils.BaseFlsTest;
@@ -26,22 +26,22 @@ public class CommonFLSViolationRuleCrossClassTest extends BaseFlsTest {
         return Stream.of(
                 getArguments(
                         FlsValidationType.INSERT,
-                        ApexFlsViolationRule.getInstance(),
+                        ApexFlsViolation.getInstance(),
                         "insert new Account(Name = 'Acme Inc.');\n",
                         "insert new Account(Name = 'Acme Inc.', Phone = '415-555-1212');\n"),
                 getArguments(
                         FlsValidationType.READ,
-                        ApexFlsViolationRule.getInstance(),
+                        ApexFlsViolation.getInstance(),
                         "Account acc = [SELECT Name FROM Account];\n",
                         "Account acc = [SELECT Name, Phone FROM Account];\n"),
                 getArguments(
                         FlsValidationType.UPDATE,
-                        ApexFlsViolationRule.getInstance(),
-                        "/* sfge-disable-next-line ApexFlsViolationRule */\n"
+                        ApexFlsViolation.getInstance(),
+                        "/* sfge-disable-next-line ApexFlsViolation */\n"
                                 + "Account acc = [SELECT Id, Name from Account];\n"
                                 + "acc.Name = 'Acme Inc.';\n"
                                 + "update acc;\n",
-                        "/* sfge-disable-next-line ApexFlsViolationRule */\n"
+                        "/* sfge-disable-next-line ApexFlsViolation */\n"
                                 + "Account acc = [SELECT Id, Name from Account];\n"
                                 + "acc.Name = 'Acme Inc.';\n"
                                 + "acc.Phone = '415-555-1212';\n"

@@ -35,7 +35,7 @@ public class SfgeTest {
     private static final List<String> EXECUTION_ARGS_JSON =
             Lists.newArrayList(
                     "{\n",
-                    "   \"rulesToRun\": [\"ApexFlsViolationRule\"],\n",
+                    "   \"rulesToRun\": [\"ApexFlsViolation\"],\n",
                     "   \"projectFilesAndFolders\": [\"/path/to/project/dir/\"],\n",
                     "   \"targets\": [{\n",
                     "       \"targetFile\": \"/path/to/DemoExample.cls\",\n",

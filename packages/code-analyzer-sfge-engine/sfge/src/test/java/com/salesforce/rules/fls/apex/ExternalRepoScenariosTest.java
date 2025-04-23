@@ -38,7 +38,7 @@ import com.salesforce.graph.visitor.ApexPathWalker;
 import com.salesforce.graph.visitor.DefaultNoOpPathVertexVisitor;
 import com.salesforce.graph.visitor.SystemDebugAccumulator;
 import com.salesforce.rules.AbstractPathBasedRule;
-import com.salesforce.rules.ApexFlsViolationRule;
+import com.salesforce.rules.ApexFlsViolation;
 import com.salesforce.rules.fls.apex.operations.FlsConstants;
 import com.salesforce.rules.fls.apex.operations.FlsValidationRepresentation;
 import com.salesforce.testutils.BaseFlsTest;
@@ -52,7 +52,7 @@ import org.junit.jupiter.api.Test;
 
 /** This test contains issues that were encountered in repos we have tested with. */
 public class ExternalRepoScenariosTest extends BaseFlsTest {
-    private AbstractPathBasedRule rule = ApexFlsViolationRule.getInstance();
+    private AbstractPathBasedRule rule = ApexFlsViolation.getInstance();
 
     /** This code is used across three tests. */
     private static final String[] CACHED_PERM_CHECK_FOR_DELETION = {
@@ -920,7 +920,7 @@ public class ExternalRepoScenariosTest extends BaseFlsTest {
                         + "	}\n"
                         + "}\n";
 
-        // This is different from the common test case since the instance of ApexFlsViolationRule is
+        // This is different from the common test case since the instance of ApexFlsViolation is
         // for both read and write
         assertViolations(
                 rule, sourceCode, expect(4, FlsConstants.FlsValidationType.UPDATE, "Account"));

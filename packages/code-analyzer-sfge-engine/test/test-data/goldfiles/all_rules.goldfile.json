@@ -1,6 +1,6 @@
 [
   {
-    "name": "ApexFlsViolationRule",
+    "name": "ApexFlsViolation",
     "severityLevel": 2,
     "tags": [
       "DevPreview",
@@ -8,10 +8,12 @@
       "Apex"
     ],
     "description": "This rule is in \"Developer Preview\" and is subject to change. Identifies data read/write operations that may not have CRUD/FLS",
-    "resourceUrls": []
+    "resourceUrls": [
+      "https://developer.salesforce.com/docs/platform/salesforce-code-analyzer/guide/rules-sfge.html#apexflsviolation"
+    ]
   },
   {
-    "name": "ApexNullPointerExceptionRule",
+    "name": "ApexNullPointerException",
     "severityLevel": 3,
     "tags": [
       "DevPreview",
@@ -19,7 +21,9 @@
       "Apex"
     ],
     "description": "This rule is in \"Developer Preview\" and is subject to change. Identifies Apex operations that dereference null objects and throw NullPointerExceptions.",
-    "resourceUrls": []
+    "resourceUrls": [
+      "https://developer.salesforce.com/docs/platform/salesforce-code-analyzer/guide/rules-sfge.html#apexnullpointerexception"
+    ]
   },
   {
     "name": "AvoidDatabaseOperationInLoop",
@@ -30,7 +34,9 @@
       "Apex"
     ],
     "description": "This rule is in \"Developer Preview\" and is subject to change. Detects database operations inside loops, which can cause degraded performance.",
-    "resourceUrls": []
+    "resourceUrls": [
+      "https://developer.salesforce.com/docs/platform/salesforce-code-analyzer/guide/rules-sfge.html#avoiddatabaseoperationinloop"
+    ]
   },
   {
     "name": "AvoidMultipleMassSchemaLookups",
@@ -41,32 +47,12 @@
       "Apex"
     ],
     "description": "This rule is in \"Developer Preview\" and is subject to change. Detects mass schema lookups that can cause performance degradation if made more than once in a path. These methods are: Schema.getGlobalDescribe() and Schema.describeSObjects(...). Flagged lookups include those within a loop or multiple invocations in a path.",
-    "resourceUrls": []
+    "resourceUrls": [
+      "https://developer.salesforce.com/docs/platform/salesforce-code-analyzer/guide/rules-sfge.html#avoidmultiplemassschemalookups"
+    ]
   },
   {
-    "name": "PerformNullCheckOnSoqlVariables",
-    "severityLevel": 3,
-    "tags": [
-      "DevPreview",
-      "Performance",
-      "Apex"
-    ],
-    "description": "This rule is in \"Developer Preview\" and is subject to change. Identifies SOQL queries with variables in WHERE clauses that lack null checks.",
-    "resourceUrls": []
-  },
-  {
-    "name": "UnimplementedTypeRule",
-    "severityLevel": 4,
-    "tags": [
-      "DevPreview",
-      "Performance",
-      "Apex"
-    ],
-    "description": "This rule is in \"Developer Preview\" and is subject to change. Identifies abstract classes and interfaces that are non-global and don't have implementations or extensions.",
-    "resourceUrls": []
-  },
-  {
-    "name": "UseWithSharingOnDatabaseOperation",
+    "name": "DatabaseOperationsMustUseWithSharing",
     "severityLevel": 2,
     "tags": [
       "DevPreview",
@@ -74,6 +60,34 @@
       "Apex"
     ],
     "description": "This rule is in \"Developer Preview\" and is subject to change. Identifies a database operation executed outside of a \"with sharing\" policy. Warns when DML or SOQL operations inherit sharing rules implicitly instead of explicitly.",
-    "resourceUrls": []
+    "resourceUrls": [
+      "https://developer.salesforce.com/docs/platform/salesforce-code-analyzer/guide/rules-sfge.html#databaseoperationsmustusewithsharing"
+    ]
+  },
+  {
+    "name": "MissingNullCheckOnSoqlVariable",
+    "severityLevel": 3,
+    "tags": [
+      "DevPreview",
+      "Performance",
+      "Apex"
+    ],
+    "description": "This rule is in \"Developer Preview\" and is subject to change. Identifies SOQL queries with variables in WHERE clauses that lack null checks.",
+    "resourceUrls": [
+      "https://developer.salesforce.com/docs/platform/salesforce-code-analyzer/guide/rules-sfge.html#missingnullcheckonsoqlvariable"
+    ]
+  },
+  {
+    "name": "UnimplementedType",
+    "severityLevel": 4,
+    "tags": [
+      "DevPreview",
+      "Performance",
+      "Apex"
+    ],
+    "description": "This rule is in \"Developer Preview\" and is subject to change. Identifies abstract classes and interfaces that are non-global and don't have implementations or extensions.",
+    "resourceUrls": [
+      "https://developer.salesforce.com/docs/platform/salesforce-code-analyzer/guide/rules-sfge.html#unimplementedtype"
+    ]
   }
 ]

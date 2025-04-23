@@ -1,4 +1,4 @@
-package com.salesforce.rules.usewithsharingondatabaseoperation;
+package com.salesforce.rules.databaseoperationsmustusewithsharing;
 
 import com.salesforce.exception.ProgrammingException;
 import com.salesforce.graph.ApexPath;
@@ -12,7 +12,7 @@ import com.salesforce.rules.ops.boundary.SharingPolicyBoundaryDetector;
 import java.util.Set;
 import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversalSource;
 
-public class UseWithSharingOnDatabaseOperationHandler {
+public class DatabaseOperationsMustUseWithSharingHandler {
 
     public boolean test(BaseSFVertex vertex) {
         return DatabaseOperationUtil.isDatabaseOperation(vertex);
@@ -34,8 +34,8 @@ public class UseWithSharingOnDatabaseOperationHandler {
         // boundaryManager needs to be shared with both the rule visitor and the symbol visitor
         SharingPolicyBoundaryDetector boundaryManager = new SharingPolicyBoundaryDetector();
 
-        final UseWithSharingOnDatabaseOperationVisitor ruleVisitor =
-                new UseWithSharingOnDatabaseOperationVisitor(
+        final DatabaseOperationsMustUseWithSharingVisitor ruleVisitor =
+                new DatabaseOperationsMustUseWithSharingVisitor(
                         boundaryManager, sourceVertex, dbOpVertex);
 
         final SharingPolicySymbolProviderVertexVisitor symbolVisitor =
@@ -48,13 +48,13 @@ public class UseWithSharingOnDatabaseOperationHandler {
         return ruleVisitor.getViolations();
     }
 
-    public static UseWithSharingOnDatabaseOperationHandler getInstance() {
-        return UseWithSharingOnDatabaseOperationHandler.LazyHolder.INSTANCE;
+    public static DatabaseOperationsMustUseWithSharingHandler getInstance() {
+        return DatabaseOperationsMustUseWithSharingHandler.LazyHolder.INSTANCE;
     }
 
     private static final class LazyHolder {
         // postpone initialization until after first use
-        private static final UseWithSharingOnDatabaseOperationHandler INSTANCE =
-                new UseWithSharingOnDatabaseOperationHandler();
+        private static final DatabaseOperationsMustUseWithSharingHandler INSTANCE =
+                new DatabaseOperationsMustUseWithSharingHandler();
     }
 }

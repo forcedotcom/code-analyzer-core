@@ -3,7 +3,7 @@ package com.salesforce.rules.fls.apex;
 import com.salesforce.ArgumentsUtil;
 import com.salesforce.TestUtil;
 import com.salesforce.rules.AbstractPathBasedRule;
-import com.salesforce.rules.ApexFlsViolationRule;
+import com.salesforce.rules.ApexFlsViolation;
 import com.salesforce.rules.fls.apex.operations.FlsConstants;
 import com.salesforce.testutils.BaseFlsTest;
 import java.util.ArrayList;
@@ -16,7 +16,7 @@ import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 
 public class SuppressViolationTest extends BaseFlsTest {
-    private final AbstractPathBasedRule readRule = ApexFlsViolationRule.getInstance();
+    private final AbstractPathBasedRule readRule = ApexFlsViolation.getInstance();
 
     public static Stream<Arguments> sfdcDisableDirectives() {
         List<Arguments> arguments = new ArrayList<>();
@@ -24,8 +24,8 @@ public class SuppressViolationTest extends BaseFlsTest {
         for (String directive :
                 Arrays.asList(
                         "sfge-disable",
-                        "sfge-disable ApexFlsViolationRule",
-                        "sfge-disable ApexFlsViolationRule, OtherRule")) {
+                        "sfge-disable ApexFlsViolation",
+                        "sfge-disable ApexFlsViolation, OtherRule")) {
             arguments.add(Arguments.of("/* " + directive + " */"));
             arguments.add(Arguments.of("// " + directive));
         }
@@ -39,8 +39,8 @@ public class SuppressViolationTest extends BaseFlsTest {
         for (String directive :
                 Arrays.asList(
                         "sfge-disable-next-line",
-                        "sfge-disable-next-line ApexFlsViolationRule",
-                        "sfge-disable-next-line ApexFlsViolationRule, OtherRule")) {
+                        "sfge-disable-next-line ApexFlsViolation",
+                        "sfge-disable-next-line ApexFlsViolation, OtherRule")) {
             arguments.add(Arguments.of("/* " + directive + " */"));
             arguments.add(Arguments.of("// " + directive));
         }
@@ -54,8 +54,8 @@ public class SuppressViolationTest extends BaseFlsTest {
         for (String directive :
                 Arrays.asList(
                         "sfge-disable-stack",
-                        "sfge-disable-stack ApexFlsViolationRule",
-                        "sfge-disable-stack ApexFlsViolationRule, OtherRule")) {
+                        "sfge-disable-stack ApexFlsViolation",
+                        "sfge-disable-stack ApexFlsViolation, OtherRule")) {
             arguments.add(Arguments.of("/* " + directive + " */"));
             arguments.add(Arguments.of("// " + directive));
         }

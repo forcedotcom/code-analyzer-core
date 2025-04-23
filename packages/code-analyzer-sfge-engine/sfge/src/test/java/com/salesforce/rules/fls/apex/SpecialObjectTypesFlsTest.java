@@ -1,6 +1,6 @@
 package com.salesforce.rules.fls.apex;
 
-import com.salesforce.rules.ApexFlsViolationRule;
+import com.salesforce.rules.ApexFlsViolation;
 import com.salesforce.rules.fls.apex.operations.FlsConstants.FlsValidationType;
 import com.salesforce.testutils.BaseFlsTest;
 import java.util.stream.Stream;
@@ -11,10 +11,10 @@ import org.junit.jupiter.params.provider.MethodSource;
 
 public class SpecialObjectTypesFlsTest extends BaseFlsTest {
 
-    private final ApexFlsViolationRule rule;
+    private final ApexFlsViolation rule;
 
     public SpecialObjectTypesFlsTest() {
-        rule = ApexFlsViolationRule.getInstance();
+        rule = ApexFlsViolation.getInstance();
     }
 
     private static Stream<Arguments> provideSpecialObjectData() {

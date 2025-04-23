@@ -1,7 +1,7 @@
 {
   "violations": [
     {
-      "ruleName": "ApexFlsViolationRule",
+      "ruleName": "ApexFlsViolation",
       "message": "FLS validation is missing for [READ] operation on [Account] with field(s) [CustomField__c,Name].",
       "codeLocations": [
         {
@@ -18,7 +18,7 @@
       "primaryLocationIndex": 1
     },
     {
-      "ruleName": "ApexFlsViolationRule",
+      "ruleName": "ApexFlsViolation",
       "message": "FLS validation is missing for [READ] operation on [Account] with field(s) [CustomField__c,Name].",
       "codeLocations": [
         {

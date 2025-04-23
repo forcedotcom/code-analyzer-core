@@ -14,7 +14,7 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 
-public class UnimplementedTypeRuleTest {
+public class UnimplementedTypeTest {
     private GraphTraversalSource g;
 
     @BeforeEach
@@ -113,7 +113,7 @@ public class UnimplementedTypeRuleTest {
         // Build the graph
         TestUtil.buildGraph(g, sources);
         // Get and run the rule.
-        StaticRule rule = UnimplementedTypeRule.getInstance();
+        StaticRule rule = UnimplementedType.getInstance();
         List<Violation> violations = rule.run(g);
 
         // Make sure we got the expected number of violations.

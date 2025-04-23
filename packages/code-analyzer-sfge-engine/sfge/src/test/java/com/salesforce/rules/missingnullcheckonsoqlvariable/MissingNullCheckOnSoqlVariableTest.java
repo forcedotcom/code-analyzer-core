@@ -1,18 +1,19 @@
-package com.salesforce.rules.performnullcheckonsoqlvariables;
+package com.salesforce.rules.missingnullcheckonsoqlvariable;
 
-import com.salesforce.rules.PerformNullCheckOnSoqlVariables;
+import com.salesforce.rules.ApexNullPointerException;
+import com.salesforce.rules.MissingNullCheckOnSoqlVariable;
 import com.salesforce.testutils.BasePathBasedRuleTest;
 import com.salesforce.testutils.ViolationWrapper;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 
-public class PerformNullCheckOnSoqlVariablesTest extends BasePathBasedRuleTest {
+public class MissingNullCheckOnSoqlVariableTest extends BasePathBasedRuleTest {
 
     private static final String MY_CLASS = "MyClass";
 
-    protected static final PerformNullCheckOnSoqlVariables RULE =
-            PerformNullCheckOnSoqlVariables.getInstance();
+    protected static final MissingNullCheckOnSoqlVariable RULE =
+            MissingNullCheckOnSoqlVariable.getInstance();
 
     protected ViolationWrapper.SoqlNullViolationBuilder expect(int line, String varname) {
         return new ViolationWrapper.SoqlNullViolationBuilder(line, varname);
@@ -272,7 +273,7 @@ public class PerformNullCheckOnSoqlVariablesTest extends BasePathBasedRuleTest {
 
     /**
      * Test null variables in the LIMIT and OFFSET clauses. // TODO: consider moving to {@link
-     * com.salesforce.rules.ApexNullPointerExceptionRule}. Technically, these throw a Null Pointer
+     * ApexNullPointerException}. Technically, these throw a Null Pointer
      * Exception in Apex.
      *
      * <p>NOTE: this will break when W-13876363 is fixed. This is acceptable and should not prevent

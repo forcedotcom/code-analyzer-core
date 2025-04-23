@@ -25,7 +25,7 @@ import org.apache.logging.log4j.Logger;
 import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversalSource;
 
 /**
- * Handler invoked by {@link ApexFlsViolationRule} to notice Write operation vertices and apply the
+ * Handler invoked by {@link ApexFlsViolation} to notice Write operation vertices and apply the
  * correct {@link AbstractFlsVisitor} to detect violations.
  */
 final class ApexFlsWriteRuleHandler implements FlsRuleHandler {

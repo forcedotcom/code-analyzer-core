@@ -1,7 +1,7 @@
 package com.salesforce.rules.fls.apex;
 
 import com.salesforce.rules.AbstractPathBasedRule;
-import com.salesforce.rules.ApexFlsViolationRule;
+import com.salesforce.rules.ApexFlsViolation;
 import com.salesforce.rules.fls.apex.operations.FlsConstants;
 import com.salesforce.testutils.BaseFlsTest;
 import org.junit.jupiter.api.Test;
@@ -9,7 +9,7 @@ import org.junit.jupiter.api.Test;
 // TODO: Modify flow to run both rules at once
 public class ComboFlsViolationRuleTest extends BaseFlsTest {
 
-    private final AbstractPathBasedRule rule = ApexFlsViolationRule.getInstance();
+    private final AbstractPathBasedRule rule = ApexFlsViolation.getInstance();
 
     @Test
     public void testReadAndUpdate_onlyUpdateChecked() {

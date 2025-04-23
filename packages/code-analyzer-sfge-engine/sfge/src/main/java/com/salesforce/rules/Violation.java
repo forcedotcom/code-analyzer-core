@@ -338,7 +338,7 @@ public abstract class Violation implements Comparable<Violation>, RuleThrowable 
             this.description = "";
             this.severity = AbstractRule.SEVERITY.LOW.code;
             this.url =
-                    "https://developer.salesforce.com/docs/platform/salesforce-code-analyzer/guide/working-with-graph-engine.html#limitreached-errors";
+                    "https://developer.salesforce.com/docs/platform/salesforce-code-analyzer/guide/engine-sfge-work-with.html#limitreached-errors";
         }
     }
 
@@ -354,7 +354,7 @@ public abstract class Violation implements Comparable<Violation>, RuleThrowable 
             this.description = "";
             this.severity = AbstractRule.SEVERITY.LOW.code;
             this.url =
-                    "https://developer.salesforce.com/docs/platform/salesforce-code-analyzer/guide/working-with-graph-engine.html";
+                    "https://developer.salesforce.com/docs/platform/salesforce-code-analyzer/guide/engine-sfge-work-with.html";
         }
     }
 
@@ -393,7 +393,7 @@ public abstract class Violation implements Comparable<Violation>, RuleThrowable 
             // NOTE: For now, we're hardcoding the URL to the URL for the Apex FLS violation rule,
             // since that's the only rule that can throw this violation. This may change in a future
             // release.
-            this.url = ApexFlsViolationRule.URL;
+            this.url = ApexFlsViolation.URL;
         }
 
         public String getDetails() {
@@ -478,7 +478,7 @@ public abstract class Violation implements Comparable<Violation>, RuleThrowable 
             // NOTE: For now, we're hardcoding the URL to the URL for the Apex FLS violation rule,
             // since that's the only rule that can throw this violation. This may change in a future
             // release.
-            this.url = ApexFlsViolationRule.URL;
+            this.url = ApexFlsViolation.URL;
         }
     }
 }

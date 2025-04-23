@@ -15,18 +15,18 @@ import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversalSo
 import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.__;
 import org.apache.tinkerpop.gremlin.structure.Vertex;
 
-public class UnimplementedTypeRule extends AbstractStaticRule {
+public class UnimplementedType extends AbstractStaticRule {
     private static final String URL =
-            "https://developer.salesforce.com/docs/platform/salesforce-code-analyzer/guide/unimplementedtype-rule.html";
+            "https://developer.salesforce.com/docs/platform/salesforce-code-analyzer/guide/rules-sfge.html#unimplementedtype";
 
     private static final String ABSTRACT_CLASS = "abstract class";
     private static final String INTERFACE = "interface";
 
-    private UnimplementedTypeRule() {
+    private UnimplementedType() {
         super();
     }
 
-    public static UnimplementedTypeRule getInstance() {
+    public static UnimplementedType getInstance() {
         return LazyHolder.INSTANCE;
     }
 
@@ -99,6 +99,6 @@ public class UnimplementedTypeRule extends AbstractStaticRule {
 
     private static final class LazyHolder {
         // Postpone initialization until first use.
-        private static final UnimplementedTypeRule INSTANCE = new UnimplementedTypeRule();
+        private static final UnimplementedType INSTANCE = new UnimplementedType();
     }
 }

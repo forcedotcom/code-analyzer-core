@@ -1,6 +1,6 @@
 package com.salesforce.rules.fls.apex;
 
-import com.salesforce.rules.ApexFlsViolationRule;
+import com.salesforce.rules.ApexFlsViolation;
 import com.salesforce.rules.fls.apex.operations.FlsConstants;
 import com.salesforce.testutils.BaseFlsTest;
 import java.util.stream.Stream;
@@ -10,10 +10,10 @@ import org.junit.jupiter.params.provider.MethodSource;
 
 public class CustomSettingsFlsTest extends BaseFlsTest {
 
-    private final ApexFlsViolationRule rule;
+    private final ApexFlsViolation rule;
 
     public CustomSettingsFlsTest() {
-        rule = ApexFlsViolationRule.getInstance();
+        rule = ApexFlsViolation.getInstance();
     }
 
     private static Stream<Arguments> provideCustomSettingFlsParam() {
@@ -230,7 +230,7 @@ public class CustomSettingsFlsTest extends BaseFlsTest {
                     + "		Cust_Set__c.getOrgDefaults();\n"
                     + "	}\n"
                     + "    public static void foo() {\n"
-                    + "		/* sfge-disable-next-line ApexFlsViolationRule */\n"
+                    + "		/* sfge-disable-next-line ApexFlsViolation */\n"
                     + "		List<Cust_Set__c> custSet = [SELECT Name from Cust_Set__c];\n"
                     + "    	if (Cust_Set__c.SObjectType.getDescribe()."
                     + validationType.checkMethod.first()

@@ -16,7 +16,7 @@ import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversalSo
 
 /**
  * Rule to detect missing CRUD/FLS checks for Database Read operations. Uses path-based approach and
- * moves only in forward direction. This class is utilized by {@link ApexFlsViolationRule} to detect
+ * moves only in forward direction. This class is utilized by {@link ApexFlsViolation} to detect
  * FLS violations in Read operations.
  */
 final class ApexFlsReadRuleHandler implements FlsRuleHandler {

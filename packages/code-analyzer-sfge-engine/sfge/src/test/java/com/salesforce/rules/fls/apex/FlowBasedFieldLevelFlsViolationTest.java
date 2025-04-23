@@ -6,7 +6,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import com.salesforce.TestUtil;
 import com.salesforce.graph.ops.SoqlParserUtil;
 import com.salesforce.rules.AbstractPathBasedRule;
-import com.salesforce.rules.ApexFlsViolationRule;
+import com.salesforce.rules.ApexFlsViolation;
 import com.salesforce.rules.fls.apex.operations.FlsConstants.AnalysisLevel;
 import com.salesforce.rules.fls.apex.operations.FlsConstants.FlsValidationType;
 import com.salesforce.testutils.BaseFlsTest;
@@ -23,14 +23,14 @@ public class FlowBasedFieldLevelFlsViolationTest extends BaseFlsTest {
         return Stream.of(
                 getArguments(
                         "INSERT_KeyValue_Type1",
-                        ApexFlsViolationRule.getInstance(),
+                        ApexFlsViolation.getInstance(),
                         FlsValidationType.INSERT,
                         "insert new Account(Name = 'Acme Inc.');\n",
                         "insert new Account(Name = 'Acme Inc.', Phone = '415-555-1212');\n",
                         "insert new Contact(FirstName = 'Foo');\n"),
                 getArguments(
                         "INSERT_KeyValue_Type2",
-                        ApexFlsViolationRule.getInstance(),
+                        ApexFlsViolation.getInstance(),
                         FlsValidationType.INSERT,
                         "Account a = new Account();\n" + "a.name = 'Acme Inc.'\n;" + "insert a;\n",
                         "Account a = new Account();\n"
@@ -40,7 +40,7 @@ public class FlowBasedFieldLevelFlsViolationTest extends BaseFlsTest {
                         "Contact c = new Contact();\n" + "c.FirstName = 'Foo';\n" + "insert c;\n"),
                 getArguments(
                         "INSERT_KeyValue_Type3",
-                        ApexFlsViolationRule.getInstance(),
+                        ApexFlsViolation.getInstance(),
                         FlsValidationType.INSERT,
                         "Account a = new Account(Name = 'Acme Inc.');\n" + "insert a;\n",
                         "Account a = new Account(Name = 'Acme Inc.', Phone = '415-555-1212');\n"
@@ -48,24 +48,24 @@ public class FlowBasedFieldLevelFlsViolationTest extends BaseFlsTest {
                         "Contact c = new Contact(FirstName = 'Foo');\n" + "insert c;\n"),
                 getArguments(
                         "UPDATE",
-                        ApexFlsViolationRule.getInstance(),
+                        ApexFlsViolation.getInstance(),
                         FlsValidationType.UPDATE,
-                        "/* sfge-disable-next-line ApexFlsViolationRule */\n"
+                        "/* sfge-disable-next-line ApexFlsViolation */\n"
                                 + "Account acc = [SELECT Id, Name from Account];\n"
                                 + "acc.Name = 'Acme Inc.';\n"
                                 + "update acc;\n",
-                        "/* sfge-disable-next-line ApexFlsViolationRule */\n"
+                        "/* sfge-disable-next-line ApexFlsViolation */\n"
                                 + "Account acc = [SELECT Id, Name from Account];\n"
                                 + "acc.Name = 'Acme Inc.';\n"
                                 + "acc.Phone = '415-555-1212';\n"
                                 + "update acc;\n",
-                        "/* sfge-disable-next-line ApexFlsViolationRule */\n"
+                        "/* sfge-disable-next-line ApexFlsViolation */\n"
                                 + "Contact c = [SELECT Id, FirstName from Contact];\n"
                                 + "c.FirstName = 'Foo';\n"
                                 + "update c;\n"),
                 getArguments(
                         "UPDATE_KeyValueCombo",
-                        ApexFlsViolationRule.getInstance(),
+                        ApexFlsViolation.getInstance(),
                         FlsValidationType.UPDATE,
                         "Account acc = new Account(Name = 'Acme Inc.');\n"
                                 + "acc.Name = 'Acme Inc.2';\n"
@@ -79,7 +79,7 @@ public class FlowBasedFieldLevelFlsViolationTest extends BaseFlsTest {
                                 + "update c;\n"),
                 getArguments(
                         "READ",
-                        ApexFlsViolationRule.getInstance(),
+                        ApexFlsViolation.getInstance(),
                         FlsValidationType.READ,
                         "Account acc = [SELECT Name FROM Account];\n",
                         "Account acc = [SELECT Name, Phone FROM Account];\n",
@@ -1833,7 +1833,7 @@ public class FlowBasedFieldLevelFlsViolationTest extends BaseFlsTest {
                         + "}\n";
 
         assertViolations(
-                ApexFlsViolationRule.getInstance(),
+                ApexFlsViolation.getInstance(),
                 sourceCode,
                 expect(7, FlsValidationType.INSERT, "Account").withField(SoqlParserUtil.UNKNOWN));
     }
@@ -1859,7 +1859,7 @@ public class FlowBasedFieldLevelFlsViolationTest extends BaseFlsTest {
         //   single values in forloop value list. Until that's fixed, this would
         //   return fields as "Unknown".
         assertViolations(
-                ApexFlsViolationRule.getInstance(),
+                ApexFlsViolation.getInstance(),
                 sourceCode,
                 expect(11, FlsValidationType.INSERT, "Account").withField(SoqlParserUtil.UNKNOWN));
     }

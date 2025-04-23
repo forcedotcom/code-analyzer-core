@@ -42,7 +42,7 @@ public final class RemoveUnusedMethod extends AbstractPathBasedRule {
     private static final ImmutableSet<ApexPathSource.Type> SOURCE_TYPES =
             ImmutableSet.copyOf(ApexPathSource.Type.values());
     private static final String URL =
-            "https://developer.salesforce.com/docs/platform/salesforce-code-analyzer/guide/removeunusedmethod-rule.html";
+            "";
 
     private RemoveUnusedMethod() {}
 

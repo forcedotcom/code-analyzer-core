@@ -2,7 +2,7 @@ package com.salesforce.rules.fls.apex;
 
 import com.salesforce.TestUtil;
 import com.salesforce.rules.AbstractPathBasedRule;
-import com.salesforce.rules.ApexFlsViolationRule;
+import com.salesforce.rules.ApexFlsViolation;
 import com.salesforce.rules.fls.apex.operations.FlsConstants;
 import com.salesforce.rules.fls.apex.operations.FlsConstants.FlsValidationType;
 import com.salesforce.testutils.BaseFlsTest;
@@ -34,12 +34,12 @@ public class CheckBasedFlsComplexBooleansTest extends BaseFlsTest {
             String readAction, String insertAction, String updateAction) {
         return Stream.of(
                 getArguments(
-                        FlsValidationType.READ, ApexFlsViolationRule.getInstance(), readAction),
+                        FlsValidationType.READ, ApexFlsViolation.getInstance(), readAction),
                 getArguments(
-                        FlsValidationType.INSERT, ApexFlsViolationRule.getInstance(), insertAction),
+                        FlsValidationType.INSERT, ApexFlsViolation.getInstance(), insertAction),
                 getArguments(
                         FlsValidationType.UPDATE,
-                        ApexFlsViolationRule.getInstance(),
+                        ApexFlsViolation.getInstance(),
                         updateAction));
     }
 

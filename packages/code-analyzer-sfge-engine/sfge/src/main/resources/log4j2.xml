@@ -36,7 +36,7 @@
 		<Logger name="com.salesforce.graph.ops.GraphUtil" level="INFO" additivity="false">
 			<AppenderRef ref="LogToFile"/>
 		</Logger>
-		<Logger name="com.salesforce.rules.ApexFlsViolationRule" level="INFO" additivity="false">
+		<Logger name="com.salesforce.rules.ApexFlsViolation" level="INFO" additivity="false">
 			<AppenderRef ref="LogToFile"/>
 		</Logger>
 		<Logger name="com.salesforce.rules.ThreadableRuleExecutor" level="INFO" additivity="false">

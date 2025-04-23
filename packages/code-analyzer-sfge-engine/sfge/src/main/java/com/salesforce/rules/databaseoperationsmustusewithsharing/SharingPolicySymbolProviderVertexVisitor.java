@@ -1,4 +1,4 @@
-package com.salesforce.rules.usewithsharingondatabaseoperation;
+package com.salesforce.rules.databaseoperationsmustusewithsharing;
 
 import com.salesforce.exception.ProgrammingException;
 import com.salesforce.graph.symbols.DefaultSymbolProviderVertexVisitor;

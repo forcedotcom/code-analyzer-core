@@ -1,9 +1,9 @@
-package com.salesforce.rules.usewithsharingondatabaseoperation;
+package com.salesforce.rules.databaseoperationsmustusewithsharing;
 
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
-public class SharingPolicyAbstractTest extends BaseUseWithSharingOnDatabaseOperationTest {
+public class SharingPolicyAbstractTest extends BaseDatabaseOperationsMustUseWithSharingTest {
 
     // TODO: fix and enable these tests.
 

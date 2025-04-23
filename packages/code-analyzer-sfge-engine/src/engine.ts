@@ -197,6 +197,6 @@ function toRuleDescription(sfgeRuleInfo: SfgeRuleInfo): RuleDescription {
         severityLevel: sfgeRuleInfo.severity,
         tags,
         description: getMessage('DeveloperPreviewRuleNotification', sfgeRuleInfo.description),
-        resourceUrls: [] // TODO: Once URLs are in their v5 state, start using them here.
+        resourceUrls: [sfgeRuleInfo.url]
     }
 }

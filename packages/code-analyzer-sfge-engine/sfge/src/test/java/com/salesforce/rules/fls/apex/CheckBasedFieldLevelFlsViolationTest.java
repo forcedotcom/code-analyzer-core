@@ -3,7 +3,7 @@ package com.salesforce.rules.fls.apex;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import com.salesforce.rules.AbstractPathBasedRule;
-import com.salesforce.rules.ApexFlsViolationRule;
+import com.salesforce.rules.ApexFlsViolation;
 import com.salesforce.rules.fls.apex.operations.FlsConstants;
 import com.salesforce.rules.fls.apex.operations.FlsConstants.FlsValidationType;
 import com.salesforce.testutils.BaseFlsTest;
@@ -18,23 +18,23 @@ public class CheckBasedFieldLevelFlsViolationTest extends BaseFlsTest {
         return Stream.of(
                 getArguments(
                         FlsValidationType.READ,
-                        ApexFlsViolationRule.getInstance(),
+                        ApexFlsViolation.getInstance(),
                         "Account a = [SELECT Name from Account];\n"),
                 getArguments(
                         FlsValidationType.INSERT,
-                        ApexFlsViolationRule.getInstance(),
+                        ApexFlsViolation.getInstance(),
                         "insert new Account(Name = 'Acme Inc.');\n"),
                 getArguments(
                         FlsValidationType.INSERT,
-                        ApexFlsViolationRule.getInstance(),
+                        ApexFlsViolation.getInstance(),
                         "insert as system new Account(Name = 'Acme Inc.');\n"),
                 getArguments(
                         FlsValidationType.UPDATE,
-                        ApexFlsViolationRule.getInstance(),
+                        ApexFlsViolation.getInstance(),
                         "Account a = new Account();" + "a.Name = 'Acme Inc.';" + "update a;\n"),
                 getArguments(
                         FlsValidationType.UPDATE,
-                        ApexFlsViolationRule.getInstance(),
+                        ApexFlsViolation.getInstance(),
                         "Account a = new Account();"
                                 + "a.Name = 'Acme Inc.';"
                                 + "update as system a;\n"));

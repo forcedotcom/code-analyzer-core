@@ -1,6 +1,6 @@
 package com.salesforce.rules.fls.apex;
 
-import com.salesforce.rules.ApexFlsViolationRule;
+import com.salesforce.rules.ApexFlsViolation;
 import com.salesforce.rules.fls.apex.operations.FlsConstants;
 import com.salesforce.testutils.BaseFlsTest;
 import java.util.stream.Stream;
@@ -13,39 +13,39 @@ public class ListObjectLevelFlsViolationRuleTest extends BaseFlsTest {
         return Stream.of(
                 getArguments(
                         "DML",
-                        ApexFlsViolationRule.getInstance(),
+                        ApexFlsViolation.getInstance(),
                         "delete %s;\n",
                         FlsConstants.FlsValidationType.DELETE),
                 getArguments(
                         "Database",
-                        ApexFlsViolationRule.getInstance(),
+                        ApexFlsViolation.getInstance(),
                         "Database.delete(%s);\n",
                         FlsConstants.FlsValidationType.DELETE),
                 getArguments(
                         "Database.delete with boolean",
-                        ApexFlsViolationRule.getInstance(),
+                        ApexFlsViolation.getInstance(),
                         "Database.delete(%s, false);\n",
                         FlsConstants.FlsValidationType.DELETE),
                 getArguments(
                         "DML Undelete",
-                        ApexFlsViolationRule.getInstance(),
+                        ApexFlsViolation.getInstance(),
                         "undelete %s;\n",
                         FlsConstants.FlsValidationType.UNDELETE),
                 getArguments(
                         "Database.undelete",
-                        ApexFlsViolationRule.getInstance(),
+                        ApexFlsViolation.getInstance(),
                         "Database.undelete(%s);\n",
                         FlsConstants.FlsValidationType.UNDELETE),
                 getArguments(
                         "Database.undelete with boolean",
-                        ApexFlsViolationRule.getInstance(),
+                        ApexFlsViolation.getInstance(),
                         "Database.undelete(%s, false);\n",
                         FlsConstants.FlsValidationType.UNDELETE));
     }
 
     private static Arguments getArguments(
             String testCategory,
-            ApexFlsViolationRule rule,
+            ApexFlsViolation rule,
             String dmlFormat,
             FlsConstants.FlsValidationType validationType) {
         return Arguments.of(
@@ -56,7 +56,7 @@ public class ListObjectLevelFlsViolationRuleTest extends BaseFlsTest {
     @ParameterizedTest(name = "{displayName}: {0}")
     public void testUnsafe_objectTypeDeclared_SingleItem(
             String testCategory,
-            ApexFlsViolationRule rule,
+            ApexFlsViolation rule,
             String dmlFormat,
             FlsConstants.FlsValidationType validationType,
             String validationCheck) {
@@ -77,7 +77,7 @@ public class ListObjectLevelFlsViolationRuleTest extends BaseFlsTest {
     @ParameterizedTest(name = "{displayName}: {0}")
     public void testSafe_objectTypeDeclared_SingleItem(
             String testCategory,
-            ApexFlsViolationRule rule,
+            ApexFlsViolation rule,
             String dmlFormat,
             FlsConstants.FlsValidationType validationType,
             String validationCheck) {
@@ -102,7 +102,7 @@ public class ListObjectLevelFlsViolationRuleTest extends BaseFlsTest {
     @ParameterizedTest(name = "{displayName}: {0}")
     public void testUnsafe_objectTypeDeclared_SingleItem_objProperty(
             String testCategory,
-            ApexFlsViolationRule rule,
+            ApexFlsViolation rule,
             String dmlFormat,
             FlsConstants.FlsValidationType validationType,
             String validationCheck) {
@@ -125,7 +125,7 @@ public class ListObjectLevelFlsViolationRuleTest extends BaseFlsTest {
     @ParameterizedTest(name = "{displayName}: {0}")
     public void testSafe_objectTypeDeclared_SingleItem_objProperty(
             String testCategory,
-            ApexFlsViolationRule rule,
+            ApexFlsViolation rule,
             String dmlFormat,
             FlsConstants.FlsValidationType validationType,
             String validationCheck) {
@@ -152,7 +152,7 @@ public class ListObjectLevelFlsViolationRuleTest extends BaseFlsTest {
     @ParameterizedTest(name = "{displayName}: {0}")
     public void testUnsafe_objectTypeDeclared_MultipleItems(
             String testCategory,
-            ApexFlsViolationRule rule,
+            ApexFlsViolation rule,
             String dmlFormat,
             FlsConstants.FlsValidationType validationType,
             String validationCheck) {
@@ -175,7 +175,7 @@ public class ListObjectLevelFlsViolationRuleTest extends BaseFlsTest {
     @ParameterizedTest(name = "{displayName}: {0}")
     public void testSafe_objectTypeDeclared_MultipleItems(
             String testCategory,
-            ApexFlsViolationRule rule,
+            ApexFlsViolation rule,
             String dmlFormat,
             FlsConstants.FlsValidationType validationType,
             String validationCheck) {
@@ -202,14 +202,14 @@ public class ListObjectLevelFlsViolationRuleTest extends BaseFlsTest {
     @ParameterizedTest(name = "{displayName}: {0}")
     public void testUnsafe_objectTypeDeclared_itemsFromQuery(
             String testCategory,
-            ApexFlsViolationRule rule,
+            ApexFlsViolation rule,
             String dmlFormat,
             FlsConstants.FlsValidationType validationType,
             String validationCheck) {
         String sourceCode =
                 "public class MyClass {\n"
                         + "   public void foo() {\n"
-                        + "		/* sfge-disable-next-line ApexFlsViolationRule */\n"
+                        + "		/* sfge-disable-next-line ApexFlsViolation */\n"
                         + "       List<Account> accounts = [SELECT Id, Name from Account];\n"
                         + String.format(dmlFormat, "accounts")
                         + "   }\n"
@@ -222,14 +222,14 @@ public class ListObjectLevelFlsViolationRuleTest extends BaseFlsTest {
     @ParameterizedTest(name = "{displayName}: {0}")
     public void testSafe_objectTypeDeclared_itemsFromQuery(
             String testCategory,
-            ApexFlsViolationRule rule,
+            ApexFlsViolation rule,
             String dmlFormat,
             FlsConstants.FlsValidationType validationType,
             String validationCheck) {
         String sourceCode =
                 "public class MyClass {\n"
                         + "   public void foo() {\n"
-                        + "		/* sfge-disable-next-line ApexFlsViolationRule */\n"
+                        + "		/* sfge-disable-next-line ApexFlsViolation */\n"
                         + "       List<Account> accounts = [SELECT Id, Name from Account];\n"
                         + "       if (Schema.SObjectType.Account."
                         + validationCheck
@@ -246,7 +246,7 @@ public class ListObjectLevelFlsViolationRuleTest extends BaseFlsTest {
     @ParameterizedTest(name = "{displayName}: {0}")
     public void testUnsafe_noObjectType_SingleItem(
             String testCategory,
-            ApexFlsViolationRule rule,
+            ApexFlsViolation rule,
             String dmlFormat,
             FlsConstants.FlsValidationType validationType,
             String validationCheck) {
@@ -267,7 +267,7 @@ public class ListObjectLevelFlsViolationRuleTest extends BaseFlsTest {
     @ParameterizedTest(name = "{displayName}: {0}")
     public void testSafe_noObjectType_SingleItem(
             String testCategory,
-            ApexFlsViolationRule rule,
+            ApexFlsViolation rule,
             String dmlFormat,
             FlsConstants.FlsValidationType validationType,
             String validationCheck) {
@@ -292,7 +292,7 @@ public class ListObjectLevelFlsViolationRuleTest extends BaseFlsTest {
     @ParameterizedTest(name = "{displayName}: {0}")
     public void testUnsafe_noObjectType_MultipleItems(
             String testCategory,
-            ApexFlsViolationRule rule,
+            ApexFlsViolation rule,
             String dmlFormat,
             FlsConstants.FlsValidationType validationType,
             String validationCheck) {
@@ -319,7 +319,7 @@ public class ListObjectLevelFlsViolationRuleTest extends BaseFlsTest {
     @ParameterizedTest(name = "{displayName}: {0}")
     public void testSafe_noObjectType_MultipleItems(
             String testCategory,
-            ApexFlsViolationRule rule,
+            ApexFlsViolation rule,
             String dmlFormat,
             FlsConstants.FlsValidationType validationType,
             String validationCheck) {
@@ -350,7 +350,7 @@ public class ListObjectLevelFlsViolationRuleTest extends BaseFlsTest {
     @ParameterizedTest(name = "{displayName}: {0}")
     public void testSafe_emptyList(
             String testCategory,
-            ApexFlsViolationRule rule,
+            ApexFlsViolation rule,
             String dmlFormat,
             FlsConstants.FlsValidationType validationType,
             String validationCheck) {
@@ -373,7 +373,7 @@ public class ListObjectLevelFlsViolationRuleTest extends BaseFlsTest {
     @ParameterizedTest(name = "{displayName}: {0}")
     public void testUnsafe_emptyList(
             String testCategory,
-            ApexFlsViolationRule rule,
+            ApexFlsViolation rule,
             String dmlFormat,
             FlsConstants.FlsValidationType validationType,
             String validationCheck) {
@@ -392,7 +392,7 @@ public class ListObjectLevelFlsViolationRuleTest extends BaseFlsTest {
     @ParameterizedTest(name = "{displayName}: {0}")
     public void testSafe_nullList(
             String testCategory,
-            ApexFlsViolationRule rule,
+            ApexFlsViolation rule,
             String dmlFormat,
             FlsConstants.FlsValidationType validationType,
             String validationCheck) {
@@ -415,7 +415,7 @@ public class ListObjectLevelFlsViolationRuleTest extends BaseFlsTest {
     @ParameterizedTest(name = "{displayName}: {0}")
     public void testUnsafe_nullList(
             String testCategory,
-            ApexFlsViolationRule rule,
+            ApexFlsViolation rule,
             String dmlFormat,
             FlsConstants.FlsValidationType validationType,
             String validationCheck) {
