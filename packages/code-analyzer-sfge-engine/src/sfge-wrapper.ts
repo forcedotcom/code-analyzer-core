@@ -201,8 +201,13 @@ function handleRunStdOut(
         for (const sfgeMessage of sfgeMessages) {
             if (isSfgeLogMessage(sfgeMessage)) {
                 if (sfgeMessage.messageSeverity === 'TELEMETRY') {
-                    const telemetryData: TelemetryData = JSON.parse(sfgeMessage.args[0]) as TelemetryData;
-                    emitTelemetry(telemetryData.eventName as string, telemetryData);
+                    try {
+                        const telemetryData: TelemetryData = JSON.parse(sfgeMessage.args[0]) as TelemetryData;
+                        emitTelemetry(telemetryData.eventName as string, telemetryData);
+                    } catch (e) /* istanbul ignore next */ {
+                        const message: string = e instanceof Error ? e.message : e as string;
+                        emitLog(LogLevel.Fine, `Failed to emit telemetry event: ${message}`);
+                    }
                 } else {
                     const processedMessage = getMessage(sfgeMessage.messageKey, ...sfgeMessage.args);
                     emitLog(sfgeLogLevelToSfcaLogLevel(sfgeMessage.messageSeverity), processedMessage);
