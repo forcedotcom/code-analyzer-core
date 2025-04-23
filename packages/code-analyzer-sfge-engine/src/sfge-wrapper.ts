@@ -206,7 +206,7 @@ function handleRunStdOut(
                         emitTelemetry(telemetryData.eventName as string, telemetryData);
                     } catch (e) /* istanbul ignore next */ {
                         const message: string = e instanceof Error ? e.message : e as string;
-                        emitLog(LogLevel.Fine, `Failed to emit telemetry event: ${message}`);
+                        emitLog(LogLevel.Fine, getMessage('error_failed_to_parse_telemetry', message));
                     }
                 } else {
                     const processedMessage = getMessage(sfgeMessage.messageKey, ...sfgeMessage.args);
