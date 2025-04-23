@@ -53,7 +53,7 @@ export class FlowScannerEngine extends Engine {
         this.emitDescribeRulesProgressEvent(0);
         const hasWorkspaceAndNoTargetedFlows = await this.hasWorkspaceAndNoTargetedFlows(describeOptions?.workspace);
         if (hasWorkspaceAndNoTargetedFlows) {
-            this.emitLogEvent(LogLevel.Fine, 'No Flow files have been targeted in the workspace. Returning no flow rules.');
+            this.emitLogEvent(LogLevel.Debug, 'No Flow files have been targeted in the workspace. Returning no flow rules.');
             this.emitDescribeRulesProgressEvent(100);
             return [];
         }
@@ -67,10 +67,10 @@ export class FlowScannerEngine extends Engine {
     public async runRules(ruleNames: string[], runOptions: RunOptions): Promise<EngineRunResults> {
         this.emitRunRulesProgressEvent(0);
         const targetedFlows: string[] = await this.getTargetedFlows(runOptions.workspace);
-        const workspaceFlows: string[] = await this.getWorkspaceFlows(runOptions.workspace);
-        if (workspaceFlows.length == 0) {
+        if (targetedFlows.length == 0) {
             return { violations: [] };
         }
+        const workspaceFlows: string[] = await this.getWorkspaceFlows(runOptions.workspace);
 
         const dateTimeStr: string = this.clock.formatToDateTimeString();
         const logFile: string = path.join(runOptions.logFolder, `sfca-flow-${dateTimeStr}.log`);
@@ -102,11 +102,7 @@ export class FlowScannerEngine extends Engine {
     }
 
     private async hasWorkspaceAndNoTargetedFlows(workspace: Workspace | undefined): Promise<boolean> {
-        if (!workspace) {
-            return false;
-        } else {
-            return (await this.getTargetedFlows(workspace)).length == 0
-        }
+        return workspace != undefined && (await this.getTargetedFlows(workspace)).length === 0;
     }
 
     private async getWorkspaceFlows(workspace: Workspace): Promise<string[]> {

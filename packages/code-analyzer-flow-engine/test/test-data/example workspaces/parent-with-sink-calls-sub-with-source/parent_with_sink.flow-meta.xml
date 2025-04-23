@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Flow xmlns="http://soap.sforce.com/2006/04/metadata">
+    <apiVersion>58.0</apiVersion>
+    <environments>Default</environments>
+    <interviewLabel>parent_with_sink {!$Flow.CurrentDateTime}</interviewLabel>
+    <label>parent_with_sink</label>
+    <processType>Flow</processType>
+    <recordLookups>
+        <name>get_records</name>
+        <label>get_records</label>
+        <locationX>171</locationX>
+        <locationY>254</locationY>
+        <assignNullValuesIfNoRecordsFound>false</assignNullValuesIfNoRecordsFound>
+        <filterLogic>and</filterLogic>
+        <filters>
+            <field>SuppliedName</field>
+            <operator>Contains</operator>
+            <value>
+                <elementReference>call_subflow.output_var1</elementReference>
+            </value>
+        </filters>
+        <getFirstRecordOnly>true</getFirstRecordOnly>
+        <object>Case</object>
+        <storeOutputAutomatically>true</storeOutputAutomatically>
+    </recordLookups>
+    <runInMode>SystemModeWithoutSharing</runInMode>
+    <start>
+        <locationX>491</locationX>
+        <locationY>48</locationY>
+        <connector>
+            <targetReference>call_subflow</targetReference>
+        </connector>
+    </start>
+    <status>Draft</status>
+    <subflows>
+        <name>call_subflow</name>
+        <label>call subflow</label>
+        <locationX>520</locationX>
+        <locationY>488</locationY>
+        <connector>
+            <targetReference>get_records</targetReference>
+        </connector>
+        <flowName>child_with_source</flowName>
+        <storeOutputAutomatically>true</storeOutputAutomatically>
+    </subflows>
+</Flow>

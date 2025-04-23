@@ -6,8 +6,8 @@ import fs from "node:fs";
 
 export interface FlowScannerCommandWrapper {
     runFlowScannerRules(
-        targetedFilesToScan: string[],
-        workspaceFilesToScan: string[],
+        workspaceFlowFiles: string[],
+        targetedFlowFiles: string[],
         absLogFilePath: string,
         completionPercentageHandler: (percentage: number) => void
     ): Promise<FlowScannerExecutionResult>;
@@ -47,16 +47,16 @@ export class RunTimeFlowScannerCommandWrapper implements FlowScannerCommandWrapp
     }
 
     public async runFlowScannerRules(
-        workspaceFilesToScan: string[],
-        targetedFilesToScan: string[],
+        workspaceFlowFiles: string[],
+        targetedFlowFiles: string[],
         absLogFilePath: string,
         completionPercentageHandler: (percentage: number) => void
     ): Promise<FlowScannerExecutionResult> {
         const tempDir: string = await createTempDir();
-        const workspaceFilesToScanFile: string = path.join(tempDir, 'workspaceFilesToScan.txt');
-        const targetedFilesToScanFile: string = path.join(tempDir, 'targetedFilesToScan.txt');
-        await fs.promises.writeFile(workspaceFilesToScanFile, workspaceFilesToScan.join('\n'), 'utf-8');
-        await fs.promises.writeFile(targetedFilesToScanFile, targetedFilesToScan.join('\n'), 'utf-8');
+        const workspaceFlowsFile: string = path.join(tempDir, 'workspaceFiles.txt');
+        const targetedFlowsFile: string = path.join(tempDir, 'targetedFiles.txt');
+        await fs.promises.writeFile(workspaceFlowsFile, workspaceFlowFiles.join('\n'), 'utf-8');
+        await fs.promises.writeFile(targetedFlowsFile, targetedFlowFiles.join('\n'), 'utf-8');
 
         const flowScannerResultsFile: string = path.join(tempDir, 'flowScannerResultsFile.json')
         const commandName = 'flowtest'; //pythonModuleName set by internal team
@@ -68,9 +68,9 @@ export class RunTimeFlowScannerCommandWrapper implements FlowScannerCommandWrapp
             '--log_file',
             absLogFilePath,
             '--workspace',
-            workspaceFilesToScanFile,
+            workspaceFlowsFile,
             '--target',
-            targetedFilesToScanFile,
+            targetedFlowsFile,
             '--json',
             flowScannerResultsFile
         ];

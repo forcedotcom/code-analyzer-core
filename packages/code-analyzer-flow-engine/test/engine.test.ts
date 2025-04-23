@@ -24,16 +24,24 @@ import fs from "node:fs";
 changeWorkingDirectoryToPackageRoot();
 
 //the space in the "example workspaces" path is important for testing purposes. do not remove.
-const PATH_TO_NO_FLOWS_WORKSPACE = path.resolve(__dirname, 'test-data', 'example workspaces', 'contains-no-flows');
-const PATH_TO_MULTIPLE_FLOWS_WORKSPACE = path.resolve(__dirname, 'test-data', 'example workspaces', 'contains-multiple-flows');
-const PATH_TO_ONE_FLOW_NO_VIOLATIONS_WORKSPACE = path.resolve(__dirname, 'test-data', 'example workspaces', 'contains-one-flow-no-violations');
+const TEST_DATA_FOLDER: string = path.resolve(__dirname, 'test-data');
+const PATH_TO_NO_FLOWS_WORKSPACE = path.resolve(TEST_DATA_FOLDER, 'example workspaces', 'contains-no-flows');
+const PATH_TO_MULTIPLE_FLOWS_WORKSPACE = path.resolve(TEST_DATA_FOLDER, 'example workspaces', 'contains-multiple-flows');
+const PATH_TO_ONE_FLOW_NO_VIOLATIONS_WORKSPACE = path.resolve(TEST_DATA_FOLDER, 'example workspaces', 'contains-one-flow-no-violations');
+const PARENT_WITH_SOURCE_CALLS_SUB_WITH_SINK_WORKSPACE: string = path.resolve(TEST_DATA_FOLDER, 'example workspaces', 'parent-with-source-calls-sub-with-sink');
+const PARENT_WITH_SINK_CALLS_SUB_WITH_SOURCE_WORKSPACE: string = path.resolve(TEST_DATA_FOLDER, 'example workspaces', 'parent-with-sink-calls-sub-with-source');
 const PATH_TO_EXAMPLE1: string = path.join(PATH_TO_MULTIPLE_FLOWS_WORKSPACE, 'example1_containsWithoutSharingViolations.flow-meta.xml');
 const PATH_TO_EXAMPLE2: string = path.join(PATH_TO_MULTIPLE_FLOWS_WORKSPACE, 'example2_containsWithSharingViolations.flow');
 const PATH_TO_EXAMPLE3: string = path.join(PATH_TO_MULTIPLE_FLOWS_WORKSPACE, 'example3_containsNoViolations.flow');
 const PATH_TO_EXAMPLE4_PARENTFLOW: string = path.join(PATH_TO_MULTIPLE_FLOWS_WORKSPACE, 'example4_parentFlow.flow-meta.xml');
 const PATH_TO_EXAMPLE4_SUBFLOW: string = path.join(PATH_TO_MULTIPLE_FLOWS_WORKSPACE, 'example4_subflow.flow-meta.xml');
 
-describe('Tests for the TestEngine', () => {
+const ALL_FLOW_RULES: string[] = [
+    'PreventPassingUserDataIntoElementWithSharing',
+    'PreventPassingUserDataIntoElementWithoutSharing'
+];
+
+describe('Tests for the FlowScannerEngine', () => {
     const flowScannerCommandWrapper: RunTimeFlowScannerCommandWrapper = new RunTimeFlowScannerCommandWrapper('python3');
     let tempFolder: string;
 
@@ -350,11 +358,7 @@ describe('Tests for the TestEngine', () => {
             });
 
             it('When running both rules on workspace that contains violations for SystemModeWithoutSharing and SystemModeWithSharing, then results are as expected', async () => {
-                const selectedRuleNames: string[] = [
-                    'PreventPassingUserDataIntoElementWithSharing',
-                    'PreventPassingUserDataIntoElementWithoutSharing'
-                ];
-                const engineResults: EngineRunResults = await engine.runRules(selectedRuleNames, createRunOptions(
+                const engineResults: EngineRunResults = await engine.runRules(ALL_FLOW_RULES, createRunOptions(
                     tempFolder, new Workspace('id', [PATH_TO_MULTIPLE_FLOWS_WORKSPACE])));
 
                 expect(engineResults.violations).toHaveLength(7);
@@ -383,12 +387,7 @@ describe('Tests for the TestEngine', () => {
             it('When workspace includes only some files from within a folder, then filters out results for files outside of workspace', async () => {
                 const engine: FlowScannerEngine = new FlowScannerEngine(flowScannerCommandWrapper);
 
-                const selectedRuleNames: string[] = [
-                    'PreventPassingUserDataIntoElementWithSharing',
-                    'PreventPassingUserDataIntoElementWithoutSharing'
-                ];
-
-                const engineResults: EngineRunResults = await engine.runRules(selectedRuleNames, createRunOptions(
+                const engineResults: EngineRunResults = await engine.runRules(ALL_FLOW_RULES, createRunOptions(
                     tempFolder, new Workspace('id', [PATH_TO_EXAMPLE2])));
 
                 expect(engineResults.violations).toHaveLength(2);
@@ -397,23 +396,8 @@ describe('Tests for the TestEngine', () => {
             });
 
             it('When workspace does not contain flow files, then return zero violations', async () => {
-                const selectedRuleNames: string[] = [
-                    'PreventPassingUserDataIntoElementWithSharing',
-                    'PreventPassingUserDataIntoElementWithoutSharing'
-                ];
-                const engineResults: EngineRunResults = await engine.runRules(selectedRuleNames, createRunOptions(
+                const engineResults: EngineRunResults = await engine.runRules(ALL_FLOW_RULES, createRunOptions(
                     tempFolder, new Workspace('id', [PATH_TO_NO_FLOWS_WORKSPACE])));
-
-                expect(engineResults.violations).toHaveLength(0);
-            });
-
-            it('When workspace does not contain flow files but flow files are targeted, then return zero violations', async () => {
-                const selectedRuleNames: string[] = [
-                    'PreventPassingUserDataIntoElementWithSharing',
-                    'PreventPassingUserDataIntoElementWithoutSharing'
-                ];
-                const engineResults: EngineRunResults = await engine.runRules(selectedRuleNames, createRunOptions(
-                    tempFolder, new Workspace('id', [PATH_TO_NO_FLOWS_WORKSPACE], [PATH_TO_EXAMPLE1])));
 
                 expect(engineResults.violations).toHaveLength(0);
             });
@@ -421,12 +405,7 @@ describe('Tests for the TestEngine', () => {
             it('When workspace contains flow files that have no violations but is in folder with other flow files that do have violations, then return valid results with zero violations', async () => {
                 const engine: FlowScannerEngine = new FlowScannerEngine(flowScannerCommandWrapper);
 
-                const selectedRuleNames: string[] = [
-                    'PreventPassingUserDataIntoElementWithSharing',
-                    'PreventPassingUserDataIntoElementWithoutSharing'
-                ];
-
-                const engineResults: EngineRunResults = await engine.runRules(selectedRuleNames, createRunOptions(
+                const engineResults: EngineRunResults = await engine.runRules(ALL_FLOW_RULES, createRunOptions(
                     tempFolder, new Workspace('id', [PATH_TO_EXAMPLE3])));
 
                 expect(engineResults.violations).toHaveLength(0);
@@ -435,12 +414,7 @@ describe('Tests for the TestEngine', () => {
             it('When workspace contains flow files with violations but the targeted files have no violations, then return valid results with zero violations', async () => {
                 const engine: FlowScannerEngine = new FlowScannerEngine(flowScannerCommandWrapper);
 
-                const selectedRuleNames: string[] = [
-                    'PreventPassingUserDataIntoElementWithSharing',
-                    'PreventPassingUserDataIntoElementWithoutSharing'
-                ];
-
-                const engineResults: EngineRunResults = await engine.runRules(selectedRuleNames, createRunOptions(
+                const engineResults: EngineRunResults = await engine.runRules(ALL_FLOW_RULES, createRunOptions(
                     tempFolder, new Workspace('id', [PATH_TO_MULTIPLE_FLOWS_WORKSPACE], [PATH_TO_EXAMPLE3])));
 
                 expect(engineResults.violations).toHaveLength(0);
@@ -449,12 +423,7 @@ describe('Tests for the TestEngine', () => {
             it('When workspace contains flow files with many violations and the targeted files have violations, then return valid results with violations only of targeted files', async () => {
                 const engine: FlowScannerEngine = new FlowScannerEngine(flowScannerCommandWrapper);
 
-                const selectedRuleNames: string[] = [
-                    'PreventPassingUserDataIntoElementWithSharing',
-                    'PreventPassingUserDataIntoElementWithoutSharing'
-                ];
-
-                const engineResults: EngineRunResults = await engine.runRules(selectedRuleNames, createRunOptions(
+                const engineResults: EngineRunResults = await engine.runRules(ALL_FLOW_RULES, createRunOptions(
                     tempFolder, new Workspace('id', [PATH_TO_MULTIPLE_FLOWS_WORKSPACE], [PATH_TO_EXAMPLE1])));
 
                 expect(engineResults.violations).toHaveLength(2);
@@ -468,12 +437,7 @@ describe('Tests for the TestEngine', () => {
                 // we might miss the flow utility returning results: null.
                 const engine: FlowScannerEngine = new FlowScannerEngine(flowScannerCommandWrapper);
 
-                const selectedRuleNames: string[] = [
-                    'PreventPassingUserDataIntoElementWithSharing',
-                    'PreventPassingUserDataIntoElementWithoutSharing'
-                ];
-
-                const engineResults: EngineRunResults = await engine.runRules(selectedRuleNames, createRunOptions(
+                const engineResults: EngineRunResults = await engine.runRules(ALL_FLOW_RULES, createRunOptions(
                     tempFolder, new Workspace('id', [PATH_TO_ONE_FLOW_NO_VIOLATIONS_WORKSPACE])));
 
                 expect(engineResults.violations).toHaveLength(0);
@@ -485,12 +449,7 @@ describe('Tests for the TestEngine', () => {
             ])('When workspace contains a parent flow but not its child subflow, then return valid results with zero violations', async (workspace) => {
                 const engine: FlowScannerEngine = new FlowScannerEngine(flowScannerCommandWrapper);
 
-                const selectedRuleNames: string[] = [
-                    'PreventPassingUserDataIntoElementWithSharing',
-                    'PreventPassingUserDataIntoElementWithoutSharing'
-                ];
-
-                const engineResults1: EngineRunResults = await engine.runRules(selectedRuleNames, createRunOptions(tempFolder, workspace));
+                const engineResults1: EngineRunResults = await engine.runRules(ALL_FLOW_RULES, createRunOptions(tempFolder, workspace));
                 expect(engineResults1.violations).toHaveLength(0);
             });
 
@@ -500,166 +459,202 @@ describe('Tests for the TestEngine', () => {
             ])('When workspace contains a child subflow but not its parent flow, then return valid results with zero violations', async (workspace) => {
                 const engine: FlowScannerEngine = new FlowScannerEngine(flowScannerCommandWrapper);
 
-                const selectedRuleNames: string[] = [
-                    'PreventPassingUserDataIntoElementWithSharing',
-                    'PreventPassingUserDataIntoElementWithoutSharing'
-                ];
-
-                const engineResults1: EngineRunResults = await engine.runRules(selectedRuleNames, createRunOptions(tempFolder, workspace));
+                const engineResults1: EngineRunResults = await engine.runRules(ALL_FLOW_RULES, createRunOptions(tempFolder, workspace));
                 expect(engineResults1.violations).toHaveLength(0);
             });
 
-            it('When workspace contains flow files with many violations and the targeted files have violations, then return valid results with violations only of targeted files', async () => {
-                const engine: FlowScannerEngine = new FlowScannerEngine(flowScannerCommandWrapper);
+            describe('When parent flow contains source and depends on child flow that contains sink...', () => {
+                const parentFlowFile: string = path.join(PARENT_WITH_SOURCE_CALLS_SUB_WITH_SINK_WORKSPACE, 'parent_with_source.flow-meta.xml');
+                const childFlowFile: string = path.join(PARENT_WITH_SOURCE_CALLS_SUB_WITH_SINK_WORKSPACE, 'child_with_sink.flow-meta.xml');
+                const expectedViolation: Violation = {
+                    ruleName: "PreventPassingUserDataIntoElementWithoutSharing",
+                    message: "User controlled data flows into recordCreates element data in run mode: SystemModeWithoutSharing",
+                    codeLocations: [
+                        {
+                            file: parentFlowFile,
+                            startLine: 54,
+                            startColumn: 1,
+                            comment: "input_text.input_text: Initialization"
+                        },
+                        {
+                            file: parentFlowFile,
+                            startLine: 10,
+                            startColumn: 1,
+                            comment: "input_text.input_text influences assign_input_to_var.parent_input_var: Variable Assignment"
+                        },
+                        {
+                            file: childFlowFile, // TODO: Once Robert Fixes this, then update with parentFlowFile
+                            startLine: 72,
+                            startColumn: 1,
+                            comment: "assign_input_to_var.parent_input_var influences call_subflow.input_var1: output via subflow assignment"
+                        },
+                        {
+                            file: childFlowFile,
+                            startLine: 27,
+                            startColumn: 1,
+                            comment: `call_subflow.input_var1 influences create_case.AccountId: flow into recordCreates via influence over AccountId in run mode SystemModeWithoutSharing`
+                        }
+                    ],
+                    primaryLocationIndex: 3,
+                    resourceUrls: []
+                };
 
-                const selectedRuleNames: string[] = [
-                    'PreventPassingUserDataIntoElementWithSharing',
-                    'PreventPassingUserDataIntoElementWithoutSharing'
-                ];
+                let engine: FlowScannerEngine;
 
-                const engineResults: EngineRunResults = await engine.runRules(selectedRuleNames, createRunOptions(
-                    tempFolder, new Workspace('id', [PATH_TO_MULTIPLE_FLOWS_WORKSPACE], [PATH_TO_EXAMPLE1])));
+                beforeEach(() => {
+                    engine = new FlowScannerEngine(flowScannerCommandWrapper);
+                })
 
-                expect(engineResults.violations).toHaveLength(2);
-                expect(engineResults.violations).toContainEqual(expectedExample1Violation1);
-                expect(engineResults.violations).toContainEqual(expectedExample1Violation2);
-            });
+                it('When both parent and child are in workspace and targeted, then expect violation', async () => {
+                    const workspace: Workspace = new Workspace("someId", [PARENT_WITH_SOURCE_CALLS_SUB_WITH_SINK_WORKSPACE]);
 
-            describe('Path-Specific Targeting Tests', () => {
-                const flowA = PATH_TO_EXAMPLE4_PARENTFLOW;
-                const flowB = PATH_TO_EXAMPLE4_SUBFLOW;
-                const flowC = PATH_TO_EXAMPLE3;
+                    const results: EngineRunResults = await engine.runRules(ALL_FLOW_RULES, createRunOptions(tempFolder, workspace));
 
-                describe('FlowA references subflow FlowB, they are in the same workspace, and both have violations', () => {
-                    it('When FlowA and FlowB are targeted, return the violations for both flows', async () => {
-                        const engine: FlowScannerEngine = new FlowScannerEngine(flowScannerCommandWrapper);
-
-                        const selectedRuleNames: string[] = [
-                            'PreventPassingUserDataIntoElementWithSharing',
-                            'PreventPassingUserDataIntoElementWithoutSharing'
-                        ];
-
-                        const engineResults: EngineRunResults = await engine.runRules(selectedRuleNames, createRunOptions(
-                            tempFolder, new Workspace('id', [PATH_TO_MULTIPLE_FLOWS_WORKSPACE], [flowA, flowB])));
-
-                        expect(engineResults.violations).toHaveLength(3);
-                        expect(engineResults.violations).toContainEqual(expectedExample4Violation1);
-                        expect(engineResults.violations).toContainEqual(expectedExample4Violation1);
-                        expect(engineResults.violations).toContainEqual(expectedExample4Violation3);
-                    });
-
-                    it('When FlowA is targeted and FlowB is not, return the violations for both flows', async () => {
-                        const engine: FlowScannerEngine = new FlowScannerEngine(flowScannerCommandWrapper);
-
-                        const selectedRuleNames: string[] = [
-                            'PreventPassingUserDataIntoElementWithSharing',
-                            'PreventPassingUserDataIntoElementWithoutSharing'
-                        ];
-
-                        const engineResults: EngineRunResults = await engine.runRules(selectedRuleNames, createRunOptions(
-                            tempFolder, new Workspace('id', [PATH_TO_MULTIPLE_FLOWS_WORKSPACE], [flowA])));
-
-                        expect(engineResults.violations).toHaveLength(3);
-                        expect(engineResults.violations).toContainEqual(expectedExample4Violation1);
-                        expect(engineResults.violations).toContainEqual(expectedExample4Violation1);
-                        expect(engineResults.violations).toContainEqual(expectedExample4Violation3);
-                    });
-
-                    it('When FlowB is targeted and FlowA is not, return no violations', async () => {
-                        const engine: FlowScannerEngine = new FlowScannerEngine(flowScannerCommandWrapper);
-
-                        const selectedRuleNames: string[] = [
-                            'PreventPassingUserDataIntoElementWithSharing',
-                            'PreventPassingUserDataIntoElementWithoutSharing'
-                        ];
-
-                        const engineResults: EngineRunResults = await engine.runRules(selectedRuleNames, createRunOptions(
-                            tempFolder, new Workspace('id', [PATH_TO_MULTIPLE_FLOWS_WORKSPACE], [flowB])));
-
-                        expect(engineResults.violations).toHaveLength(0);
-                    });
-
-                    it('When only no-violation FlowC is targeted, return no violations', async () => {
-                        const engine: FlowScannerEngine = new FlowScannerEngine(flowScannerCommandWrapper);
-
-                        const selectedRuleNames: string[] = [
-                            'PreventPassingUserDataIntoElementWithSharing',
-                            'PreventPassingUserDataIntoElementWithoutSharing'
-                        ];
-
-                        const engineResults: EngineRunResults = await engine.runRules(selectedRuleNames, createRunOptions(
-                            tempFolder, new Workspace('id', [flowA, flowB, flowC], [flowC])));
-
-                        expect(engineResults.violations).toHaveLength(0);
-                    });
+                    expect(results.violations).toHaveLength(1);
+                    expect(results.violations[0]).toEqual(expectedViolation);
                 });
 
-                describe('FlowA references subflow FlowB, they are NOT in the workspace, and both have violations', () => {
-                    // Sanity checks that FlowTest is respecting the workspace boundary
-                    it('When the workspace is FlowA, FlowA and FlowB are targeted, only return the violations for FlowA', async () => {
-                        const engine: FlowScannerEngine = new FlowScannerEngine(flowScannerCommandWrapper);
+                it('When both parent and child are in workspace but neither are targeted, then expect no violation', async () => {
+                    const workspace: Workspace = new Workspace("someId", [
+                            PARENT_WITH_SOURCE_CALLS_SUB_WITH_SINK_WORKSPACE,
+                            PATH_TO_ONE_FLOW_NO_VIOLATIONS_WORKSPACE
+                        ],
+                        [
+                            PATH_TO_ONE_FLOW_NO_VIOLATIONS_WORKSPACE
+                        ]);
 
-                        const selectedRuleNames: string[] = [
-                            'PreventPassingUserDataIntoElementWithSharing',
-                            'PreventPassingUserDataIntoElementWithoutSharing'
-                        ];
+                    const results: EngineRunResults = await engine.runRules(ALL_FLOW_RULES, createRunOptions(tempFolder, workspace));
 
-                        const engineResults: EngineRunResults = await engine.runRules(selectedRuleNames, createRunOptions(
-                            tempFolder, new Workspace('id', [flowA], [flowA, flowB])));
+                    expect(results.violations).toHaveLength(0);
+                });
 
-                        //Todo: why no violations here?
-                        expect(engineResults.violations).toHaveLength(0);
-                    });
-                    // ...and that targeting does not make a difference
-                    it('When the workspace is FlowA, FlowA is targeted and FlowB is not, only return the violations for FlowA', async () => {
-                        const engine: FlowScannerEngine = new FlowScannerEngine(flowScannerCommandWrapper);
+                it('When both parent and child are in workspace but only child is targeted, then expect no violation', async () => {
+                    const workspace: Workspace = new Workspace("someId", [PARENT_WITH_SOURCE_CALLS_SUB_WITH_SINK_WORKSPACE], [childFlowFile]);
 
-                        const selectedRuleNames: string[] = [
-                            'PreventPassingUserDataIntoElementWithSharing',
-                            'PreventPassingUserDataIntoElementWithoutSharing'
-                        ];
+                    const results: EngineRunResults = await engine.runRules(ALL_FLOW_RULES, createRunOptions(tempFolder, workspace));
 
-                        const engineResults: EngineRunResults = await engine.runRules(selectedRuleNames, createRunOptions(
-                            tempFolder, new Workspace('id', [flowA], [flowA])));
+                    expect(results.violations).toHaveLength(0);
+                });
 
-                        //Todo: why no violations here?
-                        expect(engineResults.violations).toHaveLength(0);
-                    });
+                it('When both parent and child are in workspace but only parent is targeted, then expect violation since sink is found in workspace', async () => {
+                    const workspace: Workspace = new Workspace("someId", [PARENT_WITH_SOURCE_CALLS_SUB_WITH_SINK_WORKSPACE], [parentFlowFile]);
 
-                    it('When the workspace is FlowB, FlowA and FlowB are targeted, only return the violations for FlowB', async () => {
-                        const engine: FlowScannerEngine = new FlowScannerEngine(flowScannerCommandWrapper);
+                    const results: EngineRunResults = await engine.runRules(ALL_FLOW_RULES, createRunOptions(tempFolder, workspace));
 
-                        const selectedRuleNames: string[] = [
-                            'PreventPassingUserDataIntoElementWithSharing',
-                            'PreventPassingUserDataIntoElementWithoutSharing'
-                        ];
+                    expect(results.violations).toHaveLength(1);
+                    expect(results.violations[0]).toEqual(expectedViolation);
+                });
 
-                        const engineResults: EngineRunResults = await engine.runRules(selectedRuleNames, createRunOptions(
-                            tempFolder, new Workspace('id', [flowB], [flowA, flowB])));
+                it('When only parent is in workspace and only parent is targeted, then expect no violation since sink is not in workspace', async () => {
+                    const workspace: Workspace = new Workspace("someId", [parentFlowFile], [parentFlowFile]);
 
-                        expect(engineResults.violations).toHaveLength(3);
-                        // Todo: why are these violations referencing FlowA?
-                        expect(engineResults.violations).toContainEqual(expectedExample4Violation1);
-                        expect(engineResults.violations).toContainEqual(expectedExample4Violation1);
-                        expect(engineResults.violations).toContainEqual(expectedExample4Violation3);
-                    });
-                    it('When the workspace is FlowB, FlowB is targeted and FlowA is not, only return the violations for FlowB', async () => {
-                        const engine: FlowScannerEngine = new FlowScannerEngine(flowScannerCommandWrapper);
+                    const results: EngineRunResults = await engine.runRules(ALL_FLOW_RULES, createRunOptions(tempFolder, workspace));
 
-                        const selectedRuleNames: string[] = [
-                            'PreventPassingUserDataIntoElementWithSharing',
-                            'PreventPassingUserDataIntoElementWithoutSharing'
-                        ];
+                    expect(results.violations).toHaveLength(0);
+                });
 
-                        const engineResults: EngineRunResults = await engine.runRules(selectedRuleNames, createRunOptions(
-                            tempFolder, new Workspace('id', [flowB], [flowB])));
+                it('When only child is in workspace and only child is targeted, then expect no violation since source is not in workspace', async () => {
+                    const workspace: Workspace = new Workspace("someId", [childFlowFile], [childFlowFile]);
 
-                        //Todo: why no violations here?
-                        expect(engineResults.violations).toHaveLength(0);
-                    });
+                    const results: EngineRunResults = await engine.runRules(ALL_FLOW_RULES, createRunOptions(tempFolder, workspace));
+
+                    expect(results.violations).toHaveLength(0);
                 });
             });
 
+            describe('When parent flow contains sink and depends on child flow that contains source...', () => {
+                const parentFlowFile: string = path.join(PARENT_WITH_SINK_CALLS_SUB_WITH_SOURCE_WORKSPACE, 'parent_with_sink.flow-meta.xml');
+                const childFlowFile: string = path.join(PARENT_WITH_SINK_CALLS_SUB_WITH_SOURCE_WORKSPACE, 'child_with_source.flow-meta.xml');
+                const expectedViolation: Violation = {
+                    ruleName: "PreventPassingUserDataIntoElementWithoutSharing",
+                    message: "User controlled data flows into recordLookups element selector in run mode: SystemModeWithoutSharing",
+                    codeLocations: [
+                        {
+                            file: childFlowFile,
+                            startLine: 35,
+                            startColumn: 1,
+                            comment: "enter_text_subflow.enter_text_subflow: Initialization"
+                        },
+                        {
+                            file: childFlowFile,
+                            startLine: 10,
+                            startColumn: 1,
+                            comment: "enter_text_subflow.enter_text_subflow influences assign_enter_to_output.output_var1: Variable Assignment"
+                        },
+                        {
+                            file: parentFlowFile,
+                            startLine: 35,
+                            startColumn: 1,
+                            comment: "assign_enter_to_output.output_var1 influences call_subflow.call_subflow.output_var1: output via subflow assignment"
+                        },
+                        {
+                            file: parentFlowFile,
+                            startLine: 8,
+                            startColumn: 1,
+                            comment: "call_subflow.call_subflow.output_var1 influences get_records.SuppliedName: flow into recordLookups via influence over SuppliedName in run mode SystemModeWithoutSharing"
+                        }
+                    ],
+                    primaryLocationIndex: 3,
+                    resourceUrls: []
+                };
+
+                let engine: FlowScannerEngine;
+
+                beforeEach(() => {
+                    engine = new FlowScannerEngine(flowScannerCommandWrapper);
+                });
+
+                it('When both parent and child are in workspace and targeted, then expect violation', async () => {
+                    const workspace: Workspace = new Workspace("someId", [PARENT_WITH_SINK_CALLS_SUB_WITH_SOURCE_WORKSPACE]);
+
+                    const results: EngineRunResults = await engine.runRules(ALL_FLOW_RULES, createRunOptions(tempFolder, workspace));
+
+                    expect(results.violations).toHaveLength(1);
+                    expect(results.violations[0]).toEqual(expectedViolation);
+                });
+
+                it('When both parent and child are in workspace but neither are targeted, then expect no violation', async () => {
+                    const workspace: Workspace = new Workspace("someId", [parentFlowFile, childFlowFile, PATH_TO_EXAMPLE3], [PATH_TO_EXAMPLE3]);
+
+                    const results: EngineRunResults = await engine.runRules(ALL_FLOW_RULES, createRunOptions(tempFolder, workspace));
+
+                    expect(results.violations).toHaveLength(0);
+                });
+
+                it('When both parent and child are in workspace but only child is targeted, then expect no violation since child would not be called', async () => {
+                    const workspace: Workspace = new Workspace("someId", [PARENT_WITH_SINK_CALLS_SUB_WITH_SOURCE_WORKSPACE], [childFlowFile]);
+
+                    const results: EngineRunResults = await engine.runRules(ALL_FLOW_RULES, createRunOptions(tempFolder, workspace));
+
+                    expect(results.violations).toHaveLength(0);
+                });
+
+                it('When both parent and child are in workspace but only parent is targeted, then expect a violation since the parent is targeted', async () => {
+                    const workspace: Workspace = new Workspace("someId", [PARENT_WITH_SINK_CALLS_SUB_WITH_SOURCE_WORKSPACE], [parentFlowFile]);
+
+                    const results: EngineRunResults = await engine.runRules(ALL_FLOW_RULES, createRunOptions(tempFolder, workspace));
+
+                    expect(results.violations).toHaveLength(1);
+                    expect(results.violations[0]).toEqual(expectedViolation);
+                });
+
+                it('When only parent is in workspace and only parent is targeted, then expect no violation since sink is not in workspace', async () => {
+                    const workspace: Workspace = new Workspace("someId", [parentFlowFile], [parentFlowFile]);
+
+                    const results: EngineRunResults = await engine.runRules(ALL_FLOW_RULES, createRunOptions(tempFolder, workspace));
+
+                    expect(results.violations).toHaveLength(0);
+                });
+
+                it('When only child is in workspace and only child is targeted, then expect no violation since source is not in workspace', async () => {
+                    const workspace: Workspace = new Workspace("someId", [childFlowFile], [childFlowFile]);
+
+                    const results: EngineRunResults = await engine.runRules(ALL_FLOW_RULES, createRunOptions(tempFolder, workspace));
+
+                    expect(results.violations).toHaveLength(0);
+                });
+
+            });
             // TODO: Add in tests for case of scanning 2 folders with the exact same flows.
             // Currently there is a bug here, and so we are waiting on:
             //    https://git.soma.salesforce.com/SecurityTools/FlowSecurityLinter/issues/62
