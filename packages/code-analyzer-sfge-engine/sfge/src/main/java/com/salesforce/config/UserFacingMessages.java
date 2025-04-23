@@ -158,7 +158,7 @@ public final class UserFacingMessages {
                 "Database operation executed in a class that implicitly inherits a sharing policy from %s %s. Explicitly assign a sharing policy instead.";
     }
 
-    public static final class PerformNullCheckOnSoqlVariablesTemplates {
+    public static final class MissingNullCheckOnSoqlVariableTemplates {
         /** String param: name of variable */
         public static final String MESSAGE_TEMPLATE =
                 "Null check is missing for variable %s used in SOQL query.";

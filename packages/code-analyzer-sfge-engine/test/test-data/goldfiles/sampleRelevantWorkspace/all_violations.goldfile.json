@@ -1,7 +1,7 @@
 {
   "violations": [
     {
-      "ruleName": "ApexFlsViolationRule",
+      "ruleName": "ApexFlsViolation",
       "message": "FLS validation is missing for [READ] operation on [Account] with field(s) [CustomField__c,Name].",
       "codeLocations": [
         {
@@ -18,7 +18,7 @@
       "primaryLocationIndex": 1
     },
     {
-      "ruleName": "UseWithSharingOnDatabaseOperation",
+      "ruleName": "DatabaseOperationsMustUseWithSharing",
       "message": "Database operation must be executed from a class that enforces sharing rules.",
       "codeLocations": [
         {
@@ -35,7 +35,7 @@
       "primaryLocationIndex": 1
     },
     {
-      "ruleName": "UnimplementedTypeRule",
+      "ruleName": "UnimplementedType",
       "message": "Extend, implement, or delete abstract class SomeClass.SomeInnerClass",
       "codeLocations": [
         {

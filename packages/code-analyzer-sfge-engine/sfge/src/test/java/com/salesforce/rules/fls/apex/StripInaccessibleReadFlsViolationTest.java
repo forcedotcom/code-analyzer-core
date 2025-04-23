@@ -2,7 +2,7 @@ package com.salesforce.rules.fls.apex;
 
 import com.salesforce.config.SfgeConfigTestProvider;
 import com.salesforce.config.TestSfgeConfig;
-import com.salesforce.rules.ApexFlsViolationRule;
+import com.salesforce.rules.ApexFlsViolation;
 import com.salesforce.rules.fls.apex.operations.FlsConstants;
 import com.salesforce.testutils.BaseFlsTest;
 import java.util.stream.Stream;
@@ -18,18 +18,18 @@ public class StripInaccessibleReadFlsViolationTest extends BaseFlsTest {
         return Stream.of(
                 Arguments.of(
                         "SOQL",
-                        ApexFlsViolationRule.getInstance(),
+                        ApexFlsViolation.getInstance(),
                         "[Select Id, Name, Phone from Account]"),
                 Arguments.of(
                         "Database.query",
-                        ApexFlsViolationRule.getInstance(),
+                        ApexFlsViolation.getInstance(),
                         "Database.query('Select Id, Name, Phone from Account')"));
     }
 
     @MethodSource("input")
     @ParameterizedTest(name = "{0}")
     public void testUnsafe_simpleReadQuery(
-            String operationName, ApexFlsViolationRule rule, String soqlOperation) {
+            String operationName, ApexFlsViolation rule, String soqlOperation) {
         String sourceCode =
                 "public class MyClass {\n"
                         + "   public void foo() {\n"
@@ -49,7 +49,7 @@ public class StripInaccessibleReadFlsViolationTest extends BaseFlsTest {
     @MethodSource("input")
     @ParameterizedTest(name = "{0}")
     public void testSafe_simpleReadQuery(
-            String operationName, ApexFlsViolationRule rule, String soqlOperation) {
+            String operationName, ApexFlsViolation rule, String soqlOperation) {
         String sourceCode =
                 "public class MyClass {\n"
                         + "   public void foo() {\n"
@@ -70,7 +70,7 @@ public class StripInaccessibleReadFlsViolationTest extends BaseFlsTest {
     @MethodSource("input")
     @ParameterizedTest(name = "{0}")
     public void testUnsafe_checkBeforeDml(
-            String operationName, ApexFlsViolationRule rule, String soqlOperation) {
+            String operationName, ApexFlsViolation rule, String soqlOperation) {
         String sourceCode =
                 "public class MyClass {\n"
                         + "   public void foo() {\n"
@@ -92,7 +92,7 @@ public class StripInaccessibleReadFlsViolationTest extends BaseFlsTest {
     @MethodSource("input")
     @ParameterizedTest(name = "{0}")
     public void testUnsafe_SingleType_UnmatchedAccessType(
-            String operationName, ApexFlsViolationRule rule, String soqlOperation) {
+            String operationName, ApexFlsViolation rule, String soqlOperation) {
         String sourceCode =
                 "public class MyClass {\n"
                         + "   public void foo() {\n"
@@ -113,7 +113,7 @@ public class StripInaccessibleReadFlsViolationTest extends BaseFlsTest {
     @MethodSource("input")
     @ParameterizedTest(name = "{0}")
     public void testUnsafe_MultipleTypes_UnmatchedListType(
-            String operationName, ApexFlsViolationRule rule, String soqlOperation) {
+            String operationName, ApexFlsViolation rule, String soqlOperation) {
         String sourceCode =
                 "public class MyClass {\n"
                         + "   public void foo() {\n"
@@ -135,7 +135,7 @@ public class StripInaccessibleReadFlsViolationTest extends BaseFlsTest {
     @MethodSource("input")
     @ParameterizedTest(name = "{0}")
     public void testSafe_MultipleTypes_UnmatchedListType(
-            String operationName, ApexFlsViolationRule rule, String soqlOperation) {
+            String operationName, ApexFlsViolation rule, String soqlOperation) {
         String sourceCode =
                 "public class MyClass {\n"
                         + "   public void foo() {\n"
@@ -157,7 +157,7 @@ public class StripInaccessibleReadFlsViolationTest extends BaseFlsTest {
     @MethodSource("input")
     @ParameterizedTest(name = "{0}")
     public void testUnsafe_IncorrectListChecked(
-            String operationName, ApexFlsViolationRule rule, String soqlOperation) {
+            String operationName, ApexFlsViolation rule, String soqlOperation) {
         String sourceCode =
                 "public class MyClass {\n"
                         + "   public void foo() {\n"
@@ -179,7 +179,7 @@ public class StripInaccessibleReadFlsViolationTest extends BaseFlsTest {
     @MethodSource("input")
     @ParameterizedTest(name = "{0}")
     public void testUnsafe_IncorrectListChecked_FieldMatch(
-            String operationName, ApexFlsViolationRule rule, String soqlOperation) {
+            String operationName, ApexFlsViolation rule, String soqlOperation) {
         String sourceCode =
                 "public class MyClass {\n"
                         + "   public void foo() {\n"
@@ -203,7 +203,7 @@ public class StripInaccessibleReadFlsViolationTest extends BaseFlsTest {
     @MethodSource("input")
     @ParameterizedTest(name = "{0}")
     public void testSafe_correctListChecked_FieldMatch(
-            String operationName, ApexFlsViolationRule rule, String soqlOperation) {
+            String operationName, ApexFlsViolation rule, String soqlOperation) {
         String sourceCode =
                 "public class MyClass {\n"
                         + "   public void foo() {\n"
@@ -227,7 +227,7 @@ public class StripInaccessibleReadFlsViolationTest extends BaseFlsTest {
     @MethodSource("input")
     @ParameterizedTest(name = "{0}")
     public void testSafe_doubleCheck(
-            String operationName, ApexFlsViolationRule rule, String soqlOperation) {
+            String operationName, ApexFlsViolation rule, String soqlOperation) {
         String sourceCode =
                 "public class MyClass {\n"
                         + "   public void foo() {\n"
@@ -249,7 +249,7 @@ public class StripInaccessibleReadFlsViolationTest extends BaseFlsTest {
     @MethodSource("input")
     @ParameterizedTest(name = "{0}")
     public void testUnsafe_TwoQueries_onlyOneChecked_differentObjectType(
-            String operationName, ApexFlsViolationRule rule, String soqlOperation) {
+            String operationName, ApexFlsViolation rule, String soqlOperation) {
         String sourceCode =
                 "public class MyClass {\n"
                         + "   public void foo() {\n"
@@ -273,7 +273,7 @@ public class StripInaccessibleReadFlsViolationTest extends BaseFlsTest {
     @MethodSource("input")
     @ParameterizedTest(name = "{0}")
     public void testSafe_TwoQueries_bothChecked_differentObjectType(
-            String operationName, ApexFlsViolationRule rule, String soqlOperation) {
+            String operationName, ApexFlsViolation rule, String soqlOperation) {
         String sourceCode =
                 "public class MyClass {\n"
                         + "   public void foo() {\n"
@@ -298,7 +298,7 @@ public class StripInaccessibleReadFlsViolationTest extends BaseFlsTest {
     @MethodSource("input")
     @ParameterizedTest(name = "{0}")
     public void testUnsafe_TwoQueries_onlyOneChecked_sameObjectType(
-            String operationName, ApexFlsViolationRule rule, String soqlOperation) {
+            String operationName, ApexFlsViolation rule, String soqlOperation) {
         String sourceCode =
                 "public class MyClass {\n"
                         + "   public void foo() {\n"
@@ -324,7 +324,7 @@ public class StripInaccessibleReadFlsViolationTest extends BaseFlsTest {
     @MethodSource("input")
     @ParameterizedTest(name = "{0}")
     public void testSafe_TwoQueries_bothChecked_sameObjectType(
-            String operationName, ApexFlsViolationRule rule, String soqlOperation) {
+            String operationName, ApexFlsViolation rule, String soqlOperation) {
         String sourceCode =
                 "public class MyClass {\n"
                         + "   public void foo() {\n"
@@ -351,7 +351,7 @@ public class StripInaccessibleReadFlsViolationTest extends BaseFlsTest {
     @MethodSource("input")
     @ParameterizedTest(name = "{0}")
     public void testNoStripInaccWarningWhenDisabled(
-            String operationName, ApexFlsViolationRule rule, String soqlOperation) {
+            String operationName, ApexFlsViolation rule, String soqlOperation) {
         try {
             // Disable WarningViolation in config
             SfgeConfigTestProvider.set(
@@ -381,7 +381,7 @@ public class StripInaccessibleReadFlsViolationTest extends BaseFlsTest {
     @MethodSource("input")
     @ParameterizedTest(name = "{0}")
     public void testSoqlValueFromMethod(
-            String operationName, ApexFlsViolationRule rule, String soqlOperation) {
+            String operationName, ApexFlsViolation rule, String soqlOperation) {
         String source =
                 "public class MyClass {\n"
                         + "	public void foo() {\n"
@@ -404,7 +404,7 @@ public class StripInaccessibleReadFlsViolationTest extends BaseFlsTest {
     @MethodSource("input")
     @ParameterizedTest(name = "{0}")
     public void testSoqlValueFromInline(
-            String operationName, ApexFlsViolationRule rule, String soqlOperation) {
+            String operationName, ApexFlsViolation rule, String soqlOperation) {
         String source =
                 "public class MyClass {\n"
                         + "	public void foo() {\n"

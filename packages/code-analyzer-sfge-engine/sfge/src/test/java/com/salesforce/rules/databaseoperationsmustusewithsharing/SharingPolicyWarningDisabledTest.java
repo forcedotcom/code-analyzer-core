@@ -1,4 +1,4 @@
-package com.salesforce.rules.usewithsharingondatabaseoperation;
+package com.salesforce.rules.databaseoperationsmustusewithsharing;
 
 import com.salesforce.config.SfgeConfigTestProvider;
 import com.salesforce.config.TestSfgeConfig;
@@ -10,7 +10,7 @@ import org.junit.jupiter.api.Test;
  * "route" to a warning: implicitly inheriting from an ancestor, and implicitly inheriting from a
  * calling class.
  */
-public class SharingPolicyWarningDisabledTest extends BaseUseWithSharingOnDatabaseOperationTest {
+public class SharingPolicyWarningDisabledTest extends BaseDatabaseOperationsMustUseWithSharingTest {
 
     // spotless:off
     private static final String ONE_SOURCE =

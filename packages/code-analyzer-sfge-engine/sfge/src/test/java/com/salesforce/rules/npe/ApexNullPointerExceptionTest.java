@@ -1,14 +1,14 @@
 package com.salesforce.rules.npe;
 
 import com.salesforce.rules.AbstractPathBasedRule;
-import com.salesforce.rules.ApexNullPointerExceptionRule;
+import com.salesforce.rules.ApexNullPointerException;
 import com.salesforce.testutils.BasePathBasedRuleTest;
 import com.salesforce.testutils.ViolationWrapper;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
 import org.junit.jupiter.params.provider.ValueSource;
 
-public class ApexNullPointerExceptionRuleTest extends BasePathBasedRuleTest {
+public class ApexNullPointerExceptionTest extends BasePathBasedRuleTest {
 
     /** This is the template for tests pertaining specifically to variables. */
     // spotless:off
@@ -110,7 +110,7 @@ public class ApexNullPointerExceptionRuleTest extends BasePathBasedRuleTest {
           + "    " + reference + ";\n";
         // spotless:on
         String sourceCode = String.format(VARIABLE_SOURCE_CODE_TEMPLATE, sourceCodeInsert);
-        AbstractPathBasedRule rule = ApexNullPointerExceptionRule.getInstance();
+        AbstractPathBasedRule rule = ApexNullPointerException.getInstance();
         assertViolations(rule, sourceCode, expect(4, op));
     }
 
@@ -143,7 +143,7 @@ public class ApexNullPointerExceptionRuleTest extends BasePathBasedRuleTest {
           + "        " + reference + ";\n";
         // spotless:on
         String sourceCode = String.format(VARIABLE_SOURCE_CODE_TEMPLATE, sourceCodeInsert);
-        AbstractPathBasedRule rule = ApexNullPointerExceptionRule.getInstance();
+        AbstractPathBasedRule rule = ApexNullPointerException.getInstance();
         assertNoViolation(rule, sourceCode);
     }
 
@@ -178,7 +178,7 @@ public class ApexNullPointerExceptionRuleTest extends BasePathBasedRuleTest {
         + "        " + reference + ";\n";
         // spotless:on
         String sourceCode = String.format(VARIABLE_SOURCE_CODE_TEMPLATE, sourceCodeInsert);
-        AbstractPathBasedRule rule = ApexNullPointerExceptionRule.getInstance();
+        AbstractPathBasedRule rule = ApexNullPointerException.getInstance();
         assertNoViolation(rule, sourceCode);
     }
 
@@ -199,7 +199,7 @@ public class ApexNullPointerExceptionRuleTest extends BasePathBasedRuleTest {
         String sourceCodeInsert = "        " + reference + ";\n";
         // spotless:on
         String sourceCode = String.format(VARIABLE_SOURCE_CODE_TEMPLATE, sourceCodeInsert);
-        AbstractPathBasedRule rule = ApexNullPointerExceptionRule.getInstance();
+        AbstractPathBasedRule rule = ApexNullPointerException.getInstance();
         assertViolations(rule, sourceCode, expect(3, op));
     }
 
@@ -222,7 +222,7 @@ public class ApexNullPointerExceptionRuleTest extends BasePathBasedRuleTest {
     public void testInlineNonNullMethodReturn_expectNoViolation(String reference) {
         String sourceCodeInsert = "    Integer i = " + reference + ";\n";
         String sourceCode = String.format(VARIABLE_SOURCE_CODE_TEMPLATE, sourceCodeInsert);
-        AbstractPathBasedRule rule = ApexNullPointerExceptionRule.getInstance();
+        AbstractPathBasedRule rule = ApexNullPointerException.getInstance();
         assertNoViolation(rule, sourceCode);
     }
 
@@ -240,7 +240,7 @@ public class ApexNullPointerExceptionRuleTest extends BasePathBasedRuleTest {
     public void testNullParamReference_expectViolation(String param, String reference, String op) {
         String sourceCode =
                 String.format(UNCONSTRAINED_PARAM_SOURCE_CODE_TEMPLATE, "null", param, reference);
-        AbstractPathBasedRule rule = ApexNullPointerExceptionRule.getInstance();
+        AbstractPathBasedRule rule = ApexNullPointerException.getInstance();
         assertViolations(rule, sourceCode, expect(7, op));
     }
 
@@ -268,7 +268,7 @@ public class ApexNullPointerExceptionRuleTest extends BasePathBasedRuleTest {
             String value, String param, String reference) {
         String sourceCode =
                 String.format(UNCONSTRAINED_PARAM_SOURCE_CODE_TEMPLATE, value, param, reference);
-        AbstractPathBasedRule rule = ApexNullPointerExceptionRule.getInstance();
+        AbstractPathBasedRule rule = ApexNullPointerException.getInstance();
         assertNoViolation(rule, sourceCode);
     }
 
@@ -298,7 +298,7 @@ public class ApexNullPointerExceptionRuleTest extends BasePathBasedRuleTest {
         String sourceCode =
                 String.format(
                         CONSTRAINED_PARAM_SOURCE_CODE_TEMPLATE, constraint, reference, reference);
-        AbstractPathBasedRule rule = ApexNullPointerExceptionRule.getInstance();
+        AbstractPathBasedRule rule = ApexNullPointerException.getInstance();
         assertViolations(rule, sourceCode, expect(line, op));
     }
 
@@ -329,7 +329,7 @@ public class ApexNullPointerExceptionRuleTest extends BasePathBasedRuleTest {
         String sourceCode =
                 String.format(
                         CONSTRAINED_PARAM_SOURCE_CODE_TEMPLATE, constraint, reference, reference);
-        AbstractPathBasedRule rule = ApexNullPointerExceptionRule.getInstance();
+        AbstractPathBasedRule rule = ApexNullPointerException.getInstance();
         assertNoViolation(rule, sourceCode);
     }
 

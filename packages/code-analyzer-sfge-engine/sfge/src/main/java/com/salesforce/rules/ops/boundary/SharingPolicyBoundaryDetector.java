@@ -3,7 +3,7 @@ package com.salesforce.rules.ops.boundary;
 import com.salesforce.apex.jorje.ASTConstants;
 import com.salesforce.exception.ProgrammingException;
 import com.salesforce.graph.vertex.UserClassVertex;
-import com.salesforce.rules.usewithsharingondatabaseoperation.SharingPolicySymbolProviderVertexVisitor;
+import com.salesforce.rules.databaseoperationsmustusewithsharing.SharingPolicySymbolProviderVertexVisitor;
 import java.util.Stack;
 
 /**

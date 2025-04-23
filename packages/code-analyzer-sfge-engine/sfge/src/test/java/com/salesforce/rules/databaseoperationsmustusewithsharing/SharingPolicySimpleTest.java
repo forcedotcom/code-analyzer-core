@@ -1,10 +1,10 @@
-package com.salesforce.rules.usewithsharingondatabaseoperation;
+package com.salesforce.rules.databaseoperationsmustusewithsharing;
 
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
 
 /** simple sharing policy tests */
-public class SharingPolicySimpleTest extends BaseUseWithSharingOnDatabaseOperationTest {
+public class SharingPolicySimpleTest extends BaseDatabaseOperationsMustUseWithSharingTest {
 
     // spotless:off
     private static final String SIMPLE_SOURCE =

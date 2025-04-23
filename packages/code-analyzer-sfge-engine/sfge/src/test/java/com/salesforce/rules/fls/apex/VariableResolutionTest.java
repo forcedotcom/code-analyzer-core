@@ -1,14 +1,14 @@
 package com.salesforce.rules.fls.apex;
 
 import com.salesforce.rules.AbstractPathBasedRule;
-import com.salesforce.rules.ApexFlsViolationRule;
+import com.salesforce.rules.ApexFlsViolation;
 import com.salesforce.rules.fls.apex.operations.FlsConstants;
 import com.salesforce.testutils.BaseFlsTest;
 import org.junit.jupiter.api.Test;
 
 public class VariableResolutionTest extends BaseFlsTest {
 
-    private final AbstractPathBasedRule rule = ApexFlsViolationRule.getInstance();
+    private final AbstractPathBasedRule rule = ApexFlsViolation.getInstance();
 
     /**
      * It's a violation to create an account with a Phone field after checking if the Name field is

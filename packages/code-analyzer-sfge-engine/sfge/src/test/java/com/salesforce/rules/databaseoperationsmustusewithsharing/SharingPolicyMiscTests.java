@@ -1,8 +1,8 @@
-package com.salesforce.rules.usewithsharingondatabaseoperation;
+package com.salesforce.rules.databaseoperationsmustusewithsharing;
 
 import org.junit.jupiter.api.Test;
 
-public class SharingPolicyMiscTests extends BaseUseWithSharingOnDatabaseOperationTest {
+public class SharingPolicyMiscTests extends BaseDatabaseOperationsMustUseWithSharingTest {
 
     @Test
     public void testBasicImplicitInheritanceFromParentWarning() {

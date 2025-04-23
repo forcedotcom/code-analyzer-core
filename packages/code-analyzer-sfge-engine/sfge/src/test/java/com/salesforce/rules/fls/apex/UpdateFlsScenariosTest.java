@@ -1,18 +1,18 @@
 package com.salesforce.rules.fls.apex;
 
-import com.salesforce.rules.ApexFlsViolationRule;
+import com.salesforce.rules.ApexFlsViolation;
 import com.salesforce.rules.fls.apex.operations.FlsConstants.FlsValidationType;
 import com.salesforce.testutils.BaseFlsTest;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 public class UpdateFlsScenariosTest extends BaseFlsTest {
-    private ApexFlsViolationRule rule;
+    private ApexFlsViolation rule;
 
     @BeforeEach
     public void setup() {
         super.setup();
-        this.rule = ApexFlsViolationRule.getInstance();
+        this.rule = ApexFlsViolation.getInstance();
     }
 
     @Test
@@ -20,7 +20,7 @@ public class UpdateFlsScenariosTest extends BaseFlsTest {
         String sourceCode =
                 "public class MyClass {\n"
                         + "    public void foo() {\n"
-                        + "		 /* sfge-disable-next-line ApexFlsViolationRule */\n"
+                        + "		 /* sfge-disable-next-line ApexFlsViolation */\n"
                         + "        Account a = [SELECT Id, Name FROM Account];\n"
                         + "        if (Schema.sObjectType.Account.fields.Name.isUpdateable()) {\n"
                         + "            a.Name = 'Acme Inc.';\n"
@@ -37,7 +37,7 @@ public class UpdateFlsScenariosTest extends BaseFlsTest {
         String sourceCode =
                 "public class MyClass {\n"
                         + "    public void foo() {\n"
-                        + "		 /* sfge-disable-next-line ApexFlsViolationRule */\n"
+                        + "		 /* sfge-disable-next-line ApexFlsViolation */\n"
                         + "        Account a = [SELECT Id, Name FROM Account];\n"
                         + "        a.Name = 'Acme Inc.';\n"
                         + "        update a;\n"
@@ -53,7 +53,7 @@ public class UpdateFlsScenariosTest extends BaseFlsTest {
         String sourceCode =
                 "public class MyClass {\n"
                         + "    public void foo() {\n"
-                        + "		 /* sfge-disable-next-line ApexFlsViolationRule */\n"
+                        + "		 /* sfge-disable-next-line ApexFlsViolation */\n"
                         + "        Account a = [SELECT Id, Name FROM Account];\n"
                         + "        a.Description = 'Some description';\n"
                         + "        update a;\n"

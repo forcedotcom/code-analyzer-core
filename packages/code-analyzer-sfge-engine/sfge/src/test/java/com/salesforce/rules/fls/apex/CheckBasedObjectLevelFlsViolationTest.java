@@ -3,7 +3,7 @@ package com.salesforce.rules.fls.apex;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import com.salesforce.TestUtil;
-import com.salesforce.rules.ApexFlsViolationRule;
+import com.salesforce.rules.ApexFlsViolation;
 import com.salesforce.rules.fls.apex.operations.FlsConstants;
 import com.salesforce.rules.fls.apex.operations.FlsConstants.FlsValidationType;
 import com.salesforce.testutils.BaseFlsTest;
@@ -16,12 +16,12 @@ import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 
 public class CheckBasedObjectLevelFlsViolationTest extends BaseFlsTest {
-    private ApexFlsViolationRule rule;
+    private ApexFlsViolation rule;
 
     @BeforeEach
     public void setup() {
         super.setup();
-        this.rule = ApexFlsViolationRule.getInstance();
+        this.rule = ApexFlsViolation.getInstance();
     }
 
     // TODO: support UPSERT operation
@@ -45,12 +45,12 @@ public class CheckBasedObjectLevelFlsViolationTest extends BaseFlsTest {
                                 + "merge as system a1 a2;\n"),
                 getArguments(
                         FlsValidationType.UNDELETE,
-                        "/* sfge-disable-next-line ApexFlsViolationRule */\n"
+                        "/* sfge-disable-next-line ApexFlsViolation */\n"
                                 + "Account a = [SELECT Id, Name FROM Account WHERE Name = 'Acme Inc.' ALL ROWS];\n"
                                 + "undelete a;\n"),
                 getArguments(
                         FlsValidationType.UNDELETE,
-                        "/* sfge-disable-next-line ApexFlsViolationRule */\n"
+                        "/* sfge-disable-next-line ApexFlsViolation */\n"
                                 + "Account a = [SELECT Id, Name FROM Account WHERE Name = 'Acme Inc.' ALL ROWS];\n"
                                 + "undelete as system a;\n"));
     }
@@ -239,7 +239,7 @@ public class CheckBasedObjectLevelFlsViolationTest extends BaseFlsTest {
                 "public class MyClass {\n"
                         + "    public void foo(Id objId) {\n"
                         + "    	Account[] accountsToDelete;\n"
-                        + "		/* sfge-disable-next-line ApexFlsViolationRule */\n"
+                        + "		/* sfge-disable-next-line ApexFlsViolation */\n"
                         + "    	accountsToDelete = [SELECT ID FROM Account WHERE ID=:objId];\n"
                         + "    	delete accountsToDelete[0];\n"
                         + "    }\n"

@@ -29,7 +29,7 @@ public class RuleUtilTest {
             List<AbstractRule> allRules = RuleUtil.getEnabledRules();
             MatcherAssert.assertThat(
                     "Wrong number of rules returned. Did you add any?", allRules, hasSize(7));
-            assertTrue(allRules.contains(ApexFlsViolationRule.getInstance()));
+            assertTrue(allRules.contains(ApexFlsViolation.getInstance()));
         } catch (Exception ex) {
             fail("Unexpected " + ex.getClass().getSimpleName() + ": " + ex.getMessage());
         }
@@ -38,7 +38,7 @@ public class RuleUtilTest {
     @Test
     public void getRule_RealRuleReturned() {
         try {
-            AbstractRule realRule = RuleUtil.getRule(UnimplementedTypeRule.class.getSimpleName());
+            AbstractRule realRule = RuleUtil.getRule(UnimplementedType.class.getSimpleName());
             MatcherAssert.assertThat(realRule, not(nullValue()));
         } catch (RuleUtil.RuleNotFoundException rnfe) {
             fail("No exception should be thrown when a real rule is requested");

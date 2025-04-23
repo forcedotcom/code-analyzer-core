@@ -39,7 +39,7 @@ public class PathBasedRuleRunnerTest {
         // singleton list.
         MethodVertex methodVertex = TestUtil.getMethodVertex(g, "MyClass", "foo");
         List<AbstractPathBasedRule> rules =
-                Collections.singletonList(ApexFlsViolationRule.getInstance());
+                Collections.singletonList(ApexFlsViolation.getInstance());
 
         // Define a PathBasedRuleRunner to apply the rule against the method vertex.
         PathBasedRuleRunner runner = new PathBasedRuleRunner(g, rules, methodVertex);

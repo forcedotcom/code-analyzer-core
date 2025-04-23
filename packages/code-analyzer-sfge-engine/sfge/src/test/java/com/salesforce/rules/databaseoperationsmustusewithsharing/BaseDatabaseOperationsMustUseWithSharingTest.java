@@ -1,6 +1,6 @@
-package com.salesforce.rules.usewithsharingondatabaseoperation;
+package com.salesforce.rules.databaseoperationsmustusewithsharing;
 
-import com.salesforce.rules.UseWithSharingOnDatabaseOperation;
+import com.salesforce.rules.DatabaseOperationsMustUseWithSharing;
 import com.salesforce.testutils.BasePathBasedRuleTest;
 import com.salesforce.testutils.ViolationWrapper;
 import java.util.Arrays;
@@ -8,10 +8,10 @@ import java.util.stream.Stream;
 import org.junit.jupiter.params.provider.*;
 
 /** provides infrastructure for other tests in this package */
-public abstract class BaseUseWithSharingOnDatabaseOperationTest extends BasePathBasedRuleTest {
+public abstract class BaseDatabaseOperationsMustUseWithSharingTest extends BasePathBasedRuleTest {
 
-    protected static final UseWithSharingOnDatabaseOperation RULE =
-            UseWithSharingOnDatabaseOperation.getInstance();
+    protected static final DatabaseOperationsMustUseWithSharing RULE =
+            DatabaseOperationsMustUseWithSharing.getInstance();
 
     protected static final String MY_CLASS = "MyClass";
 

@@ -1,4 +1,4 @@
-package com.salesforce.rules.usewithsharingondatabaseoperation;
+package com.salesforce.rules.databaseoperationsmustusewithsharing;
 
 import java.util.stream.Stream;
 import org.junit.jupiter.api.Test;
@@ -10,7 +10,7 @@ import org.junit.jupiter.params.provider.MethodSource;
  * tests MyClass instantiating and calling a method with a database operation method in Two, which
  * extends One. Also, a few misc. tests below.
  */
-public class SharingPolicyComplexInheritanceTest extends BaseUseWithSharingOnDatabaseOperationTest {
+public class SharingPolicyComplexInheritanceTest extends BaseDatabaseOperationsMustUseWithSharingTest {
 
     // spotless:off
     private static final String ONE_SOURCE =

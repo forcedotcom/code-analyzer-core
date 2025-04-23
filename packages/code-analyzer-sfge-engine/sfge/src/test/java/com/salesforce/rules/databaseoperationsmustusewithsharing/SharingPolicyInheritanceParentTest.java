@@ -1,4 +1,4 @@
-package com.salesforce.rules.usewithsharingondatabaseoperation;
+package com.salesforce.rules.databaseoperationsmustusewithsharing;
 
 import java.util.stream.Stream;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -6,7 +6,7 @@ import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 
 /** tests when MyClass containing a database operation extends ParentClass */
-public class SharingPolicyInheritanceParentTest extends BaseUseWithSharingOnDatabaseOperationTest {
+public class SharingPolicyInheritanceParentTest extends BaseDatabaseOperationsMustUseWithSharingTest {
 
     // spotless:off
     private static final String PARENT_CLASS_SOURCE =

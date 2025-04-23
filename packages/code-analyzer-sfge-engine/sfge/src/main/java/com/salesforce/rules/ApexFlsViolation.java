@@ -17,9 +17,9 @@ import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversalSo
  * FLS Violation rule that uses forward-path approach to detect missing FLS checks on CRUD
  * operations.
  */
-public final class ApexFlsViolationRule extends AbstractPathTraversalRule {
-    private static final Logger LOGGER = LogManager.getLogger(ApexFlsViolationRule.class);
-    // ApexFlsViolationRule only cares about sources that don't intrinsically respect CRUD/FLS.
+public final class ApexFlsViolation extends AbstractPathTraversalRule {
+    private static final Logger LOGGER = LogManager.getLogger(ApexFlsViolation.class);
+    // ApexFlsViolation only cares about sources that don't intrinsically respect CRUD/FLS.
     private static final ImmutableSet<Type> SOURCE_TYPES =
             ImmutableSet.of(
                     Type.ANNOTATION_AURA_ENABLED,
@@ -37,13 +37,13 @@ public final class ApexFlsViolationRule extends AbstractPathTraversalRule {
      * again.
      */
     static final String URL =
-            "https://developer.salesforce.com/docs/platform/salesforce-code-analyzer/guide/apexflsviolation-rule.html";
+            "https://developer.salesforce.com/docs/platform/salesforce-code-analyzer/guide/rules-sfge.html#apexflsviolation";
 
     private static final String DESCRIPTION =
             "Identifies data read/write operations that may not have CRUD/FLS";
     private final List<FlsRuleHandler> ruleHandlers;
 
-    private ApexFlsViolationRule() {
+    private ApexFlsViolation() {
         ruleHandlers =
                 ImmutableList.of(
                         ApexFlsReadRuleHandler.getInstance(),
@@ -119,12 +119,12 @@ public final class ApexFlsViolationRule extends AbstractPathTraversalRule {
         return ruleHandlers.stream().anyMatch(ruleHandler -> ruleHandler.test(vertex));
     }
 
-    public static ApexFlsViolationRule getInstance() {
+    public static ApexFlsViolation getInstance() {
         return LazyHolder.INSTANCE;
     }
 
     private static final class LazyHolder {
         // Postpone initialization until first use
-        private static final ApexFlsViolationRule INSTANCE = new ApexFlsViolationRule();
+        private static final ApexFlsViolation INSTANCE = new ApexFlsViolation();
     }
 }

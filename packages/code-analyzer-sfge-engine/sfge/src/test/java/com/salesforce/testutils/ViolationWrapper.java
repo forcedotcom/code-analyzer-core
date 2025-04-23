@@ -6,7 +6,7 @@ import com.salesforce.config.UserFacingMessages;
 import com.salesforce.exception.ProgrammingException;
 import com.salesforce.graph.ops.SoqlParserUtil;
 import com.salesforce.rules.AvoidMultipleMassSchemaLookups;
-import com.salesforce.rules.UseWithSharingOnDatabaseOperation;
+import com.salesforce.rules.DatabaseOperationsMustUseWithSharing;
 import com.salesforce.rules.avoiddatabaseoperationinloop.AvoidDatabaseOperationInLoopUtil;
 import com.salesforce.rules.fls.apex.operations.FlsConstants;
 import com.salesforce.rules.fls.apex.operations.FlsStripInaccessibleWarningInfo;
@@ -16,7 +16,7 @@ import com.salesforce.rules.fls.apex.operations.UnresolvedCrudFlsViolationInfo;
 import com.salesforce.rules.multiplemassschemalookup.MassSchemaLookupInfoUtil;
 import com.salesforce.rules.multiplemassschemalookup.MmslrUtil;
 import com.salesforce.rules.ops.OccurrenceInfo;
-import com.salesforce.rules.usewithsharingondatabaseoperation.SharingPolicyUtil;
+import com.salesforce.rules.databaseoperationsmustusewithsharing.SharingPolicyUtil;
 import java.util.*;
 import java.util.function.Function;
 
@@ -268,7 +268,7 @@ public class ViolationWrapper {
         }
     }
 
-    /** Message builder to help with testing {@link UseWithSharingOnDatabaseOperation}. */
+    /** Message builder to help with testing {@link DatabaseOperationsMustUseWithSharing}. */
     public static class SharingPolicyViolationBuilder extends ViolationBuilder {
         private final boolean warning;
         private final SharingPolicyUtil.InheritanceType inheritanceType;
@@ -331,7 +331,7 @@ public class ViolationWrapper {
         @Override
         public String getMessage() {
             return String.format(
-                    UserFacingMessages.PerformNullCheckOnSoqlVariablesTemplates.MESSAGE_TEMPLATE,
+                    UserFacingMessages.MissingNullCheckOnSoqlVariableTemplates.MESSAGE_TEMPLATE,
                     this.variableName);
         }
     }

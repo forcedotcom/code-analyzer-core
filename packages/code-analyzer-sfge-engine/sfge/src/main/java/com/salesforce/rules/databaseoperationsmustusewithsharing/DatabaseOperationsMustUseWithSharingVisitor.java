@@ -1,4 +1,4 @@
-package com.salesforce.rules.usewithsharingondatabaseoperation;
+package com.salesforce.rules.databaseoperationsmustusewithsharing;
 
 import com.salesforce.apex.jorje.ASTConstants;
 import com.salesforce.config.SfgeConfigProvider;
@@ -14,7 +14,7 @@ import com.salesforce.rules.ops.boundary.SharingPolicyBoundaryDetector;
 import java.util.HashSet;
 import java.util.Set;
 
-public class UseWithSharingOnDatabaseOperationVisitor extends DefaultNoOpPathVertexVisitor {
+public class DatabaseOperationsMustUseWithSharingVisitor extends DefaultNoOpPathVertexVisitor {
 
     /** record if warnings are enabled or disabled */
     private final boolean IS_WARNING_VIOLATION_DISABLED =
@@ -45,13 +45,13 @@ public class UseWithSharingOnDatabaseOperationVisitor extends DefaultNoOpPathVer
      * @param sinkVertex a vertex that is a database operation. See {@link
      *     DatabaseOperationUtil#isDatabaseOperation(BaseSFVertex)}
      */
-    UseWithSharingOnDatabaseOperationVisitor(
+    DatabaseOperationsMustUseWithSharingVisitor(
             SharingPolicyBoundaryDetector boundaryDetector,
             BaseSFVertex sourceVertex,
             BaseSFVertex sinkVertex) {
         if (!(DatabaseOperationUtil.isDatabaseOperation(sinkVertex))) {
             throw new ProgrammingException(
-                    "UseWithSharingOnDatabaseOperation Sink vertex must be a "
+                    "DatabaseOperationsMustUseWithSharing Sink vertex must be a "
                             + "MethodCallExpressionVertex in the Database class, DmlStatementVertex, or "
                             + "SoqlExpressionVertex. Provided sink vertex="
                             + sinkVertex);

@@ -1,4 +1,4 @@
-package com.salesforce.rules.usewithsharingondatabaseoperation;
+package com.salesforce.rules.databaseoperationsmustusewithsharing;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -9,7 +9,7 @@ import org.junit.jupiter.params.provider.MethodSource;
  * a subclass of the current class. Plus, a test to ensure warning messages correctly reference
  * subclasses.
  */
-public class SharingPolicySubclassesTest extends BaseUseWithSharingOnDatabaseOperationTest {
+public class SharingPolicySubclassesTest extends BaseDatabaseOperationsMustUseWithSharingTest {
 
     // spotless:off
     private static final String SUBCLASS_SOURCE =

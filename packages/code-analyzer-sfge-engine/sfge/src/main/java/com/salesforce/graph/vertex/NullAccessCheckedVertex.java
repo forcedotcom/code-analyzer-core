@@ -1,10 +1,12 @@
 package com.salesforce.graph.vertex;
 
+import com.salesforce.rules.ApexNullPointerException;
+
 /**
  * Interface to mark vertices that can have null-access check performed on them. At some point in
  * the analysis, they can have {@link com.salesforce.graph.ops.expander.NullValueAccessedException}
  * thrown if the value is known to be null. These null access checks are surfaced through {@link
- * com.salesforce.rules.ApexNullPointerExceptionRule}.
+ * ApexNullPointerException}.
  */
 public interface NullAccessCheckedVertex {
     /**

@@ -11,7 +11,7 @@ global class SomeClass {
         return [SELECT Name, CustomField__c FROM Account];
     }
 
-    // Abstract class with no subclasses will violate the UnimplementedTypeRule
+    // Abstract class with no subclasses will violate the UnimplementedType rule
     public abstract class SomeInnerClass {
         public abstract boolean getBool();
     }

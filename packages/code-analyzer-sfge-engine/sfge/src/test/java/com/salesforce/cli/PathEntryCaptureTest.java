@@ -7,7 +7,7 @@ import com.salesforce.TestUtil;
 import com.salesforce.graph.ops.GraphUtil;
 import com.salesforce.graph.vertex.MethodVertex;
 import com.salesforce.rules.AbstractPathBasedRule;
-import com.salesforce.rules.ApexFlsViolationRule;
+import com.salesforce.rules.ApexFlsViolation;
 import com.salesforce.rules.PathBasedRuleRunner;
 import java.nio.file.Path;
 import java.util.*;
@@ -90,7 +90,7 @@ public class PathEntryCaptureTest {
     private FilesToEntriesMap executePathBasedRuleRunner(String entryClass, String entryMethod) {
         MethodVertex methodVertex = TestUtil.getMethodVertex(g, entryClass, entryMethod);
         List<AbstractPathBasedRule> rules =
-                Collections.singletonList(ApexFlsViolationRule.getInstance());
+                Collections.singletonList(ApexFlsViolation.getInstance());
 
         // Define a PathBasedRuleRunner to apply the rule against the method vertex.
         PathBasedRuleRunner runner = new PathBasedRuleRunner(g, rules, methodVertex);

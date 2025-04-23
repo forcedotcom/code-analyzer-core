@@ -1,19 +1,19 @@
 package com.salesforce.rules.fls.apex;
 
 import com.salesforce.graph.ops.SoqlParserUtil;
-import com.salesforce.rules.ApexFlsViolationRule;
+import com.salesforce.rules.ApexFlsViolation;
 import com.salesforce.rules.fls.apex.operations.FlsConstants.FlsValidationType;
 import com.salesforce.testutils.BaseFlsTest;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 public class StripInaccessibleInsertFlsViolationTest extends BaseFlsTest {
-    private ApexFlsViolationRule rule;
+    private ApexFlsViolation rule;
 
     @BeforeEach
     public void setup() {
         super.setup();
-        this.rule = ApexFlsViolationRule.getInstance();
+        this.rule = ApexFlsViolation.getInstance();
     }
 
     @Test

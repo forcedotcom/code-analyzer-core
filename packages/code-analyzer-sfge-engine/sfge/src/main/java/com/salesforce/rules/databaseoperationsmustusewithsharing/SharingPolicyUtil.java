@@ -1,4 +1,4 @@
-package com.salesforce.rules.usewithsharingondatabaseoperation;
+package com.salesforce.rules.databaseoperationsmustusewithsharing;
 
 import com.salesforce.apex.jorje.ASTConstants;
 import com.salesforce.graph.vertex.UserClassVertex;

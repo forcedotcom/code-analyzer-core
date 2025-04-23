@@ -1,7 +1,7 @@
 package com.salesforce.rules.fls.apex;
 
 import com.salesforce.rules.AbstractPathBasedRule;
-import com.salesforce.rules.ApexFlsViolationRule;
+import com.salesforce.rules.ApexFlsViolation;
 import com.salesforce.testutils.BaseFlsTest;
 import java.util.stream.Stream;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -10,10 +10,10 @@ import org.junit.jupiter.params.provider.MethodSource;
 
 /**
  * Tests to verify that "as user" invocation on DML does not cause violations on
- * ApexFlsViolationRule.
+ * ApexFlsViolation.
  */
 public class DmlAsUserTest extends BaseFlsTest {
-    private static final AbstractPathBasedRule RULE = ApexFlsViolationRule.getInstance();
+    private static final AbstractPathBasedRule RULE = ApexFlsViolation.getInstance();
 
     public static Stream<Arguments> input() {
         return Stream.of(
@@ -27,7 +27,7 @@ public class DmlAsUserTest extends BaseFlsTest {
                         "Account a = new Account(Name = 'Acme Inc.');\n" + "insert %s a;\n"),
                 Arguments.of(
                         "Update",
-                        "/* sfge-disable-next-line ApexFlsViolationRule */\n"
+                        "/* sfge-disable-next-line ApexFlsViolation */\n"
                                 + "Account a = [SELECT Id, Name FROM Account];\n"
                                 + "a.Name = 'Acme Inc.';\n"
                                 + "update %s a;\n"),
@@ -42,7 +42,7 @@ public class DmlAsUserTest extends BaseFlsTest {
                                 + "merge %s a1 a2;\n"),
                 Arguments.of(
                         "Undelete",
-                        "/* sfge-disable-next-line ApexFlsViolationRule */\n"
+                        "/* sfge-disable-next-line ApexFlsViolation */\n"
                                 + "Account a = [SELECT Id, Name FROM Account WHERE Name = 'Acme Inc' ALL ROWS];\n"
                                 + "undelete %s a;\n"));
     }

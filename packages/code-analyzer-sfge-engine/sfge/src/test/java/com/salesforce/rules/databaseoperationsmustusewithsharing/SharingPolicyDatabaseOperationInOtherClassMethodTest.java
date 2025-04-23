@@ -1,4 +1,4 @@
-package com.salesforce.rules.usewithsharingondatabaseoperation;
+package com.salesforce.rules.databaseoperationsmustusewithsharing;
 
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
@@ -8,7 +8,7 @@ import org.junit.jupiter.params.provider.MethodSource;
  * operation.
  */
 public class SharingPolicyDatabaseOperationInOtherClassMethodTest
-        extends BaseUseWithSharingOnDatabaseOperationTest {
+        extends BaseDatabaseOperationsMustUseWithSharingTest {
     // spotless:off
     private static final String MAIN_CLASS =
         "public %s class " + MY_CLASS + " {\n" +

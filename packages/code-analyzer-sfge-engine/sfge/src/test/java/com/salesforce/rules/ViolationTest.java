@@ -32,7 +32,7 @@ public class ViolationTest {
         // Use the same vertex, rule, and message to instantiate two RuleViolations.
         final String message = "Some test message, this does not matter";
         final MethodVertex methodVertex = TestUtil.getMethodVertex(g, "MyClass", "foo");
-        final ApexFlsViolationRule rule = ApexFlsViolationRule.getInstance();
+        final ApexFlsViolation rule = ApexFlsViolation.getInstance();
 
         final Violation.RuleViolation violation1 =
                 new Violation.StaticRuleViolation(message, methodVertex);
@@ -70,7 +70,7 @@ public class ViolationTest {
 
         // Use the same vertex and rule to create two violations, but give them different messages.
         final MethodVertex methodVertex = TestUtil.getMethodVertex(g, "MyClass", "foo");
-        final ApexFlsViolationRule rule = ApexFlsViolationRule.getInstance();
+        final ApexFlsViolation rule = ApexFlsViolation.getInstance();
 
         final Violation.RuleViolation violation1 =
                 new Violation.StaticRuleViolation("Message one", methodVertex);
@@ -91,7 +91,7 @@ public class ViolationTest {
         // Use the same vertex and rule to create two violations. Make one static and one
         // path-based.
         final MethodVertex methodVertex = TestUtil.getMethodVertex(g, "MyClass", "foo");
-        final ApexFlsViolationRule rule = ApexFlsViolationRule.getInstance();
+        final ApexFlsViolation rule = ApexFlsViolation.getInstance();
 
         final Violation.RuleViolation staticViolation =
                 new Violation.StaticRuleViolation("Shared message", methodVertex);
@@ -115,7 +115,7 @@ public class ViolationTest {
         // Use the same source vertex and rule to create two path-based violations, but give them
         // different sink vertices.
         final MethodVertex methodVertex = TestUtil.getMethodVertex(g, "MyClass", "foo");
-        final ApexFlsViolationRule rule = ApexFlsViolationRule.getInstance();
+        final ApexFlsViolation rule = ApexFlsViolation.getInstance();
         SFVertex returnVertex =
                 TestUtil.getVertexOnLine(g, ASTConstants.NodeType.RETURN_STATEMENT, 3);
 
@@ -157,7 +157,7 @@ public class ViolationTest {
         // Use the same message and vertex to create a rule violation and a timeout violation.
         final MethodVertex methodVertex = TestUtil.getMethodVertex(g, "MyClass", "foo");
         final String message = "This message does not matter";
-        final ApexFlsViolationRule rule = ApexFlsViolationRule.getInstance();
+        final ApexFlsViolation rule = ApexFlsViolation.getInstance();
 
         final Violation.RuleViolation ruleViolation =
                 new Violation.StaticRuleViolation(message, methodVertex);
@@ -180,7 +180,7 @@ public class ViolationTest {
         // violation.
         final MethodVertex methodVertex = TestUtil.getMethodVertex(g, "MyClass", "foo");
         final String message = "This message does not matter";
-        final ApexFlsViolationRule rule = ApexFlsViolationRule.getInstance();
+        final ApexFlsViolation rule = ApexFlsViolation.getInstance();
 
         final Violation.RuleViolation ruleViolation =
                 new Violation.StaticRuleViolation(message, methodVertex);

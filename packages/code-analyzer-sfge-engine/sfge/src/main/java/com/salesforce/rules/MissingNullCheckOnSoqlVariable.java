@@ -17,16 +17,16 @@ import com.salesforce.graph.vertex.VariableExpressionVertex;
 import java.util.*;
 import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversalSource;
 
-public final class PerformNullCheckOnSoqlVariables extends AbstractPathTraversalRule {
+public final class MissingNullCheckOnSoqlVariable extends AbstractPathTraversalRule {
 
     private static final ImmutableSet<ApexPathSource.Type> SOURCE_TYPES =
             ImmutableSet.copyOf(ApexPathSource.Type.values());
 
     private static final String URL =
-            "https://developer.salesforce.com/docs/platform/salesforce-code-analyzer/guide/performnullcheckonsoqlvariables-rule.html";
+            "https://developer.salesforce.com/docs/platform/salesforce-code-analyzer/guide/rules-sfge.html#missingnullcheckonsoqlvariable";
 
     // don't instantiate
-    private PerformNullCheckOnSoqlVariables() {}
+    private MissingNullCheckOnSoqlVariable() {}
 
     @Override
     public ImmutableSet<ApexPathSource.Type> getSourceTypes() {
@@ -53,7 +53,7 @@ public final class PerformNullCheckOnSoqlVariables extends AbstractPathTraversal
         return URL;
     }
 
-    public static PerformNullCheckOnSoqlVariables getInstance() {
+    public static MissingNullCheckOnSoqlVariable getInstance() {
         return LazyHolder.INSTANCE;
     }
 
@@ -107,7 +107,7 @@ public final class PerformNullCheckOnSoqlVariables extends AbstractPathTraversal
 
         } else {
             throw new UnexpectedException(
-                    "PerformNullCheckOnSoqlVariables couldn't find an apex value associated with variable vertex "
+                    "MissingNullCheckOnSoqlVariable couldn't find an apex value associated with variable vertex "
                             + vertex);
         }
         return false;
@@ -118,7 +118,7 @@ public final class PerformNullCheckOnSoqlVariables extends AbstractPathTraversal
             GraphTraversalSource g, ApexPath path, BaseSFVertex sinkVertex) {
         if (!(sinkVertex instanceof VariableExpressionVertex)) {
             throw new ProgrammingException(
-                    "PerformNullCheckOnSoqlVariables rule can only be applied to VariableExpressionVertex sink vertex. Provided sink vertex="
+                    "MissingNullCheckOnSoqlVariable rule can only be applied to VariableExpressionVertex sink vertex. Provided sink vertex="
                             + sinkVertex);
         }
 
@@ -131,7 +131,7 @@ public final class PerformNullCheckOnSoqlVariables extends AbstractPathTraversal
         return Collections.singletonList(
                 new Violation.PathBasedRuleViolation(
                         String.format(
-                                UserFacingMessages.PerformNullCheckOnSoqlVariablesTemplates
+                                UserFacingMessages.MissingNullCheckOnSoqlVariableTemplates
                                         .MESSAGE_TEMPLATE,
                                 vertex.getFullName()),
                         sourceVertex,
@@ -141,7 +141,7 @@ public final class PerformNullCheckOnSoqlVariables extends AbstractPathTraversal
     // lazy holder
     private static final class LazyHolder {
         // postpone initialization until after first use
-        private static final PerformNullCheckOnSoqlVariables INSTANCE =
-                new PerformNullCheckOnSoqlVariables();
+        private static final MissingNullCheckOnSoqlVariable INSTANCE =
+                new MissingNullCheckOnSoqlVariable();
     }
 }

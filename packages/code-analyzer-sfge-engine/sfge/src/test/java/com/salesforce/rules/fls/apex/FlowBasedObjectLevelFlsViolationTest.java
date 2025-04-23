@@ -5,7 +5,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import com.salesforce.TestUtil;
 import com.salesforce.rules.AbstractPathBasedRule;
-import com.salesforce.rules.ApexFlsViolationRule;
+import com.salesforce.rules.ApexFlsViolation;
 import com.salesforce.rules.fls.apex.operations.FlsConstants.AnalysisLevel;
 import com.salesforce.rules.fls.apex.operations.FlsConstants.FlsValidationType;
 import com.salesforce.testutils.BaseFlsTest;
@@ -21,7 +21,7 @@ public class FlowBasedObjectLevelFlsViolationTest extends BaseFlsTest {
         return Stream.of(
                 getArguments(
                         "DELETE",
-                        ApexFlsViolationRule.getInstance(),
+                        ApexFlsViolation.getInstance(),
                         FlsValidationType.DELETE,
                         "Account a = new Account(Id = '001abc000000001', Name = 'Acme Inc.');\n"
                                 + "delete a;\n",
@@ -29,7 +29,7 @@ public class FlowBasedObjectLevelFlsViolationTest extends BaseFlsTest {
                                 + "delete c;\n"),
                 getArguments(
                         "MERGE",
-                        ApexFlsViolationRule.getInstance(),
+                        ApexFlsViolation.getInstance(),
                         FlsValidationType.MERGE,
                         "Account a1 = new Account(Name = 'Acme Inc.');\n"
                                 + "Account a2 = new Account(Name = 'Acme');\n"
@@ -39,12 +39,12 @@ public class FlowBasedObjectLevelFlsViolationTest extends BaseFlsTest {
                                 + "merge c1 c2;\n"),
                 getArguments(
                         "UNDELETE",
-                        ApexFlsViolationRule.getInstance(),
+                        ApexFlsViolation.getInstance(),
                         FlsValidationType.UNDELETE,
-                        "/* sfge-disable-next-line ApexFlsViolationRule */\n"
+                        "/* sfge-disable-next-line ApexFlsViolation */\n"
                                 + "Account a = [SELECT Id, Name FROM Account WHERE Name = 'Acme Inc' ALL ROWS];\n"
                                 + "undelete a;\n",
-                        "/* sfge-disable-next-line ApexFlsViolationRule */\n"
+                        "/* sfge-disable-next-line ApexFlsViolation */\n"
                                 + "Contact c = [SELECT Id, FirstName FROM Contact WHERE FirstName = 'Foo' ALL ROWS];\n"
                                 + "undelete c;\n"));
     }

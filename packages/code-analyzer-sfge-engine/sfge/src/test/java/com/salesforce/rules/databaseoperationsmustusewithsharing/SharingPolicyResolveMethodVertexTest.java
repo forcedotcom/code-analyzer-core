@@ -1,4 +1,4 @@
-package com.salesforce.rules.usewithsharingondatabaseoperation;
+package com.salesforce.rules.databaseoperationsmustusewithsharing;
 
 import org.junit.jupiter.api.Test;
 
@@ -7,7 +7,7 @@ import org.junit.jupiter.api.Test;
  * UserClass vertex) with different types of syntax.
  */
 public class SharingPolicyResolveMethodVertexTest
-        extends BaseUseWithSharingOnDatabaseOperationTest {
+        extends BaseDatabaseOperationsMustUseWithSharingTest {
 
     @Test
     public void testPaths() {

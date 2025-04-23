@@ -6,23 +6,24 @@ import com.salesforce.graph.ApexPath;
 import com.salesforce.graph.source.ApexPathSource;
 import com.salesforce.graph.symbols.SymbolProvider;
 import com.salesforce.graph.vertex.BaseSFVertex;
-import com.salesforce.rules.usewithsharingondatabaseoperation.UseWithSharingOnDatabaseOperationHandler;
+import com.salesforce.rules.databaseoperationsmustusewithsharing.DatabaseOperationsMustUseWithSharingHandler;
+
 import java.util.ArrayList;
 import java.util.List;
 import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversalSource;
 
-public final class UseWithSharingOnDatabaseOperation extends AbstractPathTraversalRule {
+public final class DatabaseOperationsMustUseWithSharing extends AbstractPathTraversalRule {
 
     private static final String URL =
-            "https://developer.salesforce.com/docs/platform/salesforce-code-analyzer/guide/usewithsharingondatabaseoperation-rule.html";
+            "https://developer.salesforce.com/docs/platform/salesforce-code-analyzer/guide/rules-sfge.html#databaseoperationsmustusewithsharing";
 
     private static final ImmutableSet<ApexPathSource.Type> SOURCE_TYPES =
             ImmutableSet.copyOf(ApexPathSource.Type.values());
 
-    private final UseWithSharingOnDatabaseOperationHandler ruleHandler;
+    private final DatabaseOperationsMustUseWithSharingHandler ruleHandler;
 
-    private UseWithSharingOnDatabaseOperation() {
-        ruleHandler = UseWithSharingOnDatabaseOperationHandler.getInstance();
+    private DatabaseOperationsMustUseWithSharing() {
+        ruleHandler = DatabaseOperationsMustUseWithSharingHandler.getInstance();
     }
 
     @Override
@@ -74,13 +75,13 @@ public final class UseWithSharingOnDatabaseOperation extends AbstractPathTravers
 
     // lazy holder
 
-    public static UseWithSharingOnDatabaseOperation getInstance() {
-        return UseWithSharingOnDatabaseOperation.LazyHolder.INSTANCE;
+    public static DatabaseOperationsMustUseWithSharing getInstance() {
+        return DatabaseOperationsMustUseWithSharing.LazyHolder.INSTANCE;
     }
 
     private static final class LazyHolder {
         // postpone initialization until after first use
-        private static final UseWithSharingOnDatabaseOperation INSTANCE =
-                new UseWithSharingOnDatabaseOperation();
+        private static final DatabaseOperationsMustUseWithSharing INSTANCE =
+                new DatabaseOperationsMustUseWithSharing();
     }
 }

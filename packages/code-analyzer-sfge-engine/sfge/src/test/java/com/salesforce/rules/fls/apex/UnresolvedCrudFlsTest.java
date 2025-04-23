@@ -1,6 +1,6 @@
 package com.salesforce.rules.fls.apex;
 
-import com.salesforce.rules.ApexFlsViolationRule;
+import com.salesforce.rules.ApexFlsViolation;
 import com.salesforce.rules.fls.apex.operations.FlsConstants;
 import com.salesforce.testutils.BaseFlsTest;
 import org.junit.jupiter.api.Test;
@@ -22,7 +22,7 @@ public class UnresolvedCrudFlsTest extends BaseFlsTest {
                         + "}\n";
 
         assertViolations(
-                ApexFlsViolationRule.getInstance(),
+                ApexFlsViolation.getInstance(),
                 sourceCode,
                 expect(3, FlsConstants.FlsValidationType.READ, "Account").withField("Name"));
     }
@@ -49,7 +49,7 @@ public class UnresolvedCrudFlsTest extends BaseFlsTest {
         };
 
         assertViolations(
-                ApexFlsViolationRule.getInstance(),
+                ApexFlsViolation.getInstance(),
                 sourceCode,
                 expect(3, FlsConstants.FlsValidationType.READ, "Account").withField("Name"));
     }
@@ -69,7 +69,7 @@ public class UnresolvedCrudFlsTest extends BaseFlsTest {
                         + "}\n";
 
         assertViolations(
-                ApexFlsViolationRule.getInstance(),
+                ApexFlsViolation.getInstance(),
                 sourceCode,
                 expect(3, FlsConstants.FlsValidationType.INSERT, "Account").withField("Name"));
     }
@@ -95,7 +95,7 @@ public class UnresolvedCrudFlsTest extends BaseFlsTest {
         };
 
         assertViolations(
-                ApexFlsViolationRule.getInstance(),
+                ApexFlsViolation.getInstance(),
                 sourceCode,
                 expect(3, FlsConstants.FlsValidationType.INSERT, "Account").withField("Name"));
     }
@@ -116,7 +116,7 @@ public class UnresolvedCrudFlsTest extends BaseFlsTest {
                         + "}\n";
 
         assertViolations(
-                ApexFlsViolationRule.getInstance(),
+                ApexFlsViolation.getInstance(),
                 sourceCode,
                 expectUnresolvedCrudFls(3, validationType));
     }
@@ -134,7 +134,7 @@ public class UnresolvedCrudFlsTest extends BaseFlsTest {
                         + "}\n";
 
         assertViolations(
-                ApexFlsViolationRule.getInstance(),
+                ApexFlsViolation.getInstance(),
                 sourceCode,
                 expectUnresolvedCrudFls(3, FlsConstants.FlsValidationType.READ));
     }
@@ -150,7 +150,7 @@ public class UnresolvedCrudFlsTest extends BaseFlsTest {
                         + "}\n";
 
         assertViolations(
-                ApexFlsViolationRule.getInstance(),
+                ApexFlsViolation.getInstance(),
                 sourceCode,
                 expect(4, FlsConstants.FlsValidationType.UPDATE, "Custom_Field__c"));
     }
@@ -166,7 +166,7 @@ public class UnresolvedCrudFlsTest extends BaseFlsTest {
                         + "}\n";
 
         assertViolations(
-                ApexFlsViolationRule.getInstance(),
+                ApexFlsViolation.getInstance(),
                 sourceCode,
                 expectUnresolvedCrudFls(4, FlsConstants.FlsValidationType.UPDATE));
     }
@@ -176,7 +176,7 @@ public class UnresolvedCrudFlsTest extends BaseFlsTest {
         String sourceCode =
                 "public class MyClass {\n"
                         + "   public void foo() {\n"
-                        + "       /* sfge-disable-next-line ApexFlsViolationRule */\n"
+                        + "       /* sfge-disable-next-line ApexFlsViolation */\n"
                         + "       List<SObject> accounts = [SELECT Id, Name FROM Account WHERE Type='something'];\n"
                         + "       Map<String, List<SObject>> listByType = new Map<String, List<SObject>>();\n"
                         + "       listByType.put('Account', accounts);\n"
@@ -185,7 +185,7 @@ public class UnresolvedCrudFlsTest extends BaseFlsTest {
                         + "}\n";
 
         assertViolations(
-                ApexFlsViolationRule.getInstance(),
+                ApexFlsViolation.getInstance(),
                 sourceCode,
                 expect(7, FlsConstants.FlsValidationType.DELETE, "Account"));
     }
@@ -200,7 +200,7 @@ public class UnresolvedCrudFlsTest extends BaseFlsTest {
                         + "}\n";
 
         assertViolations(
-                ApexFlsViolationRule.getInstance(),
+                ApexFlsViolation.getInstance(),
                 sourceCode,
                 expect(3, FlsConstants.FlsValidationType.DELETE, "SObject"));
     }
@@ -215,7 +215,7 @@ public class UnresolvedCrudFlsTest extends BaseFlsTest {
                         + "}\n";
 
         assertViolations(
-                ApexFlsViolationRule.getInstance(),
+                ApexFlsViolation.getInstance(),
                 sourceCode,
                 expect(3, FlsConstants.FlsValidationType.DELETE, "SObject"));
     }

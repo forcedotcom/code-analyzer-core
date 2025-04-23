@@ -17,7 +17,7 @@ public final class AvoidDatabaseOperationInLoop extends AbstractPathTraversalRul
             ImmutableSet.copyOf(ApexPathSource.Type.values());
 
     private static final String URL =
-            "https://developer.salesforce.com/docs/platform/salesforce-code-analyzer/guide/avoiddatabaseoperationinloop-rule.html";
+            "https://developer.salesforce.com/docs/platform/salesforce-code-analyzer/guide/rules-sfge.html#avoiddatabaseoperationinloop";
 
     private final AvoidDatabaseOperationInLoopHandler ruleHandler;
 

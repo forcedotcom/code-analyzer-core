@@ -8,7 +8,7 @@ import com.salesforce.TestUtil;
 import com.salesforce.graph.MetadataInfo;
 import com.salesforce.graph.MetadataInfoProvider;
 import com.salesforce.graph.ops.GraphUtil;
-import com.salesforce.rules.ApexFlsViolationRule;
+import com.salesforce.rules.ApexFlsViolation;
 import com.salesforce.rules.Violation;
 import com.salesforce.rules.fls.apex.operations.FlsConstants;
 
@@ -137,12 +137,12 @@ public class CustomSettingsInfoCollectorTest {
                         + "}\n"
             };
 
-            // Execute ApexFlsViolationRule rule on the source code
+            // Execute ApexFlsViolation rule on the source code
             final List<Violation> violations =
                     TestUtil.getViolations(
                             g,
                             sourceCode,
-                            ApexFlsViolationRule.getInstance(),
+                            ApexFlsViolation.getInstance(),
                             "MyClass",
                             "foo",
                             false);
