@@ -3,7 +3,8 @@ import fs from 'node:fs';
 import {
     getMessageFromCatalog,
     LogLevel,
-    SHARED_MESSAGE_CATALOG
+    SHARED_MESSAGE_CATALOG,
+    TelemetryData
 } from '@salesforce/code-analyzer-engine-api';
 import {createTempDir, JavaCommandExecutor} from '@salesforce/code-analyzer-engine-api/utils';
 import {getMessage} from "./messages";
@@ -75,11 +76,18 @@ export class RuntimeSfgeWrapper {
     private readonly logFileName: string;
     private temporaryWorkingDir?: string;
     private readonly emitLogEvent: (logLeveL: LogLevel, message: string) => void;
+    private readonly emitTelemetryEvent: (eventName: string, data: TelemetryData) => void;
 
-    public constructor(javaCommandExecutor: JavaCommandExecutor, clock: Clock, emitLogEvent: (logLevel: LogLevel, message: string) => void) {
+    public constructor(
+        javaCommandExecutor: JavaCommandExecutor,
+        clock: Clock,
+        emitLogEvent: (logLevel: LogLevel, message: string) => void,
+        emitTelemetryEvent: (eventName: string, data: TelemetryData) => void
+    ) {
         this.javaCommandExecutor = javaCommandExecutor;
         this.logFileName = `sfca-sfge-${formatToDateTimeString(clock.now())}.log`;
         this.emitLogEvent = emitLogEvent;
+        this.emitTelemetryEvent = emitTelemetryEvent;
     }
 
     public async invokeDescribeCommand(emitProgress: (percComplete: number) => void, logFolder: string): Promise<SfgeRuleInfo[]> {
@@ -136,7 +144,7 @@ export class RuntimeSfgeWrapper {
         const javaClassPaths: string[] = [path.join(SFGE_WRAPPER_LIB_FOLDER, '*')];
 
         try {
-            await this.javaCommandExecutor.exec(javaCmdArgs, javaClassPaths, (stdOutMsg) => handleRunStdOut(stdOutMsg, this.emitLogEvent, emitProgress));
+            await this.javaCommandExecutor.exec(javaCmdArgs, javaClassPaths, (stdOutMsg) => handleRunStdOut(stdOutMsg, this.emitLogEvent, emitProgress, this.emitTelemetryEvent));
         } catch (err) {
             const errMsg: string = err instanceof Error ? err.message : /* istanbul ignore next */ String(err);
             const processedErrMsg: string = processMessageFromFailedRun(errMsg);
@@ -179,7 +187,12 @@ export class RuntimeSfgeWrapper {
     }
 }
 
-function handleRunStdOut(stdOutMsg: string, emitLog: (logLevel: LogLevel, msg: string) => void, emitProgress: (percComplete: number, msg?: string) => void): void {
+function handleRunStdOut(
+    stdOutMsg: string,
+    emitLog: (logLevel: LogLevel, msg: string) => void,
+    emitProgress: (percComplete: number, msg?: string) => void,
+    emitTelemetry: (eventName: string, data: TelemetryData) => void
+): void {
     if (stdOutMsg.startsWith(SFCA_REALTIME_START) && stdOutMsg.endsWith(SFCA_REALTIME_END)) {
         const sfgeMessages: SfgeMessage[] = JSON.parse(stdOutMsg.slice(
             SFCA_REALTIME_START.length,
@@ -188,7 +201,8 @@ function handleRunStdOut(stdOutMsg: string, emitLog: (logLevel: LogLevel, msg: s
         for (const sfgeMessage of sfgeMessages) {
             if (isSfgeLogMessage(sfgeMessage)) {
                 if (sfgeMessage.messageSeverity === 'TELEMETRY') {
-                    // TODO: TELEMETRY
+                    const telemetryData: TelemetryData = JSON.parse(sfgeMessage.args[0]) as TelemetryData;
+                    emitTelemetry(telemetryData.eventName as string, telemetryData);
                 } else {
                     const processedMessage = getMessage(sfgeMessage.messageKey, ...sfgeMessage.args);
                     emitLog(sfgeLogLevelToSfcaLogLevel(sfgeMessage.messageSeverity), processedMessage);

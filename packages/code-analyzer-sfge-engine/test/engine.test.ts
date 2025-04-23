@@ -11,6 +11,7 @@ import {
     RuleDescription,
     RunOptions,
     RunRulesProgressEvent,
+    TelemetryEvent,
     Workspace
 } from "@salesforce/code-analyzer-engine-api";
 import {DEFAULT_SFGE_ENGINE_CONFIG, SfgeEngineConfig} from "../src/config";
@@ -347,12 +348,12 @@ describe('SfgeEngine', () => {
 
         it('InternalErrorViolations are thrown as non-fatal errors', async () => {
             // ====== SETUP ======
-            const configWithLowTimeout: SfgeEngineConfig = JSON.parse(JSON.stringify(DEFAULT_SFGE_ENGINE_CONFIG)) as SfgeEngineConfig;
-            configWithLowTimeout.java_thread_timeout = 3; // Set the timeout to an extremely low value, to increase the likelihood of getting a timeout.
-            const engine: SfgeEngine = new SfgeEngine(configWithLowTimeout, fixedClock);
-            const workspace: Workspace = new Workspace('id', [path.join(TEST_DATA_FOLDER, 'sampleRelevantWorkspace')]);
+            const engine: SfgeEngine = new SfgeEngine(DEFAULT_SFGE_ENGINE_CONFIG, fixedClock);
+            const workspace: Workspace = new Workspace('id', [path.join(TEST_DATA_FOLDER, 'sampleUnhandledWorkspace')]);
             const logEvents: LogEvent[] = [];
+            const telemetryEvents: TelemetryEvent[] = [];
             engine.onEvent(EventType.LogEvent, (e: LogEvent) => logEvents.push(e));
+            engine.onEvent(EventType.TelemetryEvent, (e: TelemetryEvent) => telemetryEvents.push(e));
             const ruleNames: string[] = ['ApexFlsViolationRule'];
 
             // ====== TESTED BEHAVIOR ======
@@ -362,7 +363,10 @@ describe('SfgeEngine', () => {
             expect(results.violations).toHaveLength(0);
             const errorLogEvents: LogEvent[] = logEvents.filter(e => e.logLevel === LogLevel.Error);
             expect(errorLogEvents.length).toBeGreaterThanOrEqual(1);
-            expect(errorLogEvents[0].message).toEqual(`Internal execution error while scanning entry point: ${path.join(__dirname, 'test-data', 'sampleRelevantWorkspace', 'SomeClass.cls')}:5:24: Path evaluation timed out after 3 ms`);
+            expect(errorLogEvents[0].message).toContain(`Internal execution error while scanning entry point: ${path.join(__dirname, 'test-data', 'sampleUnhandledWorkspace', 'MyStringHelper.cls')}:8:27: Graph Engine identified your source and sink`);
+            // While we're here, check that the internal execution error caused a telemetry event to be sent.
+            expect(telemetryEvents).toHaveLength(1);
+            expect(telemetryEvents[0].data.message).toContain('FieldDeclarationStatements');
         });
     });
 })
