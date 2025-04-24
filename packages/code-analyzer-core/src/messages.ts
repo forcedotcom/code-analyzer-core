@@ -18,11 +18,11 @@ const MESSAGE_CATALOG : MessageCatalog = {
     ConfigFieldDescription_log_level:
         `Level at which to log messages to log files.\n` +
         `Possible values are:\n` +
-        `  - 1 or 'Error' - Includes only error messages in the log.\n` +
-        `  - 2 or 'Warn' - Includes warning and error messages in the log.\n` +
-        `  - 3 or 'Info' - Includes informative, warning, and error messages in the log.\n` +
-        `  - 4 or 'Debug' - Includes debug, informative, warning, and error messages in the log.\n` +
-        `  - 5 or 'Fine' - Includes fine detail, debug, informative, warning, and error messages in the log.\n` +
+        `  1 or 'Error' - Includes only error messages in the log.\n` +
+        `  2 or 'Warn' - Includes warning and error messages in the log.\n` +
+        `  3 or 'Info' - Includes informative, warning, and error messages in the log.\n` +
+        `  4 or 'Debug' - Includes debug, informative, warning, and error messages in the log.\n` +
+        `  5 or 'Fine' - Includes fine detail, debug, informative, warning, and error messages in the log.\n` +
         `If unspecified, or if specified as null, then the 'Debug' log level will be used.`,
 
     ConfigFieldDescription_rules:

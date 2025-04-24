@@ -1,53 +1,77 @@
 export {
-    ConfigDescription,
-    ConfigFieldDescription,
-    ConfigObject,
-    ConfigValue,
     ConfigValueExtractor,
     getValueUsingCaseInsensitiveKey,
     ValueValidator
 } from "./config"
 
+export type {
+    ConfigDescription,
+    ConfigFieldDescription,
+    ConfigObject,
+    ConfigValue
+} from "./config"
+
+
 export {
-    EnginePlugin,
     EnginePluginV1,
     ENGINE_API_VERSION
 } from "./engine-plugins"
 
+export type {
+    EnginePlugin
+} from "./engine-plugins"
+
+
 export {
+    Engine
+} from "./engines"
+
+export type {
     DescribeOptions,
-    Engine,
     RunOptions
 } from "./engines"
 
+
 export {
+    EventType, LogLevel
+} from "./events"
+
+export type {
     DescribeRulesProgressEvent,
     Event,
-    EventType,
     LogEvent,
-    LogLevel,
     RunRulesProgressEvent,
     TelemetryData,
     TelemetryEvent
 } from "./events"
 
+
 export {
-    MessageCatalog,
     getMessageFromCatalog,
     SHARED_MESSAGE_CATALOG
 } from "./messages"
 
-export {
+export type {
+    MessageCatalog
+} from "./messages"
+
+
+export type {
     CodeLocation,
     EngineRunResults,
     Violation
 } from "./results"
 
+
 export {
     COMMON_TAGS,
-    RuleDescription,
     SeverityLevel
 } from "./rules"
+
+export type {
+    RuleDescription
+} from "./rules"
+
 
 export {
     Workspace
