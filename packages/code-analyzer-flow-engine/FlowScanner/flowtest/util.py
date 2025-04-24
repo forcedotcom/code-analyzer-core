@@ -51,7 +51,8 @@ def get_flows_in_dir(root_dir: str) -> {str: str}:
     for root, dir_names, filenames in os.walk(root_dir):
         for filename in filenames:
             if filename.endswith(".flow") or filename.endswith(".flow-meta.xml"):
-                flow_paths[get_label(root, filename)] = os.path.join(root, filename)
+                f_path = os.path.join(root, filename)
+                flow_paths[get_label(root, filename)] = f_path
 
     return flow_paths
 
@@ -129,8 +130,14 @@ def get_label(root: str, filename: str) -> (str, str):
         short_fname = filename
 
     local_label = short_fname.split('-')[0]
-    parent_dirname = pathlib.PurePath(root).name
-    namespaced_label = f"{parent_dirname}__{local_label}"
+    full_parent_dirname = os.path.split(os.path.abspath(root))[0]
+    parent_dirname = os.path.split(full_parent_dirname)[-1]
+    if parent_dirname is not None and len(parent_dirname) > 0 and parent_dirname != 'flows':
+        # This works when scanning core flows
+        namespaced_label = f"{parent_dirname}__{local_label}"
+    else:
+        # TODO: get namespace from manifest file
+        namespaced_label = local_label
     return namespaced_label, local_label
 
 

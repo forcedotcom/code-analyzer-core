@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Flow xmlns="http://soap.sforce.com/2006/04/metadata">
+    <apiVersion>58.0</apiVersion>
+    <assignments>
+        <name>assign_enter_to_output</name>
+        <label>assign enter to output</label>
+        <locationX>393</locationX>
+        <locationY>564</locationY>
+        <assignmentItems>
+            <assignToReference>output_var1</assignToReference>
+            <operator>Assign</operator>
+            <value>
+                <elementReference>enter_text_subflow</elementReference>
+            </value>
+        </assignmentItems>
+    </assignments>
+    <description>flow called from parent</description>
+    <environments>Default</environments>
+    <interviewLabel>child_with_source {!$Flow.CurrentDateTime}</interviewLabel>
+    <label>child_with_source</label>
+    <processType>Flow</processType>
+    <runInMode>DefaultMode</runInMode>
+    <screens>
+        <description>enter text in subflow</description>
+        <name>enter_in_subflow</name>
+        <label>enter in subflow</label>
+        <locationX>618</locationX>
+        <locationY>403</locationY>
+        <allowBack>true</allowBack>
+        <allowFinish>true</allowFinish>
+        <allowPause>true</allowPause>
+        <connector>
+            <targetReference>assign_enter_to_output</targetReference>
+        </connector>
+        <fields>
+            <name>enter_text_subflow</name>
+            <dataType>String</dataType>
+            <fieldText>enter_text_subflow</fieldText>
+            <fieldType>InputField</fieldType>
+            <isRequired>false</isRequired>
+        </fields>
+        <showFooter>true</showFooter>
+        <showHeader>true</showHeader>
+    </screens>
+    <start>
+        <locationX>491</locationX>
+        <locationY>48</locationY>
+        <connector>
+            <targetReference>enter_in_subflow</targetReference>
+        </connector>
+    </start>
+    <status>Draft</status>
+    <variables>
+        <name>output_var1</name>
+        <dataType>String</dataType>
+        <isCollection>false</isCollection>
+        <isInput>false</isInput>
+        <isOutput>true</isOutput>
+    </variables>
+</Flow>

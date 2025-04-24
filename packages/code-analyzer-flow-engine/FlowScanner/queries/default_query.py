@@ -260,7 +260,8 @@ class DefaultQueryProcessor(QueryProcessor):
                                                            f" in run mode {run_mode.name}",
                                                    line_no=current_elem.sourceline,
                                                    source_text=parse_utils.ET.tostring(current_elem, encoding='unicode'),
-                                                   flow_path=flow_path
+                                                   flow_path=flow_path,
+                                                   source_path=flow_path
                                                    )
                 to_return.append(QueryResult(query_id=query_id,
                                              influence_statement=sink_stmt,

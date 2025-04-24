@@ -588,6 +588,7 @@ def _get_value(el: ET.Element) -> str:
             return child.text
         else:
             return STRING_LITERAL_TOKEN
+    return None
 
 
 def get_subflow_output_map(subflow: ET.Element):
