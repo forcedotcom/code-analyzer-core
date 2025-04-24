@@ -18,10 +18,34 @@ export enum EventType {
  * Enum of Log Levels
  */
 export enum LogLevel {
+    /**
+     * Level where error messages are included in the log.
+     * At this level no other messages are included in the log.
+     */
     Error = 1,
+
+    /**
+     * Level where warning messages are included in the log.
+     * Additionally, at this level error messages are also included in the log.
+     */
     Warn = 2,
+
+    /**
+     * Level where informative messages are included in the log.
+     * Additionally, at this level warning and error messages are also included in the log.
+     */
     Info = 3,
+
+    /**
+     * Level where debug messages, which give users additional context, are included in the log.
+     * Additionally, at this level informative, warning, and error messages are also included in the log.
+     */
     Debug = 4,
+
+    /**
+     * Level at which fine detail messages, for internal Salesforce developers to help troubleshoot issues, are included in the log.
+     * Additionally, at this level debug, informative, warning, and error messages are also included in the log.
+     */
     Fine = 5
 }
 

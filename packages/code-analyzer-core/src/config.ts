@@ -6,11 +6,13 @@ import * as yaml from 'js-yaml';
 import {getMessage} from "./messages";
 import {deepEquals, toAbsolutePath} from "./utils"
 import {SeverityLevel} from "./rules";
+import {LogLevel} from "./events";
 
 // Only exported internally to share across files
 export const FIELDS = {
     CONFIG_ROOT: 'config_root',
     LOG_FOLDER: 'log_folder',
+    LOG_LEVEL: 'log_level',
     CUSTOM_ENGINE_PLUGIN_MODULES: 'custom_engine_plugin_modules', // Hidden
     RULES: 'rules',
     ENGINES: 'engines',
@@ -36,6 +38,7 @@ export type RuleOverride = {
 type TopLevelConfig = {
     config_root: string
     log_folder: string
+    log_level: LogLevel
     rules: Record<string, RuleOverrides>
     engines: Record<string, EngineOverrides>
     custom_engine_plugin_modules: string[] // INTERNAL USE ONLY
@@ -45,6 +48,7 @@ type TopLevelConfig = {
 export const DEFAULT_CONFIG: TopLevelConfig = {
     config_root: process.cwd(),
     log_folder: os.tmpdir(),
+    log_level: LogLevel.Debug,
     rules: {},
     engines: {},
     custom_engine_plugin_modules: [], // INTERNAL USE ONLY
@@ -133,10 +137,11 @@ export class CodeAnalyzerConfig {
             validateAbsoluteFolder(rawConfig.config_root, FIELDS.CONFIG_ROOT);
         const configExtractor: engApi.ConfigValueExtractor = new engApi.ConfigValueExtractor(rawConfig, '', configRoot);
         configExtractor.addKeysThatBypassValidation([FIELDS.CUSTOM_ENGINE_PLUGIN_MODULES]); // Because custom_engine_plugin_modules is currently hidden
-        configExtractor.validateContainsOnlySpecifiedKeys([FIELDS.CONFIG_ROOT, FIELDS.LOG_FOLDER ,FIELDS.RULES, FIELDS.ENGINES]);
+        configExtractor.validateContainsOnlySpecifiedKeys([FIELDS.CONFIG_ROOT, FIELDS.LOG_FOLDER, FIELDS.LOG_LEVEL ,FIELDS.RULES, FIELDS.ENGINES]);
         const config: TopLevelConfig = {
             config_root: configRoot,
             log_folder: configExtractor.extractFolder(FIELDS.LOG_FOLDER, DEFAULT_CONFIG.log_folder)!,
+            log_level: extractLogLevel(configExtractor),
             custom_engine_plugin_modules: configExtractor.extractArray(FIELDS.CUSTOM_ENGINE_PLUGIN_MODULES,
                 engApi.ValueValidator.validateString,
                 DEFAULT_CONFIG.custom_engine_plugin_modules)!,
@@ -165,6 +170,12 @@ export class CodeAnalyzerConfig {
                     defaultValue: null, // Using null for doc and since it indicates that the value is calculated based on the environment
                     wasSuppliedByUser: this.config.log_folder !== DEFAULT_CONFIG.log_folder
                 },
+                log_level: {
+                    descriptionText: getMessage('ConfigFieldDescription_log_level'),
+                    valueType: 'number',
+                    defaultValue: LogLevel.Debug,
+                    wasSuppliedByUser: this.config.log_level !== DEFAULT_CONFIG.log_level
+                },
                 rules: {
                     descriptionText: getMessage('ConfigFieldDescription_rules'),
                     valueType: 'object',
@@ -191,6 +202,13 @@ export class CodeAnalyzerConfig {
      */
     public getLogFolder(): string {
         return this.config.log_folder;
+    }
+
+    /**
+     * Returns the level at which to log messages to log files.
+     */
+    public getLogLevel(): LogLevel {
+        return this.config.log_level;
     }
 
     /**
@@ -232,6 +250,15 @@ export class CodeAnalyzerConfig {
     public getEngineOverridesFor(engineName: string): EngineOverrides {
         return engApi.getValueUsingCaseInsensitiveKey(this.config.engines, engineName) as EngineOverrides || {};
     }
+}
+
+function extractLogLevel(configExtractor: engApi.ConfigValueExtractor): LogLevel {
+    if (!configExtractor.hasValueDefinedFor(FIELDS.LOG_LEVEL)) {
+        return LogLevel.Debug;
+    }
+    const value: engApi.ConfigValue = engApi.getValueUsingCaseInsensitiveKey(configExtractor.getObject(), FIELDS.LOG_LEVEL);
+    return validateLogLevel(value, configExtractor.getFieldPath(FIELDS.LOG_LEVEL));
+
 }
 
 function extractRulesValue(configExtractor: engApi.ConfigValueExtractor): Record<string, RuleOverrides> {
@@ -304,4 +331,30 @@ function validateAbsolutePath(value: unknown, fieldPath: string): string {
             'ConfigPathValueDoesNotExist', fieldPath, pathValue));
     }
     return pathValue;
+}
+
+/**
+ * Validates that the provided value is a {@link LogLevel}.
+ * @param rawValue the value that you wish to validate
+ * @param fieldPath the field path of the value as you want it to appear in validation error messages
+ */
+function validateLogLevel(rawValue: unknown, fieldPath: string): LogLevel {
+    // TODO: We might be able to generalize this method in the engine-api to be a validateNumericEnum
+    //  method instead of having this code which is super close to the validateSeverityLevel implementation.
+
+    let value: unknown = typeof rawValue === 'string' && rawValue.length > 1 ?
+        rawValue.charAt(0).toUpperCase() + rawValue.slice(1).toLowerCase() : rawValue;
+
+    // Note that Object.values(LogLevel) returns [1,2,3,4,5,"Error","Warn","Info","Debug","Fine"]
+    if ((typeof value !== 'string' && typeof value !== 'number')
+        || !Object.values(LogLevel).includes(value as string | number)) {
+        throw new Error(getMessage('ConfigValueNotAValidEnumValue', fieldPath,
+            JSON.stringify(Object.values(LogLevel)), JSON.stringify(rawValue) || 'undefined'));
+    }
+    if (typeof value === 'string') {
+        // We can't type cast to enum from a string, so instead we choose the enum based on the string as a key.
+        value = LogLevel[value as keyof typeof LogLevel];
+    }
+    // We can type cast to enum safely from a number
+    return value as LogLevel;
 }

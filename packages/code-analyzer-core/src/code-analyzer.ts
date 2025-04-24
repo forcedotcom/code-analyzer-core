@@ -391,6 +391,10 @@ export class CodeAnalyzer {
     }
 
     private emitLogEvent(logLevel: LogLevel, message: string): void {
+        if (this.config.getLogLevel() < logLevel) {
+            // Do not emit log events whose level is greater than what the user has configured to display in their logs
+            return;
+        }
         this.emitEvent({
             type: EventType.LogEvent,
             timestamp: this.clock.now(),
@@ -469,6 +473,10 @@ export class CodeAnalyzer {
 
     private listenToEngineEvents(engine: engApi.Engine) {
         engine.onEvent(engApi.EventType.LogEvent, (event: engApi.LogEvent) => {
+            if (this.config.getLogLevel() < event.logLevel) {
+                // Do not emit log events whose level is greater than what the user has configured to display in their logs
+                return;
+            }
             this.emitEvent<EngineLogEvent>({
                 type: EventType.EngineLogEvent,
                 timestamp: this.clock.now(),
