@@ -54,6 +54,10 @@ class DataInfluenceStatement:
     # readability while maintaining conciseness as large snippets of xml are painful.
     source_text: str
 
+    # path of source_text element, which is just flow_path except for transmission
+    # elements such as subflows, action calls, etc
+    source_path: str
+
     def to_dict(self):
         return {s: clean_string(getattr(self, s)) for s in self.__slots__}
 
@@ -378,7 +382,14 @@ class CrawlStep:
 class InfluenceStatementEncoder(json.JSONEncoder):
     def default(self, obj):
         if isinstance(obj, DataInfluenceStatement):
-            return obj.to_dict()
+            raw_dict = obj.to_dict()
+            # For public display, we replace flow_path with source_path
+            # to correctly display transmission elements
+            cleaned_dict = {s: raw_dict[s] for s in raw_dict.keys() if (
+                            s != 'flow_path' and s != 'source_path')}
+            cleaned_dict['flow_path'] = raw_dict['source_path']
+
+            return cleaned_dict
         else:
             return json.JSONEncoder.default(self, obj)
 

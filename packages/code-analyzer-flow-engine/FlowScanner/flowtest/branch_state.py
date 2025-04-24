@@ -478,6 +478,7 @@ class BranchState(State):
                     source_text=subflow_src,
                     line_no=subflow_line_no,
                     flow_path=out_path,
+                    source_path=src_flow_path,
                     comment=SUBFLOW_WIRE_COMMENT,
                 ),),
                 influencer_name=src_name,
@@ -553,6 +554,7 @@ class BranchState(State):
             source_text=source_text,
             line_no=line_no,
             flow_path=path,
+            source_path=path,
             comment=INITIALIZATION_COMMENT
         )
 
@@ -710,6 +712,7 @@ class BranchState(State):
             source_text=get_elem_string(elem),
             line_no=get_line_no(elem),
             flow_path=self.flow_path,
+            source_path=self.flow_path,
             comment=INITIALIZATION_COMMENT
         )
 
@@ -903,7 +906,8 @@ def _get_raw_formula_map(parser: parse.Parser, flow_path: str) -> dict[str:list[
             comment=f"Parsed from {short_tag}",
             line_no=get_line_no(elem),
             source_text=get_elem_string(elem),
-            flow_path=flow_path
+            flow_path=flow_path,
+            source_path=flow_path
         )
         if formula_name in accum:
             accum[formula_name].append(stmt)

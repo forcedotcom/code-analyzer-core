@@ -288,7 +288,7 @@ describe('Tests for the FlowScannerEngine', () => {
                         comment: "input_text.input_text influences assign_input_to_var.parent_input_var: Variable Assignment"
                     },
                     {
-                        file: PATH_TO_EXAMPLE4_SUBFLOW,
+                        file: PATH_TO_EXAMPLE4_PARENTFLOW,
                         startLine: 109,
                         startColumn: 1,
                         comment: "assign_input_to_var.parent_input_var influences call_subflow.input_var1: output via subflow assignment"
@@ -332,7 +332,7 @@ describe('Tests for the FlowScannerEngine', () => {
                         comment: "combine_vars.combine_vars influences assign_enter_to_output.output_var1: Variable Assignment"
                     },
                     {
-                        file: PATH_TO_EXAMPLE4_PARENTFLOW,
+                        file: PATH_TO_EXAMPLE4_SUBFLOW,
                         startLine: 109,
                         startColumn: 1,
                         comment: "assign_enter_to_output.output_var1 influences call_subflow.call_subflow.output_var1: output via subflow assignment"
@@ -483,7 +483,7 @@ describe('Tests for the FlowScannerEngine', () => {
                             comment: "input_text.input_text influences assign_input_to_var.parent_input_var: Variable Assignment"
                         },
                         {
-                            file: childFlowFile, // TODO: Once Robert Fixes this, then update with parentFlowFile
+                            file: parentFlowFile,
                             startLine: 72,
                             startColumn: 1,
                             comment: "assign_input_to_var.parent_input_var influences call_subflow.input_var1: output via subflow assignment"
@@ -582,7 +582,7 @@ describe('Tests for the FlowScannerEngine', () => {
                             comment: "enter_text_subflow.enter_text_subflow influences assign_enter_to_output.output_var1: Variable Assignment"
                         },
                         {
-                            file: parentFlowFile,
+                            file: childFlowFile,
                             startLine: 35,
                             startColumn: 1,
                             comment: "assign_enter_to_output.output_var1 influences call_subflow.call_subflow.output_var1: output via subflow assignment"

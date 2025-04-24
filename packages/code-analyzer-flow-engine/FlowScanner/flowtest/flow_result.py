@@ -154,14 +154,14 @@ class ResultsProcessor(object):
                 result_str += f'<Query name="{query_name}" QueryPath="{query_path}">'
                 for flow_result in results:
                     statements = flow_result["flow"]
-                    start_path = statements[0].flow_path
+                    start_path = statements[0].source_path
                     counter = flow_result["counter"]
 
                     result_str += (f'<Result NodeId="{counter}" '
                                    f'FileName="{ESAPI.html_encode(start_path)}">'
                                    f'<Path SimilarityId="{counter}FT">')
                     for index, node in enumerate(statements):
-                        filename = node.flow_path
+                        filename = node.source_path
                         line = node.line_no
                         code = ESAPI.html_encode(clean_string(node.source_text))
                         result_str += f"<PathNode><FileName>{ESAPI.html_encode(filename)}</FileName>"

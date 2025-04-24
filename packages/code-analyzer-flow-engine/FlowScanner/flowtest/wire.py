@@ -166,6 +166,8 @@ def wire_assignment(state: BranchState, elem: ET.Element, elem_name: str):
         # Always assign a variable name equal to parse.STRING_LITERAL_TOKEN
         # to signify something is a literal value and not a variable.
         entry["flow_path"] = flow_path
+        entry["source_path"] = flow_path
+
         stmt = DataInfluenceStatement(**entry)
         state.propagate_flows(statement=stmt,
                               assign=is_assign,
@@ -196,7 +198,8 @@ def wire_loop(state: BranchState, elem: ET.Element, elem_name: str):
                                       default_namespace='http://soap.sforce.com/2006/04/metadata'),
         line_no=collection_ref_el.sourceline,
         comment='assign to loop variable',
-        flow_path=state.flow_path
+        flow_path=state.flow_path,
+        source_path=state.flow_path
     )
     state.propagate_flows(statement=stmt, assign=True, store=True)
 
@@ -229,6 +232,7 @@ def wire_collection_processor(state: BranchState, elem: ET.Element, elem_name: s
                                       default_namespace='http://soap.sforce.com/2006/04/metadata'),
         line_no=collection_el.sourceline,
         comment='collection filter',
-        flow_path=state.flow_path
+        flow_path=state.flow_path,
+        source_path=state.flow_path
     )
     state.propagate_flows(statement=stmt, assign=True, store=True)
