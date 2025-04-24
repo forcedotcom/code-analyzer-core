@@ -349,7 +349,7 @@ function validateLogLevel(rawValue: unknown, fieldPath: string): LogLevel {
     if ((typeof value !== 'string' && typeof value !== 'number')
         || !Object.values(LogLevel).includes(value as string | number)) {
         throw new Error(getMessage('ConfigValueNotAValidEnumValue', fieldPath,
-            JSON.stringify(Object.values(LogLevel)), JSON.stringify(rawValue) || 'undefined'));
+            JSON.stringify(Object.values(LogLevel)), JSON.stringify(rawValue) || /* istanbul ignore next */ 'undefined'));
     }
     if (typeof value === 'string') {
         // We can't type cast to enum from a string, so instead we choose the enum based on the string as a key.
