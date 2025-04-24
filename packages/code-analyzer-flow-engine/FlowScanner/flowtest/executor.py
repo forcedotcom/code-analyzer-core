@@ -433,7 +433,8 @@ class Frame(object):
         parent_frame.state.add_vectors_from_other_flow(src_flow_path=self.flow_path,
                                                        output_vector_map=output_vector_map,
                                                        src2tgt_variable_map=output_variable_map,
-                                                       transition_elem=self.parent_subflow)
+                                                       transition_elem=self.parent_subflow,
+                                                       is_return=True)
 
         if TRY_CARNAC:
             prediction = self.prediction
@@ -619,7 +620,7 @@ class Frame(object):
 
     def process_subflow(self, current_elem):
 
-        # Any problem and all, we return None and the parent
+        # If there is a problem, we return None and the parent
         # continues on as if the subflow did not exist
 
         try:

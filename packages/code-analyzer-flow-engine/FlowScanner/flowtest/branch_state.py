@@ -413,6 +413,7 @@ class BranchState(State):
 
     def add_vectors_from_other_flow(self, src_flow_path: str, output_vector_map: {(str, str): FlowVector},
                                     src2tgt_variable_map: {str: str}, transition_elem: ET.Element,
+                                    is_return=False
                                     ) -> {(str, str): FlowVector} or None:
         """Pushes vectors in the source to vectors in the target, by wiring a flow across flow boundaries::
 
@@ -435,6 +436,7 @@ class BranchState(State):
         field of the target, and then all these flows added to the target vector.
 
         Args:
+            is_return: True if we are returning from a subflow
             output_vector_map: vectors that should be pushed to target::
 
                                   (src path, src name) --> src FlowVector
@@ -466,6 +468,14 @@ class BranchState(State):
 
         # Now build a DataInfluencePath from the src to the target
         # use the subflow element for reporting
+
+        # when returning from a subflow, the source_path is the target path
+        # when entering a subflow, the source_path is the source path
+        if is_return:
+            src_path = out_path
+        else:
+            src_path = src_flow_path
+
         for (src_name, src_vec) in vec_to_process.items():
             target_var = src2tgt_variable_map[src_name]
             (tgt_parent, tgt_member, tgt_type) = self.parser.resolve_by_name(target_var)
@@ -478,7 +488,7 @@ class BranchState(State):
                     source_text=subflow_src,
                     line_no=subflow_line_no,
                     flow_path=out_path,
-                    source_path=src_flow_path,
+                    source_path=src_path,
                     comment=SUBFLOW_WIRE_COMMENT,
                 ),),
                 influencer_name=src_name,
