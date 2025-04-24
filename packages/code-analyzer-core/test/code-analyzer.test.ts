@@ -609,6 +609,20 @@ describe("Tests for the run method of CodeAnalyzer", () => {
         });
     });
 
+    it('When running, any core level events that are greater than the user defined level should not be emitted', async () => {
+        codeAnalyzer = new CodeAnalyzer(CodeAnalyzerConfig.fromObject({
+            log_level: LogLevel.Warn
+        }));
+        const stubPlugin: stubs.StubEnginePlugin = new stubs.StubEnginePlugin();
+        await codeAnalyzer.addEnginePlugin(stubPlugin);
+
+        const logEvents: LogEvent[] = [];
+        codeAnalyzer.onEvent(EventType.LogEvent, (event: LogEvent) => logEvents.push(event));
+
+        await codeAnalyzer.run(selection, sampleRunOptions);
+        expect(logEvents.length).toEqual(0); // Should be zero because core currently only emits debug level events when ran
+    });
+
     it("When running engines, then run progress events are wired up and emitted correctly from the engines", async () => {
         const engineRunProgressEvents: EngineRunProgressEvent[] = [];
         codeAnalyzer.onEvent(EventType.EngineRunProgressEvent, (event: EngineRunProgressEvent) => engineRunProgressEvents.push(event));
@@ -671,12 +685,43 @@ describe("Tests for the run method of CodeAnalyzer", () => {
         });
     });
 
-    it("When running engines, then engine-specific log events are wired up and emitted correctly from the engines", async () => {
+    it("When running engines, then engine-specific log events are wired up and emitted correctly (but only up to debug log level by default) from the engines", async () => {
         const engineLogEvents: EngineLogEvent[] = [];
         codeAnalyzer.onEvent(EventType.EngineLogEvent, (event: EngineLogEvent) => engineLogEvents.push(event));
         await codeAnalyzer.run(selection, sampleRunOptions);
 
-        expect(engineLogEvents).toHaveLength(3);
+        expect(engineLogEvents).toHaveLength(2); // Should only be 2 since by default Fine logs are not included by default
+        expect(engineLogEvents).toContainEqual({
+            type: EventType.EngineLogEvent,
+            timestamp: sampleTimestamp,
+            engineName: "stubEngine2",
+            logLevel: LogLevel.Info,
+            message: "someMiscInfoMessageFromStubEngine2"
+        });
+        expect(engineLogEvents).toContainEqual({
+            type: EventType.EngineLogEvent,
+            timestamp: sampleTimestamp,
+            engineName: "stubEngine3",
+            logLevel: LogLevel.Info,
+            message: "someMiscInfoMessageFromStubEngine3"
+        });
+    });
+
+
+    it("When running engines, then engine-specific log events are wired up and emitted fully from the engines when using fine level debugging", async () => {
+        codeAnalyzer = new CodeAnalyzer(CodeAnalyzerConfig.fromObject({
+            log_level: LogLevel.Fine
+        }));
+        codeAnalyzer._setClock(new FixedClock(sampleTimestamp));
+        codeAnalyzer._setUniqueIdGenerator(new FixedUniqueIdGenerator());
+        const stubPlugin: stubs.StubEnginePlugin = new stubs.StubEnginePlugin();
+        await codeAnalyzer.addEnginePlugin(stubPlugin);
+
+        const engineLogEvents: EngineLogEvent[] = [];
+        codeAnalyzer.onEvent(EventType.EngineLogEvent, (event: EngineLogEvent) => engineLogEvents.push(event));
+        await codeAnalyzer.run(selection, sampleRunOptions);
+
+        expect(engineLogEvents).toHaveLength(3); // Should have all 3 events
         expect(engineLogEvents).toContainEqual({
             type: EventType.EngineLogEvent,
             timestamp: sampleTimestamp,
@@ -698,6 +743,20 @@ describe("Tests for the run method of CodeAnalyzer", () => {
             logLevel: LogLevel.Info,
             message: "someMiscInfoMessageFromStubEngine3"
         });
+    });
+
+    it("When running engines, then engine-specific log events do not get emitted if they are greater than the user defined log level", async () => {
+        codeAnalyzer = new CodeAnalyzer(CodeAnalyzerConfig.fromObject({
+            log_level: LogLevel.Error
+        }));
+        const stubPlugin: stubs.StubEnginePlugin = new stubs.StubEnginePlugin();
+        await codeAnalyzer.addEnginePlugin(stubPlugin);
+
+        const engineLogEvents: EngineLogEvent[] = [];
+        codeAnalyzer.onEvent(EventType.EngineLogEvent, (event: EngineLogEvent) => engineLogEvents.push(event));
+        await codeAnalyzer.run(selection, sampleRunOptions);
+
+        expect(engineLogEvents).toHaveLength(0); // Should only be 0 since all the events emitted are Info or higher (which is greater than Error)
     });
 
     it("When running engines, then engine-level telemetry events are wired up and emitted correctly from the engines", async () => {

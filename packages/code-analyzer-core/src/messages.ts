@@ -15,6 +15,16 @@ const MESSAGE_CATALOG : MessageCatalog = {
         `Folder where to store log files. May be an absolute path or a path relative to config_root.\n` +
         `If unspecified, or if specified as null, then the value is automatically chosen to be your machine's default temporary directory.`,
 
+    ConfigFieldDescription_log_level:
+        `Level at which to log messages to log files.\n` +
+        `Possible values are:\n` +
+        `  - 1 or 'Error' - Includes only error messages in the log.\n` +
+        `  - 2 or 'Warn' - Includes warning and error messages in the log.\n` +
+        `  - 3 or 'Info' - Includes informative, warning, and error messages in the log.\n` +
+        `  - 4 or 'Debug' - Includes debug, informative, warning, and error messages in the log.\n` +
+        `  - 5 or 'Fine' - Includes fine detail, debug, informative, warning, and error messages in the log.\n` +
+        `If unspecified, or if specified as null, then the 'Debug' log level will be used.`,
+
     ConfigFieldDescription_rules:
         `Rule override settings of the format rules.{engine_name}.{rule_name}.{property_name} = {override_value} where:\n` +
         `  {engine_name} is the name of the engine containing the rule that you want to override.\n` +
@@ -119,6 +129,9 @@ const MESSAGE_CATALOG : MessageCatalog = {
 
     ConfigPathValueMustBeAbsolute:
         `The '%s' configuration value must be provided as an absolute path location. Update the value '%s' to instead be '%s'.`,
+
+    ConfigValueNotAValidEnumValue: // TODO: We should move this into the SHARED_MESSAGE_CATALOG to replace the 'ConfigValueNotAValidSeverityLevel' message
+        `The '%s' configuration value must be one of the following: %s. Instead received: %s`,
 
     FileOrFolderDoesNotExist:
         `The file or folder '%s' does not exist.`,

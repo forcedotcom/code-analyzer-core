@@ -1,7 +1,7 @@
 import {CodeAnalyzerConfig, SeverityLevel} from "../src";
 import * as os from "node:os";
 import * as path from "node:path";
-import {getMessageFromCatalog, SHARED_MESSAGE_CATALOG} from "@salesforce/code-analyzer-engine-api";
+import {getMessageFromCatalog, LogLevel, SHARED_MESSAGE_CATALOG} from "@salesforce/code-analyzer-engine-api";
 import {getMessage} from "../src/messages";
 import {changeWorkingDirectoryToPackageRoot} from "./test-helpers";
 import {ConfigDescription, DEFAULT_CONFIG} from "../src/config";
@@ -17,6 +17,7 @@ describe("Tests for creating and accessing configuration values", () => {
 
         expect(conf.getConfigRoot()).toEqual(DEFAULT_CONFIG_ROOT);
         expect(conf.getLogFolder()).toEqual(os.tmpdir());
+        expect(conf.getLogLevel()).toEqual(LogLevel.Debug);
         expect(conf.getCustomEnginePluginModules()).toEqual([]);
         expect(conf.getRuleOverridesFor("stubEngine1")).toEqual({});
         expect(conf.getEngineOverridesFor("stubEngine1")).toEqual({});
@@ -171,7 +172,7 @@ describe("Tests for creating and accessing configuration values", () => {
     it("When top level config has an unknown key, then we error", () => {
         expect(() => CodeAnalyzerConfig.fromObject({doesNotExist: 3})).toThrow(
             getMessageFromCatalog(SHARED_MESSAGE_CATALOG,'ConfigObjectContainsInvalidKey','<TopLevel>', 'doesNotExist',
-                '["config_root","engines","log_folder","rules"]'));
+                '["config_root","engines","log_folder","log_level","rules"]'));
     });
 
     it("When engines value is not an object then we throw an error", () => {
@@ -253,6 +254,36 @@ describe("Tests for creating and accessing configuration values", () => {
         );
     });
 
+    it("When log_level is a valid number, then return set it on the config correctly", () => {
+        const conf: CodeAnalyzerConfig = CodeAnalyzerConfig.fromYamlString("log_level: 3");
+        expect(conf.getLogLevel()).toEqual(LogLevel.Info);
+    });
+
+    it("When log_level is a valid string, even with odd casing, then it is set on the config corrrectly", () => {
+        const conf: CodeAnalyzerConfig = CodeAnalyzerConfig.fromYamlString("log_lEVel: wARn");
+        expect(conf.getLogLevel()).toEqual(LogLevel.Warn);
+    });
+
+    it("When log_level is null, then default (Debug) is used", () => {
+        const conf: CodeAnalyzerConfig = CodeAnalyzerConfig.fromYamlString("log_level: null");
+        expect(conf.getLogLevel()).toEqual(LogLevel.Debug);
+    });
+
+    it("When log_level is not a number or a string, then error", () => {
+        expect(() => CodeAnalyzerConfig.fromYamlString("log_level: [1,2]")).toThrow(
+            getMessage('ConfigValueNotAValidEnumValue', 'log_level', '["Error","Warn","Info","Debug","Fine",1,2,3,4,5]', '[1,2]'));
+    });
+
+    it("When log_level is not a valid string, then error", () => {
+        expect(() => CodeAnalyzerConfig.fromObject({log_level: "warning"})).toThrow(
+            getMessage('ConfigValueNotAValidEnumValue', 'log_level', '["Error","Warn","Info","Debug","Fine",1,2,3,4,5]', '"warning"'));
+    });
+
+    it("When log_level is not a valid number, then error", () => {
+        expect(() => CodeAnalyzerConfig.fromObject({log_level: 0})).toThrow(
+            getMessage('ConfigValueNotAValidEnumValue', 'log_level', '["Error","Warn","Info","Debug","Fine",1,2,3,4,5]', '0'));
+    });
+
     it("When custom_engine_plugin_modules is not a string array, then throw an error", () => {
         expect(() => CodeAnalyzerConfig.fromObject({custom_engine_plugin_modules: 3})).toThrow(
             getMessageFromCatalog(SHARED_MESSAGE_CATALOG, 'ConfigValueMustBeOfType','custom_engine_plugin_modules', 'array', 'number'));
@@ -302,6 +333,12 @@ describe("Tests for creating and accessing configuration values", () => {
                 descriptionText: getMessage('ConfigFieldDescription_log_folder'),
                 valueType: 'string',
                 defaultValue: null,
+                wasSuppliedByUser: false
+            },
+            log_level: {
+                descriptionText: getMessage('ConfigFieldDescription_log_level'),
+                valueType: 'number',
+                defaultValue: LogLevel.Debug,
                 wasSuppliedByUser: false
             },
             rules: {
