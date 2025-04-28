@@ -368,7 +368,6 @@ describe('SfgeEngine', () => {
             expect(telemetryEvents).toHaveLength(1);
             expect(telemetryEvents[0].eventName).toEqual('exception');
             expect(telemetryEvents[0].data.message).toContain('FieldDeclarationStatements');
-            expect(telemetryEvents[0].data.engine).toEqual('sfge');
         });
     });
 })

@@ -70,7 +70,6 @@ public final class TelemetryUtil {
         private final String eventName;
 
         private final String message;
-        private final String engine = "sfge";
         private final EventType eventType;
         private final String stackTrace;
 
