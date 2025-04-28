@@ -23,7 +23,7 @@ public final class TelemetryUtil {
                 isMainThread() ? EventType.MAIN_THREAD_WARNING : EventType.RULE_THREAD_WARNING;
         StackTraceElement[] trace =
                 cause == null ? Thread.currentThread().getStackTrace() : cause.getStackTrace();
-        postTelemetry(message, trace, eventType);
+        postTelemetry("warning", message, trace, eventType);
     }
 
     /**
@@ -49,12 +49,12 @@ public final class TelemetryUtil {
                 isMainThread() ? EventType.MAIN_THREAD_EXCEPTION : EventType.RULE_THREAD_EXCEPTION;
         StackTraceElement[] trace =
                 cause == null ? runtimeException.getStackTrace() : cause.getStackTrace();
-        postTelemetry(runtimeException.getMessage(), trace, eventType);
+        postTelemetry("exception", runtimeException.getMessage(), trace, eventType);
     }
 
     private static void postTelemetry(
-            String message, StackTraceElement[] trace, EventType eventType) {
-        TelemetryData telemetryData = new TelemetryData(message, trace, eventType);
+            String eventName, String message, StackTraceElement[] trace, EventType eventType) {
+        TelemetryData telemetryData = new TelemetryData(eventName, message, trace, eventType);
         CliMessager.postLogMessage("TelemetryData", LogMessage.LogEventKey.TELEMETRY, new Gson().toJson(telemetryData));
     }
 
@@ -67,14 +67,15 @@ public final class TelemetryUtil {
 
     /** An object that can be used as the base for a Salesforce CLI telemetry event. */
     private static class TelemetryData {
-        /** Necessary property for telemetry objects. */
-        private final String eventName = "SFGE_TELEMETRY";
+        private final String eventName;
 
         private final String message;
+        private final String engine = "sfge";
         private final EventType eventType;
         private final String stackTrace;
 
-        public TelemetryData(String message, StackTraceElement[] trace, EventType eventType) {
+        public TelemetryData(String eventName, String message, StackTraceElement[] trace, EventType eventType) {
+            this.eventName = eventName;
             this.message = message;
             this.eventType = eventType;
             this.stackTrace =
