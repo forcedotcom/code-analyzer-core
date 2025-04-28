@@ -366,7 +366,9 @@ describe('SfgeEngine', () => {
             expect(errorLogEvents[0].message).toContain(`Internal execution error while scanning entry point: ${path.join(__dirname, 'test-data', 'sampleUnhandledWorkspace', 'MyStringHelper.cls')}:8:27: Graph Engine identified your source and sink`);
             // While we're here, check that the internal execution error caused a telemetry event to be sent.
             expect(telemetryEvents).toHaveLength(1);
+            expect(telemetryEvents[0].eventName).toEqual('exception');
             expect(telemetryEvents[0].data.message).toContain('FieldDeclarationStatements');
+            expect(telemetryEvents[0].data.engine).toEqual('sfge');
         });
     });
 })
