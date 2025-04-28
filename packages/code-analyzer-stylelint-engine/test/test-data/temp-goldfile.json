@@ -1,11 +1,1790 @@
 [
-    {
-      "name": "ExampleStylelintRule",
-      "severityLevel": 5,
-      "tags": [
-        "Recommended"
-      ],
-      "description": "The description of your rule",
-      "resourceUrls": []
-    }
+  {
+    "name": "alpha-value-notation",
+    "severityLevel": 5,
+    "tags": [
+      "CodeStyle",
+      "CSS",
+      "SCSS"
+    ],
+    "description": "alpha-value-notation",
+    "resourceUrls": [
+      "https://stylelint.io/user-guide/rules/alpha-value-notation"
+    ]
+  },
+  {
+    "name": "annotation-no-unknown",
+    "severityLevel": 2,
+    "tags": [
+      "ErrorProne",
+      "CSS",
+      "SCSS"
+    ],
+    "description": "annotation-no-unknown",
+    "resourceUrls": [
+      "https://stylelint.io/user-guide/rules/annotation-no-unknown"
+    ]
+  },
+  {
+    "name": "at-rule-allowed-list",
+    "severityLevel": 4,
+    "tags": [
+      "CodeStyle",
+      "CSS",
+      "SCSS"
+    ],
+    "description": "at-rule-allowed-list",
+    "resourceUrls": [
+      "https://stylelint.io/user-guide/rules/at-rule-allowed-list"
+    ]
+  },
+  {
+    "name": "at-rule-descriptor-no-unknown",
+    "severityLevel": 2,
+    "tags": [
+      "ErrorProne",
+      "CSS",
+      "SCSS"
+    ],
+    "description": "at-rule-descriptor-no-unknown",
+    "resourceUrls": [
+      "https://stylelint.io/user-guide/rules/at-rule-descriptor-no-unknown"
+    ]
+  },
+  {
+    "name": "at-rule-descriptor-value-no-unknown",
+    "severityLevel": 2,
+    "tags": [
+      "ErrorProne",
+      "CSS",
+      "SCSS"
+    ],
+    "description": "at-rule-descriptor-value-no-unknown",
+    "resourceUrls": [
+      "https://stylelint.io/user-guide/rules/at-rule-descriptor-value-no-unknown"
+    ]
+  },
+  {
+    "name": "at-rule-disallowed-list",
+    "severityLevel": 4,
+    "tags": [
+      "CodeStyle",
+      "CSS",
+      "SCSS"
+    ],
+    "description": "at-rule-disallowed-list",
+    "resourceUrls": [
+      "https://stylelint.io/user-guide/rules/at-rule-disallowed-list"
+    ]
+  },
+  {
+    "name": "at-rule-empty-line-before",
+    "severityLevel": 3,
+    "tags": [
+      "BestPractices",
+      "CSS",
+      "SCSS"
+    ],
+    "description": "at-rule-empty-line-before",
+    "resourceUrls": [
+      "https://stylelint.io/user-guide/rules/at-rule-empty-line-before"
+    ]
+  },
+  {
+    "name": "at-rule-no-deprecated",
+    "severityLevel": 2,
+    "tags": [
+      "ErrorProne",
+      "CSS",
+      "SCSS"
+    ],
+    "description": "at-rule-no-deprecated",
+    "resourceUrls": [
+      "https://stylelint.io/user-guide/rules/at-rule-no-deprecated"
+    ]
+  },
+  {
+    "name": "at-rule-no-unknown",
+    "severityLevel": 2,
+    "tags": [
+      "ErrorProne",
+      "CSS",
+      "SCSS"
+    ],
+    "description": "at-rule-no-unknown",
+    "resourceUrls": [
+      "https://stylelint.io/user-guide/rules/at-rule-no-unknown"
+    ]
+  },
+  {
+    "name": "at-rule-no-vendor-prefix",
+    "severityLevel": 4,
+    "tags": [
+      "CodeStyle",
+      "CSS",
+      "SCSS"
+    ],
+    "description": "at-rule-no-vendor-prefix",
+    "resourceUrls": [
+      "https://stylelint.io/user-guide/rules/at-rule-no-vendor-prefix"
+    ]
+  },
+  {
+    "name": "at-rule-prelude-no-invalid",
+    "severityLevel": 2,
+    "tags": [
+      "ErrorProne",
+      "CSS",
+      "SCSS"
+    ],
+    "description": "at-rule-prelude-no-invalid",
+    "resourceUrls": [
+      "https://stylelint.io/user-guide/rules/at-rule-prelude-no-invalid"
+    ]
+  },
+  {
+    "name": "at-rule-property-required-list",
+    "severityLevel": 4,
+    "tags": [
+      "CodeStyle",
+      "CSS",
+      "SCSS"
+    ],
+    "description": "at-rule-property-required-list",
+    "resourceUrls": [
+      "https://stylelint.io/user-guide/rules/at-rule-property-required-list"
+    ]
+  },
+  {
+    "name": "block-no-empty",
+    "severityLevel": 2,
+    "tags": [
+      "ErrorProne",
+      "CSS",
+      "SCSS"
+    ],
+    "description": "block-no-empty",
+    "resourceUrls": [
+      "https://stylelint.io/user-guide/rules/block-no-empty"
+    ]
+  },
+  {
+    "name": "color-function-alias-notation",
+    "severityLevel": 4,
+    "tags": [
+      "CodeStyle",
+      "CSS",
+      "SCSS"
+    ],
+    "description": "color-function-alias-notation",
+    "resourceUrls": [
+      "https://stylelint.io/user-guide/rules/color-function-alias-notation"
+    ]
+  },
+  {
+    "name": "color-function-notation",
+    "severityLevel": 4,
+    "tags": [
+      "CodeStyle",
+      "CSS",
+      "SCSS"
+    ],
+    "description": "color-function-notation",
+    "resourceUrls": [
+      "https://stylelint.io/user-guide/rules/color-function-notation"
+    ]
+  },
+  {
+    "name": "color-hex-alpha",
+    "severityLevel": 4,
+    "tags": [
+      "CodeStyle",
+      "CSS",
+      "SCSS"
+    ],
+    "description": "color-hex-alpha",
+    "resourceUrls": [
+      "https://stylelint.io/user-guide/rules/color-hex-alpha"
+    ]
+  },
+  {
+    "name": "color-hex-length",
+    "severityLevel": 4,
+    "tags": [
+      "CodeStyle",
+      "CSS",
+      "SCSS"
+    ],
+    "description": "color-hex-length",
+    "resourceUrls": [
+      "https://stylelint.io/user-guide/rules/color-hex-length"
+    ]
+  },
+  {
+    "name": "color-named",
+    "severityLevel": 4,
+    "tags": [
+      "CodeStyle",
+      "CSS",
+      "SCSS"
+    ],
+    "description": "color-named",
+    "resourceUrls": [
+      "https://stylelint.io/user-guide/rules/color-named"
+    ]
+  },
+  {
+    "name": "color-no-hex",
+    "severityLevel": 4,
+    "tags": [
+      "CodeStyle",
+      "CSS",
+      "SCSS"
+    ],
+    "description": "color-no-hex",
+    "resourceUrls": [
+      "https://stylelint.io/user-guide/rules/color-no-hex"
+    ]
+  },
+  {
+    "name": "color-no-invalid-hex",
+    "severityLevel": 2,
+    "tags": [
+      "ErrorProne",
+      "CSS",
+      "SCSS"
+    ],
+    "description": "color-no-invalid-hex",
+    "resourceUrls": [
+      "https://stylelint.io/user-guide/rules/color-no-invalid-hex"
+    ]
+  },
+  {
+    "name": "comment-empty-line-before",
+    "severityLevel": 3,
+    "tags": [
+      "BestPractices",
+      "CSS",
+      "SCSS"
+    ],
+    "description": "comment-empty-line-before",
+    "resourceUrls": [
+      "https://stylelint.io/user-guide/rules/comment-empty-line-before"
+    ]
+  },
+  {
+    "name": "comment-no-empty",
+    "severityLevel": 2,
+    "tags": [
+      "ErrorProne",
+      "CSS",
+      "SCSS"
+    ],
+    "description": "comment-no-empty",
+    "resourceUrls": [
+      "https://stylelint.io/user-guide/rules/comment-no-empty"
+    ]
+  },
+  {
+    "name": "comment-pattern",
+    "severityLevel": 3,
+    "tags": [
+      "BestPractices",
+      "CSS",
+      "SCSS"
+    ],
+    "description": "comment-pattern",
+    "resourceUrls": [
+      "https://stylelint.io/user-guide/rules/comment-pattern"
+    ]
+  },
+  {
+    "name": "comment-whitespace-inside",
+    "severityLevel": 3,
+    "tags": [
+      "BestPractices",
+      "CSS",
+      "SCSS"
+    ],
+    "description": "comment-whitespace-inside",
+    "resourceUrls": [
+      "https://stylelint.io/user-guide/rules/comment-whitespace-inside"
+    ]
+  },
+  {
+    "name": "comment-word-disallowed-list",
+    "severityLevel": 4,
+    "tags": [
+      "CodeStyle",
+      "CSS",
+      "SCSS"
+    ],
+    "description": "comment-word-disallowed-list",
+    "resourceUrls": [
+      "https://stylelint.io/user-guide/rules/comment-word-disallowed-list"
+    ]
+  },
+  {
+    "name": "container-name-pattern",
+    "severityLevel": 3,
+    "tags": [
+      "BestPractices",
+      "CSS",
+      "SCSS"
+    ],
+    "description": "container-name-pattern",
+    "resourceUrls": [
+      "https://stylelint.io/user-guide/rules/container-name-pattern"
+    ]
+  },
+  {
+    "name": "custom-media-pattern",
+    "severityLevel": 3,
+    "tags": [
+      "BestPractices",
+      "CSS",
+      "SCSS"
+    ],
+    "description": "custom-media-pattern",
+    "resourceUrls": [
+      "https://stylelint.io/user-guide/rules/custom-media-pattern"
+    ]
+  },
+  {
+    "name": "custom-property-empty-line-before",
+    "severityLevel": 3,
+    "tags": [
+      "BestPractices",
+      "CSS",
+      "SCSS"
+    ],
+    "description": "custom-property-empty-line-before",
+    "resourceUrls": [
+      "https://stylelint.io/user-guide/rules/custom-property-empty-line-before"
+    ]
+  },
+  {
+    "name": "custom-property-no-missing-var-function",
+    "severityLevel": 3,
+    "tags": [
+      "ErrorProne",
+      "CSS",
+      "SCSS"
+    ],
+    "description": "custom-property-no-missing-var-function",
+    "resourceUrls": [
+      "https://stylelint.io/user-guide/rules/custom-property-no-missing-var-function"
+    ]
+  },
+  {
+    "name": "custom-property-pattern",
+    "severityLevel": 3,
+    "tags": [
+      "BestPractices",
+      "CSS",
+      "SCSS"
+    ],
+    "description": "custom-property-pattern",
+    "resourceUrls": [
+      "https://stylelint.io/user-guide/rules/custom-property-pattern"
+    ]
+  },
+  {
+    "name": "declaration-block-no-duplicate-custom-properties",
+    "severityLevel": 2,
+    "tags": [
+      "ErrorProne",
+      "CSS",
+      "SCSS"
+    ],
+    "description": "declaration-block-no-duplicate-custom-properties",
+    "resourceUrls": [
+      "https://stylelint.io/user-guide/rules/declaration-block-no-duplicate-custom-properties"
+    ]
+  },
+  {
+    "name": "declaration-block-no-duplicate-properties",
+    "severityLevel": 2,
+    "tags": [
+      "ErrorProne",
+      "CSS",
+      "SCSS"
+    ],
+    "description": "declaration-block-no-duplicate-properties",
+    "resourceUrls": [
+      "https://stylelint.io/user-guide/rules/declaration-block-no-duplicate-properties"
+    ]
+  },
+  {
+    "name": "declaration-block-no-redundant-longhand-properties",
+    "severityLevel": 3,
+    "tags": [
+      "BestPractices",
+      "CSS",
+      "SCSS"
+    ],
+    "description": "declaration-block-no-redundant-longhand-properties",
+    "resourceUrls": [
+      "https://stylelint.io/user-guide/rules/declaration-block-no-redundant-longhand-properties"
+    ]
+  },
+  {
+    "name": "declaration-block-no-shorthand-property-overrides",
+    "severityLevel": 3,
+    "tags": [
+      "BestPractices",
+      "CSS",
+      "SCSS"
+    ],
+    "description": "declaration-block-no-shorthand-property-overrides",
+    "resourceUrls": [
+      "https://stylelint.io/user-guide/rules/declaration-block-no-shorthand-property-overrides"
+    ]
+  },
+  {
+    "name": "declaration-block-single-line-max-declarations",
+    "severityLevel": 3,
+    "tags": [
+      "BestPractices",
+      "CSS",
+      "SCSS"
+    ],
+    "description": "declaration-block-single-line-max-declarations",
+    "resourceUrls": [
+      "https://stylelint.io/user-guide/rules/declaration-block-single-line-max-declarations"
+    ]
+  },
+  {
+    "name": "declaration-empty-line-before",
+    "severityLevel": 3,
+    "tags": [
+      "BestPractices",
+      "CSS",
+      "SCSS"
+    ],
+    "description": "declaration-empty-line-before",
+    "resourceUrls": [
+      "https://stylelint.io/user-guide/rules/declaration-empty-line-before"
+    ]
+  },
+  {
+    "name": "declaration-no-important",
+    "severityLevel": 4,
+    "tags": [
+      "CodeStyle",
+      "CSS",
+      "SCSS"
+    ],
+    "description": "declaration-no-important",
+    "resourceUrls": [
+      "https://stylelint.io/user-guide/rules/declaration-no-important"
+    ]
+  },
+  {
+    "name": "declaration-property-max-values",
+    "severityLevel": 3,
+    "tags": [
+      "BestPractices",
+      "CSS",
+      "SCSS"
+    ],
+    "description": "declaration-property-max-values",
+    "resourceUrls": [
+      "https://stylelint.io/user-guide/rules/declaration-property-max-values"
+    ]
+  },
+  {
+    "name": "declaration-property-unit-allowed-list",
+    "severityLevel": 4,
+    "tags": [
+      "CodeStyle",
+      "CSS",
+      "SCSS"
+    ],
+    "description": "declaration-property-unit-allowed-list",
+    "resourceUrls": [
+      "https://stylelint.io/user-guide/rules/declaration-property-unit-allowed-list"
+    ]
+  },
+  {
+    "name": "declaration-property-unit-disallowed-list",
+    "severityLevel": 4,
+    "tags": [
+      "CodeStyle",
+      "CSS",
+      "SCSS"
+    ],
+    "description": "declaration-property-unit-disallowed-list",
+    "resourceUrls": [
+      "https://stylelint.io/user-guide/rules/declaration-property-unit-disallowed-list"
+    ]
+  },
+  {
+    "name": "declaration-property-value-allowed-list",
+    "severityLevel": 4,
+    "tags": [
+      "CodeStyle",
+      "CSS",
+      "SCSS"
+    ],
+    "description": "declaration-property-value-allowed-list",
+    "resourceUrls": [
+      "https://stylelint.io/user-guide/rules/declaration-property-value-allowed-list"
+    ]
+  },
+  {
+    "name": "declaration-property-value-disallowed-list",
+    "severityLevel": 4,
+    "tags": [
+      "CodeStyle",
+      "CSS",
+      "SCSS"
+    ],
+    "description": "declaration-property-value-disallowed-list",
+    "resourceUrls": [
+      "https://stylelint.io/user-guide/rules/declaration-property-value-disallowed-list"
+    ]
+  },
+  {
+    "name": "declaration-property-value-keyword-no-deprecated",
+    "severityLevel": 3,
+    "tags": [
+      "ErrorProne",
+      "CSS",
+      "SCSS"
+    ],
+    "description": "declaration-property-value-keyword-no-deprecated",
+    "resourceUrls": [
+      "https://stylelint.io/user-guide/rules/declaration-property-value-keyword-no-deprecated"
+    ]
+  },
+  {
+    "name": "declaration-property-value-no-unknown",
+    "severityLevel": 3,
+    "tags": [
+      "ErrorProne",
+      "CSS",
+      "SCSS"
+    ],
+    "description": "declaration-property-value-no-unknown",
+    "resourceUrls": [
+      "https://stylelint.io/user-guide/rules/declaration-property-value-no-unknown"
+    ]
+  },
+  {
+    "name": "font-family-name-quotes",
+    "severityLevel": 3,
+    "tags": [
+      "BestPractices",
+      "CSS",
+      "SCSS"
+    ],
+    "description": "font-family-name-quotes",
+    "resourceUrls": [
+      "https://stylelint.io/user-guide/rules/font-family-name-quotes"
+    ]
+  },
+  {
+    "name": "font-family-no-duplicate-names",
+    "severityLevel": 2,
+    "tags": [
+      "ErrorProne",
+      "CSS",
+      "SCSS"
+    ],
+    "description": "font-family-no-duplicate-names",
+    "resourceUrls": [
+      "https://stylelint.io/user-guide/rules/font-family-no-duplicate-names"
+    ]
+  },
+  {
+    "name": "font-family-no-missing-generic-family-keyword",
+    "severityLevel": 3,
+    "tags": [
+      "ErrorProne",
+      "CSS",
+      "SCSS"
+    ],
+    "description": "font-family-no-missing-generic-family-keyword",
+    "resourceUrls": [
+      "https://stylelint.io/user-guide/rules/font-family-no-missing-generic-family-keyword"
+    ]
+  },
+  {
+    "name": "font-weight-notation",
+    "severityLevel": 4,
+    "tags": [
+      "CodeStyle",
+      "CSS",
+      "SCSS"
+    ],
+    "description": "font-weight-notation",
+    "resourceUrls": [
+      "https://stylelint.io/user-guide/rules/font-weight-notation"
+    ]
+  },
+  {
+    "name": "function-allowed-list",
+    "severityLevel": 3,
+    "tags": [
+      "CodeStyle",
+      "CSS",
+      "SCSS"
+    ],
+    "description": "function-allowed-list",
+    "resourceUrls": [
+      "https://stylelint.io/user-guide/rules/function-allowed-list"
+    ]
+  },
+  {
+    "name": "function-calc-no-unspaced-operator",
+    "severityLevel": 2,
+    "tags": [
+      "ErrorProne",
+      "CSS",
+      "SCSS"
+    ],
+    "description": "function-calc-no-unspaced-operator",
+    "resourceUrls": [
+      "https://stylelint.io/user-guide/rules/function-calc-no-unspaced-operator"
+    ]
+  },
+  {
+    "name": "function-disallowed-list",
+    "severityLevel": 3,
+    "tags": [
+      "CodeStyle",
+      "CSS",
+      "SCSS"
+    ],
+    "description": "function-disallowed-list",
+    "resourceUrls": [
+      "https://stylelint.io/user-guide/rules/function-disallowed-list"
+    ]
+  },
+  {
+    "name": "function-linear-gradient-no-nonstandard-direction",
+    "severityLevel": 3,
+    "tags": [
+      "BestPractices",
+      "CSS",
+      "SCSS"
+    ],
+    "description": "function-linear-gradient-no-nonstandard-direction",
+    "resourceUrls": [
+      "https://stylelint.io/user-guide/rules/function-linear-gradient-no-nonstandard-direction"
+    ]
+  },
+  {
+    "name": "function-name-case",
+    "severityLevel": 4,
+    "tags": [
+      "CodeStyle",
+      "CSS",
+      "SCSS"
+    ],
+    "description": "function-name-case",
+    "resourceUrls": [
+      "https://stylelint.io/user-guide/rules/function-name-case"
+    ]
+  },
+  {
+    "name": "function-no-unknown",
+    "severityLevel": 3,
+    "tags": [
+      "ErrorProne",
+      "CSS",
+      "SCSS"
+    ],
+    "description": "function-no-unknown",
+    "resourceUrls": [
+      "https://stylelint.io/user-guide/rules/function-no-unknown"
+    ]
+  },
+  {
+    "name": "function-url-no-scheme-relative",
+    "severityLevel": 3,
+    "tags": [
+      "CodeStyle",
+      "CSS",
+      "SCSS"
+    ],
+    "description": "function-url-no-scheme-relative",
+    "resourceUrls": [
+      "https://stylelint.io/user-guide/rules/function-url-no-scheme-relative"
+    ]
+  },
+  {
+    "name": "function-url-quotes",
+    "severityLevel": 3,
+    "tags": [
+      "ErrorProne",
+      "CSS",
+      "SCSS"
+    ],
+    "description": "function-url-quotes",
+    "resourceUrls": [
+      "https://stylelint.io/user-guide/rules/function-url-quotes"
+    ]
+  },
+  {
+    "name": "function-url-scheme-allowed-list",
+    "severityLevel": 3,
+    "tags": [
+      "CodeStyle",
+      "CSS",
+      "SCSS"
+    ],
+    "description": "function-url-scheme-allowed-list",
+    "resourceUrls": [
+      "https://stylelint.io/user-guide/rules/function-url-scheme-allowed-list"
+    ]
+  },
+  {
+    "name": "function-url-scheme-disallowed-list",
+    "severityLevel": 3,
+    "tags": [
+      "CodeStyle",
+      "CSS",
+      "SCSS"
+    ],
+    "description": "function-url-scheme-disallowed-list",
+    "resourceUrls": [
+      "https://stylelint.io/user-guide/rules/function-url-scheme-disallowed-list"
+    ]
+  },
+  {
+    "name": "hue-degree-notation",
+    "severityLevel": 4,
+    "tags": [
+      "CodeStyle",
+      "CSS",
+      "SCSS"
+    ],
+    "description": "hue-degree-notation",
+    "resourceUrls": [
+      "https://stylelint.io/user-guide/rules/hue-degree-notation"
+    ]
+  },
+  {
+    "name": "import-notation",
+    "severityLevel": 4,
+    "tags": [
+      "CodeStyle",
+      "CSS",
+      "SCSS"
+    ],
+    "description": "import-notation",
+    "resourceUrls": [
+      "https://stylelint.io/user-guide/rules/import-notation"
+    ]
+  },
+  {
+    "name": "keyframe-block-no-duplicate-selectors",
+    "severityLevel": 2,
+    "tags": [
+      "ErrorProne",
+      "CSS",
+      "SCSS"
+    ],
+    "description": "keyframe-block-no-duplicate-selectors",
+    "resourceUrls": [
+      "https://stylelint.io/user-guide/rules/keyframe-block-no-duplicate-selectors"
+    ]
+  },
+  {
+    "name": "keyframe-declaration-no-important",
+    "severityLevel": 2,
+    "tags": [
+      "ErrorProne",
+      "CSS",
+      "SCSS"
+    ],
+    "description": "keyframe-declaration-no-important",
+    "resourceUrls": [
+      "https://stylelint.io/user-guide/rules/keyframe-declaration-no-important"
+    ]
+  },
+  {
+    "name": "keyframe-selector-notation",
+    "severityLevel": 4,
+    "tags": [
+      "CodeStyle",
+      "CSS",
+      "SCSS"
+    ],
+    "description": "keyframe-selector-notation",
+    "resourceUrls": [
+      "https://stylelint.io/user-guide/rules/keyframe-selector-notation"
+    ]
+  },
+  {
+    "name": "keyframes-name-pattern",
+    "severityLevel": 3,
+    "tags": [
+      "ErrorProne",
+      "CSS",
+      "SCSS"
+    ],
+    "description": "keyframes-name-pattern",
+    "resourceUrls": [
+      "https://stylelint.io/user-guide/rules/keyframes-name-pattern"
+    ]
+  },
+  {
+    "name": "layer-name-pattern",
+    "severityLevel": 3,
+    "tags": [
+      "ErrorProne",
+      "CSS",
+      "SCSS"
+    ],
+    "description": "layer-name-pattern",
+    "resourceUrls": [
+      "https://stylelint.io/user-guide/rules/layer-name-pattern"
+    ]
+  },
+  {
+    "name": "length-zero-no-unit",
+    "severityLevel": 3,
+    "tags": [
+      "BestPractices",
+      "CSS",
+      "SCSS"
+    ],
+    "description": "length-zero-no-unit",
+    "resourceUrls": [
+      "https://stylelint.io/user-guide/rules/length-zero-no-unit"
+    ]
+  },
+  {
+    "name": "lightness-notation",
+    "severityLevel": 4,
+    "tags": [
+      "CodeStyle",
+      "CSS",
+      "SCSS"
+    ],
+    "description": "lightness-notation",
+    "resourceUrls": [
+      "https://stylelint.io/user-guide/rules/lightness-notation"
+    ]
+  },
+  {
+    "name": "max-nesting-depth",
+    "severityLevel": 3,
+    "tags": [
+      "ErrorProne",
+      "CSS",
+      "SCSS"
+    ],
+    "description": "max-nesting-depth",
+    "resourceUrls": [
+      "https://stylelint.io/user-guide/rules/max-nesting-depth"
+    ]
+  },
+  {
+    "name": "media-feature-name-allowed-list",
+    "severityLevel": 4,
+    "tags": [
+      "CodeStyle",
+      "CSS",
+      "SCSS"
+    ],
+    "description": "media-feature-name-allowed-list",
+    "resourceUrls": [
+      "https://stylelint.io/user-guide/rules/media-feature-name-allowed-list"
+    ]
+  },
+  {
+    "name": "media-feature-name-disallowed-list",
+    "severityLevel": 4,
+    "tags": [
+      "CodeStyle",
+      "CSS",
+      "SCSS"
+    ],
+    "description": "media-feature-name-disallowed-list",
+    "resourceUrls": [
+      "https://stylelint.io/user-guide/rules/media-feature-name-disallowed-list"
+    ]
+  },
+  {
+    "name": "media-feature-name-no-unknown",
+    "severityLevel": 3,
+    "tags": [
+      "ErrorProne",
+      "CSS",
+      "SCSS"
+    ],
+    "description": "media-feature-name-no-unknown",
+    "resourceUrls": [
+      "https://stylelint.io/user-guide/rules/media-feature-name-no-unknown"
+    ]
+  },
+  {
+    "name": "media-feature-name-no-vendor-prefix",
+    "severityLevel": 4,
+    "tags": [
+      "CodeStyle",
+      "CSS",
+      "SCSS"
+    ],
+    "description": "media-feature-name-no-vendor-prefix",
+    "resourceUrls": [
+      "https://stylelint.io/user-guide/rules/media-feature-name-no-vendor-prefix"
+    ]
+  },
+  {
+    "name": "media-feature-name-unit-allowed-list",
+    "severityLevel": 4,
+    "tags": [
+      "CodeStyle",
+      "CSS",
+      "SCSS"
+    ],
+    "description": "media-feature-name-unit-allowed-list",
+    "resourceUrls": [
+      "https://stylelint.io/user-guide/rules/media-feature-name-unit-allowed-list"
+    ]
+  },
+  {
+    "name": "media-feature-name-value-allowed-list",
+    "severityLevel": 4,
+    "tags": [
+      "CodeStyle",
+      "CSS",
+      "SCSS"
+    ],
+    "description": "media-feature-name-value-allowed-list",
+    "resourceUrls": [
+      "https://stylelint.io/user-guide/rules/media-feature-name-value-allowed-list"
+    ]
+  },
+  {
+    "name": "media-feature-name-value-no-unknown",
+    "severityLevel": 3,
+    "tags": [
+      "ErrorProne",
+      "CSS",
+      "SCSS"
+    ],
+    "description": "media-feature-name-value-no-unknown",
+    "resourceUrls": [
+      "https://stylelint.io/user-guide/rules/media-feature-name-value-no-unknown"
+    ]
+  },
+  {
+    "name": "media-feature-range-notation",
+    "severityLevel": 4,
+    "tags": [
+      "CodeStyle",
+      "CSS",
+      "SCSS"
+    ],
+    "description": "media-feature-range-notation",
+    "resourceUrls": [
+      "https://stylelint.io/user-guide/rules/media-feature-range-notation"
+    ]
+  },
+  {
+    "name": "media-query-no-invalid",
+    "severityLevel": 2,
+    "tags": [
+      "ErrorProne",
+      "CSS",
+      "SCSS"
+    ],
+    "description": "media-query-no-invalid",
+    "resourceUrls": [
+      "https://stylelint.io/user-guide/rules/media-query-no-invalid"
+    ]
+  },
+  {
+    "name": "named-grid-areas-no-invalid",
+    "severityLevel": 2,
+    "tags": [
+      "ErrorProne",
+      "CSS",
+      "SCSS"
+    ],
+    "description": "named-grid-areas-no-invalid",
+    "resourceUrls": [
+      "https://stylelint.io/user-guide/rules/named-grid-areas-no-invalid"
+    ]
+  },
+  {
+    "name": "no-descending-specificity",
+    "severityLevel": 3,
+    "tags": [
+      "ErrorProne",
+      "CSS",
+      "SCSS"
+    ],
+    "description": "no-descending-specificity",
+    "resourceUrls": [
+      "https://stylelint.io/user-guide/rules/no-descending-specificity"
+    ]
+  },
+  {
+    "name": "no-duplicate-at-import-rules",
+    "severityLevel": 2,
+    "tags": [
+      "ErrorProne",
+      "CSS",
+      "SCSS"
+    ],
+    "description": "no-duplicate-at-import-rules",
+    "resourceUrls": [
+      "https://stylelint.io/user-guide/rules/no-duplicate-at-import-rules"
+    ]
+  },
+  {
+    "name": "no-duplicate-selectors",
+    "severityLevel": 2,
+    "tags": [
+      "ErrorProne",
+      "CSS",
+      "SCSS"
+    ],
+    "description": "no-duplicate-selectors",
+    "resourceUrls": [
+      "https://stylelint.io/user-guide/rules/no-duplicate-selectors"
+    ]
+  },
+  {
+    "name": "no-empty-source",
+    "severityLevel": 2,
+    "tags": [
+      "ErrorProne",
+      "CSS",
+      "SCSS"
+    ],
+    "description": "no-empty-source",
+    "resourceUrls": [
+      "https://stylelint.io/user-guide/rules/no-empty-source"
+    ]
+  },
+  {
+    "name": "no-invalid-double-slash-comments",
+    "severityLevel": 2,
+    "tags": [
+      "ErrorProne",
+      "CSS",
+      "SCSS"
+    ],
+    "description": "no-invalid-double-slash-comments",
+    "resourceUrls": [
+      "https://stylelint.io/user-guide/rules/no-invalid-double-slash-comments"
+    ]
+  },
+  {
+    "name": "no-invalid-position-at-import-rule",
+    "severityLevel": 2,
+    "tags": [
+      "ErrorProne",
+      "CSS",
+      "SCSS"
+    ],
+    "description": "no-invalid-position-at-import-rule",
+    "resourceUrls": [
+      "https://stylelint.io/user-guide/rules/no-invalid-position-at-import-rule"
+    ]
+  },
+  {
+    "name": "no-irregular-whitespace",
+    "severityLevel": 4,
+    "tags": [
+      "BestPractices",
+      "CSS",
+      "SCSS"
+    ],
+    "description": "no-irregular-whitespace",
+    "resourceUrls": [
+      "https://stylelint.io/user-guide/rules/no-irregular-whitespace"
+    ]
+  },
+  {
+    "name": "no-unknown-animations",
+    "severityLevel": 3,
+    "tags": [
+      "ErrorProne",
+      "CSS",
+      "SCSS"
+    ],
+    "description": "no-unknown-animations",
+    "resourceUrls": [
+      "https://stylelint.io/user-guide/rules/no-unknown-animations"
+    ]
+  },
+  {
+    "name": "no-unknown-custom-media",
+    "severityLevel": 3,
+    "tags": [
+      "ErrorProne",
+      "CSS",
+      "SCSS"
+    ],
+    "description": "no-unknown-custom-media",
+    "resourceUrls": [
+      "https://stylelint.io/user-guide/rules/no-unknown-custom-media"
+    ]
+  },
+  {
+    "name": "no-unknown-custom-properties",
+    "severityLevel": 3,
+    "tags": [
+      "ErrorProne",
+      "CSS",
+      "SCSS"
+    ],
+    "description": "no-unknown-custom-properties",
+    "resourceUrls": [
+      "https://stylelint.io/user-guide/rules/no-unknown-custom-properties"
+    ]
+  },
+  {
+    "name": "number-max-precision",
+    "severityLevel": 3,
+    "tags": [
+      "BestPractices",
+      "CSS",
+      "SCSS"
+    ],
+    "description": "number-max-precision",
+    "resourceUrls": [
+      "https://stylelint.io/user-guide/rules/number-max-precision"
+    ]
+  },
+  {
+    "name": "property-allowed-list",
+    "severityLevel": 5,
+    "tags": [
+      "CodeStyle",
+      "CSS",
+      "SCSS"
+    ],
+    "description": "property-allowed-list",
+    "resourceUrls": [
+      "https://stylelint.io/user-guide/rules/property-allowed-list"
+    ]
+  },
+  {
+    "name": "property-disallowed-list",
+    "severityLevel": 5,
+    "tags": [
+      "CodeStyle",
+      "CSS",
+      "SCSS"
+    ],
+    "description": "property-disallowed-list",
+    "resourceUrls": [
+      "https://stylelint.io/user-guide/rules/property-disallowed-list"
+    ]
+  },
+  {
+    "name": "property-no-unknown",
+    "severityLevel": 3,
+    "tags": [
+      "ErrorProne",
+      "CSS",
+      "SCSS"
+    ],
+    "description": "property-no-unknown",
+    "resourceUrls": [
+      "https://stylelint.io/user-guide/rules/property-no-unknown"
+    ]
+  },
+  {
+    "name": "property-no-vendor-prefix",
+    "severityLevel": 4,
+    "tags": [
+      "CodeStyle",
+      "CSS",
+      "SCSS"
+    ],
+    "description": "property-no-vendor-prefix",
+    "resourceUrls": [
+      "https://stylelint.io/user-guide/rules/property-no-vendor-prefix"
+    ]
+  },
+  {
+    "name": "rule-empty-line-before",
+    "severityLevel": 3,
+    "tags": [
+      "BestPractices",
+      "CSS",
+      "SCSS"
+    ],
+    "description": "rule-empty-line-before",
+    "resourceUrls": [
+      "https://stylelint.io/user-guide/rules/rule-empty-line-before"
+    ]
+  },
+  {
+    "name": "rule-selector-property-disallowed-list",
+    "severityLevel": 5,
+    "tags": [
+      "CodeStyle",
+      "CSS",
+      "SCSS"
+    ],
+    "description": "rule-selector-property-disallowed-list",
+    "resourceUrls": [
+      "https://stylelint.io/user-guide/rules/rule-selector-property-disallowed-list"
+    ]
+  },
+  {
+    "name": "selector-anb-no-unmatchable",
+    "severityLevel": 3,
+    "tags": [
+      "BestPractices",
+      "CSS",
+      "SCSS"
+    ],
+    "description": "selector-anb-no-unmatchable",
+    "resourceUrls": [
+      "https://stylelint.io/user-guide/rules/selector-anb-no-unmatchable"
+    ]
+  },
+  {
+    "name": "selector-attribute-name-disallowed-list",
+    "severityLevel": 5,
+    "tags": [
+      "CodeStyle",
+      "CSS",
+      "SCSS"
+    ],
+    "description": "selector-attribute-name-disallowed-list",
+    "resourceUrls": [
+      "https://stylelint.io/user-guide/rules/selector-attribute-name-disallowed-list"
+    ]
+  },
+  {
+    "name": "selector-attribute-operator-allowed-list",
+    "severityLevel": 5,
+    "tags": [
+      "CodeStyle",
+      "CSS",
+      "SCSS"
+    ],
+    "description": "selector-attribute-operator-allowed-list",
+    "resourceUrls": [
+      "https://stylelint.io/user-guide/rules/selector-attribute-operator-allowed-list"
+    ]
+  },
+  {
+    "name": "selector-attribute-operator-disallowed-list",
+    "severityLevel": 3,
+    "tags": [
+      "ErrorProne",
+      "CSS",
+      "SCSS"
+    ],
+    "description": "selector-attribute-operator-disallowed-list",
+    "resourceUrls": [
+      "https://stylelint.io/user-guide/rules/selector-attribute-operator-disallowed-list"
+    ]
+  },
+  {
+    "name": "selector-attribute-quotes",
+    "severityLevel": 3,
+    "tags": [
+      "BestPractices",
+      "CSS",
+      "SCSS"
+    ],
+    "description": "selector-attribute-quotes",
+    "resourceUrls": [
+      "https://stylelint.io/user-guide/rules/selector-attribute-quotes"
+    ]
+  },
+  {
+    "name": "selector-class-pattern",
+    "severityLevel": 3,
+    "tags": [
+      "BestPractices",
+      "CSS",
+      "SCSS"
+    ],
+    "description": "selector-class-pattern",
+    "resourceUrls": [
+      "https://stylelint.io/user-guide/rules/selector-class-pattern"
+    ]
+  },
+  {
+    "name": "selector-combinator-allowed-list",
+    "severityLevel": 3,
+    "tags": [
+      "BestPractices",
+      "CSS",
+      "SCSS"
+    ],
+    "description": "selector-combinator-allowed-list",
+    "resourceUrls": [
+      "https://stylelint.io/user-guide/rules/selector-combinator-allowed-list"
+    ]
+  },
+  {
+    "name": "selector-combinator-disallowed-list",
+    "severityLevel": 3,
+    "tags": [
+      "BestPractices",
+      "CSS",
+      "SCSS"
+    ],
+    "description": "selector-combinator-disallowed-list",
+    "resourceUrls": [
+      "https://stylelint.io/user-guide/rules/selector-combinator-disallowed-list"
+    ]
+  },
+  {
+    "name": "selector-disallowed-list",
+    "severityLevel": 3,
+    "tags": [
+      "BestPractices",
+      "CSS",
+      "SCSS"
+    ],
+    "description": "selector-disallowed-list",
+    "resourceUrls": [
+      "https://stylelint.io/user-guide/rules/selector-disallowed-list"
+    ]
+  },
+  {
+    "name": "selector-id-pattern",
+    "severityLevel": 3,
+    "tags": [
+      "BestPractices",
+      "CSS",
+      "SCSS"
+    ],
+    "description": "selector-id-pattern",
+    "resourceUrls": [
+      "https://stylelint.io/user-guide/rules/selector-id-pattern"
+    ]
+  },
+  {
+    "name": "selector-max-attribute",
+    "severityLevel": 3,
+    "tags": [
+      "ErrorProne",
+      "CSS",
+      "SCSS"
+    ],
+    "description": "selector-max-attribute",
+    "resourceUrls": [
+      "https://stylelint.io/user-guide/rules/selector-max-attribute"
+    ]
+  },
+  {
+    "name": "selector-max-class",
+    "severityLevel": 3,
+    "tags": [
+      "ErrorProne",
+      "CSS",
+      "SCSS"
+    ],
+    "description": "selector-max-class",
+    "resourceUrls": [
+      "https://stylelint.io/user-guide/rules/selector-max-class"
+    ]
+  },
+  {
+    "name": "selector-max-combinators",
+    "severityLevel": 3,
+    "tags": [
+      "BestPractices",
+      "CSS",
+      "SCSS"
+    ],
+    "description": "selector-max-combinators",
+    "resourceUrls": [
+      "https://stylelint.io/user-guide/rules/selector-max-combinators"
+    ]
+  },
+  {
+    "name": "selector-max-compound-selectors",
+    "severityLevel": 3,
+    "tags": [
+      "BestPractices",
+      "CSS",
+      "SCSS"
+    ],
+    "description": "selector-max-compound-selectors",
+    "resourceUrls": [
+      "https://stylelint.io/user-guide/rules/selector-max-compound-selectors"
+    ]
+  },
+  {
+    "name": "selector-max-id",
+    "severityLevel": 3,
+    "tags": [
+      "ErrorProne",
+      "CSS",
+      "SCSS"
+    ],
+    "description": "selector-max-id",
+    "resourceUrls": [
+      "https://stylelint.io/user-guide/rules/selector-max-id"
+    ]
+  },
+  {
+    "name": "selector-max-pseudo-class",
+    "severityLevel": 3,
+    "tags": [
+      "BestPractices",
+      "CSS",
+      "SCSS"
+    ],
+    "description": "selector-max-pseudo-class",
+    "resourceUrls": [
+      "https://stylelint.io/user-guide/rules/selector-max-pseudo-class"
+    ]
+  },
+  {
+    "name": "selector-max-specificity",
+    "severityLevel": 3,
+    "tags": [
+      "ErrorProne",
+      "CSS",
+      "SCSS"
+    ],
+    "description": "selector-max-specificity",
+    "resourceUrls": [
+      "https://stylelint.io/user-guide/rules/selector-max-specificity"
+    ]
+  },
+  {
+    "name": "selector-max-type",
+    "severityLevel": 3,
+    "tags": [
+      "BestPractices",
+      "CSS",
+      "SCSS"
+    ],
+    "description": "selector-max-type",
+    "resourceUrls": [
+      "https://stylelint.io/user-guide/rules/selector-max-type"
+    ]
+  },
+  {
+    "name": "selector-max-universal",
+    "severityLevel": 3,
+    "tags": [
+      "BestPractices",
+      "CSS",
+      "SCSS"
+    ],
+    "description": "selector-max-universal",
+    "resourceUrls": [
+      "https://stylelint.io/user-guide/rules/selector-max-universal"
+    ]
+  },
+  {
+    "name": "selector-nested-pattern",
+    "severityLevel": 3,
+    "tags": [
+      "BestPractices",
+      "CSS",
+      "SCSS"
+    ],
+    "description": "selector-nested-pattern",
+    "resourceUrls": [
+      "https://stylelint.io/user-guide/rules/selector-nested-pattern"
+    ]
+  },
+  {
+    "name": "selector-no-qualifying-type",
+    "severityLevel": 3,
+    "tags": [
+      "ErrorProne",
+      "CSS",
+      "SCSS"
+    ],
+    "description": "selector-no-qualifying-type",
+    "resourceUrls": [
+      "https://stylelint.io/user-guide/rules/selector-no-qualifying-type"
+    ]
+  },
+  {
+    "name": "selector-no-vendor-prefix",
+    "severityLevel": 3,
+    "tags": [
+      "BestPractices",
+      "CSS",
+      "SCSS"
+    ],
+    "description": "selector-no-vendor-prefix",
+    "resourceUrls": [
+      "https://stylelint.io/user-guide/rules/selector-no-vendor-prefix"
+    ]
+  },
+  {
+    "name": "selector-not-notation",
+    "severityLevel": 4,
+    "tags": [
+      "CodeStyle",
+      "CSS",
+      "SCSS"
+    ],
+    "description": "selector-not-notation",
+    "resourceUrls": [
+      "https://stylelint.io/user-guide/rules/selector-not-notation"
+    ]
+  },
+  {
+    "name": "selector-pseudo-class-allowed-list",
+    "severityLevel": 4,
+    "tags": [
+      "CodeStyle",
+      "CSS",
+      "SCSS"
+    ],
+    "description": "selector-pseudo-class-allowed-list",
+    "resourceUrls": [
+      "https://stylelint.io/user-guide/rules/selector-pseudo-class-allowed-list"
+    ]
+  },
+  {
+    "name": "selector-pseudo-class-disallowed-list",
+    "severityLevel": 3,
+    "tags": [
+      "BestPractices",
+      "CSS",
+      "SCSS"
+    ],
+    "description": "selector-pseudo-class-disallowed-list",
+    "resourceUrls": [
+      "https://stylelint.io/user-guide/rules/selector-pseudo-class-disallowed-list"
+    ]
+  },
+  {
+    "name": "selector-pseudo-class-no-unknown",
+    "severityLevel": 3,
+    "tags": [
+      "ErrorProne",
+      "CSS",
+      "SCSS"
+    ],
+    "description": "selector-pseudo-class-no-unknown",
+    "resourceUrls": [
+      "https://stylelint.io/user-guide/rules/selector-pseudo-class-no-unknown"
+    ]
+  },
+  {
+    "name": "selector-pseudo-element-allowed-list",
+    "severityLevel": 3,
+    "tags": [
+      "BestPractices",
+      "CSS",
+      "SCSS"
+    ],
+    "description": "selector-pseudo-element-allowed-list",
+    "resourceUrls": [
+      "https://stylelint.io/user-guide/rules/selector-pseudo-element-allowed-list"
+    ]
+  },
+  {
+    "name": "selector-pseudo-element-colon-notation",
+    "severityLevel": 4,
+    "tags": [
+      "CodeStyle",
+      "CSS",
+      "SCSS"
+    ],
+    "description": "selector-pseudo-element-colon-notation",
+    "resourceUrls": [
+      "https://stylelint.io/user-guide/rules/selector-pseudo-element-colon-notation"
+    ]
+  },
+  {
+    "name": "selector-pseudo-element-disallowed-list",
+    "severityLevel": 3,
+    "tags": [
+      "BestPractices",
+      "CSS",
+      "SCSS"
+    ],
+    "description": "selector-pseudo-element-disallowed-list",
+    "resourceUrls": [
+      "https://stylelint.io/user-guide/rules/selector-pseudo-element-disallowed-list"
+    ]
+  },
+  {
+    "name": "selector-pseudo-element-no-unknown",
+    "severityLevel": 3,
+    "tags": [
+      "ErrorProne",
+      "CSS",
+      "SCSS"
+    ],
+    "description": "selector-pseudo-element-no-unknown",
+    "resourceUrls": [
+      "https://stylelint.io/user-guide/rules/selector-pseudo-element-no-unknown"
+    ]
+  },
+  {
+    "name": "selector-type-case",
+    "severityLevel": 4,
+    "tags": [
+      "CodeStyle",
+      "CSS",
+      "SCSS"
+    ],
+    "description": "selector-type-case",
+    "resourceUrls": [
+      "https://stylelint.io/user-guide/rules/selector-type-case"
+    ]
+  },
+  {
+    "name": "selector-type-no-unknown",
+    "severityLevel": 3,
+    "tags": [
+      "ErrorProne",
+      "CSS",
+      "SCSS"
+    ],
+    "description": "selector-type-no-unknown",
+    "resourceUrls": [
+      "https://stylelint.io/user-guide/rules/selector-type-no-unknown"
+    ]
+  },
+  {
+    "name": "shorthand-property-no-redundant-values",
+    "severityLevel": 3,
+    "tags": [
+      "ErrorProne",
+      "CSS",
+      "SCSS"
+    ],
+    "description": "shorthand-property-no-redundant-values",
+    "resourceUrls": [
+      "https://stylelint.io/user-guide/rules/shorthand-property-no-redundant-values"
+    ]
+  },
+  {
+    "name": "string-no-newline",
+    "severityLevel": 2,
+    "tags": [
+      "ErrorProne",
+      "CSS",
+      "SCSS"
+    ],
+    "description": "string-no-newline",
+    "resourceUrls": [
+      "https://stylelint.io/user-guide/rules/string-no-newline"
+    ]
+  },
+  {
+    "name": "syntax-string-no-invalid",
+    "severityLevel": 2,
+    "tags": [
+      "ErrorProne",
+      "CSS",
+      "SCSS"
+    ],
+    "description": "syntax-string-no-invalid",
+    "resourceUrls": [
+      "https://stylelint.io/user-guide/rules/syntax-string-no-invalid"
+    ]
+  },
+  {
+    "name": "time-min-milliseconds",
+    "severityLevel": 3,
+    "tags": [
+      "ErrorProne",
+      "CSS",
+      "SCSS"
+    ],
+    "description": "time-min-milliseconds",
+    "resourceUrls": [
+      "https://stylelint.io/user-guide/rules/time-min-milliseconds"
+    ]
+  },
+  {
+    "name": "unit-allowed-list",
+    "severityLevel": 5,
+    "tags": [
+      "CodeStyle",
+      "CSS",
+      "SCSS"
+    ],
+    "description": "unit-allowed-list",
+    "resourceUrls": [
+      "https://stylelint.io/user-guide/rules/unit-allowed-list"
+    ]
+  },
+  {
+    "name": "unit-disallowed-list",
+    "severityLevel": 5,
+    "tags": [
+      "CodeStyle",
+      "CSS",
+      "SCSS"
+    ],
+    "description": "unit-disallowed-list",
+    "resourceUrls": [
+      "https://stylelint.io/user-guide/rules/unit-disallowed-list"
+    ]
+  },
+  {
+    "name": "unit-no-unknown",
+    "severityLevel": 3,
+    "tags": [
+      "ErrorProne",
+      "CSS",
+      "SCSS"
+    ],
+    "description": "unit-no-unknown",
+    "resourceUrls": [
+      "https://stylelint.io/user-guide/rules/unit-no-unknown"
+    ]
+  },
+  {
+    "name": "value-keyword-case",
+    "severityLevel": 4,
+    "tags": [
+      "CodeStyle",
+      "CSS",
+      "SCSS"
+    ],
+    "description": "value-keyword-case",
+    "resourceUrls": [
+      "https://stylelint.io/user-guide/rules/value-keyword-case"
+    ]
+  },
+  {
+    "name": "value-no-vendor-prefix",
+    "severityLevel": 3,
+    "tags": [
+      "CodeStyle",
+      "CSS",
+      "SCSS"
+    ],
+    "description": "value-no-vendor-prefix",
+    "resourceUrls": [
+      "https://stylelint.io/user-guide/rules/value-no-vendor-prefix"
+    ]
+  },
+  {
+    "name": "custom-test-rule",
+    "severityLevel": 4,
+    "tags": [
+      "Custom"
+    ],
+    "description": "custom-test-rule",
+    "resourceUrls": [
+      "https://example.com/custom-rule"
+    ]
+  },
+  {
+    "name": "no-url-rule",
+    "severityLevel": 4,
+    "tags": [
+      "Custom"
+    ],
+    "description": "no-url-rule",
+    "resourceUrls": []
+  }
 ]
