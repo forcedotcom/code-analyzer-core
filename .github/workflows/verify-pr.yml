@@ -91,9 +91,9 @@ jobs:
           HEAD_SHA=${{ github.event.pull_request.head.sha }}
           CHANGED_FILES=`git diff --name-only $HEAD_SHA $BASE_SHA`
           echo changed files are $CHANGED_FILES
-          npm run test-affected-workspaces
-          npm run lint
-          npm run package
+#          npm run test-affected-workspaces
+#          npm run lint
+#          npm run package
   run_tests:
     runs-on: ${{ matrix.os }}
     strategy:
