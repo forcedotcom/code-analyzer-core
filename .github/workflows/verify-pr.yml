@@ -90,7 +90,7 @@ jobs:
           BASE_SHA=${{ github.event.pull_request.base.sha }}
           HEAD_SHA=${{ github.event.pull_request.head.sha }}
           CHANGED_FILES=`git diff --name-only $HEAD_SHA $BASE_SHA`
-          node ./.github/workflows/verify-pr/identify-affected-workspaces.js "$CHANGED_FILES"
+          node ./.github/workflows/verify-pr/identify-affected-workspaces.mjs "$CHANGED_FILES"
           cat ./workspace-args.txt
 #          npm run test `cat ./workspace-args.txt || echo ''`
 #          npm run lint
