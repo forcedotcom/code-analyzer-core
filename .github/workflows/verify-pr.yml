@@ -72,6 +72,9 @@ jobs:
       - name: Support long paths
         run: git config --global core.longpaths true
       - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          fetch-depth: 0
       - uses: actions/setup-java@v4
         with:
           distribution: 'temurin'
@@ -83,4 +86,12 @@ jobs:
         with:
           python-version: 3.12
       - run: npm install
-      - run: npm run all
+      - name: Test changes in affected packages
+        run: |
+          BASE_SHA=${{ github.event.pull_request.base.sha }}
+          HEAD_SHA=${{ github.event.pull_request.head.sha }}
+          CHANGED_FILES=`git diff --name-only $HEAD_SHA $BASE_SHA`
+          node ./.github/workflows/verify-pr/identify-affected-workspaces.mjs "$CHANGED_FILES"
+          npm run build `cat workspace-args.txt`
+          npm run test `cat workspace-args.txt`
+          npm run lint
