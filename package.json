@@ -9,6 +9,7 @@
     "test-java": "npm run test-java --workspaces --if-present",
     "test-typescript": "cross-env NODE_OPTIONS=--experimental-vm-modules jest --coverage",
     "test": "npm run test-java && npm run test-typescript",
+    "test-affected-workspaces": "node ./.github/workflows/verify-pr/identify-affected-workspaces.mjs $CHANGED_FILES && npm run test `cat ./workspace-args.txt || echo ''`",
     "lint": "npm run lint --workspaces --if-present",
     "package": "npm run package --workspaces --if-present",
     "all": "npm run build && npm run test && npm run lint && npm run package",
