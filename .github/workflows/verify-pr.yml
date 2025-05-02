@@ -54,8 +54,8 @@ jobs:
         run: |
           BASE_SHA=${{ github.event.pull_request.base.sha }}
           HEAD_SHA=${{ github.event.pull_request.head.sha }}
-          CHANGED_FILES=`git diff --name-only $HEAD_SHA $BASE_SHA`
-          node ./.github/workflows/verify-pr/validate-changed-package-versions.js "$CHANGED_FILES"
+          git diff --name-only $HEAD_SHA $BASE_SHA > changed_files.txt
+          node ./.github/workflows/verify-pr/validate-changed-package-versions.js changed_files.txt
       - name: Validate that packages properly depend on each other
         if: ${{ needs.check_for_postrelease_keyword.outputs.is-postrelease == 'false' }}
         run: |
@@ -90,8 +90,8 @@ jobs:
         run: |
           BASE_SHA=${{ github.event.pull_request.base.sha }}
           HEAD_SHA=${{ github.event.pull_request.head.sha }}
-          CHANGED_FILES=`git diff --name-only $HEAD_SHA $BASE_SHA`
-          node ./.github/workflows/verify-pr/identify-affected-workspaces.mjs "$CHANGED_FILES"
+          git diff --name-only $HEAD_SHA $BASE_SHA > changed_files.txt
+          node ./.github/workflows/verify-pr/identify-affected-workspaces.mjs changed_files.txt
           npm run build `cat workspace-args.txt`
           npm run test `cat workspace-args.txt`
           npm run lint
