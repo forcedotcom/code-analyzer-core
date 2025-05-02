@@ -7,7 +7,7 @@ const __dirname = path.dirname(__filename);
 const pathToRoot = path.resolve(__dirname, '..', '..', '..');
 
 function main() {
-    const changedFiles = process.argv[2].split('\n');
+    const changedFiles = readChangedFilesFile(process.argv[2]);
     if (changedFiles.length === 0) {
         console.log('No changed files; no packages need testing');
         process.exit(0);
@@ -45,6 +45,10 @@ function displayList(header, list) {
         console.log(`* ${listItem}`);
     }
     console.log('');
+}
+
+function readChangedFilesFile(changedFilesFileName) {
+    return fs.readFileSync(path.join(__dirname, changedFilesFileName), 'utf-8').split('\n').map(s => s.trim());
 }
 
 function identifyChangedPackages(changedFiles) {
