@@ -48,6 +48,9 @@ function displayList(header, list) {
 }
 
 function readChangedFilesFile(changedFilesFileName) {
+
+
+    
     return fs.readFileSync(path.join(__dirname, '..', '..', '..', changedFilesFileName), 'utf-8').split('\n').map(s => s.trim());
 }
 
