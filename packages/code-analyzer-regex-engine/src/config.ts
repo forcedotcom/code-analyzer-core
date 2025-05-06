@@ -56,7 +56,7 @@ export type RegexRule = {
     include_metadata?: boolean;
 }
 
-export const FILE_EXT_PATTERN: RegExp = /^[.][a-zA-Z0-9]+$/;
+export const FILE_EXT_PATTERN: RegExp = /^([.][a-zA-Z0-9-_]+)+$/;
 export const RULE_NAME_PATTERN: RegExp = /^[A-Za-z@][A-Za-z_0-9@\-/]*$/;
 export const REGEX_STRING_PATTERN: RegExp = /^\/(.*)\/(.*)$/;
 
