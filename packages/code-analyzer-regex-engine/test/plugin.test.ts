@@ -31,6 +31,13 @@ const SAMPLE_RAW_CUSTOM_RULE_NO_FILE_EXTS_DEFINITION = {
     tags: ["dummy"]
 }
 
+const SAMPLE_RAW_CUSTOM_RULE_NO_TALKING_ABOUT_FIGHT_CLUB_DEFINITION = {
+    regex: String.raw`/fight club/gi`,
+    description: "The first rule of Fight Club is don't talk about Fight Club",
+    tags: ["PopCulture"],
+    file_extensions: [".cls-meta.xml", ".cls_meta.xml"]
+};
+
 const SAMPLE_DATE: Date = new Date(Date.UTC(2024, 8, 1, 0, 0, 0));
 
 describe('RegexEnginePlugin No Custom Config Tests' , () => {
@@ -110,7 +117,8 @@ describe('RegexEnginePlugin Custom Config Tests', () => {
         const rawConfig: ConfigObject = {
             custom_rules: {
                 NoTodos: SAMPLE_RAW_CUSTOM_RULE_DEFINITION,
-                NoHellos: SAMPLE_RAW_CUSTOM_RULE_NO_FILE_EXTS_DEFINITION
+                NoHellos: SAMPLE_RAW_CUSTOM_RULE_NO_FILE_EXTS_DEFINITION,
+                NoTalkingAboutFightClub: SAMPLE_RAW_CUSTOM_RULE_NO_TALKING_ABOUT_FIGHT_CLUB_DEFINITION
             }
         };
         const valueExtractor: ConfigValueExtractor = new ConfigValueExtractor(rawConfig, 'engines.regex');
@@ -118,6 +126,7 @@ describe('RegexEnginePlugin Custom Config Tests', () => {
         const engine: RegexEngine = await plugin.createEngine('regex', resolvedConfig) as RegexEngine;
         const customNoTodoRuleRegex: RegExp = /TODO:\s/gi;
         const customNoHelloRuleRegex: RegExp = /hello/gi;
+        const customNoTalkingAboutFightClubRegex: RegExp = /fight club/gi;
         const expRegexRules: RegexRules = {
             ...createBaseRegexRules(SAMPLE_DATE),
             NoTodos: {
@@ -134,6 +143,14 @@ describe('RegexEnginePlugin Custom Config Tests', () => {
                 violation_message: getMessage('RuleViolationMessage', customNoHelloRuleRegex.toString(), 'NoHellos', 'Detects hellos in project'),
                 severity: SeverityLevel.Moderate,
                 tags: ['dummy']
+            },
+            NoTalkingAboutFightClub: {
+                regex: customNoTalkingAboutFightClubRegex.toString(),
+                description: SAMPLE_RAW_CUSTOM_RULE_NO_TALKING_ABOUT_FIGHT_CLUB_DEFINITION.description,
+                file_extensions: SAMPLE_RAW_CUSTOM_RULE_NO_TALKING_ABOUT_FIGHT_CLUB_DEFINITION.file_extensions,
+                violation_message: getMessage('RuleViolationMessage', customNoTalkingAboutFightClubRegex.toString(), 'NoTalkingAboutFightClub', 'The first rule of Fight Club is don\'t talk about Fight Club'),
+                severity: SeverityLevel.Moderate,
+                tags: ['PopCulture']
             }
         };
         expect(engine._getRegexRules()).toEqual(expRegexRules);
