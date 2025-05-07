@@ -35,6 +35,14 @@ const SAMPLE_CUSTOM_RULES: RegexRules = {
         violation_message: "sample violation message",
         severity: DEFAULT_SEVERITY_LEVEL,
         tags: ["Recommended", "Dummy"]
+    },
+    NoTalkingAboutFightClub: {
+        regex: '/fight club/gi',
+        description: "The first rule of Fight Club is do not talk about Fight Club",
+        file_extensions: [".abc-def.xyz"],
+        violation_message: "The second rule of Fight Club is DO NOT. TALK. ABOUT FIGHT CLUB.",
+        severity: DEFAULT_SEVERITY_LEVEL,
+        tags: ['PopCulture']
     }
 };
 
@@ -59,6 +67,14 @@ const EXPECTED_NoHellos_RULE_DESCRIPTION = {
     severityLevel: DEFAULT_SEVERITY_LEVEL,
     tags: ["Recommended", "Dummy"],
     description: "Detects hellos in project.",
+    resourceUrls: []
+};
+
+const EXPECTED_NoTalkingAboutFightClub_RULE_DESCRIPTION = {
+    name: "NoTalkingAboutFightClub",
+    severityLevel: DEFAULT_SEVERITY_LEVEL,
+    tags: ['PopCulture'],
+    description: "The first rule of Fight Club is do not talk about Fight Club",
     resourceUrls: []
 };
 
@@ -112,7 +128,7 @@ describe("Tests for RegexEngine's getName and describeRules methods", () => {
 
     it('Calling describeRules without workspace, returns all available rules', async () => {
         const rulesDescriptions: RuleDescription[] = await engine.describeRules(createDescribeOptions());
-        expect(rulesDescriptions).toHaveLength(7);
+        expect(rulesDescriptions).toHaveLength(8);
         expect(rulesDescriptions[0]).toMatchObject(EXPECTED_NoTrailingWhitespace_RULE_DESCRIPTION);
         expect(rulesDescriptions[1]).toMatchObject(EXPECTED_AvoidTermsWithImplicitBias_RULE_DESCRIPTION)
         expect(rulesDescriptions[2]).toMatchObject(EXPECTED_AvoidOldSalesforceApiVersions_RULE_DESCRIPTION)
@@ -120,6 +136,7 @@ describe("Tests for RegexEngine's getName and describeRules methods", () => {
         expect(rulesDescriptions[4]).toMatchObject(EXPECTED_MinVersionForAbstractVirtualClassesWithPrivateMethod_RULE_DESCRIPTION)
         expect(rulesDescriptions[5]).toMatchObject(EXPECTED_NoTodos_RULE_DESCRIPTION);
         expect(rulesDescriptions[6]).toMatchObject(EXPECTED_NoHellos_RULE_DESCRIPTION);
+        expect(rulesDescriptions[7]).toMatchObject(EXPECTED_NoTalkingAboutFightClub_RULE_DESCRIPTION);
     });
 
     it("When workspace targeting zero applicable files, then describeRules returns no rules", async () => {
@@ -730,6 +747,34 @@ describe('Tests for runRules', () => {
                 ]
             }
 
+        ];
+
+        expect(runResults.violations).toHaveLength(expectedViolations.length);
+        for (const expectedViolation of expectedViolations) {
+            expect(runResults.violations).toContainEqual(expectedViolation);
+        }
+    });
+
+    it('When workspace contains files that violate custom rules with multi-dot file extensions, then emit violations correctly', async () => {
+        const runOptions: RunOptions = createRunOptions(
+            new Workspace('id', [path.resolve(__dirname, "test-data", "workspaceWithMultidotFiles")]));
+        const runResults: EngineRunResults = await engine.runRules(["NoTalkingAboutFightClub"], runOptions);
+
+        const expectedViolations: Violation[] = [
+            {
+                ruleName: "NoTalkingAboutFightClub",
+                message: "The second rule of Fight Club is DO NOT. TALK. ABOUT FIGHT CLUB.",
+                primaryLocationIndex: 0,
+                codeLocations: [
+                    {
+                        file: path.resolve(__dirname, "test-data", "workspaceWithMultidotFiles", "somefile.abc-def.xyz"),
+                        startLine: 1,
+                        startColumn: 26,
+                        endLine: 1,
+                        endColumn: 36
+                    }
+                ]
+            }
         ];
 
         expect(runResults.violations).toHaveLength(expectedViolations.length);
