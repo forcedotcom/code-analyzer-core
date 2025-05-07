@@ -122,9 +122,8 @@ export class RegexEngine extends Engine {
     }
 
     private shouldScanFile(fileName: string, ruleName: string): boolean {
-        const ext: string = path.extname(fileName).toLowerCase();
         const fileExtensions: string[] | undefined = this.regexRules[ruleName].file_extensions;
-        return !fileExtensions || fileExtensions.includes(ext);
+        return !fileExtensions || fileExtensions.some(ext => fileName.toLowerCase().endsWith(ext));
     }
 
     private async scanFile(fileName: string, ruleName: string): Promise<Violation[]> {
