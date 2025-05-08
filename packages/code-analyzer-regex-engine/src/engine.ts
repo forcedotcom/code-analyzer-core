@@ -14,7 +14,7 @@ import * as fsp from 'node:fs/promises';
 import os from "node:os";
 import {RegexRule, RegexRules} from "./config";
 import {isBinaryFile} from "isbinaryfile";
-import {convertToRegex} from "./utils";
+import {convertToRegex, PromiseExecutionLimiter} from "./utils";
 
 const TEXT_BASED_FILE_EXTS = new Set<string>(
     [
@@ -23,18 +23,13 @@ const TEXT_BASED_FILE_EXTS = new Set<string>(
     ]
 )
 
-/**
- * The number of files that can be processed by the Regex engine simultaneously.
- * Batching the files allows us to control how many are open at once, and avoid hitting system limits over it.
- */
-const FILE_BATCH_SIZE = 1000;
-
 export class RegexEngine extends Engine {
     static readonly NAME = "regex";
     private readonly regexRules: RegexRules;
     private readonly regexValues: Map<string, RegExp> = new Map();
     private readonly textFilesCache: Map<string, string[]> = new Map();
     private readonly ruleResourceUrls: Map<string, string[]>;
+    private readonly promiseLimiter: PromiseExecutionLimiter = new PromiseExecutionLimiter();
 
     constructor(regexRules: RegexRules, ruleResourceUrls: Map<string, string[]>) {
         super();
@@ -82,7 +77,7 @@ export class RegexEngine extends Engine {
             return this.textFilesCache.get(cacheKey)!;
         }
         const fullFileList: string[] = await workspace.getTargetedFiles();
-        const workspaceTextFiles: string[] =  await filterAsync(fullFileList, isTextFile);
+        const workspaceTextFiles: string[] =  await this.filterAsync(fullFileList, isTextFile);
         this.textFilesCache.set(cacheKey, workspaceTextFiles);
         return workspaceTextFiles;
     }
@@ -99,26 +94,18 @@ export class RegexEngine extends Engine {
 
     async runRules(ruleNames: string[], runOptions: RunOptions): Promise<EngineRunResults> {
         const textFiles: string[] = await this.getTextFiles(runOptions.workspace);
-        let batchMultiplier = 0;
-        const violations: Violation[] = [];
-        while (batchMultiplier * FILE_BATCH_SIZE < textFiles.length) {
-            // Turns out there's a system-level limit on how many files can be open at once. In order to avoid hitting
-            // this limit while still reaping the benefits of `Promise.all()`, we'll process the files in batches.
-            const textFileBatch = textFiles.slice(batchMultiplier * FILE_BATCH_SIZE, (batchMultiplier + 1) * FILE_BATCH_SIZE);
-            const ruleRunPromises: Promise<Violation[]>[] = textFileBatch.map(file => this.runRulesForFile(file, ruleNames));
-            const newViolations = (await Promise.all(ruleRunPromises)).flat();
-            violations.push(...newViolations);
-            batchMultiplier++;
-        }
+        const ruleRunPromiseFunctions: (() => Promise<Violation[]>)[] = textFiles.map(
+            file => () => this.runRulesForFile(file, ruleNames));
         return {
-            violations
+            violations: (await this.promiseLimiter.execute(ruleRunPromiseFunctions)).flat()
         };
     }
 
     private async runRulesForFile(file: string, ruleNames: string[]): Promise<Violation[]>{
         const rulesToRun: string[] = ruleNames.filter(rule => this.shouldScanFile(file, rule));
-        const violationPromises:  Promise<Violation[]>[]  = rulesToRun.map(ruleName => this.scanFile(file, ruleName));
-        return (await Promise.all(violationPromises)).flat();
+        const violationPromiseFunctions:  (() => Promise<Violation[]>)[] = rulesToRun.map(
+            ruleName => () => this.scanFile(file, ruleName));
+        return (await this.promiseLimiter.execute(violationPromiseFunctions)).flat();
     }
 
     private shouldScanFile(fileName: string, ruleName: string): boolean {
@@ -172,6 +159,13 @@ export class RegexEngine extends Engine {
         }
         return violations;
     }
+
+    private async filterAsync<T>(array: T[], filterFcn: AsyncFilterFnc<T>): Promise<T[]> {
+        const tasks: (() => Promise<boolean>)[] = array.map(item => () => filterFcn(item));
+        const mask: boolean[] = await this.promiseLimiter.execute(tasks);
+        return array.filter((_, index) => mask[index]);
+    }
+
 }
 
 
@@ -208,8 +202,3 @@ async function isTextFile(fileName: string): Promise<boolean> {
 }
 
 type AsyncFilterFnc<T> = (value: T) => Promise<boolean>;
-
-async function filterAsync<T>(array: T[], filterFcn: AsyncFilterFnc<T>): Promise<T[]> {
-    const mask: boolean[] = await Promise.all(array.map(filterFcn));
-    return array.filter((_, index) => mask[index]);
-}
