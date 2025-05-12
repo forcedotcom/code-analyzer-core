@@ -1,0 +1,15 @@
+overrides:
+  - files:
+      - "*.html"
+      - "*.cmp"
+    plugins:
+      - "dummy"
+    parserOptions:
+      ecmaVersion: 2020
+    rules:
+      "dummy/my-rule-1":
+        - "error"
+      "dummy/my-rule-2":
+        - "error"
+      "dummy/my-rule-3":
+        - "error"
