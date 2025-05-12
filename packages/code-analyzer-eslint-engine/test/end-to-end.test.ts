@@ -31,7 +31,7 @@ describe('End to end test', () => {
         const defaultConfig: ConfigObject = await plugin.createEngineConfig('eslint', configValueExtractor);
         const engine: Engine = await plugin.createEngine(availableEngineNames[0], defaultConfig);
         const workspace: Workspace = new Workspace('id', [
-            path.resolve('test', 'test-data', 'legacyConfigCases', 'workspace_NoCustomConfig')
+            path.resolve('test', 'test-data', 'workspace_NoCustomConfig')
         ]);
         const ruleDescriptions: RuleDescription[] = await engine.describeRules({logFolder: os.tmpdir(), workspace: workspace});
         const recommendedRuleNames: string[] = ruleDescriptions.filter(rd => rd.tags.includes('Recommended')).map(rd => rd.name);

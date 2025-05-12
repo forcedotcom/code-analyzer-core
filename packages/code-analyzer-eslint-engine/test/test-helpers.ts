@@ -17,8 +17,3 @@ export function changeWorkingDirectoryToPackageRoot() {
         process.chdir(original_working_directory);
     });
 }
-
-export async function unzipToFolder(zipFile: string, outputFolder: string): Promise<void> {
-    const directory: unzipper.CentralDirectory = await unzipper.Open.file(zipFile);
-    await directory.extract({path: outputFolder});
-}

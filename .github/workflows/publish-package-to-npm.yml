@@ -12,13 +12,13 @@ on:
         type: boolean
         required: false
         default: false
-      code-analyzer-eslint-engine:
-        description: Should the code-analyzer-eslint-engine package be released?
+      code-analyzer-eslint8-engine:
+        description: Should the code-analyzer-eslint8-engine package be released?
         type: boolean
         required: false
         default: false
-      code-analyzer-eslint8-engine:
-        description: Should the code-analyzer-eslint8-engine package be released?
+      code-analyzer-eslint-engine:
+        description: Should the code-analyzer-eslint-engine package be released?
         type: boolean
         required: false
         default: false
@@ -80,11 +80,12 @@ jobs:
           if [ "${{ inputs.code-analyzer-core }}" == "true" ]; then
             PACKAGES_TO_CHECK_ARR+=('code-analyzer-core')
           fi
-          if [ "${{ inputs.code-analyzer-eslint-engine }}" == "true" ]; then
-            PACKAGES_TO_CHECK_ARR+=('code-analyzer-eslint-engine')
-          fi
+          # NOTE: eslint8-engine MUST GET PUBLISHED BEFORE eslint-engine DUE TO THE DEPENDENCY
           if [ "${{ inputs.code-analyzer-eslint8-engine }}" == "true" ]; then
             PACKAGES_TO_CHECK_ARR+=('code-analyzer-eslint8-engine')
+          fi
+          if [ "${{ inputs.code-analyzer-eslint-engine }}" == "true" ]; then
+            PACKAGES_TO_CHECK_ARR+=('code-analyzer-eslint-engine')
           fi
           if [ "${{ inputs.code-analyzer-flow-engine }}" == "true" ]; then
             PACKAGES_TO_CHECK_ARR+=('code-analyzer-flow-engine')
