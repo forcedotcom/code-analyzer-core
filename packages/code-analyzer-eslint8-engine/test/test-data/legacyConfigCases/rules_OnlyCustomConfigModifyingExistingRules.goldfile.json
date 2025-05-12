@@ -1,0 +1,42 @@
+[
+  {
+    "description": "Enforce `return` statements in callbacks of array methods",
+    "name": "array-callback-return",
+    "resourceUrls": [
+      "https://eslint.org/docs/latest/rules/array-callback-return"
+    ],
+    "severityLevel": 2,
+    "tags": [
+      "ErrorProne",
+      "JavaScript",
+      "TypeScript"
+    ]
+  },
+  {
+    "description": "Disallow unused variables",
+    "name": "no-unused-vars",
+    "resourceUrls": [
+      "https://eslint.org/docs/latest/rules/no-unused-vars"
+    ],
+    "severityLevel": 2,
+    "tags": [
+      "Recommended",
+      "ErrorProne",
+      "JavaScript"
+    ]
+  },
+  {
+    "description": "Disallow useless backreferences in regular expressions",
+    "name": "no-useless-backreference",
+    "resourceUrls": [
+      "https://eslint.org/docs/latest/rules/no-useless-backreference"
+    ],
+    "severityLevel": 2,
+    "tags": [
+      "Recommended",
+      "ErrorProne",
+      "JavaScript",
+      "TypeScript"
+    ]
+  }
+]

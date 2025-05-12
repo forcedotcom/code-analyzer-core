@@ -17,6 +17,11 @@ on:
         type: boolean
         required: false
         default: false
+      code-analyzer-eslint8-engine:
+        description: Should the code-analyzer-eslint8-engine package be released?
+        type: boolean
+        required: false
+        default: false
       code-analyzer-flow-engine:
         description: Should the code-analyzer-flow-engine package be released?
         type: boolean
@@ -77,6 +82,9 @@ jobs:
           fi
           if [ "${{ inputs.code-analyzer-eslint-engine }}" == "true" ]; then
             PACKAGES_TO_CHECK_ARR+=('code-analyzer-eslint-engine')
+          fi
+          if [ "${{ inputs.code-analyzer-eslint8-engine }}" == "true" ]; then
+            PACKAGES_TO_CHECK_ARR+=('code-analyzer-eslint8-engine')
           fi
           if [ "${{ inputs.code-analyzer-flow-engine }}" == "true" ]; then
             PACKAGES_TO_CHECK_ARR+=('code-analyzer-flow-engine')
