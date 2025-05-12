@@ -10,7 +10,10 @@
   ],
   "references": [
     {
-      "path": "../code-analyzer-engine-api/tsconfig.build.json"
+      "path": "../code-analyzer-engine-api/tsconfig.build.json",
+    },
+    {
+      "path": "../code-analyzer-eslint8-engine/tsconfig.build.json"
     }
   ]
   }
