@@ -16,6 +16,6 @@
         <priority>1</priority> <!-- Default severity is 5 (low), interpreted as 4 (low). But our hardcoded mapping replaces it with 3 (moderate). We re-override it here with 1 (high), interpreted as 2 (high). -->
     </rule>
 
-    <rule ref="category/apex/codestyle.xml/OneDeclarationPerLine"/> <!-- This rule's default severity is 1 (high) which we interpret as 2 (high). But our hardcoded mapping replaces it with 3 (moderate). We're not touching it here, so 3 should stay used. -->
+    <rule ref="category/apex/codestyle.xml/OneDeclarationPerLine"/> <!-- This rule's default severity is 1 (high) which we interpret as 2 (high). Our hardcoded mapping replaces it with 3 (moderate), but referencing it in the custom ruleset causes the native severity to be used. -->
 
 </ruleset>
