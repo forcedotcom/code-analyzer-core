@@ -146,7 +146,7 @@ describe('Tests for the describeRules method of PmdEngine', () => {
         expectNoDuplicateRuleNames(ruleDescriptions);
     });
 
-    it('When specifying all zero rule languages, then no rules are described', async () => {
+    it('When specifying zero rule languages, then no rules are described', async () => {
         const engine: PmdEngine = new PmdEngine({
             ... DEFAULT_PMD_ENGINE_CONFIG,
             rule_languages: []
@@ -165,6 +165,27 @@ describe('Tests for the describeRules method of PmdEngine', () => {
         ]);
         const ruleDescriptions: RuleDescription[] = await engine.describeRules(createDescribeOptions(workspace));
         expect(ruleDescriptions).toEqual(EXPECTED_JAVASCRIPT_RULE_DESCRIPTIONS);
+    });
+
+    it(`When using a custom ruleset to override a standard rule's severity, the overridden severity is properly used`, async () => {
+        const engine: PmdEngine = new PmdEngine({
+            ...DEFAULT_PMD_ENGINE_CONFIG,
+            rule_languages: [Language.APEX],
+            custom_rulesets: [
+                path.join(TEST_DATA_FOLDER, 'custom rules', 'custom-sevs.xml')
+            ]
+        });
+        const ruleDescriptions: RuleDescription[] = await engine.describeRules(createDescribeOptions());
+
+        const overriddenDangerousMethodsDescription: RuleDescription = expectContainsRuleWithName(ruleDescriptions, 'ApexDangerousMethods'); // From security.xml via custom-sevs.xml
+        expect(overriddenDangerousMethodsDescription.severityLevel).toEqual(SeverityLevel.High); // Base priority 3 (moderate) overridden to 1 (high) in custom-sevs.xml. Corresponds to 2 (high) in SFCA.
+        expect(overriddenDangerousMethodsDescription.tags).toEqual(['Recommended', 'Security', 'Apex', 'SeverityOverrides']);
+        const overriddenUnusedLocalVariableDescription: RuleDescription = expectContainsRuleWithName(ruleDescriptions, 'UnusedLocalVariable'); // From bestpractices.xml, via custom-sevs.xml
+        expect(overriddenUnusedLocalVariableDescription.severityLevel).toEqual(SeverityLevel.High); // Base priority 5 (low) overridden to 1 (high) in custom-sevs.xml, which corresponds to 2 (high) in SFCA. This trumps our hardcoded severity of 3 (moderate).
+        expect(overriddenUnusedLocalVariableDescription.tags).toEqual(['Recommended', 'BestPractices', 'Apex', 'SeverityOverrides']);
+        const overriddenOneDeclarationPerLine: RuleDescription = expectContainsRuleWithName(ruleDescriptions, 'OneDeclarationPerLine'); // From codestyle.xml, via custom-sevs.xml
+        expect(overriddenOneDeclarationPerLine.severityLevel).toEqual(SeverityLevel.High); // Native priority 1 (high) is converted to SFCA value of 2 (high). Since the rule is referenced in a custom ruleset, the native priority is used instead of the hardcoded one.
+        expect(overriddenOneDeclarationPerLine.tags).toEqual(['Recommended', 'CodeStyle', 'Apex', 'SeverityOverrides']);
     });
 
     it('When adding a custom rulesets from disk, then the custom rules are added to the rule descriptions', async () => {

@@ -1,0 +1,21 @@
+<?xml version="1.0"?>
+<ruleset name="SeverityOverrides"
+         xmlns="http://pmd.sourceforge.net/ruleset/2.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://pmd.sourceforge.net/ruleset/2.0.0 https://pmd.sourceforge.io/ruleset_2_0_0.xsd">
+
+    <description>
+        Base PMD rules with overridden severities
+    </description>
+
+    <rule ref="category/apex/security.xml/ApexDangerousMethods">
+        <priority>1</priority> <!-- Default severity is 3 (moderate), interpreted by us as 3 (moderate). This override (1 (high)) will be interpreted as 2 (high). -->
+    </rule>
+
+    <rule ref="category/apex/bestpractices.xml/UnusedLocalVariable">
+        <priority>1</priority> <!-- Default severity is 5 (low), interpreted as 4 (low). But our hardcoded mapping replaces it with 3 (moderate). We re-override it here with 1 (high), interpreted as 2 (high). -->
+    </rule>
+
+    <rule ref="category/apex/codestyle.xml/OneDeclarationPerLine"/> <!-- This rule's default severity is 1 (high) which we interpret as 2 (high). But our hardcoded mapping replaces it with 3 (moderate). We're not touching it here, so 3 should stay used. -->
+
+</ruleset>
