@@ -41,7 +41,7 @@
     "test": "jest --coverage",
     "lint": "eslint src/**/*.ts",
     "package": "npm pack",
-    "all": "npm run build && npm run test && npm run lint && npm run package",
+    "all": "npm run build && npm run lint && npm run test && npm run package",
     "clean": "tsc --build tsconfig.build.json --clean",
     "postclean": "rimraf dist && rimraf coverage && rimraf ./*.tgz && rimraf vulnerabilities",
     "scrub": "npm run clean && rimraf node_modules",

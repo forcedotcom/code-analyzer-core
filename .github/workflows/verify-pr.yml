@@ -93,5 +93,5 @@ jobs:
           git diff --name-only $HEAD_SHA $BASE_SHA > changed_files.txt
           node ./.github/workflows/verify-pr/identify-affected-workspaces.mjs changed_files.txt
           npm run build `cat workspace-args.txt`
-          npm run test `cat workspace-args.txt`
           npm run lint
+          npm run test `cat workspace-args.txt`

@@ -45,7 +45,7 @@
     "test": "npm run test-java && npm run test-typescript",
     "lint": "eslint src/**/*.ts",
     "package": "npm pack",
-    "all": "npm run build && npm run test && npm run lint && npm run package",
+    "all": "npm run build && npm run lint && npm run test && npm run package",
     "clean-java": "sh ./gradlew clean",
     "clean-typescript": "tsc --build tsconfig.build.json --clean",
     "clean": "npm run clean-java && npm run clean-typescript",
