@@ -11,7 +11,7 @@
     "test": "npm run test-java && npm run test-typescript",
     "lint": "npm run lint --workspaces --if-present",
     "package": "npm run package --workspaces --if-present",
-    "all": "npm run build && npm run test && npm run lint && npm run package",
+    "all": "npm run build && npm run lint && npm run test && npm run package",
     "clean": "npm run clean --workspaces",
     "postclean": "rimraf coverage",
     "scrub": "npm run clean && npm run scrub --workspaces --if-present && rimraf node_modules && rimraf package-lock.json",

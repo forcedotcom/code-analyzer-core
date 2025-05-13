@@ -31,7 +31,7 @@ export class PmdCpdEnginesPlugin extends EnginePluginV1 {
         return [PMD_ENGINE_NAME, CPD_ENGINE_NAME];
     }
 
-    describeEngineConfig(engineName: string): ConfigDescription { // eslint-disable-line @typescript-eslint/no-unused-vars
+    describeEngineConfig(engineName: string): ConfigDescription {
         if (engineName === CPD_ENGINE_NAME) {
             return CPD_ENGINE_CONFIG_DESCRIPTION;
         } else if (engineName === PMD_ENGINE_NAME) {
@@ -40,7 +40,7 @@ export class PmdCpdEnginesPlugin extends EnginePluginV1 {
         throw new Error(getMessage('UnsupportedEngineName', engineName));
     }
 
-    async createEngineConfig(engineName: string, configValueExtractor: ConfigValueExtractor): Promise<ConfigObject> { // eslint-disable-line @typescript-eslint/no-unused-vars
+    async createEngineConfig(engineName: string, configValueExtractor: ConfigValueExtractor): Promise<ConfigObject> {
         if (engineName === CPD_ENGINE_NAME) {
             return await validateAndNormalizeCpdConfig(configValueExtractor, this.javaVersionIdentifier) as ConfigObject;
         } else if (engineName === PMD_ENGINE_NAME) {

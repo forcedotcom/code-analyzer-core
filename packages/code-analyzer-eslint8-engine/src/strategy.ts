@@ -181,7 +181,7 @@ export class LegacyESLintStrategy implements ESLintStrategy {
             overrideConfigFile: userConfigInfo.getUserConfigFile(),                              // This is applied third.
             overrideConfig: overrideConfig as Linter.Config,                                     // This is applied fourth (on top).
             ignorePath: userConfigInfo.getUserIgnoreFile()
-        };
+        } as ESLint.Options;
     }
 
     private async getAllBaseRuleNames(filterFcn: AsyncFilterFnc<string>): Promise<string[]> {
