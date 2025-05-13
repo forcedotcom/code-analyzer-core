@@ -98,7 +98,10 @@ const MESSAGE_CATALOG : { [key: string]: string } = {
         `  engines:\n` +
         `    eslint:\n` +
         `      eslint_ignore_file: "%s"\n` +
-        `Alternatively, to have Code Analyzer automatically discover and apply any ESLint configuration and ignore files found in your workspace, set the auto_discover_eslint_config value to true.`
+        `Alternatively, to have Code Analyzer automatically discover and apply any ESLint configuration and ignore files found in your workspace, set the auto_discover_eslint_config value to true.`,
+
+    IgnoringFlatConfigFile:
+        `Ignoring '%s' since ESLint "Flat" configuration files are not yet supported by this version of the 'eslint' engine.`
 }
 
 /**

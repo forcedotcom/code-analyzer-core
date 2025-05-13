@@ -107,6 +107,11 @@ export const ESLINT_ENGINE_CONFIG_DESCRIPTION: ConfigDescription = {
     }
 }
 
+// See https://eslint.org/docs/latest/use/configure/configuration-files
+// We currently do not support Typescript config files are since they require additional setup
+export const FLAT_ESLINT_CONFIG_FILES: string[] =
+    ['eslint.config.js', 'eslint.config.mjs', 'eslint.config.cjs'];
+
 // See https://eslint.org/docs/v8.x/use/configure/configuration-files#configuration-file-formats
 export const LEGACY_ESLINT_CONFIG_FILES: string[] =
     ['.eslintrc.js', '.eslintrc.cjs', '.eslintrc.yaml', '.eslintrc.yml', '.eslintrc.json'];

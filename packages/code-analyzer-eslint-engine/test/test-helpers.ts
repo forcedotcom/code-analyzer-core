@@ -1,6 +1,5 @@
 import process from "node:process";
 import path from "node:path";
-import * as unzipper from "unzipper";
 
 export function changeWorkingDirectoryToPackageRoot() {
     let original_working_directory: string;

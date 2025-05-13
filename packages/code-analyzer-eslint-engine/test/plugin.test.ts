@@ -19,9 +19,7 @@ import path from "node:path";
 describe('Tests for the ESLintEnginePlugin', () => {
     let plugin: EnginePluginV1;
     beforeAll(() => {
-        // FOR THIS TEST WE DO NOT DEFER TO v8 AT ALL. WE FORCE v9 SINCE IT WILL NEED TO MAINTAIN CONFIG EXTRACTION.
-        const forceV9: boolean = true;
-        plugin = new ESLintEnginePlugin(forceV9);
+        plugin = new ESLintEnginePlugin();
     });
 
     it('When the getAvailableEngineNames method is called then only eslint is returned', () => {
@@ -55,11 +53,11 @@ describe('Tests for the ESLintEnginePlugin', () => {
 
     it('When a valid eslint_config_file is passed to createEngineConfig, then it is set on the config', async () => {
         const userProvidedOverrides: ConfigObject = {
-            eslint_config_file: 'test-data/workspaceWithLegacyConfig/.eslintrc.json'
+            eslint_config_file: 'test-data/workspaceWithLegacyConfig1/.eslintrc.json'
         };
         const resolvedConfig: ConfigObject = await callCreateEngineConfig(plugin, userProvidedOverrides, __dirname);
         expect(resolvedConfig['eslint_config_file']).toEqual(
-            path.resolve(__dirname, 'test-data', 'workspaceWithLegacyConfig', '.eslintrc.json'));
+            path.resolve(__dirname, 'test-data', 'workspaceWithLegacyConfig1', '.eslintrc.json'));
     });
 
     it('When eslint_config_file value does not exist, then createEngineConfig errors', async () => {
@@ -253,25 +251,6 @@ describe('Tests for the ESLintEnginePlugin', () => {
     it('When createEngine is passed eslint and a valid config, then an ESLintEngine instance is returned', async () => {
         const engine: Engine = await plugin.createEngine('eslint', DEFAULT_CONFIG);
         expect(engine).toBeInstanceOf(ESLintEngine);
-    });
-
-    it('When not forcing v9, then createEngineConfig delegates to v8 in default scenario', async () => {
-        // THIS TEST IS TEMPORARY UNTIL WE HAVE IMPLEMENTED THE V9 ENGINE
-
-        plugin = new ESLintEnginePlugin(); // Not forcing v9
-        const engine: Engine = await plugin.createEngine('eslint', DEFAULT_CONFIG);
-        expect(engine).not.toBeInstanceOf(ESLintEngine); // It is not ESLintEngine because it is ESLint8Engine
-        expect(engine.getName()).toEqual('eslint'); // Sanity check it still gives 'eslint'
-    });
-
-    it('When not forcing v9, then createEngineConfig delegates to v8 when legacy concig is supplied', async () => {
-        plugin = new ESLintEnginePlugin(); // Not forcing v9
-        const engine: Engine = await plugin.createEngine('eslint', {
-            ...DEFAULT_CONFIG,
-            eslint_config_file: 'test-data/workspaceWithLegacyConfig/.eslintrc.json'
-        });
-        expect(engine).not.toBeInstanceOf(ESLintEngine); // It is not ESLintEngine because it is ESLint8Engine
-        expect(engine.getName()).toEqual('eslint'); // Sanity check it still gives 'eslint'
     });
 });
 
