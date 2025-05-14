@@ -23,6 +23,8 @@ export interface RetireJsExecutor {
 export type EmitLogEventFcn = (logLevel: LogLevel, msg: string) => void;
 const NO_OP: () => void = () => {};
 
+const IS_WINDOWS: boolean = process.platform.startsWith('win');
+
 /**
  * SimpleRetireJsExecutor - A simple wrapper around the retire command
  *
@@ -94,10 +96,14 @@ export class SimpleRetireJsExecutor implements RetireJsExecutor {
 
     private async runRetireCmdWithArgs(cmd:string, argArray: string[]): Promise<void> {
         return new Promise<void>((res, rej) => {
-            const childProcess: ChildProcessWithoutNullStreams = spawn(['.', path.basename(cmd)].join(path.sep), argArray, {
-                shell: process.platform.startsWith('win'), // Use shell on window's machines
-                cwd: path.dirname(cmd)
-            });
+            const cmdPath: string = ['.', path.basename(cmd)].join(path.sep);
+            // On Windows, since we are calling a script (not a native command) then we must use shell and when using
+            // shell, it is required to wrap arguments that have spaces with double quotes. Currently, we control
+            // the arguments and they most likely won't have spaces, but we should add in the wrap just in case.
+            const childProcess: ChildProcessWithoutNullStreams = IS_WINDOWS ?
+                spawn(cmdPath, wrapArgsWithSpacesWithQuotes(argArray), {shell: true, cwd: path.dirname(cmd)}) :
+                spawn(cmdPath, argArray, {cwd: path.dirname(cmd)});
+
             let output: string = '';
             /* istanbul ignore next */
             const processOutput = (data: string) => output += data;
@@ -260,4 +266,8 @@ function separateTextAndZipFiles(files: string[]): {textFiles: string[], zipFile
         }
     }
     return {textFiles, zipFiles};
+}
+
+function wrapArgsWithSpacesWithQuotes(args: string[]): string[] {
+    return args.map(arg => arg.includes(' ') ? `"${arg}"` : arg);
 }
