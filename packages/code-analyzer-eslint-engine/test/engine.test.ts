@@ -1,37 +1,52 @@
 import {
+    ConfigObject,
+    DescribeOptions,
     DescribeRulesProgressEvent,
+    Engine,
     EngineRunResults,
     EventType,
     LogEvent,
     LogLevel,
-    RunRulesProgressEvent,
     RuleDescription,
     RunOptions,
+    RunRulesProgressEvent,
     Violation,
-    Workspace, DescribeOptions,
-    ConfigObject,
-    Engine
+    Workspace
 } from "@salesforce/code-analyzer-engine-api";
-import {changeWorkingDirectoryToPackageRoot} from "./test-helpers";
 import fs from "node:fs";
 import path from "node:path";
 import process from "node:process";
-import {ESLintEngine} from "../src/engine";
-import {DEFAULT_CONFIG} from "../src/config";
+import {DEFAULT_CONFIG, ESLintEngineConfig} from "../src/config";
 import {getMessage} from "../src/messages";
 import * as os from "node:os";
 import {ESLintEnginePlugin} from "../src";
 
-changeWorkingDirectoryToPackageRoot();
-
 jest.setTimeout(30_000);
+
+const DEFAULT_CONFIG_FOR_TESTING: ESLintEngineConfig = {
+    ...DEFAULT_CONFIG,
+    config_root: __dirname
+}
 
 const testDataFolder: string = path.join(__dirname, 'test-data');
 const workspaceWithNoCustomConfig: string = path.join(testDataFolder, 'workspace_NoCustomConfig');
 
+let original_working_directory: string;
+beforeAll(() => {
+    // Since eslint auto discovers based on workspace dir, then config root, and then process.cwd()...
+    // we need to make sure that we don't accidentally sit inside our package root folder which contains our
+    // eslint.config.mjs file. Otherwise, we'll never hit the NO_USER_CONFIG cases. So we CD to test directory.
+    original_working_directory = process.cwd();
+    process.chdir(__dirname);
+});
+afterAll(() => {
+    process.chdir(original_working_directory);
+});
+
+
 describe('Tests for the getName method of ESLintEngine', () => {
-    it('When getName is called, then eslint is returned', () => {
-        const engine: ESLintEngine = new ESLintEngine(DEFAULT_CONFIG);
+    it('When getName is called, then eslint is returned', async () => {
+        const engine: Engine = await createEngineFromPlugin(DEFAULT_CONFIG_FOR_TESTING);
         expect(engine.getName()).toEqual('eslint');
     });
 });
@@ -57,8 +72,9 @@ describe('Tests for the describeRules method of ESLintEngine', () => {
         const origWorkingDir: string = process.cwd();
         process.chdir(caseObj.folder);
         try {
-            const engine: Engine = await createEngineFromPlugin({...DEFAULT_CONFIG,
-                auto_discover_eslint_config: true
+            const engine: Engine = await createEngineFromPlugin({...DEFAULT_CONFIG_FOR_TESTING,
+                config_root: __dirname,
+                auto_discover_eslint_config: true,
             });
             const ruleDescriptions: RuleDescription[] = await engine.describeRules({logFolder: os.tmpdir()});
             expect(ruleDescriptions).toEqual(caseObj.expectationRuleDescriptions);
@@ -68,7 +84,7 @@ describe('Tests for the describeRules method of ESLintEngine', () => {
     });
 
     it.each(testScenarios)('When describing rules while from a workspace $description and auto_discover_eslint_config=true, then return expected', async (caseObj: TEST_SCENARIO) => {
-        const engine: ESLintEngine = await createEngineFromPlugin({...DEFAULT_CONFIG,
+        const engine: Engine = await createEngineFromPlugin({...DEFAULT_CONFIG_FOR_TESTING,
             auto_discover_eslint_config: true
         });
         const ruleDescriptions: RuleDescription[] = await engine.describeRules(createDescribeOptions(new Workspace('id', [caseObj.folder])));
@@ -76,7 +92,7 @@ describe('Tests for the describeRules method of ESLintEngine', () => {
     });
 
     it.each(testScenarios)('When describing rules while config_root is folder $description and auto_discover_eslint_config=true, then return expected', async (caseObj: TEST_SCENARIO) => {
-        const engine: ESLintEngine = await createEngineFromPlugin({...DEFAULT_CONFIG,
+        const engine: Engine = await createEngineFromPlugin({...DEFAULT_CONFIG_FOR_TESTING,
             auto_discover_eslint_config: true,
             config_root: caseObj.folder
         });
@@ -85,7 +101,7 @@ describe('Tests for the describeRules method of ESLintEngine', () => {
     });
 
     it('When describing rules from a workspace targeting no javascript files, then no javascript rules should return', async () => {
-        const engine: ESLintEngine = await createEngineFromPlugin(DEFAULT_CONFIG);
+        const engine: Engine = await createEngineFromPlugin(DEFAULT_CONFIG_FOR_TESTING);
         const ruleDescriptions: RuleDescription[] = await engine.describeRules(createDescribeOptions(new Workspace('id',
             [testDataFolder],
             [
@@ -96,7 +112,7 @@ describe('Tests for the describeRules method of ESLintEngine', () => {
     });
 
     it('When describing rules from a workspace with no typescript files, then no typescript rules should returned', async () => {
-        const engine: ESLintEngine = await createEngineFromPlugin(DEFAULT_CONFIG);
+        const engine: Engine = await createEngineFromPlugin(DEFAULT_CONFIG_FOR_TESTING);
         const ruleDescriptions: RuleDescription[] = await engine.describeRules(createDescribeOptions(new Workspace('id', [
                 path.join(workspaceWithNoCustomConfig, 'dummy1.js'),
                 path.join(workspaceWithNoCustomConfig, 'dummy3.txt')])));
@@ -104,20 +120,20 @@ describe('Tests for the describeRules method of ESLintEngine', () => {
     });
 
     it('When describing rules from a workspace with no javascript or typescript files, then no rules should return', async () => {
-        const engine: ESLintEngine = await createEngineFromPlugin(DEFAULT_CONFIG);
+        const engine: Engine = await createEngineFromPlugin(DEFAULT_CONFIG_FOR_TESTING);
         const ruleDescriptions: RuleDescription[] = await engine.describeRules(createDescribeOptions(
             new Workspace('id', [path.join(workspaceWithNoCustomConfig, 'dummy3.txt')])));
         expect(ruleDescriptions).toHaveLength(0);
     });
 
     it('When describing rules from an empty workspace, then no rules should return', async () => {
-        const engine: ESLintEngine = await createEngineFromPlugin(DEFAULT_CONFIG);
+        const engine: Engine = await createEngineFromPlugin(DEFAULT_CONFIG_FOR_TESTING);
         const ruleDescriptions: RuleDescription[] = await engine.describeRules(createDescribeOptions(new Workspace('id', [])));
         expect(ruleDescriptions).toHaveLength(0);
     });
 
     it('When disable_javascript_base_config=true, then the base rules are removed for javascript only', async () => {
-        const engine: ESLintEngine = await createEngineFromPlugin({...DEFAULT_CONFIG,
+        const engine: Engine = await createEngineFromPlugin({...DEFAULT_CONFIG_FOR_TESTING,
             disable_javascript_base_config: true
         });
         const ruleDescriptions: RuleDescription[] = await engine.describeRules(createDescribeOptions());
@@ -125,7 +141,7 @@ describe('Tests for the describeRules method of ESLintEngine', () => {
     });
 
     it('When disable_lwc_base_config=true, then the lwc rules are removed but javascript rules remain', async() => {
-        const engine: ESLintEngine = await createEngineFromPlugin({...DEFAULT_CONFIG,
+        const engine: Engine = await createEngineFromPlugin({...DEFAULT_CONFIG_FOR_TESTING,
             disable_lwc_base_config: true
         });
         const ruleDescriptions: RuleDescription[] = await engine.describeRules(createDescribeOptions());
@@ -133,7 +149,7 @@ describe('Tests for the describeRules method of ESLintEngine', () => {
     });
 
     it('When disable_typescript_base_config=true, then the typescript rules are removed', async() => {
-        const engine: ESLintEngine = await createEngineFromPlugin({...DEFAULT_CONFIG,
+        const engine: Engine = await createEngineFromPlugin({...DEFAULT_CONFIG_FOR_TESTING,
             disable_typescript_base_config: true
         });
         const ruleDescriptions: RuleDescription[] = await engine.describeRules(createDescribeOptions());
@@ -141,7 +157,7 @@ describe('Tests for the describeRules method of ESLintEngine', () => {
     });
 
     it('When disable_lwc_base_config=true and disable_typescript_base_config=true, then only base javascript rules remain', async() => {
-        const engine: ESLintEngine = await createEngineFromPlugin({...DEFAULT_CONFIG,
+        const engine: Engine = await createEngineFromPlugin({...DEFAULT_CONFIG_FOR_TESTING,
             disable_typescript_base_config: true,
             disable_lwc_base_config: true,
         });
@@ -150,7 +166,7 @@ describe('Tests for the describeRules method of ESLintEngine', () => {
     });
 
     it('When disable_javascript_base_config=true and disable_lwc_base_config=true, then only base typescript rules remain', async() => {
-        const engine: ESLintEngine = await createEngineFromPlugin({...DEFAULT_CONFIG,
+        const engine: Engine = await createEngineFromPlugin({...DEFAULT_CONFIG_FOR_TESTING,
             disable_javascript_base_config: true,
             disable_lwc_base_config: true,
         });
@@ -159,7 +175,7 @@ describe('Tests for the describeRules method of ESLintEngine', () => {
     });
 
     it('When disable_javascript_base_config=true and disable_typescript_base_config=true, then only base lwc rules remain', async() => {
-        const engine: ESLintEngine = await createEngineFromPlugin({...DEFAULT_CONFIG,
+        const engine: Engine = await createEngineFromPlugin({...DEFAULT_CONFIG_FOR_TESTING,
             disable_javascript_base_config: true,
             disable_typescript_base_config: true,
         });
@@ -168,7 +184,7 @@ describe('Tests for the describeRules method of ESLintEngine', () => {
     });
 
     it('When all *_javascript_base_config equal true and no custom config exists, then no rules should exist', async() => {
-        const engine: ESLintEngine = await createEngineFromPlugin({...DEFAULT_CONFIG,
+        const engine: Engine = await createEngineFromPlugin({...DEFAULT_CONFIG_FOR_TESTING,
             disable_javascript_base_config: true,
             disable_typescript_base_config: true,
             disable_lwc_base_config: true
@@ -177,9 +193,9 @@ describe('Tests for the describeRules method of ESLintEngine', () => {
         expect(ruleDescriptions).toHaveLength(0);
     });
     it('When file_extensions.javascript is empty, then javascript rules do not get picked up', async () => {
-        const engine: ESLintEngine = await createEngineFromPlugin({...DEFAULT_CONFIG,
+        const engine: Engine = await createEngineFromPlugin({...DEFAULT_CONFIG_FOR_TESTING,
             file_extensions: {
-                ... DEFAULT_CONFIG.file_extensions,
+                ... DEFAULT_CONFIG_FOR_TESTING.file_extensions,
                 javascript: []
             }
         });
@@ -188,9 +204,9 @@ describe('Tests for the describeRules method of ESLintEngine', () => {
     });
 
     it('When file_extensions.typescript is empty, then javascript rules do not get picked up', async () => {
-        const engine: ESLintEngine = await createEngineFromPlugin({...DEFAULT_CONFIG,
+        const engine: Engine = await createEngineFromPlugin({...DEFAULT_CONFIG_FOR_TESTING,
             file_extensions: {
-                ... DEFAULT_CONFIG.file_extensions,
+                ... DEFAULT_CONFIG_FOR_TESTING.file_extensions,
                 typescript: []
             }
         });
@@ -199,9 +215,9 @@ describe('Tests for the describeRules method of ESLintEngine', () => {
     });
 
     it('When file_extensions.javascript and file_extensions.typescript are both empty, then no rules are returned', async () => {
-        const engine: ESLintEngine = await createEngineFromPlugin({...DEFAULT_CONFIG,
+        const engine: Engine = await createEngineFromPlugin({...DEFAULT_CONFIG_FOR_TESTING,
             file_extensions: {
-                ...DEFAULT_CONFIG.file_extensions,
+                ...DEFAULT_CONFIG_FOR_TESTING.file_extensions,
                 javascript: [],
                 typescript: []
             }
@@ -225,11 +241,23 @@ describe('Tests for the describeRules method of ESLintEngine', () => {
     //        * When workspace contains .eslintignore that is set as the eslint_ignore_file value, then that file is ignored
     //        * When custom rules only apply to file extensions that are not javascript or typescript based, then without specifying file extensions, they are not picked up
     //        * When custom rules only apply to file extensions that are not javascript or typescript based, then when specifying file extensions, they are picked up
-    // For now we just maintain a test that the v9 eslint engine errors until it has been implemented:
-    it('When directly calling describeRules on the v9 ESLintEngine, then we error since it has not been implemented', async () => {
-        const engine: ESLintEngine = new ESLintEngine(DEFAULT_CONFIG);
-        await expect(engine.describeRules(createDescribeOptions())).rejects.toThrow(
-            'Not implemented. Soon this will be implemented for ESLint v9.');
+    // For now we just maintain a test that the v9 eslint engine warns when auto discovered flat config is discovered until it has been implemented:
+    it('When calling describeRules with auto discovery on and a flat config available, then we warn since it has not been implemented', async () => {
+        const engine: Engine = await createEngineFromPlugin({
+            ... DEFAULT_CONFIG_FOR_TESTING,
+            auto_discover_eslint_config: true,
+            config_root: path.join(__dirname, '..') // The project directory contains a eslint.config.mjs flat config file
+        });
+        const logEvents: LogEvent[] = [];
+        engine.onEvent(EventType.LogEvent, (event: LogEvent) => logEvents.push(event));
+
+        const ruleDescriptions: RuleDescription[] = await engine.describeRules(createDescribeOptions());
+
+        const warnLogs: LogEvent[] = logEvents.filter(e => e.logLevel === LogLevel.Warn);
+        expect(warnLogs).toHaveLength(1);
+        expect(warnLogs[0].message).toEqual(getMessage('IgnoringFlatConfigFile', path.join(__dirname, '..', 'eslint.config.mjs')));
+
+        expect(ruleDescriptions).toEqual(DEFAULT_RULES);
     });
 });
 
@@ -272,7 +300,7 @@ describe('Typical tests for the runRules method of ESLintEngine', () => {
     };
 
     it('When running with defaults and no customizations, then violations for javascript and typescript are found correctly', async () => {
-        const engine: ESLintEngine = await createEngineFromPlugin(DEFAULT_CONFIG);
+        const engine: Engine = await createEngineFromPlugin(DEFAULT_CONFIG_FOR_TESTING);
         const runOptions: RunOptions = createRunOptions(new Workspace('id', [workspaceWithNoCustomConfig]));
         const results: EngineRunResults = await engine.runRules(['no-invalid-regexp', '@typescript-eslint/no-wrapper-object-types'], runOptions);
 
@@ -283,7 +311,7 @@ describe('Typical tests for the runRules method of ESLintEngine', () => {
     });
 
     it('When workspace only targets javascript files, then only javascript violations are returned', async () => {
-        const engine: ESLintEngine = await createEngineFromPlugin(DEFAULT_CONFIG);
+        const engine: Engine = await createEngineFromPlugin(DEFAULT_CONFIG_FOR_TESTING);
         const runOptions: RunOptions = createRunOptions(new Workspace('id', [workspaceWithNoCustomConfig],
             [path.join(workspaceWithNoCustomConfig, 'dummy1.js')]));
         const results: EngineRunResults = await engine.runRules(['no-invalid-regexp'], runOptions);
@@ -292,7 +320,7 @@ describe('Typical tests for the runRules method of ESLintEngine', () => {
     });
 
     it('When workspace only contains typescript files, then only typescript violations are returned', async () => {
-        const engine: ESLintEngine = await createEngineFromPlugin(DEFAULT_CONFIG);
+        const engine: Engine = await createEngineFromPlugin(DEFAULT_CONFIG_FOR_TESTING);
         const runOptions: RunOptions = createRunOptions(new Workspace('id', [path.join(workspaceWithNoCustomConfig, 'dummy2.ts')]));
         const results: EngineRunResults = await engine.runRules(['no-invalid-regexp'], runOptions);
 
@@ -300,7 +328,7 @@ describe('Typical tests for the runRules method of ESLintEngine', () => {
     });
 
     it('When workspace does not contains javascript or typescript files, then zero violations are returned', async () => {
-        const engine: ESLintEngine = await createEngineFromPlugin(DEFAULT_CONFIG);
+        const engine: Engine = await createEngineFromPlugin(DEFAULT_CONFIG_FOR_TESTING);
         const runOptions: RunOptions = createRunOptions(new Workspace('id', [path.join(workspaceWithNoCustomConfig, 'dummy3.txt')]));
         const results: EngineRunResults = await engine.runRules(['no-invalid-regexp'], runOptions);
 
@@ -310,7 +338,7 @@ describe('Typical tests for the runRules method of ESLintEngine', () => {
     it('When runRules is called on a workspace that has a babel configuration file, then the file is ignored and no error events are thrown', async () => {
         const folderContainingBabelConfigFile: string = path.join(testDataFolder,'workspaceWithBabelConfigFile');
         const logEvents: LogEvent[] = [];
-        const engine: ESLintEngine = await createEngineFromPlugin(DEFAULT_CONFIG);
+        const engine: Engine = await createEngineFromPlugin(DEFAULT_CONFIG_FOR_TESTING);
         const origWorkingDir: string = process.cwd();
         process.chdir(folderContainingBabelConfigFile);
         try {
@@ -330,19 +358,25 @@ describe('Typical tests for the runRules method of ESLintEngine', () => {
     //        * When custom eslint config exists but is not applied, then runRules emits info message
     //        * When runRules is called on workspace with a config that ignores files and auto discover is true, then those files are ignored
     //        * When runRules is called and a ".eslintignore" file is provided that ignores files, then those files are ignored
-    // For now we just maintain a test that the v9 eslint engine errors until it has been implemented:
-    it('When directly calling describeRules on the v9 ESLintEngine, then we error since it has not been implemented', async () => {
-        const engine: ESLintEngine = new ESLintEngine(DEFAULT_CONFIG);
+    // For now we just maintain a test that the v9 eslint engine defers to v8 when auto discovered flat config is discovered until it has been implemented:
+    it('When calling runRules with auto discovery on and a flat config available, then just defer to v8 since it has not been implemented', async () => {
+        const engine: Engine = await createEngineFromPlugin({
+            ... DEFAULT_CONFIG_FOR_TESTING,
+            auto_discover_eslint_config: true,
+            config_root: path.join(__dirname, '..') // The project directory contains a eslint.config.mjs flat config file
+        });
+
         const runOptions: RunOptions = createRunOptions(new Workspace('id', [workspaceWithNoCustomConfig]));
-        await expect(engine.runRules(['no-invalid-regexp'], runOptions)).rejects.toThrow(
-            'Not implemented. Soon this will be implemented for ESLint v9.');
+        const results: EngineRunResults = await engine.runRules(['no-invalid-regexp'], runOptions);
+
+        expect(results.violations).toEqual([expectedJsViolation_noInvalidRegexp, expectedTsViolation_noInvalidRegexp]);
     });
 
 });
 
 describe('Tests for the getEngineVersion method of ESLint Engine', () => {
     it('getEngineVersion() outputs something resembling a Semantic Version', async () => {
-        const engine: ESLintEngine = new ESLintEngine(DEFAULT_CONFIG);
+        const engine: Engine = await createEngineFromPlugin(DEFAULT_CONFIG_FOR_TESTING);
         const version: string = await engine.getEngineVersion();
 
         expect(version).toMatch(/\d+\.\d+\.\d+.*/);
@@ -350,12 +384,12 @@ describe('Tests for the getEngineVersion method of ESLint Engine', () => {
 });
 
 describe('Tests for emitting events', () => {
-    let engine: ESLintEngine;
+    let engine: Engine;
     let logEvents: LogEvent[];
     let runRulesProgressEvents: RunRulesProgressEvent[];
     let describeRulesProgressEvents: DescribeRulesProgressEvent[];
     beforeEach(async () => {
-        engine = await createEngineFromPlugin(DEFAULT_CONFIG);
+        engine = await createEngineFromPlugin(DEFAULT_CONFIG_FOR_TESTING);
         logEvents = [];
         engine.onEvent(EventType.LogEvent, (event: LogEvent) => logEvents.push(event));
         runRulesProgressEvents = [];
@@ -418,8 +452,6 @@ function createRunOptions(workspace: Workspace): RunOptions {
     }
 }
 
-// To be used temporarily while we are still migrating tests from using v8 to v9.
-// The goal is to eventually get rid of this and use the ESLint constructor again soon to turn the tests back on for v9.
 async function createEngineFromPlugin(configObject: ConfigObject): Promise<Engine> {
     const plugin: ESLintEnginePlugin = new ESLintEnginePlugin();
     return await plugin.createEngine('eslint', configObject);
