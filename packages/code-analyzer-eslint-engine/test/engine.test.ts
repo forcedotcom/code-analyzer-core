@@ -358,7 +358,7 @@ describe('Typical tests for the runRules method of ESLintEngine', () => {
     //        * When custom eslint config exists but is not applied, then runRules emits info message
     //        * When runRules is called on workspace with a config that ignores files and auto discover is true, then those files are ignored
     //        * When runRules is called and a ".eslintignore" file is provided that ignores files, then those files are ignored
-    // For now we just maintain a test that the v9 eslint engine defers when auto discovered flat config is discovered until it has been implemented:
+    // For now we just maintain a test that the v9 eslint engine defers to v8 when auto discovered flat config is discovered until it has been implemented:
     it('When calling runRules with auto discovery on and a flat config available, then just defer to v8 since it has not been implemented', async () => {
         const engine: Engine = await createEngineFromPlugin({
             ... DEFAULT_CONFIG_FOR_TESTING,

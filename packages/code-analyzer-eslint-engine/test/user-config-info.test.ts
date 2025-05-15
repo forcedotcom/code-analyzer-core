@@ -5,13 +5,13 @@ import {DEFAULT_CONFIG, ESLintEngineConfig} from "../src/config";
 import {UserConfigInfo, UserConfigState} from "../src/user-config-info";
 
 const TEST_DATA_FOLDER: string = path.join(__dirname, 'test-data');
-const WORKSPACE_WITH_LEGACY_CONFIG1: string = path.join(TEST_DATA_FOLDER, 'workspaceWithLegacyConfig1');
-const WORKSPACE_WITH_LEGACY_CONFIG2: string = path.join(TEST_DATA_FOLDER, 'workspaceWithLegacyConfig2');
-const WORKSPACE_WITH_LEGACY_CONFIG3: string = path.join(TEST_DATA_FOLDER, 'workspaceWithLegacyConfig3');
+const WORKSPACE_WITH_LEGACY_CONFIG_JSON: string = path.join(TEST_DATA_FOLDER, 'workspaceWithLegacyConfigJson');
+const WORKSPACE_WITH_LEGACY_CONFIG_YML: string = path.join(TEST_DATA_FOLDER, 'workspaceWithLegacyConfigYml');
+const WORKSPACE_WITH_LEGACY_CONFIG_CJS: string = path.join(TEST_DATA_FOLDER, 'workspaceWithLegacyConfigCjs');
 const WORKSPACE_WITH_LEGACY_IGNORE: string = path.join(TEST_DATA_FOLDER, 'workspaceWithLegacyIgnoreFile');
-const WORKSPACE_WITH_FLAT_CONFIG1: string = path.join(TEST_DATA_FOLDER, 'workspaceWithFlatConfig1');
-const WORKSPACE_WITH_FLAT_CONFIG2: string = path.join(TEST_DATA_FOLDER, 'workspaceWithFlatConfig2');
-const WORKSPACE_WITH_FLAT_CONFIG3: string = path.join(TEST_DATA_FOLDER, 'workspaceWithFlatConfig3');
+const WORKSPACE_WITH_FLAT_CONFIG_JS: string = path.join(TEST_DATA_FOLDER, 'workspaceWithFlatConfigJs');
+const WORKSPACE_WITH_FLAT_CONFIG_CJS: string = path.join(TEST_DATA_FOLDER, 'workspaceWithFlatConfigCjs');
+const WORKSPACE_WITH_FLAT_CONFIG_MJS: string = path.join(TEST_DATA_FOLDER, 'workspaceWithFlatConfigMjs');
 
 describe('Tests for the UserConfigInfo class', () => {
     let engineConfig: ESLintEngineConfig;
@@ -49,7 +49,7 @@ describe('Tests for the UserConfigInfo class', () => {
                 });
 
                 it.each([
-                    WORKSPACE_WITH_LEGACY_CONFIG1,
+                    WORKSPACE_WITH_LEGACY_CONFIG_JSON,
                     WORKSPACE_WITH_LEGACY_IGNORE
                 ])('...and workspace root contains a config or ignore file, then return NO_USER_CONFIG state', (workspaceFolder: string) => {
                     const workspace: Workspace = new Workspace('id', [workspaceFolder]);
@@ -60,7 +60,7 @@ describe('Tests for the UserConfigInfo class', () => {
                 });
 
                 it.each([
-                    WORKSPACE_WITH_LEGACY_CONFIG2,
+                    WORKSPACE_WITH_LEGACY_CONFIG_YML,
                     WORKSPACE_WITH_LEGACY_IGNORE
                 ])('...and config root contains a config or ignore file, then return NO_USER_CONFIG state', (configRoot: string) => {
                     engineConfig.config_root = configRoot;
@@ -71,7 +71,7 @@ describe('Tests for the UserConfigInfo class', () => {
                 });
 
                 it.each([
-                    WORKSPACE_WITH_LEGACY_CONFIG3,
+                    WORKSPACE_WITH_LEGACY_CONFIG_CJS,
                     WORKSPACE_WITH_LEGACY_IGNORE
                 ])('...and pwd contains a config or ignore file, then return NO_USER_CONFIG state', (folder: string) => {
                     process.chdir(folder);
@@ -96,7 +96,7 @@ describe('Tests for the UserConfigInfo class', () => {
                 });
 
                 it('...and workspace root contains a flat config file, then LEGACY_USER_CONFIG state', () => {
-                    const workspace: Workspace = new Workspace('id', [WORKSPACE_WITH_FLAT_CONFIG1]);
+                    const workspace: Workspace = new Workspace('id', [WORKSPACE_WITH_FLAT_CONFIG_JS]);
                     const userConfigInfo: UserConfigInfo = new UserConfigInfo(engineConfig, workspace);
                     expect(userConfigInfo.getState()).toEqual(UserConfigState.LEGACY_USER_CONFIG);
                     expect(userConfigInfo.getUserConfigFile()).toEqual(undefined);
@@ -104,7 +104,7 @@ describe('Tests for the UserConfigInfo class', () => {
                 });
 
                 it('...and config root contains a flat config file, then LEGACY_USER_CONFIG state', () => {
-                    engineConfig.config_root = WORKSPACE_WITH_FLAT_CONFIG1;
+                    engineConfig.config_root = WORKSPACE_WITH_FLAT_CONFIG_JS;
                     const userConfigInfo: UserConfigInfo = new UserConfigInfo(engineConfig, undefined);
                     expect(userConfigInfo.getState()).toEqual(UserConfigState.LEGACY_USER_CONFIG);
                     expect(userConfigInfo.getUserConfigFile()).toEqual(undefined);
@@ -112,7 +112,7 @@ describe('Tests for the UserConfigInfo class', () => {
                 });
 
                 it('...and pwd contains a flat config file, then LEGACY_USER_CONFIG state', () => {
-                    process.chdir(WORKSPACE_WITH_FLAT_CONFIG1);
+                    process.chdir(WORKSPACE_WITH_FLAT_CONFIG_JS);
                     const userConfigInfo: UserConfigInfo = new UserConfigInfo(engineConfig, undefined);
                     expect(userConfigInfo.getState()).toEqual(UserConfigState.LEGACY_USER_CONFIG);
                     expect(userConfigInfo.getUserConfigFile()).toEqual(undefined);
@@ -122,9 +122,9 @@ describe('Tests for the UserConfigInfo class', () => {
         });
 
         describe.each([
-            path.join(WORKSPACE_WITH_LEGACY_CONFIG1, '.eslintrc.json'),
-            path.join(WORKSPACE_WITH_LEGACY_CONFIG2, '.eslintrc.yml'),
-            path.join(WORKSPACE_WITH_LEGACY_CONFIG3, '.eslintrc.cjs')
+            path.join(WORKSPACE_WITH_LEGACY_CONFIG_JSON, '.eslintrc.json'),
+            path.join(WORKSPACE_WITH_LEGACY_CONFIG_YML, '.eslintrc.yml'),
+            path.join(WORKSPACE_WITH_LEGACY_CONFIG_CJS, '.eslintrc.cjs')
         ])('...and eslint_config_file is supplied as a legacy config file...', (legacyConfigFile: string) => {
             beforeEach(() => {
                 engineConfig.eslint_config_file = legacyConfigFile;
@@ -147,7 +147,7 @@ describe('Tests for the UserConfigInfo class', () => {
                 });
 
                 it('...and config root contains a flat config, then return LEGACY_USER_CONFIG state', () => {
-                    engineConfig.config_root = WORKSPACE_WITH_FLAT_CONFIG1;
+                    engineConfig.config_root = WORKSPACE_WITH_FLAT_CONFIG_JS;
                     const userConfigInfo: UserConfigInfo = new UserConfigInfo(engineConfig , undefined);
                     expect(userConfigInfo.getState()).toEqual(UserConfigState.LEGACY_USER_CONFIG);
                     expect(userConfigInfo.getUserConfigFile()).toEqual(legacyConfigFile);
@@ -155,7 +155,7 @@ describe('Tests for the UserConfigInfo class', () => {
                 });
 
                 it('...and pwd contains a flat config file, then return LEGACY_USER_CONFIG state', () => {
-                    process.chdir(WORKSPACE_WITH_FLAT_CONFIG2);
+                    process.chdir(WORKSPACE_WITH_FLAT_CONFIG_CJS);
                     const userConfigInfo: UserConfigInfo = new UserConfigInfo(engineConfig , undefined);
                     expect(userConfigInfo.getState()).toEqual(UserConfigState.LEGACY_USER_CONFIG);
                     expect(userConfigInfo.getUserConfigFile()).toEqual(legacyConfigFile);
@@ -177,7 +177,7 @@ describe('Tests for the UserConfigInfo class', () => {
                 });
 
                 it('...and workspace root contains an different ignore file, then return LEGACY_USER_CONFIG state', () => {
-                    const workspace: Workspace = new Workspace('id', [WORKSPACE_WITH_LEGACY_CONFIG3]);
+                    const workspace: Workspace = new Workspace('id', [WORKSPACE_WITH_LEGACY_CONFIG_CJS]);
                     const userConfigInfo: UserConfigInfo = new UserConfigInfo(engineConfig , workspace);
                     expect(userConfigInfo.getState()).toEqual(UserConfigState.LEGACY_USER_CONFIG);
                     expect(userConfigInfo.getUserConfigFile()).toEqual(legacyConfigFile);
@@ -185,7 +185,7 @@ describe('Tests for the UserConfigInfo class', () => {
                 });
 
                 it('...and config root contains a flat config, then return LEGACY_USER_CONFIG state', () => {
-                    engineConfig.config_root = WORKSPACE_WITH_FLAT_CONFIG1;
+                    engineConfig.config_root = WORKSPACE_WITH_FLAT_CONFIG_JS;
                     const userConfigInfo: UserConfigInfo = new UserConfigInfo(engineConfig , undefined);
                     expect(userConfigInfo.getState()).toEqual(UserConfigState.LEGACY_USER_CONFIG);
                     expect(userConfigInfo.getUserConfigFile()).toEqual(legacyConfigFile);
@@ -193,7 +193,7 @@ describe('Tests for the UserConfigInfo class', () => {
                 });
 
                 it('...and pwd contains a different ignore file, then return LEGACY_USER_CONFIG state', () => {
-                    process.chdir(WORKSPACE_WITH_LEGACY_CONFIG3);
+                    process.chdir(WORKSPACE_WITH_LEGACY_CONFIG_CJS);
                     const userConfigInfo: UserConfigInfo = new UserConfigInfo(engineConfig , undefined);
                     expect(userConfigInfo.getState()).toEqual(UserConfigState.LEGACY_USER_CONFIG);
                     expect(userConfigInfo.getUserConfigFile()).toEqual(legacyConfigFile);
@@ -203,9 +203,9 @@ describe('Tests for the UserConfigInfo class', () => {
         });
 
         describe.each([
-            WORKSPACE_WITH_FLAT_CONFIG1,
-            WORKSPACE_WITH_FLAT_CONFIG2,
-            WORKSPACE_WITH_FLAT_CONFIG3
+            WORKSPACE_WITH_FLAT_CONFIG_JS,
+            WORKSPACE_WITH_FLAT_CONFIG_CJS,
+            WORKSPACE_WITH_FLAT_CONFIG_MJS
         ])('...and eslint_config_file is supplied as a flat config file...', (flatConfigFile: string) => {
             beforeEach(() => {
                 engineConfig.eslint_config_file = flatConfigFile;
@@ -228,7 +228,7 @@ describe('Tests for the UserConfigInfo class', () => {
                 });
 
                 it('...and config root contains a legacy config then return FLAT_USER_CONFIG state', () => {
-                    engineConfig.config_root = WORKSPACE_WITH_LEGACY_CONFIG2;
+                    engineConfig.config_root = WORKSPACE_WITH_LEGACY_CONFIG_YML;
                     const userConfigInfo: UserConfigInfo = new UserConfigInfo(engineConfig , undefined);
                     expect(userConfigInfo.getState()).toEqual(UserConfigState.FLAT_USER_CONFIG);
                     expect(userConfigInfo.getUserConfigFile()).toEqual(flatConfigFile);
@@ -236,7 +236,7 @@ describe('Tests for the UserConfigInfo class', () => {
                 });
 
                 it('...and pwd contains a legacy config and ignore file, then return FLAT_USER_CONFIG state', () => {
-                    process.chdir(WORKSPACE_WITH_LEGACY_CONFIG3);
+                    process.chdir(WORKSPACE_WITH_LEGACY_CONFIG_CJS);
                     const userConfigInfo: UserConfigInfo = new UserConfigInfo(engineConfig , undefined);
                     expect(userConfigInfo.getState()).toEqual(UserConfigState.FLAT_USER_CONFIG);
                     expect(userConfigInfo.getUserConfigFile()).toEqual(flatConfigFile);
@@ -268,7 +268,7 @@ describe('Tests for the UserConfigInfo class', () => {
                 });
 
                 it('...and config root contains a legacy config then return FLAT_USER_CONFIG state', () => {
-                    engineConfig.config_root = WORKSPACE_WITH_LEGACY_CONFIG2;
+                    engineConfig.config_root = WORKSPACE_WITH_LEGACY_CONFIG_YML;
                     const userConfigInfo: UserConfigInfo = new UserConfigInfo(engineConfig , undefined);
                     expect(userConfigInfo.getState()).toEqual(UserConfigState.FLAT_USER_CONFIG);
                     expect(userConfigInfo.getUserConfigFile()).toEqual(flatConfigFile);
@@ -277,7 +277,7 @@ describe('Tests for the UserConfigInfo class', () => {
                 });
 
                 it('...and pwd contains a legacy config and ignore file, then return FLAT_USER_CONFIG state', () => {
-                    process.chdir(WORKSPACE_WITH_LEGACY_CONFIG3);
+                    process.chdir(WORKSPACE_WITH_LEGACY_CONFIG_CJS);
                     const userConfigInfo: UserConfigInfo = new UserConfigInfo(engineConfig , undefined);
                     expect(userConfigInfo.getState()).toEqual(UserConfigState.FLAT_USER_CONFIG);
                     expect(userConfigInfo.getUserConfigFile()).toEqual(flatConfigFile);
@@ -304,10 +304,10 @@ describe('Tests for the UserConfigInfo class', () => {
                 });
 
                 it('...and workspace root contains a legacy config file, then return LEGACY_USER_CONFIG state', () => {
-                    const workspace: Workspace = new Workspace('id', [WORKSPACE_WITH_LEGACY_CONFIG1]);
+                    const workspace: Workspace = new Workspace('id', [WORKSPACE_WITH_LEGACY_CONFIG_JSON]);
                     const userConfigInfo: UserConfigInfo = new UserConfigInfo(engineConfig , workspace);
                     expect(userConfigInfo.getState()).toEqual(UserConfigState.LEGACY_USER_CONFIG);
-                    expect(userConfigInfo.getUserConfigFile()).toEqual(path.join(WORKSPACE_WITH_LEGACY_CONFIG1, '.eslintrc.json'));
+                    expect(userConfigInfo.getUserConfigFile()).toEqual(path.join(WORKSPACE_WITH_LEGACY_CONFIG_JSON, '.eslintrc.json'));
                     expect(userConfigInfo.getUserIgnoreFile()).toEqual(undefined);
                 });
 
@@ -320,29 +320,29 @@ describe('Tests for the UserConfigInfo class', () => {
                 });
 
                 it('...and workspace root contains a flat config file, then return FLAT_USER_CONFIG state', () => {
-                    const workspace: Workspace = new Workspace('id', [WORKSPACE_WITH_FLAT_CONFIG1]);
-                    engineConfig.config_root = WORKSPACE_WITH_LEGACY_CONFIG2; // Confirming that workspace wins so this is ignored
+                    const workspace: Workspace = new Workspace('id', [WORKSPACE_WITH_FLAT_CONFIG_JS]);
+                    engineConfig.config_root = WORKSPACE_WITH_LEGACY_CONFIG_YML; // Confirming that workspace wins so this is ignored
                     const userConfigInfo: UserConfigInfo = new UserConfigInfo(engineConfig , workspace);
                     expect(userConfigInfo.getState()).toEqual(UserConfigState.FLAT_USER_CONFIG);
-                    expect(userConfigInfo.getUserConfigFile()).toEqual(path.join(WORKSPACE_WITH_FLAT_CONFIG1, 'eslint.config.js'));
+                    expect(userConfigInfo.getUserConfigFile()).toEqual(path.join(WORKSPACE_WITH_FLAT_CONFIG_JS, 'eslint.config.js'));
                     expect(userConfigInfo.getUserIgnoreFile()).toEqual(undefined);
                 });
 
                 it('...and config root contains a legacy config and ignore file, then return LEGACY_USER_CONFIG state', () => {
-                    engineConfig.config_root = WORKSPACE_WITH_LEGACY_CONFIG3
-                    process.chdir(WORKSPACE_WITH_LEGACY_CONFIG2); // Also confirm that config root wins so this should be ignored
+                    engineConfig.config_root = WORKSPACE_WITH_LEGACY_CONFIG_CJS
+                    process.chdir(WORKSPACE_WITH_LEGACY_CONFIG_YML); // Also confirm that config root wins so this should be ignored
                     const userConfigInfo: UserConfigInfo = new UserConfigInfo(engineConfig , undefined);
                     expect(userConfigInfo.getState()).toEqual(UserConfigState.LEGACY_USER_CONFIG);
-                    expect(userConfigInfo.getUserConfigFile()).toEqual(path.join(WORKSPACE_WITH_LEGACY_CONFIG3, '.eslintrc.cjs'));
-                    expect(userConfigInfo.getUserIgnoreFile()).toEqual(path.join(WORKSPACE_WITH_LEGACY_CONFIG3, '.eslintignore'));
+                    expect(userConfigInfo.getUserConfigFile()).toEqual(path.join(WORKSPACE_WITH_LEGACY_CONFIG_CJS, '.eslintrc.cjs'));
+                    expect(userConfigInfo.getUserIgnoreFile()).toEqual(path.join(WORKSPACE_WITH_LEGACY_CONFIG_CJS, '.eslintignore'));
                 });
 
                 it('...and config root contains a flat config file and legacy ignore file, then return FLAT_USER_CONFIG state', () => {
-                    engineConfig.config_root = WORKSPACE_WITH_FLAT_CONFIG3;
+                    engineConfig.config_root = WORKSPACE_WITH_FLAT_CONFIG_MJS;
                     const userConfigInfo: UserConfigInfo = new UserConfigInfo(engineConfig , undefined);
                     expect(userConfigInfo.getState()).toEqual(UserConfigState.FLAT_USER_CONFIG);
-                    expect(userConfigInfo.getUserConfigFile()).toEqual(path.join(WORKSPACE_WITH_FLAT_CONFIG3, 'eslint.config.mjs'));
-                    expect(userConfigInfo.getUserIgnoreFile()).toEqual(path.join(WORKSPACE_WITH_FLAT_CONFIG3, '.eslintignore'));
+                    expect(userConfigInfo.getUserConfigFile()).toEqual(path.join(WORKSPACE_WITH_FLAT_CONFIG_MJS, 'eslint.config.mjs'));
+                    expect(userConfigInfo.getUserIgnoreFile()).toEqual(path.join(WORKSPACE_WITH_FLAT_CONFIG_MJS, '.eslintignore'));
                 });
 
 
@@ -355,19 +355,19 @@ describe('Tests for the UserConfigInfo class', () => {
                 });
 
                 it('...and pwd contains a flat config file, then return FLAT_USER_CONFIG state', () => {
-                    process.chdir(WORKSPACE_WITH_FLAT_CONFIG2);
+                    process.chdir(WORKSPACE_WITH_FLAT_CONFIG_CJS);
                     const userConfigInfo: UserConfigInfo = new UserConfigInfo(engineConfig , undefined);
                     expect(userConfigInfo.getState()).toEqual(UserConfigState.FLAT_USER_CONFIG);
-                    expect(userConfigInfo.getUserConfigFile()).toEqual(path.join(WORKSPACE_WITH_FLAT_CONFIG2, 'eslint.config.cjs'));
+                    expect(userConfigInfo.getUserConfigFile()).toEqual(path.join(WORKSPACE_WITH_FLAT_CONFIG_CJS, 'eslint.config.cjs'));
                     expect(userConfigInfo.getUserIgnoreFile()).toEqual(undefined);
                 });
 
                 it('... and workspace contains legacy config and pwd contains flat config, then return LEGACY_USER_CONFIG state', () => {
-                    const workspace: Workspace = new Workspace('id', [WORKSPACE_WITH_LEGACY_CONFIG1]);
-                    process.chdir(WORKSPACE_WITH_FLAT_CONFIG2);
+                    const workspace: Workspace = new Workspace('id', [WORKSPACE_WITH_LEGACY_CONFIG_JSON]);
+                    process.chdir(WORKSPACE_WITH_FLAT_CONFIG_CJS);
                     const userConfigInfo: UserConfigInfo = new UserConfigInfo(engineConfig , workspace);
                     expect(userConfigInfo.getState()).toEqual(UserConfigState.LEGACY_USER_CONFIG);
-                    expect(userConfigInfo.getUserConfigFile()).toEqual(path.join(WORKSPACE_WITH_LEGACY_CONFIG1, '.eslintrc.json'));
+                    expect(userConfigInfo.getUserConfigFile()).toEqual(path.join(WORKSPACE_WITH_LEGACY_CONFIG_JSON, '.eslintrc.json'));
                     expect(userConfigInfo.getUserIgnoreFile()).toEqual(undefined);
                 });
             });
@@ -386,28 +386,28 @@ describe('Tests for the UserConfigInfo class', () => {
                 });
 
                 it('...and workspace root contains a legacy config file and another legacy ignore file, then return LEGACY_USER_CONFIG state', () => {
-                    const workspace: Workspace = new Workspace('id', [WORKSPACE_WITH_LEGACY_CONFIG3]);
+                    const workspace: Workspace = new Workspace('id', [WORKSPACE_WITH_LEGACY_CONFIG_CJS]);
                     const userConfigInfo: UserConfigInfo = new UserConfigInfo(engineConfig , workspace);
                     expect(userConfigInfo.getState()).toEqual(UserConfigState.LEGACY_USER_CONFIG);
-                    expect(userConfigInfo.getUserConfigFile()).toEqual(path.join(WORKSPACE_WITH_LEGACY_CONFIG3, '.eslintrc.cjs'));
+                    expect(userConfigInfo.getUserConfigFile()).toEqual(path.join(WORKSPACE_WITH_LEGACY_CONFIG_CJS, '.eslintrc.cjs'));
                     expect(userConfigInfo.getUserIgnoreFile()).toEqual(engineConfig.eslint_ignore_file);
                 });
 
                 it('...and workspace root contains a flat config file, then return FLAT_USER_CONFIG state', () => {
-                    const workspace: Workspace = new Workspace('id', [WORKSPACE_WITH_FLAT_CONFIG1]);
-                    engineConfig.config_root = WORKSPACE_WITH_LEGACY_CONFIG2; // Confirming that workspace wins so this is ignored
+                    const workspace: Workspace = new Workspace('id', [WORKSPACE_WITH_FLAT_CONFIG_JS]);
+                    engineConfig.config_root = WORKSPACE_WITH_LEGACY_CONFIG_YML; // Confirming that workspace wins so this is ignored
                     const userConfigInfo: UserConfigInfo = new UserConfigInfo(engineConfig , workspace);
                     expect(userConfigInfo.getState()).toEqual(UserConfigState.FLAT_USER_CONFIG);
-                    expect(userConfigInfo.getUserConfigFile()).toEqual(path.join(WORKSPACE_WITH_FLAT_CONFIG1, 'eslint.config.js'));
+                    expect(userConfigInfo.getUserConfigFile()).toEqual(path.join(WORKSPACE_WITH_FLAT_CONFIG_JS, 'eslint.config.js'));
                     // Yes we still set the ignore file so that the engine can detect it and issue a warning if it wants to
                     expect(userConfigInfo.getUserIgnoreFile()).toEqual(engineConfig.eslint_ignore_file);
                 });
 
                 it('...and config root contains a flat config file and another legacy ignore file, then return FLAT_USER_CONFIG state', () => {
-                    engineConfig.config_root = WORKSPACE_WITH_FLAT_CONFIG3;
+                    engineConfig.config_root = WORKSPACE_WITH_FLAT_CONFIG_MJS;
                     const userConfigInfo: UserConfigInfo = new UserConfigInfo(engineConfig , undefined);
                     expect(userConfigInfo.getState()).toEqual(UserConfigState.FLAT_USER_CONFIG);
-                    expect(userConfigInfo.getUserConfigFile()).toEqual(path.join(WORKSPACE_WITH_FLAT_CONFIG3, 'eslint.config.mjs'));
+                    expect(userConfigInfo.getUserConfigFile()).toEqual(path.join(WORKSPACE_WITH_FLAT_CONFIG_MJS, 'eslint.config.mjs'));
                     expect(userConfigInfo.getUserIgnoreFile()).toEqual(engineConfig.eslint_ignore_file);
                 });
 
@@ -420,28 +420,28 @@ describe('Tests for the UserConfigInfo class', () => {
                 });
 
                 it('...and pwd contains a flat config file, then return FLAT_USER_CONFIG state', () => {
-                    process.chdir(WORKSPACE_WITH_FLAT_CONFIG2);
+                    process.chdir(WORKSPACE_WITH_FLAT_CONFIG_CJS);
                     const userConfigInfo: UserConfigInfo = new UserConfigInfo(engineConfig , undefined);
                     expect(userConfigInfo.getState()).toEqual(UserConfigState.FLAT_USER_CONFIG);
-                    expect(userConfigInfo.getUserConfigFile()).toEqual(path.join(WORKSPACE_WITH_FLAT_CONFIG2, 'eslint.config.cjs'));
+                    expect(userConfigInfo.getUserConfigFile()).toEqual(path.join(WORKSPACE_WITH_FLAT_CONFIG_CJS, 'eslint.config.cjs'));
                     expect(userConfigInfo.getUserIgnoreFile()).toEqual(engineConfig.eslint_ignore_file);
                 });
 
                 it('... and workspace contains legacy config and pwd contains flat config, then return LEGACY_USER_CONFIG state', () => {
-                    const workspace: Workspace = new Workspace('id', [WORKSPACE_WITH_LEGACY_CONFIG1]);
-                    process.chdir(WORKSPACE_WITH_FLAT_CONFIG2);
+                    const workspace: Workspace = new Workspace('id', [WORKSPACE_WITH_LEGACY_CONFIG_JSON]);
+                    process.chdir(WORKSPACE_WITH_FLAT_CONFIG_CJS);
                     const userConfigInfo: UserConfigInfo = new UserConfigInfo(engineConfig , workspace);
                     expect(userConfigInfo.getState()).toEqual(UserConfigState.LEGACY_USER_CONFIG);
-                    expect(userConfigInfo.getUserConfigFile()).toEqual(path.join(WORKSPACE_WITH_LEGACY_CONFIG1, '.eslintrc.json'));
+                    expect(userConfigInfo.getUserConfigFile()).toEqual(path.join(WORKSPACE_WITH_LEGACY_CONFIG_JSON, '.eslintrc.json'));
                     expect(userConfigInfo.getUserIgnoreFile()).toEqual(engineConfig.eslint_ignore_file);
                 });
             });
         });
 
         describe.each([
-            path.join(WORKSPACE_WITH_LEGACY_CONFIG1, '.eslintrc.json'),
-            path.join(WORKSPACE_WITH_LEGACY_CONFIG2, '.eslintrc.yml'),
-            path.join(WORKSPACE_WITH_LEGACY_CONFIG3, '.eslintrc.cjs')
+            path.join(WORKSPACE_WITH_LEGACY_CONFIG_JSON, '.eslintrc.json'),
+            path.join(WORKSPACE_WITH_LEGACY_CONFIG_YML, '.eslintrc.yml'),
+            path.join(WORKSPACE_WITH_LEGACY_CONFIG_CJS, '.eslintrc.cjs')
         ])('...and eslint_config_file is supplied as a legacy config file...', (legacyConfigFile: string) => {
             beforeEach(() => {
                 engineConfig.eslint_config_file = legacyConfigFile;
@@ -464,7 +464,7 @@ describe('Tests for the UserConfigInfo class', () => {
                 });
 
                 it('...and config root contains a flat config, then return LEGACY_USER_CONFIG state', () => {
-                    engineConfig.config_root = WORKSPACE_WITH_FLAT_CONFIG1;
+                    engineConfig.config_root = WORKSPACE_WITH_FLAT_CONFIG_JS;
                     const userConfigInfo: UserConfigInfo = new UserConfigInfo(engineConfig , undefined);
                     expect(userConfigInfo.getState()).toEqual(UserConfigState.LEGACY_USER_CONFIG);
                     expect(userConfigInfo.getUserConfigFile()).toEqual(legacyConfigFile);
@@ -472,7 +472,7 @@ describe('Tests for the UserConfigInfo class', () => {
                 });
 
                 it('...and pwd contains a flat config file, then return LEGACY_USER_CONFIG state', () => {
-                    process.chdir(WORKSPACE_WITH_FLAT_CONFIG2);
+                    process.chdir(WORKSPACE_WITH_FLAT_CONFIG_CJS);
                     const userConfigInfo: UserConfigInfo = new UserConfigInfo(engineConfig , undefined);
                     expect(userConfigInfo.getState()).toEqual(UserConfigState.LEGACY_USER_CONFIG);
                     expect(userConfigInfo.getUserConfigFile()).toEqual(legacyConfigFile);
@@ -494,7 +494,7 @@ describe('Tests for the UserConfigInfo class', () => {
                 });
 
                 it('...and workspace root contains an different ignore file, then return LEGACY_USER_CONFIG state', () => {
-                    const workspace: Workspace = new Workspace('id', [WORKSPACE_WITH_LEGACY_CONFIG3]);
+                    const workspace: Workspace = new Workspace('id', [WORKSPACE_WITH_LEGACY_CONFIG_CJS]);
                     const userConfigInfo: UserConfigInfo = new UserConfigInfo(engineConfig , workspace);
                     expect(userConfigInfo.getState()).toEqual(UserConfigState.LEGACY_USER_CONFIG);
                     expect(userConfigInfo.getUserConfigFile()).toEqual(legacyConfigFile);
@@ -502,7 +502,7 @@ describe('Tests for the UserConfigInfo class', () => {
                 });
 
                 it('...and config root contains a flat config, then return LEGACY_USER_CONFIG state', () => {
-                    engineConfig.config_root = WORKSPACE_WITH_FLAT_CONFIG1;
+                    engineConfig.config_root = WORKSPACE_WITH_FLAT_CONFIG_JS;
                     const userConfigInfo: UserConfigInfo = new UserConfigInfo(engineConfig , undefined);
                     expect(userConfigInfo.getState()).toEqual(UserConfigState.LEGACY_USER_CONFIG);
                     expect(userConfigInfo.getUserConfigFile()).toEqual(legacyConfigFile);
@@ -510,7 +510,7 @@ describe('Tests for the UserConfigInfo class', () => {
                 });
 
                 it('...and pwd contains a different ignore file, then return LEGACY_USER_CONFIG state', () => {
-                    process.chdir(WORKSPACE_WITH_LEGACY_CONFIG3);
+                    process.chdir(WORKSPACE_WITH_LEGACY_CONFIG_CJS);
                     const userConfigInfo: UserConfigInfo = new UserConfigInfo(engineConfig , undefined);
                     expect(userConfigInfo.getState()).toEqual(UserConfigState.LEGACY_USER_CONFIG);
                     expect(userConfigInfo.getUserConfigFile()).toEqual(legacyConfigFile);
@@ -520,9 +520,9 @@ describe('Tests for the UserConfigInfo class', () => {
         });
 
         describe.each([
-            WORKSPACE_WITH_FLAT_CONFIG1,
-            WORKSPACE_WITH_FLAT_CONFIG2,
-            WORKSPACE_WITH_FLAT_CONFIG3
+            WORKSPACE_WITH_FLAT_CONFIG_JS,
+            WORKSPACE_WITH_FLAT_CONFIG_CJS,
+            WORKSPACE_WITH_FLAT_CONFIG_MJS
         ])('...and eslint_config_file is supplied as a flat config file...', (flatConfigFile: string) => {
             beforeEach(() => {
                 engineConfig.eslint_config_file = flatConfigFile;
@@ -545,7 +545,7 @@ describe('Tests for the UserConfigInfo class', () => {
                 });
 
                 it('...and config root contains a legacy config then return FLAT_USER_CONFIG state', () => {
-                    engineConfig.config_root = WORKSPACE_WITH_LEGACY_CONFIG2;
+                    engineConfig.config_root = WORKSPACE_WITH_LEGACY_CONFIG_YML;
                     const userConfigInfo: UserConfigInfo = new UserConfigInfo(engineConfig , undefined);
                     expect(userConfigInfo.getState()).toEqual(UserConfigState.FLAT_USER_CONFIG);
                     expect(userConfigInfo.getUserConfigFile()).toEqual(flatConfigFile);
@@ -553,11 +553,11 @@ describe('Tests for the UserConfigInfo class', () => {
                 });
 
                 it('...and pwd contains a legacy config and ignore file, then return FLAT_USER_CONFIG state', () => {
-                    process.chdir(WORKSPACE_WITH_LEGACY_CONFIG3);
+                    process.chdir(WORKSPACE_WITH_LEGACY_CONFIG_CJS);
                     const userConfigInfo: UserConfigInfo = new UserConfigInfo(engineConfig , undefined);
                     expect(userConfigInfo.getState()).toEqual(UserConfigState.FLAT_USER_CONFIG);
                     expect(userConfigInfo.getUserConfigFile()).toEqual(flatConfigFile);
-                    expect(userConfigInfo.getUserIgnoreFile()).toEqual(path.join(WORKSPACE_WITH_LEGACY_CONFIG3, '.eslintignore'));
+                    expect(userConfigInfo.getUserIgnoreFile()).toEqual(path.join(WORKSPACE_WITH_LEGACY_CONFIG_CJS, '.eslintignore'));
                 });
             });
 
@@ -585,7 +585,7 @@ describe('Tests for the UserConfigInfo class', () => {
                 });
 
                 it('...and config root contains a legacy config then return FLAT_USER_CONFIG state', () => {
-                    engineConfig.config_root = WORKSPACE_WITH_LEGACY_CONFIG2;
+                    engineConfig.config_root = WORKSPACE_WITH_LEGACY_CONFIG_YML;
                     const userConfigInfo: UserConfigInfo = new UserConfigInfo(engineConfig , undefined);
                     expect(userConfigInfo.getState()).toEqual(UserConfigState.FLAT_USER_CONFIG);
                     expect(userConfigInfo.getUserConfigFile()).toEqual(flatConfigFile);
@@ -594,7 +594,7 @@ describe('Tests for the UserConfigInfo class', () => {
                 });
 
                 it('...and pwd contains a legacy config and ignore file, then return FLAT_USER_CONFIG state', () => {
-                    process.chdir(WORKSPACE_WITH_LEGACY_CONFIG3);
+                    process.chdir(WORKSPACE_WITH_LEGACY_CONFIG_CJS);
                     const userConfigInfo: UserConfigInfo = new UserConfigInfo(engineConfig , undefined);
                     expect(userConfigInfo.getState()).toEqual(UserConfigState.FLAT_USER_CONFIG);
                     expect(userConfigInfo.getUserConfigFile()).toEqual(flatConfigFile);

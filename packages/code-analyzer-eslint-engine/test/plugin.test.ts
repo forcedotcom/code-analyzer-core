@@ -53,11 +53,11 @@ describe('Tests for the ESLintEnginePlugin', () => {
 
     it('When a valid eslint_config_file is passed to createEngineConfig, then it is set on the config', async () => {
         const userProvidedOverrides: ConfigObject = {
-            eslint_config_file: 'test-data/workspaceWithLegacyConfig1/.eslintrc.json'
+            eslint_config_file: 'test-data/workspaceWithLegacyConfigJson/.eslintrc.json'
         };
         const resolvedConfig: ConfigObject = await callCreateEngineConfig(plugin, userProvidedOverrides, __dirname);
         expect(resolvedConfig['eslint_config_file']).toEqual(
-            path.resolve(__dirname, 'test-data', 'workspaceWithLegacyConfig1', '.eslintrc.json'));
+            path.resolve(__dirname, 'test-data', 'workspaceWithLegacyConfigJson', '.eslintrc.json'));
     });
 
     it('When eslint_config_file value does not exist, then createEngineConfig errors', async () => {
