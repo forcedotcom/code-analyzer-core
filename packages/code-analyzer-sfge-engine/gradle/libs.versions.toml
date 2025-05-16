@@ -23,6 +23,7 @@ reflections = "0.10.2"
 asm = "9.7.1"
 mockito-core = "5.16.1"
 mockito-junit-jupiter = "5.16.1"
+netty-all = "4.1.118.Final"
 
 [libraries]
 hamcrest = { module = "org.hamcrest:hamcrest", version.ref = "hamcrest" }
@@ -43,3 +44,4 @@ asm = { module = "org.ow2.asm:asm", version.ref = "asm" }
 junit-platform-launcher = { module = "org.junit.platform:junit-platform-launcher" }
 mockito-core = { module = "org.mockito:mockito-core", version.ref = "mockito-core" }
 mockito-junit-jupiter = { module = "org.mockito:mockito-junit-jupiter", version.ref = "mockito-junit-jupiter" }
+netty-all = { module = "io.netty:netty-all", version.ref = "netty-all" }
