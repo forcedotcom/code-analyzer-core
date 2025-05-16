@@ -966,7 +966,7 @@
       "ErrorProne",
       "Apex"
     ],
-    "description": "This rule finds Apex classes, enums, and interfaces that have the same name as a class, enum, or interface in the `System` or `Schema` namespace. Shadowing these namespaces in this way can lead to confusion and unexpected behavior. Code that intends to reference a `System` or `Schema` class, enum, or interface may inadvertently reference the locally defined type instead. This can... Learn more: https://docs.pmd-code.org/pmd-doc-7.13.0/pmd_rules_apex_errorprone.html#typeshadowsbuiltinnamespace",
+    "description": "This rule finds Apex classes, enums, and interfaces that have the same name as a class, enum, or interface in the `System` or `Schema` namespace. Shadowing these namespaces in this way can lead to confusion and unexpected behavior. Code that intends to reference a `System` or `Schema` class, enum, or interface may inadvertently reference the locally defined type instead. This can... Learn more: https://docs.pmd-code.org/pmd-doc-{{PMD_VERSION}}/pmd_rules_apex_errorprone.html#typeshadowsbuiltinnamespace",
     "resourceUrls": [
       "https://docs.pmd-code.org/pmd-doc-{{PMD_VERSION}}/pmd_rules_apex_errorprone.html#typeshadowsbuiltinnamespace"
     ]
