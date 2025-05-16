@@ -514,12 +514,12 @@ export class CodeAnalyzer {
 
     private updateRuleDescriptionWithOverrides(engineName: string, ruleDescription: engApi.RuleDescription): engApi.RuleDescription {
         const ruleOverride: RuleOverride = this.config.getRuleOverrideFor(engineName, ruleDescription.name);
-        if (ruleOverride.severity) {
+        if (ruleOverride.severity && ruleDescription.severityLevel !== ruleOverride.severity) {
             this.emitLogEvent(LogLevel.Debug, getMessage('RulePropertyOverridden', FIELDS.SEVERITY,
                 ruleDescription.name, engineName, ruleDescription.severityLevel, ruleOverride.severity));
             ruleDescription.severityLevel = ruleOverride.severity as engApi.SeverityLevel;
         }
-        if (ruleOverride.tags) {
+        if (ruleOverride.tags && JSON.stringify(ruleDescription.tags) !== JSON.stringify(ruleOverride.tags)) {
             this.emitLogEvent(LogLevel.Debug, getMessage('RulePropertyOverridden', FIELDS.TAGS,
                 ruleDescription.name, engineName, JSON.stringify(ruleDescription.tags), JSON.stringify(ruleOverride.tags)));
             ruleDescription.tags = ruleOverride.tags;
