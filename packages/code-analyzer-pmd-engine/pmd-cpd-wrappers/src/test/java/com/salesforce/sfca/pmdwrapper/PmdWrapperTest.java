@@ -329,6 +329,51 @@ class PmdWrapperTest {
                 containsString("milliseconds")));
     }
 
+    @Test
+    void whenCallingRunWithAnInvalidApexFileWithValidApexFile_thenSkipInvalidApexFileWithProcessingErrorButStillProcessValidFile(@TempDir Path tempDir) throws Exception {
+        String ruleSetInputFile = createSampleRulesetFile(tempDir);
+
+        String invalidApexCode = "public class InvalidApexCode {\n" +
+            "    #### OOPS \n" +
+            "}";
+        String invalidApexFile = createTempFile(tempDir, "InvalidApexCode.cls", invalidApexCode);
+
+        String validApexCode = "public class ValidApexCode {\n" +
+            "    public static void main() {\n" +
+            "        for (Integer i = 0; i < 10; i++) {\n" +
+            "            List<Account> accounts = [SELECT Id FROM Account];\n" +
+            "        }\n" +
+            "    }\n" +
+            "}";
+        String validApexFile = createTempFile(tempDir, "ValidApexCode.cls", validApexCode);
+
+        String inputFileContents = "{\n" +
+            "  \"ruleSetInputFile\":\"" + makePathJsonSafe(ruleSetInputFile) + "\",\n" +
+            "  \"runDataPerLanguage\": {\n" +
+            "    \"apex\": {\n" +
+            "      \"filesToScan\": [\n" +
+            "        \"" + makePathJsonSafe(invalidApexFile) + "\"," +
+            "        \"" + makePathJsonSafe(validApexFile) + "\"" +
+            "      ]\n" +
+            "    }\n" +
+            "  }\n" +
+            "}";
+        String inputFile = createTempFile(tempDir, "inputFile.json", inputFileContents);
+
+        String resultsOutputFile = tempDir.resolve("results.json").toAbsolutePath().toString();
+
+        String[] args = {"run", inputFile, resultsOutputFile};
+        callPmdWrapper(args); // Should not error
+
+        String resultsJsonString = new String(Files.readAllBytes(Paths.get(resultsOutputFile)));
+        JsonElement element = JsonParser.parseString(resultsJsonString); // Should not error
+        assertThat(element.isJsonObject(), is(true));
+        
+        assertThat(resultsJsonString, containsString("{\"violations\":[{\"rule\":\"OperationWithLimitsInLoop\"")); // Contains the violation for the valid file
+        assertThat(resultsJsonString, containsString("\"processingErrors\":[{\"file\":")); // Contains the processing error for the invalid file
+    }
+
+
     private static String createSampleRulesetFile(Path tempDir) throws Exception {
         String ruleSetContents = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" +
                 "<ruleset name=\"Ruleset for Salesforce Code Analyzer\"\n" +

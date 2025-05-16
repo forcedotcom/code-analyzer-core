@@ -79,7 +79,7 @@ const MESSAGE_CATALOG : { [key: string]: string } = {
         `%s issued a processing error for file '%s':\n%s`,
 
     CpdTerminatingExceptionThrown:
-        `CPD threw an exception while processing files for language '%s' which terminated the CPD process:\n%s`,
+        `CPD threw an exception while processing files for language '%s':\n%s`,
 
     DetectCopyPasteForLanguageRuleDescription:
         `Identify duplicate code blocks within your workspace files associated with the '%s' language.`,

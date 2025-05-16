@@ -1,5 +1,7 @@
 package com.salesforce.sfca.cpdwrapper;
 
+import com.google.gson.JsonElement;
+import com.google.gson.JsonParser;
 import com.google.gson.JsonSyntaxException;
 import com.salesforce.sfca.testtools.StdOutCaptor;
 import org.junit.jupiter.api.Test;
@@ -50,6 +52,11 @@ class CpdWrapperTest {
             "    const b = 4;\n" +
             "  }\n" +
             "}\n";
+    private final static String SAMPLE_JS_INVALID =
+        "export default class OopsClass {\n" +
+        "    ### OOPS templateIds; // INVALID SYNTAX\n" +
+        "    loading = false;\n" +
+        "}\n";
 
     @Test
     void whenCallingMainWithNoCommand_thenError() {
@@ -503,6 +510,37 @@ class CpdWrapperTest {
         String resultsJsonString = new String(Files.readAllBytes(Paths.get(outputFile)));
 
         assertThat(resultsJsonString, is("{}"));
+    }
+
+    @Test
+    void whenCallingRunWithAnInvalidJsFileWithValidJsFile_thenSkipInvalidJsFileWithProcessingErrorButStillProcessValidFile(@TempDir Path tempDir) throws Exception {
+        String invalidJsFile = createTempFile(tempDir, "invalidJsFile.js", SAMPLE_JS_INVALID);
+        String validJsFile = createTempFile(tempDir, "validJsFile.js", SAMPLE_JS_1);
+
+        String inputFileContents = "{" +
+            "  \"runDataPerLanguage\": {" +
+            "     \"ecmascript\": {" +
+            "       \"filesToScan\": [\"" + makePathJsonSafe(invalidJsFile) + "\", \"" + makePathJsonSafe(validJsFile) + "\"]," +
+            "       \"minimumTokens\": 13" +
+            "    }" +
+            "  }," +
+            "  \"skipDuplicateFiles\": false " +
+            "}";
+        String inputFile = createTempFile(tempDir, "inputFile.json", inputFileContents);
+
+        String outputFile = tempDir.resolve("output.json").toAbsolutePath().toString();
+        String[] args = {"run", inputFile, outputFile};
+
+        callCpdWrapper(args);
+
+        String resultsJsonString = new String(Files.readAllBytes(Paths.get(outputFile)));
+
+        JsonElement element = JsonParser.parseString(resultsJsonString); // Should not error
+        assertThat(element.isJsonObject(), is(true));
+
+        assertThat(resultsJsonString, containsString("\"processingErrors\":[{\"file\"")); // Still reports the processing error
+        assertThat(resultsJsonString, not(containsString("TERMINATING_EXCEPTION"))); // But don't make it a terminating exception
+        assertThat(resultsJsonString, containsString("{\"ecmascript\":{\"matches\":[{\"numTokensInBlock\":13")); // Still contains the mismatch for the valid file
     }
 
     private static String createTempFile(Path tempDir, String fileName, String fileContents) throws Exception {
