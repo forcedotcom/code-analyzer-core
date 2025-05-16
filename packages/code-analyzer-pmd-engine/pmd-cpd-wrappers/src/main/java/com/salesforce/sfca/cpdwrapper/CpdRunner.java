@@ -10,6 +10,7 @@ import net.sourceforge.pmd.cpd.Mark;
 import net.sourceforge.pmd.cpd.Match;
 import net.sourceforge.pmd.lang.Language;
 import net.sourceforge.pmd.lang.LanguageVersion;
+import net.sourceforge.pmd.lang.ast.FileAnalysisException;
 import net.sourceforge.pmd.reporting.Report;
 import net.sourceforge.pmd.util.log.PmdReporter;
 import org.slf4j.event.Level;
@@ -162,6 +163,13 @@ class CpdErrorListener implements PmdReporter {
     @Override
     public void logEx(Level level, @javax.annotation.Nullable String s, Object[] objects, @Nullable Throwable throwable) {
         if (throwable != null) {
+            if (throwable instanceof FileAnalysisException) {
+                // Note that if a single file can't be processed (like if it has syntax error) then a
+                // FileAnalysisException exception is thrown, but this is already reported in the processingErrors.
+                // Thus, we ignore FileAnalysisException so that we don't terminate CPD entirely just because of the
+                // issue with the one file, so we can continue processing the other files.
+                return;
+            }
             exceptionsCaught.add(new RuntimeException("CPD threw an unexpected exception:\n" + throwable.getMessage(), throwable));
         } else if (s != null) {
             String message = MessageFormat.format(s, objects);
