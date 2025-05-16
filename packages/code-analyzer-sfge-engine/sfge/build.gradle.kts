@@ -35,7 +35,11 @@ dependencies {
     }
     implementation(libs.reflections)
     implementation(libs.asm)
-    implementation(libs.netty.all)
+    constraints {
+        implementation(libs.netty.all) {
+            because("Force specific version of transitive dependency")
+        }
+    }
     implementation(files("lib/apex-jorje-lsp-sfge.jar"))
     // --- TEST ONLY DEPENDENCIES -----------------------------------------------
     testImplementation(libs.hamcrest)
