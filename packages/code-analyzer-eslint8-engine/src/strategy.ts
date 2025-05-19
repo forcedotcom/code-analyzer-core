@@ -173,7 +173,7 @@ export class LegacyESLintStrategy implements ESLintStrategy {
     private createESLintOptions(baseRuleset: BaseRuleset, overrideConfig?: Linter.LegacyConfig): ESLint.Options {
         const userConfigInfo: UserConfigInfo = this.workspace.getUserConfigInfo();
         return {
-            cwd: __dirname, // This is needed to make the base plugins discoverable. Don't worry, user's plugins are also still discovered.
+            cwd: this.getBaseDirForOptions(),
             errorOnUnmatchedPattern: false,
             reportUnusedDisableDirectives: 'off',
             baseConfig: this.baseConfigFactory.createBaseConfig(baseRuleset) as Linter.Config,   // This is applied first (on bottom).
@@ -187,7 +187,7 @@ export class LegacyESLintStrategy implements ESLintStrategy {
     private async getAllBaseRuleNames(filterFcn: AsyncFilterFnc<string>): Promise<string[]> {
         const candidateFiles: string[] = await this.workspace.getCandidateFilesForBaseConfig(filterFcn);
         const eslintForBaseRuleNameDiscovery: ESLint = new LegacyESLintWrapper({
-            cwd: __dirname, // This is needed to make the base plugins discoverable.
+            cwd: this.getBaseDirForOptions(),
             baseConfig: this.baseConfigFactory.createBaseConfig(BaseRuleset.ALL),
             useEslintrc: false
         } as ESLint.Options);
@@ -218,6 +218,25 @@ export class LegacyESLintStrategy implements ESLintStrategy {
                 makeRelativeTo(process.cwd(), ignoreFileFound),
                 makeRelativeTo(this.config.config_root, ignoreFileFound)));
         }
+    }
+
+    private getBaseDirForOptions(): string {
+        // With ESLint 8 (legacy config) there is no winning here. If we use any of our own base configs then we
+        // need to set the base dir as __dirname so that our base plugins are discoverable. But doing so makes it so
+        // that although user's plugins are discoverable, the "files" in an overrides section is based on the wrong
+        // base path. So if users have issues with their custom config, then we can at least tell them to turn off
+        // all of our base configs so that it switches back to using cwd() as the base directory (default of eslint).
+        // This is the best we can do. In most cases, as long as users don't use "overrides" then we can still give them
+        // decent merge abilities with our base config and their custom config. Note that this will be resolved with
+        // ESLint 9's flat config because the plugins aren't discovered... they are loaded ahead of time.
+        // See https://github.com/forcedotcom/code-analyzer/issues/1807
+        return this.usingAnyBaseConfig() ? __dirname : process.cwd();
+    }
+
+    private usingAnyBaseConfig(): boolean {
+        return !(this.config.disable_javascript_base_config &&
+            this.config.disable_lwc_base_config &&
+            this.config.disable_typescript_base_config);
     }
 }
 
