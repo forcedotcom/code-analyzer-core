@@ -1,5 +1,7 @@
 import {Linter} from "eslint";
 import {ESLint8EngineConfig} from "./config";
+import rawLwcConfig from "@salesforce/eslint-config-lwc/recommended"
+
 
 export enum BaseRuleset {
     ALL = "all",
@@ -20,7 +22,7 @@ export class LegacyBaseConfigFactory {
         } else if (this.useJsConfig()) {
             overrides.push(this.createJavascriptConfig(baseRuleset));
         } else if (this.useLwcConfig()) {
-            overrides.push(this.createLwcConfig());
+            overrides.push(this.createLwcConfig(baseRuleset));
         }
         if (this.useTsConfig()) {
             overrides.push(this.createTypescriptConfig(baseRuleset));
@@ -60,49 +62,37 @@ export class LegacyBaseConfigFactory {
         return this.addJavascriptParser(jsConfig);
     }
 
-    private createLwcConfig(): Linter.ConfigOverride {
-        const lwcConfig: Linter.ConfigOverride = {
-            files: this.config.file_extensions.javascript.map(ext => `*${ext}`),
-            extends: [
-                "@salesforce/eslint-config-lwc/base", // Using base instead of recommended. See the comment below.
-                "plugin:@lwc/lwc-platform/recommended"
-            ],
-            plugins: [
-                "@lwc/eslint-plugin-lwc",
-                "@lwc/lwc-platform",
-                "@salesforce/eslint-plugin-lightning"
-            ],
-            rules: {
-                // The following is a better alternative than extending from @salesforce/eslint-config-lwc/recommended:
-                //   Note that we don't want to pull in all the base javascript rules again (from eslint:Recommended),
-                //   which is why we don't just extend from @salesforce/eslint-config-lwc/lwc/recommended (which
-                //   pulls in everything again). Therefore, we just add in the recommended @lwc/lwc/* and
-                //   @salesforce/lightning/* rules that aren't included in @salesforce/eslint-config-lwc/base here.
-                '@lwc/lwc/no-api-reassignments': 'error',
-                '@lwc/lwc/no-async-operation': 'error',
-                '@lwc/lwc/no-attributes-during-construction': 'error',
-                '@lwc/lwc/no-document-query': 'error',
-                '@lwc/lwc/no-inner-html': 'error',
-                '@lwc/lwc/no-leading-uppercase-api-name': 'error',
-                '@lwc/lwc/no-template-children': 'error',
-                '@lwc/lwc/prefer-custom-event': 'error',
-                '@lwc/lwc/valid-api': ['error', {disallowUnderscoreUppercaseMix: true,}],
-                '@lwc/lwc/valid-graphql-wire-adapter-callback-parameters': 'error',
-                '@salesforce/lightning/valid-apex-method-invocation': 'error',
+    private createLwcConfig(baseRuleset: BaseRuleset): Linter.ConfigOverride {
+        // Add in the lwc recommended rules (but remove the eslint:recommended since we add it in with the javascript base config)
+        const lwcConfig: Linter.ConfigOverride = this.createJavascriptPlusLwcConfig(baseRuleset);
 
-                // This one rule is broken and thus we need to turn it off for now.
-                // See https://git.soma.salesforce.com/lwc/eslint-plugin-lwc-platform/issues/152
-                // TODO: Turn it back on when the rule has been fixed
-                '@lwc/lwc-platform/valid-offline-wire': 'off'
-            }
-        }
-        return this.addJavascriptParser(lwcConfig);
+        // Remove the base javascript rules:
+        // * First we remove the eslint:all or eslint:recommended from the extends
+        lwcConfig.extends = (lwcConfig.extends as string[]).filter(s => !s.startsWith('eslint:'));
+        // * Next we remove any explicitly listed rule that is a base rule - which doesn't have namespace like jest/*, @lwc/*, etc (and thus has no '/')
+        lwcConfig.rules = Object.fromEntries(
+            Object.entries(lwcConfig.rules as Linter.RulesRecord).filter(([key]) => key.includes('/'))
+        );
+
+        return lwcConfig;
     }
 
     private createJavascriptPlusLwcConfig(baseRuleset: BaseRuleset): Linter.ConfigOverride {
-        const jsPlusLwcConfig: Linter.ConfigOverride = this.createLwcConfig();
-        (jsPlusLwcConfig.extends as string[]).push(`eslint:${baseRuleset}`);
-        return jsPlusLwcConfig;
+        const lwcAndJsConfig: Linter.ConfigOverride = {...rawLwcConfig};
+        // Add in the recommended lwc-platform rules
+        (lwcAndJsConfig.plugins as string[]).push("@lwc/lwc-platform");
+        (lwcAndJsConfig.extends as string[]).push("plugin:@lwc/lwc-platform/recommended");
+        // This one rule is broken, so we need to turn it off for now.
+        // See https://git.soma.salesforce.com/lwc/eslint-plugin-lwc-platform/issues/152
+        (lwcAndJsConfig.rules as Linter.RulesRecord)['@lwc/lwc-platform/valid-offline-wire'] = 'off';
+
+        if (baseRuleset === BaseRuleset.ALL) {
+            lwcAndJsConfig.extends = (lwcAndJsConfig.extends as string[]).map(s => s === 'eslint:recommended' ? 'eslint:all' : s);
+        }
+
+        lwcAndJsConfig.files = this.config.file_extensions.javascript.map(ext => `*${ext}`);
+
+        return this.addJavascriptParser(lwcAndJsConfig);
     }
 
     private createTypescriptConfig(baseRuleset: BaseRuleset): Linter.ConfigOverride {

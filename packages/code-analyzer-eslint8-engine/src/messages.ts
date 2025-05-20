@@ -21,13 +21,20 @@ const MESSAGE_CATALOG : { [key: string]: string } = {
         `Whether to have Code Analyzer automatically discover/apply any ESLint configuration and ignore files from your workspace.`,
 
     ConfigFieldDescription_disable_javascript_base_config:
-        `Whether to turn off the default base configuration that supplies the standard ESLint rules for JavaScript files.`,
+        `Whether to turn off the default base configuration that supplies the standard ESLint rules for JavaScript files.\n` +
+        `The base configuration for JavaScript files adds the rules from the "eslint:all" configuration to Code Analyzer.\n` +
+        `See https://eslint.org/docs/v8.x/rules for the list of rules.`,
 
     ConfigFieldDescription_disable_lwc_base_config:
-        `Whether to turn off the default base configuration that supplies the LWC rules for JavaScript files.`,
+        `Whether to turn off the default base configuration that supplies the LWC rules for JavaScript files.\n` +
+        `The base configuration for LWC adds the rules from the "@salesforce/eslint-config-lwc/recommended"\n` +
+        `and "plugin:@lwc/lwc-platform/recommended" configurations to Code Analyzer.\n` +
+        `See https://github.com/salesforce/eslint-config-lwc and https://www.npmjs.com/package/@lwc/eslint-plugin-lwc-platform.`,
 
     ConfigFieldDescription_disable_typescript_base_config:
-        `Whether to turn off the default base configuration that supplies the standard rules for TypeScript files.`,
+        `Whether to turn off the default base configuration that supplies the standard rules for TypeScript files\n` +
+        `The base configuration for TypeScript files adds the rules from the "plugin:@typescript-eslint:all" configuration to Code Analyzer.\n` +
+        `See https://typescript-eslint.io/rules and https://eslint.org/docs/v8.x/rules for the lists of rules.`,
 
     ConfigFieldDescription_file_extensions:
         `Extensions of the files in your workspace that will be used to discover rules.\n` +

@@ -1,576 +1,898 @@
 [
   {
-    "name": "@lwc/lwc-platform/no-aura",
-    "severityLevel": 3,
-    "tags": [
-      "Recommended",
-      "LWC",
-      "ErrorProne",
-      "JavaScript"
-    ],
     "description": "disallow usage of \"$A\"",
-    "resourceUrls": []
-  },
-  {
-    "name": "@lwc/lwc-platform/no-aura-libs",
+    "name": "@lwc/lwc-platform/no-aura",
+    "resourceUrls": [],
     "severityLevel": 3,
     "tags": [
       "Recommended",
       "LWC",
       "ErrorProne",
       "JavaScript"
-    ],
+    ]
+  },
+  {
     "description": "disallow import of Aura libraries",
-    "resourceUrls": []
-  },
-  {
-    "name": "@lwc/lwc-platform/no-community-import",
+    "name": "@lwc/lwc-platform/no-aura-libs",
+    "resourceUrls": [],
     "severityLevel": 3,
     "tags": [
       "Recommended",
       "LWC",
       "ErrorProne",
       "JavaScript"
-    ],
+    ]
+  },
+  {
     "description": "disallow import of Community-only properties",
-    "resourceUrls": []
-  },
-  {
-    "name": "@lwc/lwc-platform/no-create-context-provider",
+    "name": "@lwc/lwc-platform/no-community-import",
+    "resourceUrls": [],
     "severityLevel": 3,
     "tags": [
       "Recommended",
       "LWC",
-      "BestPractices",
+      "ErrorProne",
       "JavaScript"
-    ],
+    ]
+  },
+  {
     "description": "disallow import of \"createContextProvider\" from \"lwc\"",
-    "resourceUrls": []
-  },
-  {
-    "name": "@lwc/lwc-platform/no-deprecated-module-import",
+    "name": "@lwc/lwc-platform/no-create-context-provider",
+    "resourceUrls": [],
     "severityLevel": 3,
     "tags": [
       "Recommended",
       "LWC",
       "BestPractices",
       "JavaScript"
-    ],
+    ]
+  },
+  {
     "description": "disallow importing deprecated modules",
-    "resourceUrls": []
-  },
-  {
-    "name": "@lwc/lwc-platform/no-dynamic-import-identifier",
+    "name": "@lwc/lwc-platform/no-deprecated-module-import",
+    "resourceUrls": [],
     "severityLevel": 3,
     "tags": [
       "Recommended",
       "LWC",
       "BestPractices",
       "JavaScript"
-    ],
+    ]
+  },
+  {
     "description": "disallow dynamic import with an identifier import(id), import(\"stringLiteral\" + id)",
-    "resourceUrls": []
-  },
-  {
-    "name": "@lwc/lwc-platform/no-inline-disable",
+    "name": "@lwc/lwc-platform/no-dynamic-import-identifier",
+    "resourceUrls": [],
     "severityLevel": 3,
     "tags": [
       "Recommended",
       "LWC",
       "BestPractices",
       "JavaScript"
-    ],
+    ]
+  },
+  {
     "description": "disallow inline disablement of ESLint rule",
-    "resourceUrls": []
-  },
-  {
-    "name": "@lwc/lwc-platform/no-interop",
+    "name": "@lwc/lwc-platform/no-inline-disable",
+    "resourceUrls": [],
     "severityLevel": 3,
     "tags": [
       "Recommended",
       "LWC",
       "BestPractices",
       "JavaScript"
-    ],
+    ]
+  },
+  {
     "description": "disallow import of \"aura\"",
-    "resourceUrls": []
-  },
-  {
-    "name": "@lwc/lwc-platform/no-interop-create",
+    "name": "@lwc/lwc-platform/no-interop",
+    "resourceUrls": [],
     "severityLevel": 3,
     "tags": [
       "Recommended",
       "LWC",
       "BestPractices",
       "JavaScript"
-    ],
+    ]
+  },
+  {
     "description": "disallow import of \"createComponent\" from \"aura\"",
-    "resourceUrls": []
-  },
-  {
-    "name": "@lwc/lwc-platform/no-interop-dispatch",
+    "name": "@lwc/lwc-platform/no-interop-create",
+    "resourceUrls": [],
     "severityLevel": 3,
     "tags": [
       "Recommended",
       "LWC",
       "BestPractices",
       "JavaScript"
-    ],
+    ]
+  },
+  {
     "description": "disallow import of \"dispatchGlobalEvent\" from \"aura\"",
-    "resourceUrls": []
-  },
-  {
-    "name": "@lwc/lwc-platform/no-interop-execute",
+    "name": "@lwc/lwc-platform/no-interop-dispatch",
+    "resourceUrls": [],
     "severityLevel": 3,
     "tags": [
       "Recommended",
       "LWC",
       "BestPractices",
       "JavaScript"
-    ],
+    ]
+  },
+  {
     "description": "disallow import of \"executeGlobalController\" from \"aura\"",
-    "resourceUrls": []
-  },
-  {
-    "name": "@lwc/lwc-platform/no-interop-execute-privileged",
+    "name": "@lwc/lwc-platform/no-interop-execute",
+    "resourceUrls": [],
     "severityLevel": 3,
     "tags": [
       "Recommended",
       "LWC",
       "BestPractices",
       "JavaScript"
-    ],
+    ]
+  },
+  {
     "description": "disallow import of \"unstable_executeGlobalControllerPrivileged\" from \"aura\"",
-    "resourceUrls": []
-  },
-  {
-    "name": "@lwc/lwc-platform/no-interop-execute-raw-response",
+    "name": "@lwc/lwc-platform/no-interop-execute-privileged",
+    "resourceUrls": [],
     "severityLevel": 3,
     "tags": [
       "Recommended",
       "LWC",
       "BestPractices",
       "JavaScript"
-    ],
+    ]
+  },
+  {
     "description": "disallow import of \"executeGlobalControllerRawResponse\" from \"aura\"",
-    "resourceUrls": []
-  },
-  {
-    "name": "@lwc/lwc-platform/no-interop-get-event",
+    "name": "@lwc/lwc-platform/no-interop-execute-raw-response",
+    "resourceUrls": [],
     "severityLevel": 3,
     "tags": [
       "Recommended",
       "LWC",
       "BestPractices",
       "JavaScript"
-    ],
+    ]
+  },
+  {
     "description": "disallow import of \"getEventDef\" from \"aura\"",
-    "resourceUrls": []
-  },
-  {
-    "name": "@lwc/lwc-platform/no-interop-get-module",
+    "name": "@lwc/lwc-platform/no-interop-get-event",
+    "resourceUrls": [],
     "severityLevel": 3,
     "tags": [
       "Recommended",
       "LWC",
       "BestPractices",
       "JavaScript"
-    ],
+    ]
+  },
+  {
     "description": "disallow import of \"getModule\" from \"aura\"",
-    "resourceUrls": []
-  },
-  {
-    "name": "@lwc/lwc-platform/no-interop-is-external-definition",
+    "name": "@lwc/lwc-platform/no-interop-get-module",
+    "resourceUrls": [],
     "severityLevel": 3,
     "tags": [
       "Recommended",
       "LWC",
       "BestPractices",
       "JavaScript"
-    ],
+    ]
+  },
+  {
     "description": "disallow import of \"isExternalDefinition\" from \"aura\"",
-    "resourceUrls": []
-  },
-  {
-    "name": "@lwc/lwc-platform/no-interop-load-definitions",
+    "name": "@lwc/lwc-platform/no-interop-is-external-definition",
+    "resourceUrls": [],
     "severityLevel": 3,
     "tags": [
       "Recommended",
       "LWC",
       "BestPractices",
       "JavaScript"
-    ],
+    ]
+  },
+  {
     "description": "disallow import of \"unstable_loadComponentDefs\" from \"aura\"",
-    "resourceUrls": []
-  },
-  {
-    "name": "@lwc/lwc-platform/no-interop-module-instrumentation",
+    "name": "@lwc/lwc-platform/no-interop-load-definitions",
+    "resourceUrls": [],
     "severityLevel": 3,
     "tags": [
       "Recommended",
       "LWC",
       "BestPractices",
       "JavaScript"
-    ],
+    ]
+  },
+  {
     "description": "disallow import of \"aura-instrumentation\"",
-    "resourceUrls": []
-  },
-  {
-    "name": "@lwc/lwc-platform/no-interop-module-storage",
+    "name": "@lwc/lwc-platform/no-interop-module-instrumentation",
+    "resourceUrls": [],
     "severityLevel": 3,
     "tags": [
       "Recommended",
       "LWC",
       "BestPractices",
       "JavaScript"
-    ],
+    ]
+  },
+  {
     "description": "disallow import of \"aura-storage\"",
-    "resourceUrls": []
-  },
-  {
-    "name": "@lwc/lwc-platform/no-interop-register",
+    "name": "@lwc/lwc-platform/no-interop-module-storage",
+    "resourceUrls": [],
     "severityLevel": 3,
     "tags": [
       "Recommended",
       "LWC",
       "BestPractices",
       "JavaScript"
-    ],
+    ]
+  },
+  {
     "description": "disallow import of \"registerModule\" from \"aura\"",
-    "resourceUrls": []
-  },
-  {
-    "name": "@lwc/lwc-platform/no-interop-render",
+    "name": "@lwc/lwc-platform/no-interop-register",
+    "resourceUrls": [],
     "severityLevel": 3,
     "tags": [
       "Recommended",
       "LWC",
       "BestPractices",
       "JavaScript"
-    ],
+    ]
+  },
+  {
     "description": "disallow import of \"renderComponent\" from \"aura\"",
-    "resourceUrls": []
-  },
-  {
-    "name": "@lwc/lwc-platform/no-interop-sanitize",
+    "name": "@lwc/lwc-platform/no-interop-render",
+    "resourceUrls": [],
     "severityLevel": 3,
     "tags": [
       "Recommended",
       "LWC",
       "BestPractices",
       "JavaScript"
-    ],
+    ]
+  },
+  {
     "description": "disallow import of \"sanitizeDOM\" from \"aura\"",
-    "resourceUrls": []
-  },
-  {
-    "name": "@lwc/lwc-platform/no-process-env",
+    "name": "@lwc/lwc-platform/no-interop-sanitize",
+    "resourceUrls": [],
     "severityLevel": 3,
     "tags": [
       "Recommended",
       "LWC",
       "BestPractices",
       "JavaScript"
-    ],
+    ]
+  },
+  {
     "description": "restrict usage of the \"process\" global object",
-    "resourceUrls": []
-  },
-  {
-    "name": "@lwc/lwc-platform/no-restricted-namespaces",
+    "name": "@lwc/lwc-platform/no-process-env",
+    "resourceUrls": [],
     "severityLevel": 3,
     "tags": [
       "Recommended",
       "LWC",
-      "ErrorProne",
+      "BestPractices",
       "JavaScript"
-    ],
+    ]
+  },
+  {
     "description": "disallow import or export from restricted namespaces",
-    "resourceUrls": []
-  },
-  {
-    "name": "@lwc/lwc-platform/no-site-import",
+    "name": "@lwc/lwc-platform/no-restricted-namespaces",
+    "resourceUrls": [],
     "severityLevel": 3,
     "tags": [
       "Recommended",
       "LWC",
       "ErrorProne",
       "JavaScript"
-    ],
+    ]
+  },
+  {
     "description": "disallow import of Site-only properties",
-    "resourceUrls": []
-  },
-  {
-    "name": "@lwc/lwc-platform/no-wire-service",
+    "name": "@lwc/lwc-platform/no-site-import",
+    "resourceUrls": [],
     "severityLevel": 3,
     "tags": [
       "Recommended",
       "LWC",
       "ErrorProne",
       "JavaScript"
-    ],
+    ]
+  },
+  {
     "description": "disallow import of \"wire-service\"",
-    "resourceUrls": []
-  },
-  {
-    "name": "@lwc/lwc-platform/valid-dynamic-import-hint",
+    "name": "@lwc/lwc-platform/no-wire-service",
+    "resourceUrls": [],
     "severityLevel": 3,
     "tags": [
       "Recommended",
       "LWC",
-      "BestPractices",
+      "ErrorProne",
       "JavaScript"
-    ],
+    ]
+  },
+  {
     "description": "validate hint comment in a dynamic import statement",
-    "resourceUrls": []
-  },
-  {
-    "name": "@lwc/lwc/no-api-reassignments",
+    "name": "@lwc/lwc-platform/valid-dynamic-import-hint",
+    "resourceUrls": [],
     "severityLevel": 3,
     "tags": [
       "Recommended",
       "LWC",
       "BestPractices",
       "JavaScript"
-    ],
+    ]
+  },
+  {
     "description": "prevent public property reassignments",
+    "name": "@lwc/lwc/no-api-reassignments",
     "resourceUrls": [
       "https://github.com/salesforce/eslint-plugin-lwc/blob/v2.2.0/docs/rules/no-api-reassignments.md"
-    ]
-  },
-  {
-    "name": "@lwc/lwc/no-async-operation",
+    ],
     "severityLevel": 3,
     "tags": [
       "Recommended",
       "LWC",
       "BestPractices",
       "JavaScript"
-    ],
+    ]
+  },
+  {
     "description": "restrict usage of async operations",
+    "name": "@lwc/lwc/no-async-operation",
     "resourceUrls": [
       "https://github.com/salesforce/eslint-plugin-lwc/blob/v2.2.0/docs/rules/no-async-operation.md"
-    ]
-  },
-  {
-    "name": "@lwc/lwc/no-attributes-during-construction",
+    ],
     "severityLevel": 3,
     "tags": [
       "Recommended",
       "LWC",
-      "ErrorProne",
+      "BestPractices",
       "JavaScript"
-    ],
+    ]
+  },
+  {
     "description": "no attributes during construction",
+    "name": "@lwc/lwc/no-attributes-during-construction",
     "resourceUrls": [
       "https://github.com/salesforce/eslint-plugin-lwc/blob/v2.2.0/docs/rules/no-attributes-during-construction.md"
-    ]
-  },
-  {
-    "name": "@lwc/lwc/no-deprecated",
-    "severityLevel": 3,
-    "tags": [
-      "Recommended",
-      "LWC",
-      "BestPractices",
-      "JavaScript"
     ],
-    "description": "disallow usage of deprecated LWC APIs",
-    "resourceUrls": [
-      "https://github.com/salesforce/eslint-plugin-lwc/blob/v2.2.0/docs/rules/no-deprecated.md"
-    ]
-  },
-  {
-    "name": "@lwc/lwc/no-disallowed-lwc-imports",
-    "severityLevel": 3,
-    "tags": [
-      "Recommended",
-      "LWC",
-      "BestPractices",
-      "JavaScript"
-    ],
-    "description": "restrict unexpected imports from the lwc package",
-    "resourceUrls": [
-      "https://github.com/salesforce/eslint-plugin-lwc/blob/v2.2.0/docs/rules/no-disallowed-lwc-imports.md"
-    ]
-  },
-  {
-    "name": "@lwc/lwc/no-document-query",
     "severityLevel": 3,
     "tags": [
       "Recommended",
       "LWC",
       "ErrorProne",
       "JavaScript"
-    ],
-    "description": "disallow DOM query at the document level.",
-    "resourceUrls": [
-      "https://github.com/salesforce/eslint-plugin-lwc/blob/v2.2.0/docs/rules/no-document-query.md"
     ]
   },
   {
+    "description": "disallow usage of deprecated LWC APIs",
+    "name": "@lwc/lwc/no-deprecated",
+    "resourceUrls": [
+      "https://github.com/salesforce/eslint-plugin-lwc/blob/v2.2.0/docs/rules/no-deprecated.md"
+    ],
+    "severityLevel": 3,
+    "tags": [
+      "Recommended",
+      "LWC",
+      "BestPractices",
+      "JavaScript"
+    ]
+  },
+  {
+    "description": "restrict unexpected imports from the lwc package",
+    "name": "@lwc/lwc/no-disallowed-lwc-imports",
+    "resourceUrls": [
+      "https://github.com/salesforce/eslint-plugin-lwc/blob/v2.2.0/docs/rules/no-disallowed-lwc-imports.md"
+    ],
+    "severityLevel": 3,
+    "tags": [
+      "Recommended",
+      "LWC",
+      "BestPractices",
+      "JavaScript"
+    ]
+  },
+  {
+    "description": "disallow DOM query at the document level.",
+    "name": "@lwc/lwc/no-document-query",
+    "resourceUrls": [
+      "https://github.com/salesforce/eslint-plugin-lwc/blob/v2.2.0/docs/rules/no-document-query.md"
+    ],
+    "severityLevel": 3,
+    "tags": [
+      "Recommended",
+      "LWC",
+      "ErrorProne",
+      "JavaScript"
+    ]
+  },
+  {
+    "description": "disallow usage of \"innerHtml\"",
     "name": "@lwc/lwc/no-inner-html",
+    "resourceUrls": [
+      "https://github.com/salesforce/eslint-plugin-lwc/blob/v2.2.0/docs/rules/no-inner-html.md"
+    ],
     "severityLevel": 2,
     "tags": [
       "Recommended",
       "LWC",
       "Security",
       "JavaScript"
-    ],
-    "description": "disallow usage of \"innerHtml\"",
-    "resourceUrls": [
-      "https://github.com/salesforce/eslint-plugin-lwc/blob/v2.2.0/docs/rules/no-inner-html.md"
     ]
   },
   {
-    "name": "@lwc/lwc/no-leading-uppercase-api-name",
-    "severityLevel": 3,
-    "tags": [
-      "Recommended",
-      "LWC",
-      "ErrorProne",
-      "JavaScript"
-    ],
     "description": "disallow public property to start with an upper case character",
+    "name": "@lwc/lwc/no-leading-uppercase-api-name",
     "resourceUrls": [
       "https://github.com/salesforce/eslint-plugin-lwc/blob/v2.2.0/docs/rules/no-leading-uppercase-api-name.md"
-    ]
-  },
-  {
-    "name": "@lwc/lwc/no-template-children",
+    ],
     "severityLevel": 3,
     "tags": [
       "Recommended",
       "LWC",
       "ErrorProne",
       "JavaScript"
-    ],
+    ]
+  },
+  {
     "description": "prevent accessing the immediate children of this.template",
+    "name": "@lwc/lwc/no-template-children",
     "resourceUrls": [
       "https://github.com/salesforce/eslint-plugin-lwc/blob/v2.2.0/docs/rules/no-template-children.md"
-    ]
-  },
-  {
-    "name": "@lwc/lwc/no-unexpected-wire-adapter-usages",
+    ],
     "severityLevel": 3,
     "tags": [
       "Recommended",
       "LWC",
-      "BestPractices",
+      "ErrorProne",
       "JavaScript"
-    ],
+    ]
+  },
+  {
     "description": "restrict unexpected wire adapter usages",
+    "name": "@lwc/lwc/no-unexpected-wire-adapter-usages",
     "resourceUrls": [
       "https://github.com/salesforce/eslint-plugin-lwc/blob/v2.2.0/docs/rules/no-unexpected-wire-adapter-usages.md"
-    ]
-  },
-  {
-    "name": "@lwc/lwc/no-unknown-wire-adapters",
+    ],
     "severityLevel": 3,
     "tags": [
       "Recommended",
       "LWC",
       "BestPractices",
       "JavaScript"
-    ],
+    ]
+  },
+  {
     "description": "restrict usage of unknown wire adapters",
+    "name": "@lwc/lwc/no-unknown-wire-adapters",
     "resourceUrls": [
       "https://github.com/salesforce/eslint-plugin-lwc/blob/v2.2.0/docs/rules/no-unknown-wire-adapters.md"
-    ]
-  },
-  {
-    "name": "@lwc/lwc/prefer-custom-event",
+    ],
     "severityLevel": 3,
     "tags": [
       "Recommended",
       "LWC",
       "BestPractices",
       "JavaScript"
-    ],
+    ]
+  },
+  {
     "description": "suggest usage of \"CustomEvent\" over \"Event\" constructor",
+    "name": "@lwc/lwc/prefer-custom-event",
     "resourceUrls": [
       "https://github.com/salesforce/eslint-plugin-lwc/blob/v2.2.0/docs/rules/prefer-custom-event.md"
-    ]
-  },
-  {
-    "name": "@lwc/lwc/valid-api",
+    ],
     "severityLevel": 3,
     "tags": [
       "Recommended",
       "LWC",
-      "ErrorProne",
+      "BestPractices",
       "JavaScript"
-    ],
+    ]
+  },
+  {
     "description": "validate api decorator usage",
+    "name": "@lwc/lwc/valid-api",
     "resourceUrls": [
       "https://github.com/salesforce/eslint-plugin-lwc/blob/v2.2.0/docs/rules/valid-api.md"
-    ]
-  },
-  {
-    "name": "@lwc/lwc/valid-graphql-wire-adapter-callback-parameters",
+    ],
     "severityLevel": 3,
     "tags": [
       "Recommended",
       "LWC",
       "ErrorProne",
       "JavaScript"
-    ],
+    ]
+  },
+  {
     "description": "validate graphql error callback parameter",
+    "name": "@lwc/lwc/valid-graphql-wire-adapter-callback-parameters",
     "resourceUrls": [
       "https://github.com/salesforce/eslint-plugin-lwc/blob/v2.2.0/docs/rules/valid-graphql-wire-adapter-callback-parameters.md"
-    ]
-  },
-  {
-    "name": "@lwc/lwc/valid-track",
+    ],
     "severityLevel": 3,
     "tags": [
       "Recommended",
       "LWC",
       "ErrorProne",
       "JavaScript"
-    ],
+    ]
+  },
+  {
     "description": "validate track decorator usage",
+    "name": "@lwc/lwc/valid-track",
     "resourceUrls": [
       "https://github.com/salesforce/eslint-plugin-lwc/blob/v2.2.0/docs/rules/valid-track.md"
-    ]
-  },
-  {
-    "name": "@lwc/lwc/valid-wire",
+    ],
     "severityLevel": 3,
     "tags": [
       "Recommended",
       "LWC",
       "ErrorProne",
       "JavaScript"
-    ],
+    ]
+  },
+  {
     "description": "validate wire decorator usage",
+    "name": "@lwc/lwc/valid-wire",
     "resourceUrls": [
       "https://github.com/salesforce/eslint-plugin-lwc/blob/v2.2.0/docs/rules/valid-wire.md"
-    ]
-  },
-  {
-    "name": "@salesforce/lightning/valid-apex-method-invocation",
+    ],
     "severityLevel": 3,
     "tags": [
       "Recommended",
       "LWC",
       "ErrorProne",
       "JavaScript"
-    ],
-    "description": "enforce invoking Apex methods with the right arguments",
-    "resourceUrls": [
-      "https://github.com/salesforce/eslint-plugin-lightning/blob/v1.0.1/docs/rules/valid-apex-method-invocation.md"
     ]
   },
   {
+    "description": "enforce invoking Apex methods with the right arguments",
+    "name": "@salesforce/lightning/valid-apex-method-invocation",
+    "resourceUrls": [
+      "https://github.com/salesforce/eslint-plugin-lightning/blob/v1.0.1/docs/rules/valid-apex-method-invocation.md"
+    ],
+    "severityLevel": 3,
+    "tags": [
+      "Recommended",
+      "LWC",
+      "ErrorProne",
+      "JavaScript"
+    ]
+  },
+  {
+    "description": "Ensure a default export is present, given a default import.",
+    "name": "import/default",
+    "resourceUrls": [
+      "https://github.com/import-js/eslint-plugin-import/blob/v2.30.0/docs/rules/default.md"
+    ],
+    "severityLevel": 2,
+    "tags": [
+      "Recommended",
+      "LWC",
+      "ErrorProne",
+      "JavaScript"
+    ]
+  },
+  {
+    "description": "Forbid any invalid exports, i.e. re-export of the same name.",
+    "name": "import/export",
+    "resourceUrls": [
+      "https://github.com/import-js/eslint-plugin-import/blob/v2.30.0/docs/rules/export.md"
+    ],
+    "severityLevel": 2,
+    "tags": [
+      "Recommended",
+      "LWC",
+      "ErrorProne",
+      "JavaScript"
+    ]
+  },
+  {
+    "description": "Ensure named imports correspond to a named export in the remote file.",
+    "name": "import/named",
+    "resourceUrls": [
+      "https://github.com/import-js/eslint-plugin-import/blob/v2.30.0/docs/rules/named.md"
+    ],
+    "severityLevel": 2,
+    "tags": [
+      "Recommended",
+      "LWC",
+      "ErrorProne",
+      "JavaScript"
+    ]
+  },
+  {
+    "description": "Ensure imported namespaces contain dereferenced properties as they are dereferenced.",
+    "name": "import/namespace",
+    "resourceUrls": [
+      "https://github.com/import-js/eslint-plugin-import/blob/v2.30.0/docs/rules/namespace.md"
+    ],
+    "severityLevel": 2,
+    "tags": [
+      "Recommended",
+      "LWC",
+      "ErrorProne",
+      "JavaScript"
+    ]
+  },
+  {
+    "description": "Enforce assertion to be made in a test body",
+    "name": "jest/expect-expect",
+    "resourceUrls": [
+      "https://github.com/jest-community/eslint-plugin-jest/blob/v28.10.0/docs/rules/expect-expect.md"
+    ],
+    "severityLevel": 5,
+    "tags": [
+      "Recommended",
+      "LWC",
+      "BestPractices",
+      "JavaScript"
+    ]
+  },
+  {
+    "description": "Disallow alias methods",
+    "name": "jest/no-alias-methods",
+    "resourceUrls": [
+      "https://github.com/jest-community/eslint-plugin-jest/blob/v28.10.0/docs/rules/no-alias-methods.md"
+    ],
+    "severityLevel": 3,
+    "tags": [
+      "Recommended",
+      "LWC",
+      "BestPractices",
+      "JavaScript"
+    ]
+  },
+  {
+    "description": "Disallow commented out tests",
+    "name": "jest/no-commented-out-tests",
+    "resourceUrls": [
+      "https://github.com/jest-community/eslint-plugin-jest/blob/v28.10.0/docs/rules/no-commented-out-tests.md"
+    ],
+    "severityLevel": 5,
+    "tags": [
+      "Recommended",
+      "LWC",
+      "BestPractices",
+      "JavaScript"
+    ]
+  },
+  {
+    "description": "Disallow calling `expect` conditionally",
+    "name": "jest/no-conditional-expect",
+    "resourceUrls": [
+      "https://github.com/jest-community/eslint-plugin-jest/blob/v28.10.0/docs/rules/no-conditional-expect.md"
+    ],
+    "severityLevel": 2,
+    "tags": [
+      "Recommended",
+      "LWC",
+      "ErrorProne",
+      "JavaScript"
+    ]
+  },
+  {
+    "description": "Disallow use of deprecated functions",
+    "name": "jest/no-deprecated-functions",
+    "resourceUrls": [
+      "https://github.com/jest-community/eslint-plugin-jest/blob/v28.10.0/docs/rules/no-deprecated-functions.md"
+    ],
+    "severityLevel": 3,
+    "tags": [
+      "Recommended",
+      "LWC",
+      "BestPractices",
+      "JavaScript"
+    ]
+  },
+  {
+    "description": "Disallow disabled tests",
+    "name": "jest/no-disabled-tests",
+    "resourceUrls": [
+      "https://github.com/jest-community/eslint-plugin-jest/blob/v28.10.0/docs/rules/no-disabled-tests.md"
+    ],
+    "severityLevel": 5,
+    "tags": [
+      "Recommended",
+      "LWC",
+      "BestPractices",
+      "JavaScript"
+    ]
+  },
+  {
+    "description": "Disallow using a callback in asynchronous tests and hooks",
+    "name": "jest/no-done-callback",
+    "resourceUrls": [
+      "https://github.com/jest-community/eslint-plugin-jest/blob/v28.10.0/docs/rules/no-done-callback.md"
+    ],
+    "severityLevel": 3,
+    "tags": [
+      "Recommended",
+      "LWC",
+      "BestPractices",
+      "JavaScript"
+    ]
+  },
+  {
+    "description": "Disallow using `exports` in files containing tests",
+    "name": "jest/no-export",
+    "resourceUrls": [
+      "https://github.com/jest-community/eslint-plugin-jest/blob/v28.10.0/docs/rules/no-export.md"
+    ],
+    "severityLevel": 3,
+    "tags": [
+      "Recommended",
+      "LWC",
+      "BestPractices",
+      "JavaScript"
+    ]
+  },
+  {
+    "description": "Disallow focused tests",
+    "name": "jest/no-focused-tests",
+    "resourceUrls": [
+      "https://github.com/jest-community/eslint-plugin-jest/blob/v28.10.0/docs/rules/no-focused-tests.md"
+    ],
+    "severityLevel": 3,
+    "tags": [
+      "Recommended",
+      "LWC",
+      "BestPractices",
+      "JavaScript"
+    ]
+  },
+  {
+    "description": "Disallow identical titles",
+    "name": "jest/no-identical-title",
+    "resourceUrls": [
+      "https://github.com/jest-community/eslint-plugin-jest/blob/v28.10.0/docs/rules/no-identical-title.md"
+    ],
+    "severityLevel": 3,
+    "tags": [
+      "Recommended",
+      "LWC",
+      "BestPractices",
+      "JavaScript"
+    ]
+  },
+  {
+    "description": "Disallow string interpolation inside snapshots",
+    "name": "jest/no-interpolation-in-snapshots",
+    "resourceUrls": [
+      "https://github.com/jest-community/eslint-plugin-jest/blob/v28.10.0/docs/rules/no-interpolation-in-snapshots.md"
+    ],
+    "severityLevel": 2,
+    "tags": [
+      "Recommended",
+      "LWC",
+      "ErrorProne",
+      "JavaScript"
+    ]
+  },
+  {
+    "description": "Disallow Jasmine globals",
+    "name": "jest/no-jasmine-globals",
+    "resourceUrls": [
+      "https://github.com/jest-community/eslint-plugin-jest/blob/v28.10.0/docs/rules/no-jasmine-globals.md"
+    ],
+    "severityLevel": 3,
+    "tags": [
+      "Recommended",
+      "LWC",
+      "BestPractices",
+      "JavaScript"
+    ]
+  },
+  {
+    "description": "Disallow manually importing from `__mocks__`",
+    "name": "jest/no-mocks-import",
+    "resourceUrls": [
+      "https://github.com/jest-community/eslint-plugin-jest/blob/v28.10.0/docs/rules/no-mocks-import.md"
+    ],
+    "severityLevel": 2,
+    "tags": [
+      "Recommended",
+      "LWC",
+      "ErrorProne",
+      "JavaScript"
+    ]
+  },
+  {
+    "description": "Disallow using `expect` outside of `it` or `test` blocks",
+    "name": "jest/no-standalone-expect",
+    "resourceUrls": [
+      "https://github.com/jest-community/eslint-plugin-jest/blob/v28.10.0/docs/rules/no-standalone-expect.md"
+    ],
+    "severityLevel": 3,
+    "tags": [
+      "Recommended",
+      "LWC",
+      "BestPractices",
+      "JavaScript"
+    ]
+  },
+  {
+    "description": "Require using `.only` and `.skip` over `f` and `x`",
+    "name": "jest/no-test-prefixes",
+    "resourceUrls": [
+      "https://github.com/jest-community/eslint-plugin-jest/blob/v28.10.0/docs/rules/no-test-prefixes.md"
+    ],
+    "severityLevel": 3,
+    "tags": [
+      "Recommended",
+      "LWC",
+      "BestPractices",
+      "JavaScript"
+    ]
+  },
+  {
+    "description": "Enforce valid `describe()` callback",
+    "name": "jest/valid-describe-callback",
+    "resourceUrls": [
+      "https://github.com/jest-community/eslint-plugin-jest/blob/v28.10.0/docs/rules/valid-describe-callback.md"
+    ],
+    "severityLevel": 2,
+    "tags": [
+      "Recommended",
+      "LWC",
+      "ErrorProne",
+      "JavaScript"
+    ]
+  },
+  {
+    "description": "Enforce valid `expect()` usage",
+    "name": "jest/valid-expect",
+    "resourceUrls": [
+      "https://github.com/jest-community/eslint-plugin-jest/blob/v28.10.0/docs/rules/valid-expect.md"
+    ],
+    "severityLevel": 3,
+    "tags": [
+      "Recommended",
+      "LWC",
+      "BestPractices",
+      "JavaScript"
+    ]
+  },
+  {
+    "description": "Require promises that have expectations in their chain to be valid",
+    "name": "jest/valid-expect-in-promise",
+    "resourceUrls": [
+      "https://github.com/jest-community/eslint-plugin-jest/blob/v28.10.0/docs/rules/valid-expect-in-promise.md"
+    ],
+    "severityLevel": 3,
+    "tags": [
+      "Recommended",
+      "LWC",
+      "BestPractices",
+      "JavaScript"
+    ]
+  },
+  {
+    "description": "Enforce valid titles",
+    "name": "jest/valid-title",
+    "resourceUrls": [
+      "https://github.com/jest-community/eslint-plugin-jest/blob/v28.10.0/docs/rules/valid-title.md"
+    ],
+    "severityLevel": 3,
+    "tags": [
+      "Recommended",
+      "LWC",
+      "BestPractices",
+      "JavaScript"
+    ]
+  },
+  {
+    "description": "Disallow specified modules when loaded by `import`",
     "name": "no-restricted-imports",
+    "resourceUrls": [
+      "https://eslint.org/docs/latest/rules/no-restricted-imports"
+    ],
     "severityLevel": 3,
     "tags": [
       "BestPractices",
       "JavaScript"
-    ],
-    "description": "Disallow specified modules when loaded by `import`",
-    "resourceUrls": [
-      "https://eslint.org/docs/latest/rules/no-restricted-imports"
     ]
   }
 ]
