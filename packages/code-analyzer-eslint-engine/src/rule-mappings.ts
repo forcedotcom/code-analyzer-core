@@ -1003,7 +1003,98 @@ export const RULE_MAPPINGS: Record<string, {severity: SeverityLevel, tags: strin
         severity: SeverityLevel.Moderate,
         tags: [COMMON_TAGS.RECOMMENDED, LWC, COMMON_TAGS.CATEGORIES.ERROR_PRONE,    COMMON_TAGS.LANGUAGES.JAVASCRIPT]
     },
-
+    "import/default": {
+        severity: SeverityLevel.High,
+        tags: [COMMON_TAGS.RECOMMENDED, LWC, COMMON_TAGS.CATEGORIES.ERROR_PRONE,    COMMON_TAGS.LANGUAGES.JAVASCRIPT]
+    },
+    "import/export": {
+        severity: SeverityLevel.High,
+        tags: [COMMON_TAGS.RECOMMENDED, LWC, COMMON_TAGS.CATEGORIES.ERROR_PRONE,    COMMON_TAGS.LANGUAGES.JAVASCRIPT]
+    },
+    "import/named": {
+        severity: SeverityLevel.High,
+        tags: [COMMON_TAGS.RECOMMENDED, LWC, COMMON_TAGS.CATEGORIES.ERROR_PRONE,    COMMON_TAGS.LANGUAGES.JAVASCRIPT]
+    },
+    "import/namespace": {
+        severity: SeverityLevel.High,
+        tags: [COMMON_TAGS.RECOMMENDED, LWC, COMMON_TAGS.CATEGORIES.ERROR_PRONE,    COMMON_TAGS.LANGUAGES.JAVASCRIPT]
+    },
+    "jest/expect-expect": {
+        severity: SeverityLevel.Info,
+        tags: [COMMON_TAGS.RECOMMENDED, LWC, COMMON_TAGS.CATEGORIES.BEST_PRACTICES, COMMON_TAGS.LANGUAGES.JAVASCRIPT]
+    },
+    "jest/no-alias-methods": {
+        severity: SeverityLevel.Moderate,
+        tags: [COMMON_TAGS.RECOMMENDED, LWC, COMMON_TAGS.CATEGORIES.BEST_PRACTICES, COMMON_TAGS.LANGUAGES.JAVASCRIPT]
+    },
+    "jest/no-commented-out-tests": {
+        severity: SeverityLevel.Info,
+        tags: [COMMON_TAGS.RECOMMENDED, LWC, COMMON_TAGS.CATEGORIES.BEST_PRACTICES, COMMON_TAGS.LANGUAGES.JAVASCRIPT]
+    },
+    "jest/no-conditional-expect": {
+        severity: SeverityLevel.High,
+        tags: [COMMON_TAGS.RECOMMENDED, LWC, COMMON_TAGS.CATEGORIES.ERROR_PRONE,    COMMON_TAGS.LANGUAGES.JAVASCRIPT]
+    },
+    "jest/no-deprecated-functions": {
+        severity: SeverityLevel.Moderate,
+        tags: [COMMON_TAGS.RECOMMENDED, LWC, COMMON_TAGS.CATEGORIES.BEST_PRACTICES, COMMON_TAGS.LANGUAGES.JAVASCRIPT]
+    },
+    "jest/no-disabled-tests": {
+        severity: SeverityLevel.Info,
+        tags: [COMMON_TAGS.RECOMMENDED, LWC, COMMON_TAGS.CATEGORIES.BEST_PRACTICES, COMMON_TAGS.LANGUAGES.JAVASCRIPT]
+    },
+    "jest/no-done-callback": {
+        severity: SeverityLevel.Moderate,
+        tags: [COMMON_TAGS.RECOMMENDED, LWC, COMMON_TAGS.CATEGORIES.BEST_PRACTICES, COMMON_TAGS.LANGUAGES.JAVASCRIPT]
+    },
+    "jest/no-export": {
+        severity: SeverityLevel.Moderate,
+        tags: [COMMON_TAGS.RECOMMENDED, LWC, COMMON_TAGS.CATEGORIES.BEST_PRACTICES, COMMON_TAGS.LANGUAGES.JAVASCRIPT]
+    },
+    "jest/no-focused-tests": {
+        severity: SeverityLevel.Moderate,
+        tags: [COMMON_TAGS.RECOMMENDED, LWC, COMMON_TAGS.CATEGORIES.BEST_PRACTICES, COMMON_TAGS.LANGUAGES.JAVASCRIPT]
+    },
+    "jest/no-identical-title": {
+        severity: SeverityLevel.Moderate,
+        tags: [COMMON_TAGS.RECOMMENDED, LWC, COMMON_TAGS.CATEGORIES.BEST_PRACTICES, COMMON_TAGS.LANGUAGES.JAVASCRIPT]
+    },
+    "jest/no-interpolation-in-snapshots": {
+        severity: SeverityLevel.High,
+        tags: [COMMON_TAGS.RECOMMENDED, LWC, COMMON_TAGS.CATEGORIES.ERROR_PRONE,    COMMON_TAGS.LANGUAGES.JAVASCRIPT]
+    },
+    "jest/no-jasmine-globals": {
+        severity: SeverityLevel.Moderate,
+        tags: [COMMON_TAGS.RECOMMENDED, LWC, COMMON_TAGS.CATEGORIES.BEST_PRACTICES, COMMON_TAGS.LANGUAGES.JAVASCRIPT]
+    },
+    "jest/no-mocks-import": {
+        severity: SeverityLevel.High,
+        tags: [COMMON_TAGS.RECOMMENDED, LWC, COMMON_TAGS.CATEGORIES.ERROR_PRONE,    COMMON_TAGS.LANGUAGES.JAVASCRIPT]
+    },
+    "jest/no-standalone-expect": {
+        severity: SeverityLevel.Moderate,
+        tags: [COMMON_TAGS.RECOMMENDED, LWC, COMMON_TAGS.CATEGORIES.BEST_PRACTICES, COMMON_TAGS.LANGUAGES.JAVASCRIPT]
+    },
+    "jest/no-test-prefixes": {
+        severity: SeverityLevel.Moderate,
+        tags: [COMMON_TAGS.RECOMMENDED, LWC, COMMON_TAGS.CATEGORIES.BEST_PRACTICES, COMMON_TAGS.LANGUAGES.JAVASCRIPT]
+    },
+    "jest/valid-describe-callback": {
+        severity: SeverityLevel.High,
+        tags: [COMMON_TAGS.RECOMMENDED, LWC, COMMON_TAGS.CATEGORIES.ERROR_PRONE,    COMMON_TAGS.LANGUAGES.JAVASCRIPT]
+    },
+    "jest/valid-expect": {
+        severity: SeverityLevel.Moderate,
+        tags: [COMMON_TAGS.RECOMMENDED, LWC, COMMON_TAGS.CATEGORIES.BEST_PRACTICES, COMMON_TAGS.LANGUAGES.JAVASCRIPT]
+    },
+    "jest/valid-expect-in-promise": {
+        severity: SeverityLevel.Moderate,
+        tags: [COMMON_TAGS.RECOMMENDED, LWC, COMMON_TAGS.CATEGORIES.BEST_PRACTICES, COMMON_TAGS.LANGUAGES.JAVASCRIPT]
+    },
+    "jest/valid-title": {
+        severity: SeverityLevel.Moderate,
+        tags: [COMMON_TAGS.RECOMMENDED, LWC, COMMON_TAGS.CATEGORIES.BEST_PRACTICES, COMMON_TAGS.LANGUAGES.JAVASCRIPT]
+    },
 
 
     // =================================================================================================================
