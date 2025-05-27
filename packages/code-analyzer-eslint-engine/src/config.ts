@@ -45,7 +45,7 @@ export type ESLintEngineConfig = {
     config_root: string
 }
 
-type FileExtensionsObject = {
+export type FileExtensionsObject = {
     javascript: string[],
     typescript: string[],
     other: string[]

@@ -20,6 +20,7 @@ import {DEFAULT_CONFIG, ESLintEngineConfig} from "../src/config";
 import {getMessage} from "../src/messages";
 import * as os from "node:os";
 import {ESLintEnginePlugin} from "../src";
+import {ESLintEngine} from "../src/engine";
 
 jest.setTimeout(30_000);
 
@@ -418,7 +419,8 @@ describe('Tests for emitting events', () => {
 
     it('When describeRules is called, then it emits correct progress events', async () => {
         await engine.describeRules(createDescribeOptions());
-        expect(describeRulesProgressEvents.map(e => e.percentComplete)).toEqual([0, 10, 40, 80, 100]);
+        // TODO: We should make our DescribeRulesProgressEvents more refined while calculating the eslint context information
+        expect(describeRulesProgressEvents.map(e => e.percentComplete)).toEqual([0, 10, 90, 95, 100]);
     });
 
     it('When runRules is called, then it emits correct progress events', async () => {
@@ -454,5 +456,7 @@ function createRunOptions(workspace: Workspace): RunOptions {
 
 async function createEngineFromPlugin(configObject: ConfigObject): Promise<Engine> {
     const plugin: ESLintEnginePlugin = new ESLintEnginePlugin();
-    return await plugin.createEngine('eslint', configObject);
+    const engine: ESLintEngine = await plugin.createEngine('eslint', configObject);
+    engine._runESLintWorkerTask._runInCurrentThreadInsteadofNewThread = true;
+    return engine;
 }

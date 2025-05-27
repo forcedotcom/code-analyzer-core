@@ -128,10 +128,6 @@ export const RULE_MAPPINGS: Record<string, {severity: SeverityLevel, tags: strin
         severity: SeverityLevel.Moderate,
         tags: [/* NOT RECOMMENDED */    COMMON_TAGS.CATEGORIES.BEST_PRACTICES, COMMON_TAGS.LANGUAGES.JAVASCRIPT] // Not available with TypeScript
     },
-    "line-comment-position": {
-        severity: SeverityLevel.Low,
-        tags: [/* NOT RECOMMENDED */    COMMON_TAGS.CATEGORIES.CODE_STYLE,     COMMON_TAGS.LANGUAGES.JAVASCRIPT, COMMON_TAGS.LANGUAGES.TYPESCRIPT]
-    },
     "logical-assignment-operators": {
         severity: SeverityLevel.Moderate,
         tags: [/* NOT RECOMMENDED */    COMMON_TAGS.CATEGORIES.BEST_PRACTICES, COMMON_TAGS.LANGUAGES.JAVASCRIPT, COMMON_TAGS.LANGUAGES.TYPESCRIPT]
@@ -161,10 +157,6 @@ export const RULE_MAPPINGS: Record<string, {severity: SeverityLevel, tags: strin
         tags: [/* NOT RECOMMENDED */    COMMON_TAGS.CATEGORIES.BEST_PRACTICES, COMMON_TAGS.LANGUAGES.JAVASCRIPT] // Not available with TypeScript
     },
     "max-statements": {
-        severity: SeverityLevel.Moderate,
-        tags: [/* NOT RECOMMENDED */    COMMON_TAGS.CATEGORIES.BEST_PRACTICES, COMMON_TAGS.LANGUAGES.JAVASCRIPT, COMMON_TAGS.LANGUAGES.TYPESCRIPT]
-    },
-    "multiline-comment-style": {
         severity: SeverityLevel.Moderate,
         tags: [/* NOT RECOMMENDED */    COMMON_TAGS.CATEGORIES.BEST_PRACTICES, COMMON_TAGS.LANGUAGES.JAVASCRIPT, COMMON_TAGS.LANGUAGES.TYPESCRIPT]
     },
@@ -440,10 +432,6 @@ export const RULE_MAPPINGS: Record<string, {severity: SeverityLevel, tags: strin
         severity: SeverityLevel.High,
         tags: [/* NOT RECOMMENDED */    COMMON_TAGS.CATEGORIES.ERROR_PRONE,    COMMON_TAGS.LANGUAGES.JAVASCRIPT] // Not available with TypeScript
     },
-    "no-new-symbol": {
-        severity: SeverityLevel.High,
-        tags: [COMMON_TAGS.RECOMMENDED, COMMON_TAGS.CATEGORIES.ERROR_PRONE,    COMMON_TAGS.LANGUAGES.JAVASCRIPT] // Not available with TypeScript
-    },
     "no-new-wrappers": {
         severity: SeverityLevel.Moderate,
         tags: [/* NOT RECOMMENDED */    COMMON_TAGS.CATEGORIES.BEST_PRACTICES, COMMON_TAGS.LANGUAGES.JAVASCRIPT, COMMON_TAGS.LANGUAGES.TYPESCRIPT]
@@ -635,6 +623,10 @@ export const RULE_MAPPINGS: Record<string, {severity: SeverityLevel, tags: strin
     "no-use-before-define": {
         severity: SeverityLevel.High,
         tags: [/* NOT RECOMMENDED */    COMMON_TAGS.CATEGORIES.ERROR_PRONE,    COMMON_TAGS.LANGUAGES.JAVASCRIPT] // Not available with TypeScript
+    },
+    "no-useless-assignment": {
+        severity: SeverityLevel.High,
+        tags: [/* NOT RECOMMENDED */    COMMON_TAGS.CATEGORIES.ERROR_PRONE,    COMMON_TAGS.LANGUAGES.JAVASCRIPT, COMMON_TAGS.LANGUAGES.TYPESCRIPT]
     },
     "no-useless-backreference": {
         severity: SeverityLevel.High,
@@ -1387,6 +1379,10 @@ export const RULE_MAPPINGS: Record<string, {severity: SeverityLevel, tags: strin
     "@typescript-eslint/no-unnecessary-type-constraint": {
         severity: SeverityLevel.Moderate,
         tags: [COMMON_TAGS.RECOMMENDED, COMMON_TAGS.CATEGORIES.BEST_PRACTICES, COMMON_TAGS.LANGUAGES.TYPESCRIPT]
+    },
+    "@typescript-eslint/no-unnecessary-type-conversion": {
+        severity: SeverityLevel.Moderate,
+        tags: [/* NOT RECOMMENDED */    COMMON_TAGS.CATEGORIES.BEST_PRACTICES, COMMON_TAGS.LANGUAGES.TYPESCRIPT]
     },
     "@typescript-eslint/no-unnecessary-type-parameters": {
         severity: SeverityLevel.High,
