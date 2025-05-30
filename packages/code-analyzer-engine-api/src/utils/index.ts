@@ -5,7 +5,8 @@ export {
 } from './datetime-utils';
 
 export {
-    createTempDir
+    createTempDir,
+    calculateLongestCommonParentFolderOf
 } from './fs-utils';
 
 export {

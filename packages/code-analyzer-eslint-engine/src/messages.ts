@@ -80,16 +80,11 @@ const MESSAGE_CATALOG : { [key: string]: string } = {
         `      eslint_config_file: null\n` +
         `      auto_discover_eslint_config: false\n\n` +
         `Error thrown from %s': %s\n\n` +
-        'ESLint options used: %s',
+        'ESLint options used:\n%s',
 
     ESLintThrewExceptionWithUnknownMessage:
         `The eslint engine encountered an unexpected error thrown from '%s': %s\n\n` +
-        'ESLint options used: %s',
-
-    ViolationFoundFromUnregisteredRule:
-        `A rule with name '%s' produced a violation, but this rule was not registered with the 'eslint' engine so it will not be included in the results.\n` +
-        `This may occur if in your file you are using inline comments to attempt to disable or configure this rule even though it is unknown to ESLint and Code Analyzer.\n` +
-        `Ignored Violation:\n%s`,
+        'ESLint options used:\n%s',
 
     UnusedEslintConfigFile:
         `The ESLint configuration file '%s' was found but not applied.\n` +
@@ -107,8 +102,16 @@ const MESSAGE_CATALOG : { [key: string]: string } = {
         `      eslint_ignore_file: "%s"\n` +
         `Alternatively, to have Code Analyzer automatically discover and apply any ESLint configuration and ignore files found in your workspace, set the auto_discover_eslint_config value to true.`,
 
-    IgnoringFlatConfigFile:
-        `Ignoring '%s' since ESLint "Flat" configuration files are not yet supported by this version of the 'eslint' engine.`
+    IgnoringLegacyIgnoreFile:
+        `Ignoring '%s' since ESLint v9+ does not support legacy ignore files.`,
+
+    IgnoringFlatConfigFile: // TODO: Remove this as soon as we support user's providing their own flat config files
+        `Ignoring '%s' since ESLint "Flat" configuration files are not yet supported by this version of the 'eslint' engine.`,
+
+    UnableToCalculateBaseDirectory:
+        `Could not calculate base directory for ESLint from the list of relevant targeted files to scan.\n` +
+        `This can occur if you are attempting to target files from more than one drive (like C: and D: drives for example).\n` +
+        `The list of relevant targeted files:\n%s`
 }
 
 /**

@@ -31,7 +31,7 @@ export class ESLintEnginePlugin extends EnginePluginV1 {
         return validateAndNormalizeConfig(configValueExtractor) as ConfigObject;
     }
 
-    async createEngine(engineName: string, resolvedConfig: ConfigObject): Promise<Engine> {
+    async createEngine(engineName: string, resolvedConfig: ConfigObject): Promise<ESLintEngine> {
         validateEngineName(engineName);
         const delegateV8Engine: Engine = await this.delegateV8EnginePlugin.createEngine(engineName, resolvedConfig);
         return new ESLintEngine(resolvedConfig as ESLintEngineConfig, delegateV8Engine);
