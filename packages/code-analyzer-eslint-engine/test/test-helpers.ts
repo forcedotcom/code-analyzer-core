@@ -1,5 +1,6 @@
 import process from "node:process";
 import path from "node:path";
+import * as unzipper from "unzipper";
 
 export function changeWorkingDirectoryToPackageRoot() {
     let original_working_directory: string;
@@ -15,4 +16,9 @@ export function changeWorkingDirectoryToPackageRoot() {
     afterAll(() => {
         process.chdir(original_working_directory);
     });
+}
+
+export async function unzipToFolder(zipFile: string, outputFolder: string): Promise<void> {
+    const directory: unzipper.CentralDirectory = await unzipper.Open.file(zipFile);
+    await directory.extract({path: outputFolder});
 }

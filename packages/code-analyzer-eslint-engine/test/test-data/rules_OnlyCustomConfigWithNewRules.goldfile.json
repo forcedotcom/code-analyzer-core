@@ -1,0 +1,52 @@
+[
+  {
+    "description": "My description of my-rule-1",
+    "name": "dummy/my-rule-1",
+    "resourceUrls": [
+      "https://example.com/my-rule-1"
+    ],
+    "severityLevel": 3,
+    "tags": [
+      "Recommended",
+      "BestPractices",
+      "Custom"
+    ]
+  },
+  {
+    "description": "",
+    "name": "dummy/my-rule-2",
+    "resourceUrls": [
+      "https://example.com/my-rule-2"
+    ],
+    "severityLevel": 5,
+    "tags": [
+      "Recommended",
+      "ErrorProne",
+      "Custom"
+    ]
+  },
+  {
+    "description": "My description of my-rule-3",
+    "name": "dummy/my-rule-3",
+    "resourceUrls": [],
+    "severityLevel": 4,
+    "tags": [
+      "Recommended",
+      "CodeStyle",
+      "Custom"
+    ]
+  },
+  {
+    "description": "My description of my-rule-8",
+    "name": "dummy/my-rule-8",
+    "resourceUrls": [
+      "https://example.com/my-rule-8"
+    ],
+    "severityLevel": 2,
+    "tags": [
+      "Recommended",
+      "ErrorProne",
+      "Custom"
+    ]
+  }
+]

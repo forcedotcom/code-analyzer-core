@@ -13,6 +13,7 @@ export enum ESLintRuleStatus {
 
 export type ESLintContext = {
     baseDirectory: string,
+    userConfigFile?: string,
     filesToScan: string[],
     ruleInfo: {
         [ruleName: string]: {
@@ -22,12 +23,13 @@ export type ESLintContext = {
     }
 }
 
-export async function calculateESLintContext(engineConfig: ESLintEngineConfig, eslintWorkspace: ESLintWorkspace): Promise<ESLintContext> {
+export async function calculateESLintContext(engineConfig: ESLintEngineConfig, eslintWorkspace: ESLintWorkspace, userConfigFile?: string): Promise<ESLintContext> {
     const baseDirectory: string = await eslintWorkspace.getBaseDirectory();
-    const eslint: ESLint = createESLint(engineConfig, baseDirectory);
+    const eslint: ESLint = createESLint(engineConfig, baseDirectory, userConfigFile);
 
     const context: ESLintContext = {
         baseDirectory: baseDirectory,
+        userConfigFile: userConfigFile,
         filesToScan: await eslintWorkspace.getFilesToScan(eslint),
         ruleInfo: {}
     }
@@ -80,7 +82,9 @@ function getRuleStatusFromRuleEntry(ruleEntry: Linter.RuleEntry): ESLintRuleStat
     if (typeof ruleEntry === "number") {
         return ruleEntry === 2 ? ESLintRuleStatus.ERROR :
             ruleEntry === 1 ? ESLintRuleStatus.WARN : ESLintRuleStatus.OFF;
-    } else if (typeof ruleEntry === "string") {
+    } else /* istanbul ignore if */ if (typeof ruleEntry === "string") {
+        // I believe ESLint 9 normalizes the ruleEntry to always be numbers when we invoke calculateConfigForFile
+        // but just in case things change, we should keep this branch of code that handles the string case for safety.
         return ruleEntry.toLowerCase() === "error" ? ESLintRuleStatus.ERROR :
             ruleEntry.toLowerCase() === "warn" ? ESLintRuleStatus.WARN : ESLintRuleStatus.OFF;
     }

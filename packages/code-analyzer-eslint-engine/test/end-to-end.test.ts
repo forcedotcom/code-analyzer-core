@@ -102,6 +102,7 @@ describe('End to end test', () => {
         ]));
 
         const warnLogs: LogEvent[] = logEvents.filter(e => e.logLevel == LogLevel.Warn);
-        expect(warnLogs).toHaveLength(0); // TODO: Update this once we support user's providing flat config files, we should warn when we see user is using a legacy config file: W-18495577
+        expect(warnLogs).toHaveLength(1);
+        expect(warnLogs[0].message).toContain('Using ESLint v8 instead of ESLint v9');
     });
 });

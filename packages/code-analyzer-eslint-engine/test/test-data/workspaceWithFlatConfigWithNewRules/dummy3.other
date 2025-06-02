@@ -1,0 +1,2 @@
+// This is basically the same as a javascript file - but with an ".other" extension
+let forbidden = 3;

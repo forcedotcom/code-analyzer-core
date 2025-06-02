@@ -23,7 +23,7 @@ const MESSAGE_CATALOG : { [key: string]: string } = {
     ConfigFieldDescription_disable_javascript_base_config:
         `Whether to turn off the default base configuration that supplies the standard ESLint rules for JavaScript files.\n` +
         `The base configuration for JavaScript files adds the rules from the "eslint:all" configuration to Code Analyzer.\n` +
-        `See https://eslint.org/docs/v8.x/rules for the list of rules.`, // TODO: This link will change when we move to v9
+        `See https://eslint.org/docs/latest/rules for the list of rules.`,
 
     ConfigFieldDescription_disable_lwc_base_config:
         `Whether to turn off the default base configuration that supplies the LWC rules for JavaScript files.\n` +
@@ -34,7 +34,7 @@ const MESSAGE_CATALOG : { [key: string]: string } = {
     ConfigFieldDescription_disable_typescript_base_config:
         `Whether to turn off the default base configuration that supplies the standard rules for TypeScript files\n` +
         `The base configuration for TypeScript files adds the rules from the "plugin:@typescript-eslint:all" configuration to Code Analyzer.\n` +
-        `See https://typescript-eslint.io/rules and https://eslint.org/docs/v8.x/rules for the lists of rules.`, // TODO: This link will change when we move to v9
+        `See https://typescript-eslint.io/rules and https://eslint.org/docs/latest/rules for the lists of rules.`,
 
     ConfigFieldDescription_file_extensions:
         `Extensions of the files in your workspace that will be used to discover rules.\n` +
@@ -47,8 +47,8 @@ const MESSAGE_CATALOG : { [key: string]: string } = {
     UnsupportedEngineName:
         `The ESLintEnginePlugin does not support an engine with name '%s'.`,
 
-    InvalidLegacyConfigFileName:
-        `The '%s' configuration value is invalid. Expected the file name '%s' to be one of the following: %s`,
+    InvalidESLintConfigFileName:
+        `The '%s' configuration value is invalid. Expected either a "flat" ESLint configuration file that ends with %s or a known "legacy" ESLint configuration file name from among %s.`,
 
     InvalidLegacyIgnoreFileName:
         `The '%s' configuration value is invalid. Expected the file name '%s' to be equal to '%s'.`,
@@ -62,7 +62,7 @@ const MESSAGE_CATALOG : { [key: string]: string } = {
     ESLintWarnedWhenScanningFile:
         `When scanning file '%s' with the eslint engine, ESLint gave the following warning:\n%s`,
 
-    ESLintThrewExceptionWithPluginConflictMessage:
+    ESLintThrewExceptionWithPluginConflictMessage: // TODO: Hopefully with W-18695515 we can manually resolve conflicts and we won't need this
         `The eslint engine encountered a conflict between a plugin supplied by one of your ESLint configuration ` +
         `files and a plugin supplied by the base configuration.\n` +
         `To continue to use your custom config you may need to disable one or more of the provided base ` +
@@ -79,34 +79,32 @@ const MESSAGE_CATALOG : { [key: string]: string } = {
         `    eslint:\n` +
         `      eslint_config_file: null\n` +
         `      auto_discover_eslint_config: false\n\n` +
-        `Error thrown from %s': %s\n\n` +
+        `Error thrown from %s':\n%s\n\n` +
         'ESLint options used:\n%s',
 
     ESLintThrewExceptionWithUnknownMessage:
-        `The eslint engine encountered an unexpected error thrown from '%s': %s\n\n` +
+        `The eslint engine encountered an unexpected error thrown from '%s':\n%s\n\n` +
         'ESLint options used:\n%s',
 
-    UnusedEslintConfigFile:
+    UnusedESLintConfigFile:
         `The ESLint configuration file '%s' was found but not applied.\n` +
         `To apply this configuration file, set it as the eslint_config_file value in your Code Analyzer configuration. For example:\n` +
         `  engines:\n` +
         `    eslint:\n` +
         `      eslint_config_file: "%s"\n` +
-        `Alternatively, to have Code Analyzer automatically discover and apply any ESLint configuration and ignore files found in your workspace, set the auto_discover_eslint_config value to true.`,
-
-    UnusedEslintIgnoreFile:
-        `The ESLint ignore file '%s' was found but not applied.\n` +
-        `To apply this ignore file, set it as the eslint_ignore_file value in your Code Analyzer configuration. For example:\n` +
-        `  engines:\n` +
-        `    eslint:\n` +
-        `      eslint_ignore_file: "%s"\n` +
-        `Alternatively, to have Code Analyzer automatically discover and apply any ESLint configuration and ignore files found in your workspace, set the auto_discover_eslint_config value to true.`,
+        `Alternatively, to have Code Analyzer attempt to automatically discover your ESLint configuration file in your workspace, set the auto_discover_eslint_config value to true.`,
 
     IgnoringLegacyIgnoreFile:
         `Ignoring '%s' since ESLint v9+ does not support legacy ignore files.`,
 
-    IgnoringFlatConfigFile: // TODO: Remove this as soon as we support user's providing their own flat config files
-        `Ignoring '%s' since ESLint "Flat" configuration files are not yet supported by this version of the 'eslint' engine.`,
+    DetectedLegacyConfig:
+        `Using ESLint v8 instead of ESLint v9 since the use of a "legacy" ESLint configuration file or ignore file was detected: %s.\n` +
+        `Since ESLint v8 is no longer supported, Code Analyzer will be removing support for "legacy" ESLint configuration files in the coming months.\n` +
+        `Therefore, it is highly recommended that you migrate your "legacy" configuration to the new "flat" configuration format as soon as possible.\n` +
+        `Learn how at: https://eslint.org/docs/latest/use/configure/migration-guide`,
+
+    ApplyingFlatConfigFile:
+        `Applying the ESLint "flat" configuration file: %s`,
 
     UnableToCalculateBaseDirectory:
         `Could not calculate base directory for ESLint from the list of relevant targeted files to scan.\n` +

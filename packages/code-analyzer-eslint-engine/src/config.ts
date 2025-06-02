@@ -109,8 +109,9 @@ export const ESLINT_ENGINE_CONFIG_DESCRIPTION: ConfigDescription = {
 
 // See https://eslint.org/docs/latest/use/configure/configuration-files
 // We currently do not support Typescript config files are since they require additional setup
-export const FLAT_ESLINT_CONFIG_FILES: string[] =
-    ['eslint.config.js', 'eslint.config.mjs', 'eslint.config.cjs'];
+export const DISCOVERABLE_FLAT_ESLINT_CONFIG_FILES: string[] =
+    ['eslint.config.js', 'eslint.config.cjs', 'eslint.config.mjs'];
+export const FLAT_ESLINT_CONFIG_FILE_EXTS: string[] = ['.js', '.cjs', '.mjs'];
 
 // See https://eslint.org/docs/v8.x/use/configure/configuration-files#configuration-file-formats
 export const LEGACY_ESLINT_CONFIG_FILES: string[] =
@@ -148,9 +149,11 @@ class ESLintEngineConfigValueExtractor {
     extractESLintConfigFileValue(): string | undefined {
         const eslintConfigFileField: string = 'eslint_config_file';
         const eslintConfigFile: string | undefined = this.delegateExtractor.extractFile(eslintConfigFileField, DEFAULT_CONFIG.eslint_config_file);
-        if (eslintConfigFile && !LEGACY_ESLINT_CONFIG_FILES.includes(path.basename(eslintConfigFile))) {
-            throw new Error(getMessage('InvalidLegacyConfigFileName', this.delegateExtractor.getFieldPath(eslintConfigFileField),
-                path.basename(eslintConfigFile), JSON.stringify(LEGACY_ESLINT_CONFIG_FILES)));
+        if (eslintConfigFile && !(isValidLegacyConfigFileName(eslintConfigFile) || isValidFlatConfigFileName(eslintConfigFile))) {
+            throw new Error(getMessage('InvalidESLintConfigFileName',
+                this.delegateExtractor.getFieldPath(eslintConfigFileField),
+                JSON.stringify(FLAT_ESLINT_CONFIG_FILE_EXTS),
+                JSON.stringify(LEGACY_ESLINT_CONFIG_FILES)));
         }
         return eslintConfigFile;
     }
@@ -197,4 +200,13 @@ class ESLintEngineConfigValueExtractor {
     extractBooleanValue(field_name: string): boolean {
         return this.delegateExtractor.extractBoolean(field_name, DEFAULT_CONFIG[field_name as keyof ESLintEngineConfig] as boolean)!;
     }
+}
+
+function isValidLegacyConfigFileName(eslintConfigFile: string): boolean {
+    // For legacy config files, we only allow specific file names so we are confident it is a legacy config file.
+    return LEGACY_ESLINT_CONFIG_FILES.includes(path.basename(eslintConfigFile).toLowerCase());
+}
+
+function isValidFlatConfigFileName(eslintConfigFile: string): boolean {
+    return FLAT_ESLINT_CONFIG_FILE_EXTS.includes(path.extname(eslintConfigFile).toLowerCase());
 }
