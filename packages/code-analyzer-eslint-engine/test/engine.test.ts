@@ -611,7 +611,7 @@ describe('Typical tests for the runRules method of ESLintEngine', () => {
         expect(path.extname(results.violations[1].codeLocations[0].file)).toEqual('.ts');
     });
 
-    it('When calling runRules and only a legacy ignore file is provided, then we warn and defer to v8', async () => {
+    it('When calling runRules and only a legacy ignore file is provided, then we defer to v8', async () => {
         const engine: Engine = await createEngineFromPlugin({
             ... DEFAULT_CONFIG_FOR_TESTING,
             eslint_ignore_file: path.join(testDataFolder, 'workspaceWithLegacyIgnoreFile', '.eslintignore')
@@ -621,12 +621,6 @@ describe('Typical tests for the runRules method of ESLintEngine', () => {
 
         const runOptions: RunOptions = createRunOptions(new Workspace('id', [workspaceWithNoCustomConfig]));
         const results: EngineRunResults = await engine.runRules(['no-invalid-regexp', '@typescript-eslint/no-wrapper-object-types'], runOptions);
-
-
-        const warnLogs: LogEvent[] = logEvents.filter(e => e.logLevel === LogLevel.Warn);
-        expect(warnLogs).toHaveLength(1);
-        expect(warnLogs[0].message).toEqual(getMessage('DetectedLegacyConfig',
-            path.join(testDataFolder, 'workspaceWithLegacyIgnoreFile', '.eslintignore')));
 
         expect(results.violations).toHaveLength(2); // Only TS Violations show up because ignore file ignores js files
         expect(results.violations).toContainEqual(expectedTsViolation_noInvalidRegexp);

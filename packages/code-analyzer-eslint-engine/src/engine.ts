@@ -34,7 +34,6 @@ export class ESLintEngine extends Engine {
     private readonly delegateV8Engine: Engine;
     private userConfigInfoCache: Map<string, UserConfigInfo> = new Map();
     private eslintContextCache: Map<string, ESLintContext> = new Map();
-    private workspaceIdsThatHaveWarnedAboutESLint8: Set<string> = new Set();
 
     constructor(engineConfig: ESLintEngineConfig, delegateV8Engine: Engine) {
         super();
@@ -62,7 +61,8 @@ export class ESLintEngine extends Engine {
         this.emitLogEvent(LogLevel.Fine, `Detected the following state regarding the user's ESLint configuration: ${userConfigInfo}`);
 
         if (userConfigInfo.getState() === UserConfigState.LEGACY_USER_CONFIG) {
-            this.warnAboutUsingESLint8IfNeeded(userConfigInfo, describeOptions.workspace);
+            this.emitLogEvent(LogLevel.Warn, getMessage('DetectedLegacyConfig',
+                userConfigInfo.getChosenUserConfigFile() ?? userConfigInfo.getChosenUserIgnoreFile()!));
             return this.delegateV8Engine.describeRules(describeOptions);
         }
 
@@ -105,7 +105,6 @@ export class ESLintEngine extends Engine {
         this.emitRunRulesProgressEvent(0);
         const userConfigInfo: UserConfigInfo = this.getUserConfigInfo(runOptions.workspace);
         if (userConfigInfo.getState() === UserConfigState.LEGACY_USER_CONFIG) {
-            this.warnAboutUsingESLint8IfNeeded(userConfigInfo, runOptions.workspace);
             return this.delegateV8Engine.runRules(ruleNames, runOptions);
         }
 
@@ -135,16 +134,6 @@ export class ESLintEngine extends Engine {
         };
         this.emitRunRulesProgressEvent(100);
         return engineResults;
-    }
-
-    private warnAboutUsingESLint8IfNeeded(userConfigInfo: UserConfigInfo, workspace?: Workspace): void {
-        const cacheKey: string = workspace?.getWorkspaceId() ?? process.cwd();
-        if (userConfigInfo.getState() === UserConfigState.LEGACY_USER_CONFIG &&
-            !this.workspaceIdsThatHaveWarnedAboutESLint8.has(cacheKey)) {
-            this.emitLogEvent(LogLevel.Warn, getMessage('DetectedLegacyConfig',
-                userConfigInfo.getChosenUserConfigFile() ?? userConfigInfo.getChosenUserIgnoreFile()!));
-            this.workspaceIdsThatHaveWarnedAboutESLint8.add(cacheKey);
-        }
     }
 
     private toViolations(eslintResults: ESLint.LintResult[]): Violation[] {
