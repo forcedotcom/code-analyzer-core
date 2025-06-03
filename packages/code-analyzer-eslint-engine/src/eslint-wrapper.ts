@@ -6,13 +6,13 @@ import {makeStringifiable} from "./utils";
 import { indent } from "@salesforce/code-analyzer-engine-api/utils";
 
 
-export function createESLint(engineConfig: ESLintEngineConfig, baseDirectory: string, rulesToRun?: Set<string>): ESLintWrapper {
+export function createESLint(engineConfig: ESLintEngineConfig, baseDirectory: string, userConfigFile?: string, rulesToRun?: Set<string>): ESLintWrapper {
     const baseConfigFactory: BaseConfigFactory = new BaseConfigFactory(engineConfig);
     const eslintOptions: ESLint.Options = {
         cwd: baseDirectory,                      // The base working directory. This must be an absolute path.
         errorOnUnmatchedPattern: false,          // Unless set to false, the eslint.lintFiles() method will throw an error when no target files are found.
         baseConfig: baseConfigFactory.createBaseConfigArray(),
-        overrideConfigFile: true,  //TODO: Will Add in Users Config File
+        overrideConfigFile: userConfigFile ?? true,  // Oddly enough ESLint documents that "true" means don't go auto looking for a config file (which we set if we didn't find one ourselves)
     };
     if (rulesToRun) {
         // Using a ruleFilter ensures that we only run the rules that the user has selected. This approach is much
@@ -31,7 +31,7 @@ export class ESLintWrapper extends ESLint {
         try {
             super(options);
             this._options = options;
-        } catch (error) {
+        } catch (error) /* istanbul ignore next */ {
             throw wrapESLintError(error, 'ESLint', options);
         }
     }
@@ -41,7 +41,7 @@ export class ESLintWrapper extends ESLint {
         try {
             return await super.calculateConfigForFile(filePath);
         } catch (error) {
-            throw wrapESLintError(error, `ESLint.calculateConfigForFile(${filePath})`, this._options);
+            throw await wrapESLintError(error, `ESLint.calculateConfigForFile("${filePath}")`, this._options);
         }
 
     }
@@ -50,20 +50,41 @@ export class ESLintWrapper extends ESLint {
         try {
             return await super.isPathIgnored(filePath);
         } catch (error) { /* istanbul ignore next */
-            throw wrapESLintError(error, `ESLint.isPathIgnored(${filePath})`, this._options);
+            throw await wrapESLintError(error, `ESLint.isPathIgnored("${filePath}")`, this._options);
         }
     }
 }
 
+class WrappedError extends Error {}
 
-function wrapESLintError(rawError: unknown, fcnCallStr: string, options: ESLint.Options): Error {
-    const rawErrMsg: string = rawError instanceof Error ? rawError.message : /* istanbul ignore next */
-        String(rawError);
-    const eslintOptionsStr: string = indent(stringifyESLintOptions(options), '    |');
-    const wrappedErrMsg: string = rawErrMsg.includes('conflict') ? // TODO: See if this conflict case ever happens anymore
+async function wrapESLintError(rawError: unknown, fcnCallStr: string, options: ESLint.Options): Promise<Error> {
+    if (rawError instanceof WrappedError) {
+        return rawError; // Prevent wrapping multiple times
+    }
+
+    // Before throwing the actual error message, we first want to validate the user's config file in an isolated
+    // environment see if it is even valid when run by itself without any other configurations.
+    // If not, then we display the simpler error and options.
+    if (typeof options.overrideConfigFile === "string") {
+        const simpleOptions: ESLint.Options = {overrideConfigFile: options.overrideConfigFile};
+        try {
+            const rawESLint: ESLint = new ESLint(simpleOptions);
+            await rawESLint.calculateConfigForFile('dummy.js');
+        } catch (err) {
+            rawError = err;
+            fcnCallStr = 'ESLint.calculateConfigForFile';
+            options = simpleOptions;
+        }
+    }
+
+    /* istanbul ignore next */
+    const rawErrMsg: string = indent(rawError instanceof Error ?
+        rawError.stack ?? rawError.message : String(rawError), '  | ');
+    const eslintOptionsStr: string = indent(stringifyESLintOptions(options), '    ');
+    const wrappedErrMsg: string = rawErrMsg.includes('Cannot redefine plugin') ? // TODO: Maybe with W-18695515 we can manually resolve conflicts
         getMessage('ESLintThrewExceptionWithPluginConflictMessage', fcnCallStr, rawErrMsg, eslintOptionsStr)
         : getMessage('ESLintThrewExceptionWithUnknownMessage', fcnCallStr, rawErrMsg, eslintOptionsStr);
-    return new Error(wrappedErrMsg, {cause: rawError});
+    return new WrappedError(wrappedErrMsg, {cause: rawError});
 }
 
 

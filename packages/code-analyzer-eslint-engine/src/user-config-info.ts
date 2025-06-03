@@ -2,7 +2,7 @@ import path from "node:path";
 import fs from "node:fs";
 import {
     ESLintEngineConfig,
-    FLAT_ESLINT_CONFIG_FILES,
+    DISCOVERABLE_FLAT_ESLINT_CONFIG_FILES,
     LEGACY_ESLINT_CONFIG_FILES,
     LEGACY_ESLINT_IGNORE_FILE
 } from "./config";
@@ -21,6 +21,8 @@ export class UserConfigInfo {
     private userConfigState?: UserConfigState;
     private userConfigFile?: string;
     private userIgnoreFile?: string;
+    private discoveredConfigFile?: string;
+    private discoveredIgnoreFile?: string;
 
     constructor(config: ESLintEngineConfig, workspace?: Workspace) {
         this.engineConfig = config;
@@ -32,21 +34,26 @@ export class UserConfigInfo {
         return this.userConfigState!;
     }
 
-    getUserConfigFile(): string | undefined {
+    getChosenUserConfigFile(): string | undefined {
         this.initIfNeeded();
         return this.userConfigFile;
     }
 
-    getUserIgnoreFile(): string | undefined {
+    getChosenUserIgnoreFile(): string | undefined {
         this.initIfNeeded();
         return this.userIgnoreFile;
+    }
+
+    getDiscoveredConfigFile(): string | undefined {
+        this.initIfNeeded();
+        return this.discoveredConfigFile;
     }
 
     toString(): string {
         return JSON.stringify({
             state: this.getState(),
-            userConfigFile: this.getUserConfigFile() || null,
-            userIgnoreFile: this.getUserIgnoreFile() || null
+            userConfigFile: this.getChosenUserConfigFile() || null,
+            userIgnoreFile: this.getChosenUserIgnoreFile() || null
         });
     }
 
@@ -55,23 +62,32 @@ export class UserConfigInfo {
             return;
         }
         this.userConfigState = UserConfigState.NO_USER_CONFIG;
-        this.userConfigFile = this.engineConfig.eslint_config_file ||
-            this.discoverFileIfShould([...LEGACY_ESLINT_CONFIG_FILES, ...FLAT_ESLINT_CONFIG_FILES]); // TODO: When we support flat config then we should switch the order of these to look for flat config first
+
+        if (this.engineConfig.eslint_config_file) {
+            this.userConfigFile = this.engineConfig.eslint_config_file;
+        } else {
+            this.discoveredConfigFile = this.discoverFile(
+                [...DISCOVERABLE_FLAT_ESLINT_CONFIG_FILES, ...LEGACY_ESLINT_CONFIG_FILES]);
+            this.userConfigFile = this.engineConfig.auto_discover_eslint_config ?
+                this.discoveredConfigFile : undefined;
+        }
         if (this.userConfigFile) {
             this.userConfigState = isLegacyConfigFile(this.userConfigFile) ? UserConfigState.LEGACY_USER_CONFIG : UserConfigState.FLAT_USER_CONFIG;
         }
-        this.userIgnoreFile = this.engineConfig.eslint_ignore_file ||
-            this.discoverFileIfShould([LEGACY_ESLINT_IGNORE_FILE]);
+
+        if (this.engineConfig.eslint_ignore_file) {
+            this.userIgnoreFile = this.engineConfig.eslint_ignore_file;
+        } else {
+            this.discoveredIgnoreFile = this.discoverFile([LEGACY_ESLINT_IGNORE_FILE]);
+            this.userIgnoreFile = this.engineConfig.auto_discover_eslint_config ?
+                this.discoveredIgnoreFile : undefined;
+        }
         if (this.userIgnoreFile && this.userConfigState !== UserConfigState.FLAT_USER_CONFIG) {
             this.userConfigState = UserConfigState.LEGACY_USER_CONFIG;
         }
     }
 
-    private discoverFileIfShould(possibleFileNames: string[]): string | undefined {
-        if (!this.engineConfig.auto_discover_eslint_config) {
-            return undefined;
-        }
-
+    private discoverFile(possibleFileNames: string[]): string | undefined {
         const workspaceRoot: string | undefined | null = this.workspace?.getWorkspaceRoot();
         const foldersToCheck: string[] = makeUnique([
                 ... workspaceRoot ? [workspaceRoot] : [],

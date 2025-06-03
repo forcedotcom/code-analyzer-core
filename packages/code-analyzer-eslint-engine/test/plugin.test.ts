@@ -11,6 +11,7 @@ import {ESLintEngine} from "../src/engine";
 import {
     DEFAULT_CONFIG,
     ESLINT_ENGINE_CONFIG_DESCRIPTION,
+    FLAT_ESLINT_CONFIG_FILE_EXTS,
     LEGACY_ESLINT_CONFIG_FILES,
     LEGACY_ESLINT_IGNORE_FILE
 } from "../src/config";
@@ -51,13 +52,24 @@ describe('Tests for the ESLintEnginePlugin', () => {
                 '"disable_typescript_base_config","eslint_config_file","eslint_ignore_file","file_extensions"]'));
     });
 
-    it('When a valid eslint_config_file is passed to createEngineConfig, then it is set on the config', async () => {
+    it('When a valid legacy eslint_config_file is passed to createEngineConfig, then it is set on the config', async () => {
         const userProvidedOverrides: ConfigObject = {
             eslint_config_file: 'test-data/workspaceWithLegacyConfigJson/.eslintrc.json'
         };
         const resolvedConfig: ConfigObject = await callCreateEngineConfig(plugin, userProvidedOverrides, __dirname);
         expect(resolvedConfig['eslint_config_file']).toEqual(
             path.resolve(__dirname, 'test-data', 'workspaceWithLegacyConfigJson', '.eslintrc.json'));
+    });
+
+    it.each(
+        ['eslint.config.js', 'a-config-file-that-uses-ignores.js']
+    )('When a valid flag eslint_config_file called %s is passed to createEngineConfig, then it is set on the config', async (configFileName) => {
+        const userProvidedOverrides: ConfigObject = {
+            eslint_config_file: `test-data/workspaceWithFlatConfigJs/${configFileName}`
+        };
+        const resolvedConfig: ConfigObject = await callCreateEngineConfig(plugin, userProvidedOverrides, __dirname);
+        expect(resolvedConfig['eslint_config_file']).toEqual(
+            path.resolve(__dirname, 'test-data', 'workspaceWithFlatConfigJs', configFileName));
     });
 
     it('When eslint_config_file value does not exist, then createEngineConfig errors', async () => {
@@ -72,11 +84,11 @@ describe('Tests for the ESLintEnginePlugin', () => {
 
     it('When eslint_config_file is not one of the supported legacy config file names, then createEngineConfig errors', async () => {
         const userProvidedOverrides: ConfigObject = {
-            eslint_config_file: 'eslint.config.mjs' // TODO: This test will soon change so we support both
+            eslint_config_file: 'plugin.test.ts'
         };
-        const configRoot: string = path.resolve(__dirname, '..');
-        await expect(callCreateEngineConfig(plugin, userProvidedOverrides, configRoot)).rejects.toThrow(
-            getMessage('InvalidLegacyConfigFileName', 'engines.eslint.eslint_config_file', 'eslint.config.mjs',
+        await expect(callCreateEngineConfig(plugin, userProvidedOverrides, __dirname)).rejects.toThrow(
+            getMessage('InvalidESLintConfigFileName', 'engines.eslint.eslint_config_file',
+                JSON.stringify(FLAT_ESLINT_CONFIG_FILE_EXTS),
                 JSON.stringify(LEGACY_ESLINT_CONFIG_FILES)));
     });
 

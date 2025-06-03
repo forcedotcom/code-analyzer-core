@@ -60,14 +60,21 @@ export class ESLintEngine extends Engine {
         const userConfigInfo: UserConfigInfo = this.getUserConfigInfo(describeOptions.workspace);
         this.emitLogEvent(LogLevel.Fine, `Detected the following state regarding the user's ESLint configuration: ${userConfigInfo}`);
 
-        if (this.shouldDelegateToV8(userConfigInfo)) {
+        if (userConfigInfo.getState() === UserConfigState.LEGACY_USER_CONFIG) {
+            this.emitLogEvent(LogLevel.Warn, getMessage('DetectedLegacyConfig',
+                userConfigInfo.getChosenUserConfigFile() ?? userConfigInfo.getChosenUserIgnoreFile()!));
             return this.delegateV8Engine.describeRules(describeOptions);
-        } else if (userConfigInfo.getUserIgnoreFile()) {
-            this.emitLogEvent(LogLevel.Warn, getMessage('IgnoringLegacyIgnoreFile', userConfigInfo.getUserIgnoreFile()!));
         }
 
-        if (userConfigInfo.getUserConfigFile()) { // TODO: Remove this as soon as we allow user's to supply their own flat config file.
-            this.emitLogEvent(LogLevel.Warn, getMessage('IgnoringFlatConfigFile', userConfigInfo.getUserConfigFile()!));
+        if (userConfigInfo.getChosenUserConfigFile()) {
+            this.emitLogEvent(LogLevel.Debug, getMessage('ApplyingFlatConfigFile', userConfigInfo.getChosenUserConfigFile()!));
+        } else if (userConfigInfo.getDiscoveredConfigFile()) {
+            this.emitLogEvent(LogLevel.Info, getMessage('UnusedESLintConfigFile',
+                makeRelativeTo(process.cwd(), userConfigInfo.getDiscoveredConfigFile()!),
+                makeRelativeTo(this.engineConfig.config_root, userConfigInfo.getDiscoveredConfigFile()!)));
+        }
+        if (userConfigInfo.getChosenUserIgnoreFile()) {
+            this.emitLogEvent(LogLevel.Warn, getMessage('IgnoringLegacyIgnoreFile', userConfigInfo.getChosenUserIgnoreFile()!));
         }
 
         this.emitDescribeRulesProgressEvent(10);
@@ -97,7 +104,7 @@ export class ESLintEngine extends Engine {
     async runRules(ruleNames: string[], runOptions: RunOptions): Promise<EngineRunResults> {
         this.emitRunRulesProgressEvent(0);
         const userConfigInfo: UserConfigInfo = this.getUserConfigInfo(runOptions.workspace);
-        if (this.shouldDelegateToV8(userConfigInfo)) {
+        if (userConfigInfo.getState() === UserConfigState.LEGACY_USER_CONFIG) {
             return this.delegateV8Engine.runRules(ruleNames, runOptions);
         }
 
@@ -161,17 +168,14 @@ export class ESLintEngine extends Engine {
         return this.userConfigInfoCache.get(cacheKey)!;
     }
 
-    private shouldDelegateToV8(userConfigInfo: UserConfigInfo): boolean {
-        return userConfigInfo.getState() === UserConfigState.LEGACY_USER_CONFIG;
-    }
-
     private async getESLintContext(workspace?: Workspace): Promise<ESLintContext> {
         const cacheKey: string = workspace?.getWorkspaceId() ?? process.cwd();
         if (!this.eslintContextCache.has(cacheKey)) {
             const userConfigInfo: UserConfigInfo = this.getUserConfigInfo(workspace);
             const eslintWorkspace: ESLintWorkspace = ESLintWorkspace.from(workspace,
-                this.engineConfig.config_root, this.engineConfig.file_extensions, userConfigInfo.getUserConfigFile());
-            const context: ESLintContext = await calculateESLintContext(this.engineConfig, eslintWorkspace);
+                this.engineConfig.config_root, this.engineConfig.file_extensions, userConfigInfo.getChosenUserConfigFile());
+            const context: ESLintContext = await calculateESLintContext(this.engineConfig, eslintWorkspace,
+                userConfigInfo.getChosenUserConfigFile());
             this.eslintContextCache.set(cacheKey, context);
         }
         return this.eslintContextCache.get(cacheKey)!;
@@ -266,4 +270,12 @@ function normalizeEndValue(endValue: number | undefined): number | undefined {
     // Sometimes rules contain a negative number if the line/column is unknown, so we force undefined in that case
     /* istanbul ignore next */
     return endValue && endValue > 0 ? endValue : undefined;
+}
+
+
+function makeRelativeTo(absFolderPath: string, absFilePath: string): string {
+    absFolderPath = absFolderPath.endsWith(path.sep) ?
+        /* istanbul ignore next */ absFolderPath : absFolderPath + path.sep;
+    return absFilePath.startsWith(absFolderPath) ?
+        absFilePath.slice(absFolderPath.length) : /* istanbul ignore next */  absFilePath;
 }

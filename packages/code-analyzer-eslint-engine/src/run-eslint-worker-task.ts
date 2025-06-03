@@ -19,7 +19,7 @@ export class RunESLintWorkerTask extends WorkerTask<RunESLintWorkerTaskInput, ES
     }
 
     protected async exec(input: RunESLintWorkerTaskInput): Promise<ESLint.LintResult[]> {
-        const eslint: ESLint = createESLint(input.engineConfig, input.eslintContext.baseDirectory, new Set(input.rulesToRun));
+        const eslint: ESLint = createESLint(input.engineConfig, input.eslintContext.baseDirectory, input.eslintContext.userConfigFile, new Set(input.rulesToRun));
         return await eslint.lintFiles(input.eslintContext.filesToScan);
     }
 }
