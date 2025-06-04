@@ -45,10 +45,10 @@ const MESSAGE_CATALOG : { [key: string]: string } = {
         `extensions under the 'other' language.`,
 
     UnsupportedEngineName:
-        `The ESLintEnginePlugin does not support an engine with name '%s'.`,
+        `The ESLintEnginePlugin doesn't support an engine with name '%s'.`,
 
     InvalidESLintConfigFileName:
-        `The '%s' configuration value is invalid. Expected either a "flat" ESLint configuration file that ends with %s or a known "legacy" ESLint configuration file name from among %s.`,
+        `The '%s' configuration value is invalid. Expected either a flat ESLint configuration file that ends with %s or a known legacy eslintrc ESLint configuration file name from among %s.`,
 
     InvalidLegacyIgnoreFileName:
         `The '%s' configuration value is invalid. Expected the file name '%s' to be equal to '%s'.`,
@@ -95,19 +95,19 @@ const MESSAGE_CATALOG : { [key: string]: string } = {
         `Alternatively, to have Code Analyzer attempt to automatically discover your ESLint configuration file in your workspace, set the auto_discover_eslint_config value to true.`,
 
     IgnoringLegacyIgnoreFile:
-        `Ignoring '%s' since ESLint v9+ does not support legacy ignore files.`,
+        `Ignoring '%s' since ESLint v9+ doesn't support legacy ignore files.`,
 
     DetectedLegacyConfig:
-        `Using ESLint v8 instead of ESLint v9 since the use of a "legacy" ESLint configuration file or ignore file was detected: %s.\n` +
-        `Since ESLint v8 is no longer supported, Code Analyzer will be removing support for "legacy" ESLint configuration files in the coming months.\n` +
-        `Therefore, it is highly recommended that you migrate your "legacy" configuration to the new "flat" configuration format as soon as possible.\n` +
+        `Using ESLint v8 instead of ESLint v9 because we detected the use of a legacy eslintrc ESLint configuration file or ignore file was detected: %s.\n` +
+        `Because ESLint v8 is no longer supported, Code Analyzer will be removing support for legacy eslint ESLint configuration files in the coming months.\n` +
+        `Therefore, we highly recommend that you migrate your legacy eslintrc configuration to the new flat configuration format as soon as possible.\n` +
         `Learn how at: https://eslint.org/docs/latest/use/configure/migration-guide`,
 
     ApplyingFlatConfigFile:
-        `Applying the ESLint "flat" configuration file: %s`,
+        `Applying the flat ESLint configuration file: %s`,
 
     UnableToCalculateBaseDirectory:
-        `Could not calculate base directory for ESLint from the list of relevant targeted files to scan.\n` +
+        `Couldn't calculate base directory for ESLint from the list of relevant targeted files to scan.\n` +
         `This can occur if you are attempting to target files from more than one drive (like C: and D: drives for example).\n` +
         `The list of relevant targeted files:\n%s`
 }
