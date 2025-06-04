@@ -51,34 +51,10 @@ export type RunOptions = {
 }
 
 /**
- * Abstract class that all engines must extend from in order to be possibly added to Code Analyzer.
+ * Abstract class that provides the ability to emit engine events
  */
-export abstract class Engine {
+export abstract class EngineEventEmitter {
     private readonly eventEmitter: EventEmitter = new EventEmitter();
-
-    /**
-     * Returns the name of the engine
-     */
-    abstract getName(): string
-
-    /**
-     * Returns an array of {@link RuleDescription} instances that describe the engine's rules available for selection
-     * @param describeOptions {@link DescribeOptions} instance
-     */
-    abstract describeRules(describeOptions: DescribeOptions): Promise<RuleDescription[]>
-
-    /**
-     * Runs a specific list of rules on a specified workspace and returns {@link EngineRunResults}
-     * @param ruleNames the names of the rules to run
-     * @param runOptions {@link RunOptions} instance containing the workspace to run rules against
-     */
-    abstract runRules(ruleNames: string[], runOptions: RunOptions): Promise<EngineRunResults>
-
-    /**
-     * Returns the version of the engine
-     * It is recommended that subclasses implement this method to return a semantic version string of X.Y.Z format
-     */
-    abstract getEngineVersion(): Promise<string>;
 
     /**
      * Attach a listener callback to one of the events that the engine may directly emit
@@ -153,6 +129,35 @@ export abstract class Engine {
             message
         });
     }
+}
+
+/**
+ * Abstract class that all engines must extend from in order to be possibly added to Code Analyzer.
+ */
+export abstract class Engine extends EngineEventEmitter {
+    /**
+     * Returns the name of the engine
+     */
+    abstract getName(): string
+
+    /**
+     * Returns an array of {@link RuleDescription} instances that describe the engine's rules available for selection
+     * @param describeOptions {@link DescribeOptions} instance
+     */
+    abstract describeRules(describeOptions: DescribeOptions): Promise<RuleDescription[]>
+
+    /**
+     * Runs a specific list of rules on a specified workspace and returns {@link EngineRunResults}
+     * @param ruleNames the names of the rules to run
+     * @param runOptions {@link RunOptions} instance containing the workspace to run rules against
+     */
+    abstract runRules(ruleNames: string[], runOptions: RunOptions): Promise<EngineRunResults>
+
+    /**
+     * Returns the version of the engine
+     * It is recommended that subclasses implement this method to return a semantic version string of X.Y.Z format
+     */
+    abstract getEngineVersion(): Promise<string>;
 }
 
 export function roundToHundredths(num: number): number {

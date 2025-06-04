@@ -62,26 +62,6 @@ const MESSAGE_CATALOG : { [key: string]: string } = {
     ESLintWarnedWhenScanningFile:
         `When scanning file '%s' with the eslint engine, ESLint gave the following warning:\n%s`,
 
-    ESLintThrewExceptionWithPluginConflictMessage: // TODO: Hopefully with W-18695515 we can manually resolve conflicts and we won't need this
-        `The eslint engine encountered a conflict between a plugin supplied by one of your ESLint configuration ` +
-        `files and a plugin supplied by the base configuration.\n` +
-        `To continue to use your custom config you may need to disable one or more of the provided base ` +
-        `configurations, by setting one or more of the following fields to true in your Code Analyzer configuration:\n` +
-        `  engines:\n` +
-        `    eslint:\n` +
-        `      disable_javascript_base_config: true\n` +
-        `      disable_lwc_base_config: true\n` +
-        `      disable_typescript_base_config: true\n` +
-        `Alternatively, you can use continue to use the base config by disabling your custom config by ` +
-        `setting 'eslint_config_file' to null and setting 'auto_discover_eslint_config' to false inside of your Code ` +
-        `Analyzer configuration:\n` +
-        `  engines:\n` +
-        `    eslint:\n` +
-        `      eslint_config_file: null\n` +
-        `      auto_discover_eslint_config: false\n\n` +
-        `Error thrown from %s':\n%s\n\n` +
-        'ESLint options used:\n%s',
-
     ESLintThrewExceptionWithUnknownMessage:
         `The eslint engine encountered an unexpected error thrown from '%s':\n%s\n\n` +
         'ESLint options used:\n%s',
@@ -109,7 +89,19 @@ const MESSAGE_CATALOG : { [key: string]: string } = {
     UnableToCalculateBaseDirectory:
         `Couldn't calculate base directory for ESLint from the list of relevant targeted files to scan.\n` +
         `This can occur if you are attempting to target files from more than one drive (like C: and D: drives for example).\n` +
-        `The list of relevant targeted files:\n%s`
+        `The list of relevant targeted files:\n%s`,
+
+    ConfigResolutionReplacedPlugin:
+        `While attempting to resolve the ESLint configuration array, the plugin reference '%s' was found to be associated to more than one plugin:\n` +
+        ` --> %s (from %s)\n` +
+        ` --> %s (most likely from %s)\n` +
+        `To avoid a conflict, the plugin from the %s has been replaced with %s.`,
+
+    BaseConfigLabel:
+        'base config',
+
+    CustomConfigFileLabel:
+        `custom config file '%s'`
 }
 
 /**

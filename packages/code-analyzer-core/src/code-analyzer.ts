@@ -1,3 +1,4 @@
+import {pathToFileURL} from "node:url";
 import {RuleImpl, RuleSelection, RuleSelectionImpl} from "./rules"
 import {
     EngineRunResults,
@@ -197,8 +198,7 @@ export class CodeAnalyzer {
                     (err instanceof Error) ? (err as Error).stack || (err as Error).message : (err as string));
                 resolvedModulePath = path.resolve(this.config.getConfigRoot(), enginePluginModulePath);
             }
-            // To avoid issues with dynamically importing absolute paths on Windows, we need to use 'file://' URI format
-            pluginModule = (await import(`file://${resolvedModulePath.replaceAll('\\', '/')}`));
+            pluginModule = await dynamicallyImport(resolvedModulePath);
         } catch (err) {
             throw new Error(getMessage('FailedToDynamicallyLoadModule', enginePluginModulePath, (err as Error).message), {cause: err});
         }
@@ -739,4 +739,13 @@ function wasFieldSuppliedByUser(engineOverrides: EngineOverrides, fieldName: str
 
 function findCaseInsensitiveKey(obj: object, key: string): string | undefined {
     return Object.keys(obj).find(k => k.toLowerCase() === key.toLowerCase());
+}
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+async function dynamicallyImport(absJavaScriptFilePath: string): Promise<any> {
+    // To avoid issues with dynamically importing absolute paths on Windows, we need to convert to url with pathToFileURL.
+    const moduleUrl: string = pathToFileURL(absJavaScriptFilePath).href;
+    const pluginModule = await import(moduleUrl);
+    /* istanbul ignore next */
+    return pluginModule.default ?? pluginModule; // Return the default export if it exists, otherwise the module itself
 }

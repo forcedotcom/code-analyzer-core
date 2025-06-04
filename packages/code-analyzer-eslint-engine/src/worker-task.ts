@@ -2,6 +2,7 @@ import * as path from "node:path";
 import * as fsp from "node:fs/promises";
 import {createTempDir} from "@salesforce/code-analyzer-engine-api/utils";
 import {Serializable, Worker} from "node:worker_threads";
+import {EngineEventEmitter, Event} from "@salesforce/code-analyzer-engine-api";
 
 /**
  * Generalized Abstract WorkerTask that makes it easy to create a task that can run in a background worker thread.
@@ -9,7 +10,7 @@ import {Serializable, Worker} from "node:worker_threads";
  * extends from this abstract class has been compiled to javascript and the constructor has passed in the location to
  * its javascript file.
  */
-export abstract class WorkerTask<Input extends Serializable, Output extends Serializable> {
+export abstract class WorkerTask<Input extends Serializable, Output extends Serializable> extends EngineEventEmitter {
     private readonly taskJsFilePath: string;
     private readonly taskClassName: string;
     private workerScriptFile?: string;
@@ -28,6 +29,7 @@ export abstract class WorkerTask<Input extends Serializable, Output extends Seri
      * @protected
      */
     protected constructor(taskJsFilePath: string, taskClassName: string) {
+        super();
         this.taskJsFilePath = taskJsFilePath;
         this.taskClassName = taskClassName;
     }
@@ -53,7 +55,13 @@ export abstract class WorkerTask<Input extends Serializable, Output extends Seri
         const worker: Worker = new Worker(await this.getWorkerScriptFile(), { workerData: { input: taskInput } });
 
         return new Promise((resolve, reject) => {
-            worker.on('message', resolve);
+            worker.on('message', (msg: Event | {type: "output", output: Output}) => {
+                if (msg.type === "output") {
+                    resolve(msg.output);
+                } else {
+                    this.emitEvent(msg);
+                }
+            });
             /* istanbul ignore next */
             worker.on('error', (err: Error) => reject(err));
             /* istanbul ignore next */
@@ -77,13 +85,19 @@ export abstract class WorkerTask<Input extends Serializable, Output extends Seri
         this.workerScriptFile = path.join(tempDir, `${this.taskClassName}_worker_script.cjs`);
         const workerScriptFileContents: string =
             `const { parentPort, workerData } = require("node:worker_threads");\n` +
+            `const engineApi = require("${require.resolve("@salesforce/code-analyzer-engine-api").replace(/\\/g, '\\\\')}");\n` +
             `const { ${this.taskClassName} } = require("${this.taskJsFilePath.replace(/\\/g, '\\\\')}");\n` + //  Need to escape slashes in strings for windows paths
             `(async () => {\n` +
             `    const input = workerData.input;\n` +
             `    const task = new ${this.taskClassName}();\n` +
+            `    for (const eventType of Object.values(engineApi.EventType)) {\n` +
+            `        task.onEvent(eventType, (evt) => {\n` +
+            `            parentPort.postMessage(evt);\n` +
+            `        });\n` +
+            `    }\n` +
             `    task._runInCurrentThreadInsteadofNewThread = true;\n` + // Important. Without this line we would have an infinite loop.
             `    const output = await task.run(input);\n` +
-            `    parentPort.postMessage(output);\n` +
+            `    parentPort.postMessage({type: "output", output: output});\n` +
             `})();\n`;
 
         await fsp.writeFile(this.workerScriptFile, workerScriptFileContents, 'utf-8');

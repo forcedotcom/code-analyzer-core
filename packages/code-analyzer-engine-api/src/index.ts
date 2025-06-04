@@ -23,7 +23,8 @@ export type {
 
 
 export {
-    Engine
+    Engine,
+    EngineEventEmitter
 } from "./engines"
 
 export type {

@@ -3,7 +3,8 @@ import {ESLint, Linter} from "eslint";
 import {builtinRules} from "eslint/use-at-your-own-risk";
 import {ESLintEngineConfig} from "./config";
 import {RulesMeta} from "@eslint/core";
-import {createESLint} from "./eslint-wrapper";
+import {ESLintFactory} from "./eslint-wrapper";
+import {EngineEventEmitter, EventType} from "@salesforce/code-analyzer-engine-api";
 
 export enum ESLintRuleStatus {
     ERROR = 2,
@@ -23,59 +24,70 @@ export type ESLintContext = {
     }
 }
 
-export async function calculateESLintContext(engineConfig: ESLintEngineConfig, eslintWorkspace: ESLintWorkspace, userConfigFile?: string): Promise<ESLintContext> {
-    const baseDirectory: string = await eslintWorkspace.getBaseDirectory();
-    const eslint: ESLint = createESLint(engineConfig, baseDirectory, userConfigFile);
-
-    const context: ESLintContext = {
-        baseDirectory: baseDirectory,
-        userConfigFile: userConfigFile,
-        filesToScan: await eslintWorkspace.getFilesToScan(eslint),
-        ruleInfo: {}
-    }
-
-    // Calculate configs for files
-    const calculatedConfigs: Linter.Config[] = await Promise.all(context.filesToScan.map(
-        f => eslint.calculateConfigForFile(f) as Linter.Config));
-
-    // Calculate rule statuses
-    for (const calculatedConfig of calculatedConfigs) {
-        const rulesRecord: Partial<Linter.RulesRecord> = calculatedConfig?.rules ?? {};
-        for (const [ruleName, ruleEntry] of Object.entries(rulesRecord)) {
-            /* istanbul ignore if */
-            if (!ruleEntry) {
-                continue;
-            }
-            const newStatus: ESLintRuleStatus = getRuleStatusFromRuleEntry(ruleEntry);
-            const existingStatus: ESLintRuleStatus | undefined = context.ruleInfo[ruleName]?.status;
-            if (existingStatus === undefined || existingStatus < newStatus) {
-                context.ruleInfo[ruleName] = {
-                    status: newStatus
-                };
-            }
+export class ESLintContextFactory extends EngineEventEmitter {
+    private readonly eslintFactory: ESLintFactory;
+    constructor() {
+        super();
+        this.eslintFactory = new ESLintFactory();
+        for (const eventType of Object.values(EventType)) { // Forward events from composed classes
+            this.eslintFactory.onEvent(eventType, this.emitEvent.bind(this));
         }
     }
 
-    // Walk through all configs, looking for plugins so that we can pull all the relevant rules from the plugins
-    for (const calculatedConfig of calculatedConfigs) {
-        for (const [pluginName, pluginConfig] of Object.entries(calculatedConfig?.plugins ?? /* istanbul ignore next */ {})) {
-            for (const [shortRuleName, ruleDefinition] of Object.entries(pluginConfig.rules ?? /* istanbul ignore next */ {})) {
-                const ruleName: string = pluginName + '/' + shortRuleName;
-                if (ruleName in context.ruleInfo) {
-                    context.ruleInfo[ruleName].meta = ruleDefinition.meta;
+    async calculateESLintContext(engineConfig: ESLintEngineConfig, eslintWorkspace: ESLintWorkspace, userConfigFile?: string): Promise<ESLintContext> {
+        const baseDirectory: string = await eslintWorkspace.getBaseDirectory();
+        const eslint: ESLint = await this.eslintFactory.createESLint(engineConfig, baseDirectory, userConfigFile);
+
+        const context: ESLintContext = {
+            baseDirectory: baseDirectory,
+            userConfigFile: userConfigFile,
+            filesToScan: await eslintWorkspace.getFilesToScan(eslint),
+            ruleInfo: {}
+        }
+
+        // Calculate configs for files
+        const calculatedConfigs: Linter.Config[] = await Promise.all(context.filesToScan.map(
+            f => eslint.calculateConfigForFile(f) as Linter.Config));
+
+        // Calculate rule statuses
+        for (const calculatedConfig of calculatedConfigs) {
+            const rulesRecord: Partial<Linter.RulesRecord> = calculatedConfig?.rules ?? {};
+            for (const [ruleName, ruleEntry] of Object.entries(rulesRecord)) {
+                /* istanbul ignore if */
+                if (!ruleEntry) {
+                    continue;
+                }
+                const newStatus: ESLintRuleStatus = getRuleStatusFromRuleEntry(ruleEntry);
+                const existingStatus: ESLintRuleStatus | undefined = context.ruleInfo[ruleName]?.status;
+                if (existingStatus === undefined || existingStatus < newStatus) {
+                    context.ruleInfo[ruleName] = {
+                        status: newStatus
+                    };
                 }
             }
         }
-    }
-    // Until ESLint 9 has moved the bundled rules into its own plugin, then we must use this to get the metadata
-    // for the built-in rules.
-    for (const [ruleName, ruleDefinition] of builtinRules) {
-        if (ruleName in context.ruleInfo) {
-            context.ruleInfo[ruleName].meta = ruleDefinition.meta;
-        }
-    }
 
-    return context;
+        // Walk through all configs, looking for plugins so that we can pull all the relevant rules from the plugins
+        for (const calculatedConfig of calculatedConfigs) {
+            for (const [pluginName, pluginConfig] of Object.entries(calculatedConfig?.plugins ?? /* istanbul ignore next */ {})) {
+                for (const [shortRuleName, ruleDefinition] of Object.entries(pluginConfig.rules ?? /* istanbul ignore next */ {})) {
+                    const ruleName: string = pluginName + '/' + shortRuleName;
+                    if (ruleName in context.ruleInfo) {
+                        context.ruleInfo[ruleName].meta = ruleDefinition.meta;
+                    }
+                }
+            }
+        }
+        // Until ESLint 9 has moved the bundled rules into its own plugin, then we must use this to get the metadata
+        // for the built-in rules.
+        for (const [ruleName, ruleDefinition] of builtinRules) {
+            if (ruleName in context.ruleInfo) {
+                context.ruleInfo[ruleName].meta = ruleDefinition.meta;
+            }
+        }
+
+        return context;
+    }
 }
 
 function getRuleStatusFromRuleEntry(ruleEntry: Linter.RuleEntry): ESLintRuleStatus {

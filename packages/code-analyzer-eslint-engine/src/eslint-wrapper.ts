@@ -1,25 +1,80 @@
+import * as semver from "semver";
+import {pathToFileURL} from 'url';
 import {ESLintEngineConfig} from "./config";
-import {ESLint} from "eslint";
+import {ESLint, Linter} from "eslint";
 import {BaseConfigFactory} from "./base-config";
 import {getMessage} from "./messages";
 import {makeStringifiable} from "./utils";
-import { indent } from "@salesforce/code-analyzer-engine-api/utils";
+import {indent} from "@salesforce/code-analyzer-engine-api/utils";
+import {EngineEventEmitter, LogLevel} from "@salesforce/code-analyzer-engine-api";
 
 
-export function createESLint(engineConfig: ESLintEngineConfig, baseDirectory: string, userConfigFile?: string, rulesToRun?: Set<string>): ESLintWrapper {
-    const baseConfigFactory: BaseConfigFactory = new BaseConfigFactory(engineConfig);
-    const eslintOptions: ESLint.Options = {
-        cwd: baseDirectory,                      // The base working directory. This must be an absolute path.
-        errorOnUnmatchedPattern: false,          // Unless set to false, the eslint.lintFiles() method will throw an error when no target files are found.
-        baseConfig: baseConfigFactory.createBaseConfigArray(),
-        overrideConfigFile: userConfigFile ?? true,  // Oddly enough ESLint documents that "true" means don't go auto looking for a config file (which we set if we didn't find one ourselves)
-    };
-    if (rulesToRun) {
-        // Using a ruleFilter ensures that we only run the rules that the user has selected. This approach is much
-        // cleaner than adding in another overrideConfig that turns off rules and saves us on some post-processing.
-        eslintOptions.ruleFilter = (arg: {ruleId: string}) => rulesToRun.has(arg.ruleId);
+export class ESLintFactory extends EngineEventEmitter {
+    async createESLint(engineConfig: ESLintEngineConfig, baseDirectory: string, userConfigFile?: string, rulesToRun?: Set<string>): Promise<ESLintWrapper> {
+        const baseConfigFactory: BaseConfigFactory = new BaseConfigFactory(engineConfig);
+        const baseConfigArray: Linter.Config[] = baseConfigFactory.createBaseConfigArray();
+
+        let userConfigArray: Linter.Config[] | undefined;
+        if (userConfigFile) {
+            userConfigArray = await loadUserConfigFile(userConfigFile);
+            const resolvedPluginsMap: Map<string, ESLint.Plugin> = this.createResolvedPluginsMap([...baseConfigArray, ...userConfigArray]);
+            const baseConfigLabel: string = getMessage('BaseConfigLabel');
+            const userConfigLabel: string = getMessage('CustomConfigFileLabel', userConfigFile);
+            this.resolvePluginsFor(baseConfigArray, resolvedPluginsMap, baseConfigLabel, userConfigLabel);
+            this.resolvePluginsFor(userConfigArray, resolvedPluginsMap, userConfigLabel, baseConfigLabel);
+        }
+
+        const eslintOptions: ESLint.Options = {
+            // The base working directory. This must be an absolute path.
+            cwd: baseDirectory,
+
+            // Unless set to false, the eslint.lintFiles() method will throw an error when no target files are found.
+            errorOnUnmatchedPattern: false,
+
+            // Set our base configuration array
+            baseConfig: baseConfigArray,
+
+            // Set the user's configuration array
+            overrideConfig: userConfigArray,
+
+            // "true" actually tells ESLint to not auto-detect config files (which we set since we manually process config files)
+            overrideConfigFile: true,
+
+            // Using a ruleFilter ensures that we only run the rules that the user has selected. This approach is much
+            // cleaner than adding in another overrideConfig that turns off rules and saves us on some post-processing.
+            ruleFilter: rulesToRun ? (arg: {ruleId: string}) => rulesToRun.has(arg.ruleId) : undefined
+        };
+
+        return new ESLintWrapper(eslintOptions);
     }
-    return new ESLintWrapper(eslintOptions);
+
+    private createResolvedPluginsMap(configArray: Linter.Config[]): Map<string, ESLint.Plugin> {
+        const resolvedPluginsMap: Map<string, ESLint.Plugin> = new Map();
+        for (const conf of configArray) {
+            for (const [pluginRef, plugin] of Object.entries(conf.plugins ?? {})) {
+                if (!resolvedPluginsMap.has(pluginRef)) {
+                    resolvedPluginsMap.set(pluginRef, plugin);
+                } else /* istanbul ignore if */ if (semver.gt(getPluginVersion(plugin), getPluginVersion(resolvedPluginsMap.get(pluginRef)!))) {
+                    resolvedPluginsMap.set(pluginRef, plugin);
+                }
+            }
+        }
+        return resolvedPluginsMap;
+    }
+
+    private resolvePluginsFor(configArray: Linter.Config[], resolvedPluginsMap: Map<string, ESLint.Plugin>, configLabel1: string, configLabel2: string): void {
+        for (const conf of configArray) {
+            for (const [pluginRef, plugin] of Object.entries(conf.plugins ?? {})) {
+                const resolvedPlugin: ESLint.Plugin = resolvedPluginsMap.get(pluginRef)!;
+                if (plugin !== resolvedPlugin) {
+                    conf.plugins![pluginRef] = resolvedPlugin;
+                    this.emitLogEvent(LogLevel.Debug, getMessage('ConfigResolutionReplacedPlugin',
+                        pluginRef, toLabel(plugin, pluginRef), configLabel1, toLabel(resolvedPlugin, pluginRef),
+                        configLabel2, configLabel1, toLabel(resolvedPlugin, pluginRef)));
+                }
+            }
+        }
+    }
 }
 
 
@@ -53,6 +108,14 @@ export class ESLintWrapper extends ESLint {
             throw await wrapESLintError(error, `ESLint.isPathIgnored("${filePath}")`, this._options);
         }
     }
+
+    override async lintFiles(patterns: string | string[]): Promise<ESLint.LintResult[]> {
+        try {
+            return await super.lintFiles(patterns);
+        } catch (error) { /* istanbul ignore next */
+            throw await wrapESLintError(error, `ESLint.lintFiles`, this._options);
+        }
+    }
 }
 
 class WrappedError extends Error {}
@@ -62,11 +125,11 @@ async function wrapESLintError(rawError: unknown, fcnCallStr: string, options: E
         return rawError; // Prevent wrapping multiple times
     }
 
-    // Before throwing the actual error message, we first want to validate the user's config file in an isolated
+    // Before throwing the actual error message, we first want to validate the user's config in an isolated
     // environment see if it is even valid when run by itself without any other configurations.
     // If not, then we display the simpler error and options.
-    if (typeof options.overrideConfigFile === "string") {
-        const simpleOptions: ESLint.Options = {overrideConfigFile: options.overrideConfigFile};
+    if (options.overrideConfig) {
+        const simpleOptions: ESLint.Options = {overrideConfig: options.overrideConfig, overrideConfigFile: true};
         try {
             const rawESLint: ESLint = new ESLint(simpleOptions);
             await rawESLint.calculateConfigForFile('dummy.js');
@@ -78,12 +141,9 @@ async function wrapESLintError(rawError: unknown, fcnCallStr: string, options: E
     }
 
     /* istanbul ignore next */
-    const rawErrMsg: string = indent(rawError instanceof Error ?
-        rawError.stack ?? rawError.message : String(rawError), '  | ');
-    const eslintOptionsStr: string = indent(stringifyESLintOptions(options), '    ');
-    const wrappedErrMsg: string = rawErrMsg.includes('Cannot redefine plugin') ? // TODO: Maybe with W-18695515 we can manually resolve conflicts
-        getMessage('ESLintThrewExceptionWithPluginConflictMessage', fcnCallStr, rawErrMsg, eslintOptionsStr)
-        : getMessage('ESLintThrewExceptionWithUnknownMessage', fcnCallStr, rawErrMsg, eslintOptionsStr);
+    const rawErrMsg: string = indent(rawError instanceof Error ? rawError.stack ?? rawError.message : String(rawError), '  | ');
+    const eslintOptionsStr: string = indent(stringifyESLintOptions(options));
+    const wrappedErrMsg: string = getMessage('ESLintThrewExceptionWithUnknownMessage', fcnCallStr, rawErrMsg, eslintOptionsStr);
     return new WrappedError(wrappedErrMsg, {cause: rawError});
 }
 
@@ -115,4 +175,32 @@ export function stringifyESLintOptions(options: ESLint.Options): string {
     };
     const serializableOptions: object = makeStringifiable(options, replacer) as object;
     return JSON.stringify(serializableOptions, null, 2);
+}
+
+async function loadUserConfigFile(userConfigFile: string): Promise<Linter.Config[]> {
+    const userConfigArray = await dynamicallyImport(userConfigFile);
+    return Array.isArray(userConfigArray) ? userConfigArray : [userConfigArray];
+}
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+async function dynamicallyImport(absJavaScriptFilePath: string): Promise<any> {
+    // To avoid issues with dynamically importing absolute paths on Windows, we need to convert to url with pathToFileURL.
+    const moduleUrl: string = pathToFileURL(absJavaScriptFilePath).href;
+    const pluginModule = await import(moduleUrl);
+    /* istanbul ignore next */
+    return pluginModule.default ?? pluginModule; // Return the default export if it exists, otherwise the module itself
+}
+
+function getPluginName(plugin: ESLint.Plugin, pluginRef: string): string {
+    /* istanbul ignore next */
+    return plugin.meta?.name ?? plugin.name ?? pluginRef;
+}
+
+function getPluginVersion(plugin: ESLint.Plugin): string {
+    /* istanbul ignore next */
+    return plugin.meta?.version ?? plugin.version ?? '0.0.0';
+}
+
+function toLabel(plugin: ESLint.Plugin, pluginRef: string): string {
+    return `${getPluginName(plugin, pluginRef)}@${getPluginVersion(plugin)}`;
 }
