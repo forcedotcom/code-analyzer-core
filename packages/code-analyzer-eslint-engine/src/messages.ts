@@ -92,7 +92,7 @@ const MESSAGE_CATALOG : { [key: string]: string } = {
         `The list of relevant targeted files:\n%s`,
 
     ConfigResolutionReplacedPlugin:
-        `While attempting to resolve the ESLint configuration array, the plugin reference '%s' was found to be associated to more than one plugin:\n` +
+        `While attempting to resolve the ESLint configuration array, the plugin reference '%s' was found to be associated with more than one plugin:\n` +
         ` --> %s (from %s)\n` +
         ` --> %s (most likely from %s)\n` +
         `To avoid a conflict, the plugin from the %s has been replaced with %s.`,
@@ -100,8 +100,8 @@ const MESSAGE_CATALOG : { [key: string]: string } = {
     BaseConfigLabel:
         'base config',
 
-    CustomConfigFileLabel:
-        `custom config file '%s'`
+    ConfigFileLabel:
+        `config file '%s'`
 }
 
 /**

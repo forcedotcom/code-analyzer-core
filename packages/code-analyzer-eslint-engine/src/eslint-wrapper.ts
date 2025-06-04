@@ -19,7 +19,7 @@ export class ESLintFactory extends EngineEventEmitter {
             userConfigArray = await loadUserConfigFile(userConfigFile);
             const resolvedPluginsMap: Map<string, ESLint.Plugin> = this.createResolvedPluginsMap([...baseConfigArray, ...userConfigArray]);
             const baseConfigLabel: string = getMessage('BaseConfigLabel');
-            const userConfigLabel: string = getMessage('CustomConfigFileLabel', userConfigFile);
+            const userConfigLabel: string = getMessage('ConfigFileLabel', userConfigFile);
             this.resolvePluginsFor(baseConfigArray, resolvedPluginsMap, baseConfigLabel, userConfigLabel);
             this.resolvePluginsFor(userConfigArray, resolvedPluginsMap, userConfigLabel, baseConfigLabel);
         }
