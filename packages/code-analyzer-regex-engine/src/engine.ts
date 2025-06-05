@@ -101,11 +101,32 @@ export class RegexEngine extends Engine {
         };
     }
 
-    private async runRulesForFile(file: string, ruleNames: string[]): Promise<Violation[]>{
-        const rulesToRun: string[] = ruleNames.filter(rule => this.shouldScanFile(file, rule));
-        const violationPromiseFunctions:  (() => Promise<Violation[]>)[] = rulesToRun.map(
-            ruleName => () => this.scanFile(file, ruleName));
-        return (await this.promiseLimiter.execute(violationPromiseFunctions)).flat();
+    private async runRulesForFile(fileName: string, ruleNames: string[]): Promise<Violation[]>{
+        const rulesToRun: string[] = ruleNames.filter(rule => this.shouldScanFile(fileName, rule));
+        if (rulesToRun.length === 0) {
+            return [];
+        }
+        const fileContents: string = await fs.promises.readFile(fileName, {encoding: 'utf8'});
+        let fileContentsPlusMetaData: string = '';
+        if (rulesToRun.some(ruleName => this.regexRules[ruleName]?.include_metadata)) {
+            const medataFileName = fileName + "-meta.xml";
+            try {
+                await fs.promises.access(medataFileName, fs.constants.F_OK);
+                fileContentsPlusMetaData = fileContents + await fs.promises.readFile(medataFileName, {encoding: 'utf8'});
+            } catch (_err) {
+                // Silently proceed if -meta.xml file doesn't exist or there was a problem reading it.
+            }
+        }
+
+        const violationPromises: Promise<Violation[]>[] = rulesToRun.map(
+            ruleName => {
+                if (this.regexRules[ruleName]?.include_metadata) {
+                    return this.scanFileContents(fileName, fileContentsPlusMetaData, ruleName)
+                } else {
+                    return this.scanFileContents(fileName, fileContents, ruleName)
+                }
+            });
+        return (await Promise.all(violationPromises)).flat();
     }
 
     private shouldScanFile(fileName: string, ruleName: string): boolean {
@@ -113,18 +134,8 @@ export class RegexEngine extends Engine {
         return !fileExtensions || fileExtensions.some(ext => fileName.toLowerCase().endsWith(ext));
     }
 
-    private async scanFile(fileName: string, ruleName: string): Promise<Violation[]> {
+    private async scanFileContents(fileName: string, fileContents: string, ruleName: string): Promise<Violation[]> {
         const violations: Violation[] = [];
-        let fileContents: string = await fs.promises.readFile(fileName, {encoding: 'utf8'})
-        if (this.regexRules[ruleName]?.include_metadata) {
-            const medataFileName = fileName + "-meta.xml";
-            try {
-                await fs.promises.access(medataFileName, fs.constants.F_OK);
-                fileContents = fileContents + await fs.promises.readFile(medataFileName, {encoding: 'utf8'}) ;
-            } catch (_err) {
-                // Silently proceed if -meta.xml file doesn't exist or there was a problem reading it.
-            }
-        }
         const regex: RegExp = this.getRegExpFor(ruleName);
         const newlineIndexes: number[] = getNewlineIndices(fileContents);
 

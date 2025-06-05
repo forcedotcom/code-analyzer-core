@@ -290,9 +290,14 @@ describe('Tests for selecting rules', () => {
             workspace: new engApi.Workspace('FixedId', [path.resolve('src'), path.resolve('test')])
         };
         const stubEngine1: stubs.StubEngine1 = plugin.getCreatedEngine('stubEngine1') as stubs.StubEngine1;
-        expect(stubEngine1.describeRulesCallHistory).toEqual([{describeOptions: expectedDescribeOptions}]);
+        expect(stubEngine1.describeRulesCallHistory).toHaveLength(1);
+        expect(stubEngine1.describeRulesCallHistory[0].describeOptions.logFolder).toEqual(expectedDescribeOptions.logFolder);
+        expect(stubEngine1.describeRulesCallHistory[0].describeOptions.workspace!.getWorkspaceId()).toEqual('FixedId');
         const stubEngine2: stubs.StubEngine2 = plugin.getCreatedEngine('stubEngine2') as stubs.StubEngine2;
-        expect(stubEngine2.describeRulesCallHistory).toEqual([{describeOptions: expectedDescribeOptions}]);
+        expect(stubEngine2.describeRulesCallHistory).toHaveLength(1);
+        expect(stubEngine2.describeRulesCallHistory[0].describeOptions.logFolder).toEqual(expectedDescribeOptions.logFolder);
+        expect(stubEngine2.describeRulesCallHistory[0].describeOptions.workspace!.getWorkspaceId()).toEqual('FixedId');
+
     });
 
     it("When selecting rules, then the log events should include the start and end of each engine's rule gathering", async () => {
