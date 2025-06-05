@@ -158,7 +158,16 @@ export class CodeAnalyzer {
             validatedTargets = (await Promise.all(targetPromises)).flat();
         }
 
-        return  new WorkspaceImpl(workspaceId, validatedWorkspaceFilesAndFolders, validatedTargets);
+        const workspace: Workspace = new WorkspaceImpl(workspaceId, validatedWorkspaceFilesAndFolders, validatedTargets);
+
+        // It appears that each of the engines is calling these methods all at the same time and so if we had N engines
+        // each creating N promises, the cache hasn't been populated, and so we are doing the work N times. If we
+        // instead invoke these immediately and cache the results, then when the engines call these, the cache will
+        // already be populated, thus giving a big performance boost.
+        await workspace.getWorkspaceFiles();
+        await workspace.getTargetedFiles();
+
+        return workspace;
     }
 
     /**
