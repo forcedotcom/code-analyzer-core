@@ -137,13 +137,13 @@ export class ESLintEngine extends Engine {
         const lintResults: ESLint.LintResult[] = await this._runESLintWorkerTask.run(runTaskInput);
 
         const engineResults: EngineRunResults = {
-            violations: this.toViolations(lintResults)
+            violations: this.toViolations(lintResults, new Set(ruleNames))
         };
         this.emitRunRulesProgressEvent(100);
         return engineResults;
     }
 
-    private toViolations(eslintResults: ESLint.LintResult[]): Violation[] {
+    private toViolations(eslintResults: ESLint.LintResult[], specifiedRules: Set<string>): Violation[] {
         const violations: Violation[] = [];
         for (const eslintResult of eslintResults) {
             for (const resultMsg of eslintResult.messages) {
@@ -152,7 +152,13 @@ export class ESLintEngine extends Engine {
                     continue;
                 }
                 const violation: Violation = toViolation(eslintResult.filePath, resultMsg);
-                violations.push(violation);
+
+                if (specifiedRules.has(violation.ruleName)) {
+                    violations.push(violation);
+                } else {
+                    // This may be possible if a user tries to suppress an eslint rule in their code that isn't available. We just ignore it but debug it just in case.
+                    this.emitLogEvent(LogLevel.Debug, getMessage('ViolationFoundFromUnregisteredRule', violation.ruleName, JSON.stringify(violation,null,2)))
+                }
             }
         }
         return violations;

@@ -651,6 +651,41 @@ describe('Typical tests for the runRules method of ESLintEngine', () => {
         const relevantDebugEvents: LogEvent[] = logEvents.filter(e => e.logLevel === LogLevel.Debug && e.message.includes("has been replaced with"));
         expect(relevantDebugEvents.length).toBeGreaterThan(0);
     });
+
+    it('When scanning a file that has a directive for a unknown rule, we should not error but issue debug log for it', async () => {
+        const engine: Engine = await createEngineFromPlugin({
+            ...DEFAULT_CONFIG_FOR_TESTING
+        });
+        const logEvents: LogEvent[] = [];
+        engine.onEvent(EventType.LogEvent, (event: LogEvent) => logEvents.push(event));
+
+        const runOptions: RunOptions = createRunOptions(new Workspace('id', [
+            path.join(testDataFolder, 'workspaceWithDirectiveAboutUnknownRule')]));
+
+        const results: EngineRunResults = await engine.runRules(['no-unused-vars'], runOptions);
+
+        expect(results.violations).toHaveLength(1);
+        expect(results.violations[0].ruleName).toEqual('no-unused-vars');
+
+        const filteredViolation: Violation = {
+            ruleName: "oops-rule",
+            message: "Definition for rule 'oops-rule' was not found.",
+            codeLocations: [{
+                file: path.join(testDataFolder, 'workspaceWithDirectiveAboutUnknownRule', 'containsDirectiveForUnknownRule.js'),
+                startLine: 4,
+                startColumn: 1,
+                endLine: 4,
+                endColumn: 31
+            }],
+            primaryLocationIndex: 0
+        };
+
+        expect(logEvents).toContainEqual({
+            type: EventType.LogEvent,
+            logLevel: LogLevel.Debug,
+            message: getMessage('ViolationFoundFromUnregisteredRule', 'oops-rule', JSON.stringify(filteredViolation, null, 2))
+        });
+    });
 });
 
 describe('Tests for the getEngineVersion method of ESLint Engine', () => {
