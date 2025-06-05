@@ -104,7 +104,6 @@ export class BaseConfigFactory {
             configs.push({
                 ...conf,
                 files: this.engineConfig.file_extensions.typescript.map(ext => `**/*${ext}`),
-                ignores: this.engineConfig.file_extensions.javascript.map(ext => `**/*${ext}`), // TODO: Confirm whether this works or not
                 languageOptions: {
                     ... (conf.languageOptions ?? {}),
                     parserOptions: {

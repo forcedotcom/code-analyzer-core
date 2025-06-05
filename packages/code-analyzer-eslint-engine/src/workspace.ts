@@ -97,7 +97,7 @@ class SpecifiedESLintWorkspace extends ESLintWorkspace {
             const relevantFileExtensions: string[] = [
                 ...this.fileExts.javascript,
                 ...this.fileExts.typescript,
-                ...this.fileExts.other]; // TODO: See if we can just pass in the relevantFileExtensions instead of the entire fileExt object
+                ...this.fileExts.other];
             this.cachedPreIgnoredFilesToScan = (await this.workspace.getTargetedFiles())
                 .filter(file => relevantFileExtensions.includes(path.extname(file).toLowerCase()));
         }

@@ -698,13 +698,15 @@ describe('Tests for emitting events', () => {
     it('When describeRules is called, then it emits correct progress events', async () => {
         await engine.describeRules(createDescribeOptions());
         // TODO: We should make our DescribeRulesProgressEvents more refined while calculating the eslint context information
-        expect(describeRulesProgressEvents.map(e => e.percentComplete)).toEqual([0, 10, 90, 95, 100]);
+        expect(describeRulesProgressEvents.map(e => e.percentComplete)).toEqual(
+            [0, 10, 14, 18, 33, 48, 63, 78, 82, 86, 90, 95, 100]);
     });
 
     it('When runRules is called, then it emits correct progress events', async () => {
         const runOptions: RunOptions = createRunOptions(new Workspace('id', [workspaceWithNoCustomConfig]));
         await engine.runRules(['no-unused-vars'], runOptions);
-        expect(runRulesProgressEvents.map(e => e.percentComplete)).toEqual([0, 30, 95, 100]);
+        expect(runRulesProgressEvents.map(e => e.percentComplete)).toEqual(
+            [0, 1.5, 3, 14.25, 25.5, 27, 28.5, 30, 62.5, 95, 100]);
     });
 });
 
