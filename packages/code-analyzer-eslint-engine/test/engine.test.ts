@@ -271,28 +271,6 @@ describe('Tests for the describeRules method of ESLintEngine', () => {
         expect(ruleDescriptions).toEqual(EXPECTED_RULES_FOR_BASE_PLUS_CONFIG_THAT_MODIFIES_EXISTING_RULES);
     });
 
-    it('When workspace contains custom config that installs same plugin as one of our base plugins, we make eslint conflict error helpful', async () => {
-        if (os.platform().startsWith('win')) {
-            // Sadly this test takes like 30 to 60 seconds on windows. I wish there was an alternative way to write this
-            // test, but we need a workspace that has the eslint plugin lwc plugin installed with all of its
-            // dependencies and unzipping the workspace is the best thing I could come up with.
-            // For now, we skip this test only on windows.
-            return;
-        }
-        const workspaceZip: string = path.join(testDataFolder, 'workspaceWithConflictingConfig.zip');
-        const tempFolder: string = fs.mkdtempSync(path.join(os.tmpdir(), 'engine-test'));
-        await unzipToFolder(workspaceZip, tempFolder);
-        const workspaceFolder: string = path.join(tempFolder, 'workspaceWithConflictingConfig');
-
-        const engine: Engine = await createEngineFromPlugin({...DEFAULT_CONFIG_FOR_TESTING,
-            auto_discover_eslint_config: true,
-            config_root: workspaceFolder
-        });
-
-        // TODO: Maybe with W-18695515 we can manually resolve conflicts so we can avoid throwing an error
-        await expect(engine.describeRules(createDescribeOptions())).rejects.toThrow(/The eslint engine encountered a conflict.*/);
-    });
-
     it('When auto_discover_eslint_config=false and eslint_config_file is not provided, then no user config should be applied', async () => {
         // While sitting in workspaceThatHasCustomConfigModifyingExistingRules, we turn off customization
         const origWorkingDir: string = process.cwd();
@@ -625,6 +603,53 @@ describe('Typical tests for the runRules method of ESLintEngine', () => {
         expect(results.violations).toHaveLength(2); // Only TS Violations show up because ignore file ignores js files
         expect(results.violations).toContainEqual(expectedTsViolation_noInvalidRegexp);
         expect(results.violations).toContainEqual(expectedTsViolation_noWrapperObjectTypes);
+    });
+
+    it('When workspace contains custom config that installs same plugin as one of our base plugins, we resolve plugins, describe and run rules properly', async () => {
+        if (os.platform().startsWith('win')) {
+            // Sadly this test takes like 30 to 60 seconds on windows because it requires unzipping a workspace.
+            // I wish there was an alternative way to write this test, but we need a workspace that as various
+            // plugins (typescript and lwc plugins) installed that are different version than our current version.
+            // Unzipping the workspace is the best thing I could come up with. For now, we skip this test only on windows.
+            return;
+        }
+        const workspaceZip: string = path.join(testDataFolder, 'workspaceWithConflictingConfig.zip');
+        const tempFolder: string = fs.mkdtempSync(path.join(os.tmpdir(), 'engine-test'));
+        await unzipToFolder(workspaceZip, tempFolder);
+        const workspaceFolder: string = path.join(tempFolder, 'workspaceWithConflictingConfig');
+
+        const engine: Engine = await createEngineFromPlugin({...DEFAULT_CONFIG_FOR_TESTING,
+            auto_discover_eslint_config: true,
+            config_root: workspaceFolder
+        });
+        const logEvents: LogEvent[] = [];
+        engine.onEvent(EventType.LogEvent, (event: LogEvent) => logEvents.push(event));
+
+        const workspace: Workspace = new Workspace('id', [workspaceFolder]);
+        const ruleDescriptions: RuleDescription[] = await engine.describeRules(createDescribeOptions(workspace));
+
+        // Sanity check a few rules
+        const ruleNames: string[] = ruleDescriptions.map(r => r.name);
+        expect(ruleNames).toContain('no-invalid-regexp');
+        expect(ruleNames).toContain('@typescript-eslint/no-wrapper-object-types');
+        expect(ruleNames).toContain('@lwc/lwc-platform/no-aura');
+
+        const results: EngineRunResults = await engine.runRules(
+            ['no-invalid-regexp', '@typescript-eslint/no-wrapper-object-types'],
+            createRunOptions(workspace));
+
+        // Verify the violations look good
+        expect(results.violations).toHaveLength(3);
+        const violatedRules: string[] =  results.violations.map(v => v.ruleName);
+        expect(violatedRules).toContain('no-invalid-regexp'); // 2 of these
+        expect(violatedRules).toContain('@typescript-eslint/no-wrapper-object-types'); // 1 of these
+        const fileNamesWithViolations: string[] = results.violations.map(v => path.basename(v.codeLocations[0].file));
+        expect(fileNamesWithViolations).toContain('dummy.js');
+        expect(fileNamesWithViolations).toContain('dummy.ts');
+
+        // Confirm we push relevant message to debug log
+        const relevantDebugEvents: LogEvent[] = logEvents.filter(e => e.logLevel === LogLevel.Debug && e.message.includes("has been replaced with"));
+        expect(relevantDebugEvents.length).toBeGreaterThan(0);
     });
 });
 

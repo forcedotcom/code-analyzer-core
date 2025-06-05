@@ -17,10 +17,10 @@
     "@types/js-yaml": "^4.0.9",
     "@types/node": "^20.0.0",
     "@types/sarif": "^2.1.7",
-    "@types/semver": "^7.5.8",
+    "@types/semver": "^7.7.0",
     "csv-stringify": "^6.5.2",
     "js-yaml": "^4.1.0",
-    "semver": "^7.7.0",
+    "semver": "^7.7.2",
     "xmlbuilder": "^15.1.1"
   },
   "devDependencies": {

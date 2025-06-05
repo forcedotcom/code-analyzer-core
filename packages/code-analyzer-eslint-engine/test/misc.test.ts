@@ -1,6 +1,6 @@
 import * as path from "node:path";
 import {DEFAULT_CONFIG, ESLintEngineConfig, FileExtensionsObject} from "../src/config";
-import {createESLint, ESLintWrapper, stringifyESLintOptions} from "../src/eslint-wrapper";
+import {ESLintFactory, ESLintWrapper, stringifyESLintOptions} from "../src/eslint-wrapper";
 import {ESLintWorkspace} from "../src/workspace";
 import {Workspace} from "@salesforce/code-analyzer-engine-api";
 import process from "node:process";
@@ -12,8 +12,10 @@ const DEFAULT_CONFIG_FOR_TESTING: ESLintEngineConfig = {
 const testDataFolder: string = path.join(__dirname, 'test-data');
 
 describe("Miscellaneous tests that test sensitive implementation details more directly", () => {
-    it("Make sure that the ESLint.Options can be stringified to an output that is no larger than 1000 lines", () => {
-        const eslint: ESLintWrapper = createESLint(DEFAULT_CONFIG_FOR_TESTING, __dirname, undefined, new Set(['dummyRuleName']));
+    it("Make sure that the ESLint.Options can be stringified to an output that is no larger than 1000 lines", async () => {
+        const eslintFactory: ESLintFactory = new ESLintFactory();
+        const eslint: ESLintWrapper = await eslintFactory.createESLint(
+            DEFAULT_CONFIG_FOR_TESTING, __dirname, undefined, new Set(['dummyRuleName']));
         const optionsString: string = stringifyESLintOptions(eslint._options);
         const numLines: number = optionsString.split('\n').length;
         expect(numLines).toBeLessThanOrEqual(1000);

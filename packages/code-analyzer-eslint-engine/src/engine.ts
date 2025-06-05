@@ -22,16 +22,17 @@ import {ESLintWorkspace} from "./workspace";
 import {RULE_MAPPINGS} from "./rule-mappings";
 import {indent} from '@salesforce/code-analyzer-engine-api/utils';
 import {RunESLintWorkerTask, RunESLintWorkerTaskInput} from "./run-eslint-worker-task";
-import {calculateESLintContext, ESLintContext, ESLintRuleStatus} from "./eslint-context";
+import {ESLintContext, ESLintContextFactory, ESLintRuleStatus} from "./eslint-context";
 
 export class ESLintEngine extends Engine {
     static readonly NAME = "eslint";
 
     // Keeping this public so that tests can modify the _runInCurrentThreadInsteadofNewThread property if needed
-    readonly _runESLintWorkerTask: RunESLintWorkerTask  = new RunESLintWorkerTask();
+    readonly _runESLintWorkerTask: RunESLintWorkerTask;
 
     private readonly engineConfig: ESLintEngineConfig;
     private readonly delegateV8Engine: Engine;
+    private readonly contextFactory: ESLintContextFactory;
     private userConfigInfoCache: Map<string, UserConfigInfo> = new Map();
     private eslintContextCache: Map<string, ESLintContext> = new Map();
 
@@ -39,8 +40,12 @@ export class ESLintEngine extends Engine {
         super();
         this.engineConfig = engineConfig;
         this.delegateV8Engine = delegateV8Engine;
-        for (const eventType of Object.values(EventType)) {
+        this.contextFactory = new ESLintContextFactory();
+        this._runESLintWorkerTask = new RunESLintWorkerTask();
+        for (const eventType of Object.values(EventType)) { // Forward events from composed classes
             this.delegateV8Engine.onEvent(eventType, this.emitEvent.bind(this));
+            this.contextFactory.onEvent(eventType, this.emitEvent.bind(this));
+            this._runESLintWorkerTask.onEvent(eventType, this.emitEvent.bind(this));
         }
     }
 
@@ -62,7 +67,7 @@ export class ESLintEngine extends Engine {
 
         if (userConfigInfo.getState() === UserConfigState.LEGACY_USER_CONFIG) {
             this.emitLogEvent(LogLevel.Warn, getMessage('DetectedLegacyConfig',
-                userConfigInfo.getChosenUserConfigFile() ?? userConfigInfo.getChosenUserIgnoreFile()!));
+                userConfigInfo.getChosenUserConfigFile() ?? /* istanbul ignore next */ userConfigInfo.getChosenUserIgnoreFile()!));
             return this.delegateV8Engine.describeRules(describeOptions);
         }
 
@@ -174,7 +179,7 @@ export class ESLintEngine extends Engine {
             const userConfigInfo: UserConfigInfo = this.getUserConfigInfo(workspace);
             const eslintWorkspace: ESLintWorkspace = ESLintWorkspace.from(workspace,
                 this.engineConfig.config_root, this.engineConfig.file_extensions, userConfigInfo.getChosenUserConfigFile());
-            const context: ESLintContext = await calculateESLintContext(this.engineConfig, eslintWorkspace,
+            const context: ESLintContext = await this.contextFactory.calculateESLintContext(this.engineConfig, eslintWorkspace,
                 userConfigInfo.getChosenUserConfigFile());
             this.eslintContextCache.set(cacheKey, context);
         }
