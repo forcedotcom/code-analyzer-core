@@ -651,6 +651,41 @@ describe('Typical tests for the runRules method of ESLintEngine', () => {
         const relevantDebugEvents: LogEvent[] = logEvents.filter(e => e.logLevel === LogLevel.Debug && e.message.includes("has been replaced with"));
         expect(relevantDebugEvents.length).toBeGreaterThan(0);
     });
+
+    it('When scanning a file that has a directive for a unknown rule, we should not error but issue debug log for it', async () => {
+        const engine: Engine = await createEngineFromPlugin({
+            ...DEFAULT_CONFIG_FOR_TESTING
+        });
+        const logEvents: LogEvent[] = [];
+        engine.onEvent(EventType.LogEvent, (event: LogEvent) => logEvents.push(event));
+
+        const runOptions: RunOptions = createRunOptions(new Workspace('id', [
+            path.join(testDataFolder, 'workspaceWithDirectiveAboutUnknownRule')]));
+
+        const results: EngineRunResults = await engine.runRules(['no-unused-vars'], runOptions);
+
+        expect(results.violations).toHaveLength(1);
+        expect(results.violations[0].ruleName).toEqual('no-unused-vars');
+
+        const filteredViolation: Violation = {
+            ruleName: "oops-rule",
+            message: "Definition for rule 'oops-rule' was not found.",
+            codeLocations: [{
+                file: path.join(testDataFolder, 'workspaceWithDirectiveAboutUnknownRule', 'containsDirectiveForUnknownRule.js'),
+                startLine: 4,
+                startColumn: 1,
+                endLine: 4,
+                endColumn: 31
+            }],
+            primaryLocationIndex: 0
+        };
+
+        expect(logEvents).toContainEqual({
+            type: EventType.LogEvent,
+            logLevel: LogLevel.Debug,
+            message: getMessage('ViolationFoundFromUnregisteredRule', 'oops-rule', JSON.stringify(filteredViolation, null, 2))
+        });
+    });
 });
 
 describe('Tests for the getEngineVersion method of ESLint Engine', () => {
@@ -698,13 +733,15 @@ describe('Tests for emitting events', () => {
     it('When describeRules is called, then it emits correct progress events', async () => {
         await engine.describeRules(createDescribeOptions());
         // TODO: We should make our DescribeRulesProgressEvents more refined while calculating the eslint context information
-        expect(describeRulesProgressEvents.map(e => e.percentComplete)).toEqual([0, 10, 90, 95, 100]);
+        expect(describeRulesProgressEvents.map(e => e.percentComplete)).toEqual(
+            [0, 10, 14, 18, 33, 48, 63, 78, 82, 86, 90, 95, 100]);
     });
 
     it('When runRules is called, then it emits correct progress events', async () => {
         const runOptions: RunOptions = createRunOptions(new Workspace('id', [workspaceWithNoCustomConfig]));
         await engine.runRules(['no-unused-vars'], runOptions);
-        expect(runRulesProgressEvents.map(e => e.percentComplete)).toEqual([0, 30, 95, 100]);
+        expect(runRulesProgressEvents.map(e => e.percentComplete)).toEqual(
+            [0, 1.5, 3, 14.25, 25.5, 27, 28.5, 30, 62.5, 95, 100]);
     });
 });
 

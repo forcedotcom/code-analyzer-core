@@ -66,6 +66,11 @@ const MESSAGE_CATALOG : { [key: string]: string } = {
         `The eslint engine encountered an unexpected error thrown from '%s':\n%s\n\n` +
         'ESLint options used:\n%s',
 
+    ViolationFoundFromUnregisteredRule:
+        `A rule with name '%s' produced a violation, but this rule was not registered with the 'eslint' engine so it will not be included in the results.\n` +
+        `This may occur if in your file you are using inline comments to attempt to disable or configure this rule even though it is unknown to ESLint and Code Analyzer.\n` +
+        `Ignored Violation:\n%s`,
+
     UnusedESLintConfigFile:
         `The ESLint configuration file '%s' was found but not applied.\n` +
         `To apply this configuration file, set it as the eslint_config_file value in your Code Analyzer configuration. For example:\n` +

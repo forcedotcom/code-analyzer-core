@@ -3,7 +3,7 @@ import {ESLint, Linter} from "eslint";
 import {builtinRules} from "eslint/use-at-your-own-risk";
 import {ESLintEngineConfig} from "./config";
 import {RulesMeta} from "@eslint/core";
-import {ESLintFactory} from "./eslint-wrapper";
+import {ESLintOptionsFactory, ESLintWrapper} from "./eslint-wrapper";
 import {EngineEventEmitter, EventType} from "@salesforce/code-analyzer-engine-api";
 
 export enum ESLintRuleStatus {
@@ -25,18 +25,21 @@ export type ESLintContext = {
 }
 
 export class ESLintContextFactory extends EngineEventEmitter {
-    private readonly eslintFactory: ESLintFactory;
+    private readonly eslintOptionsFactory: ESLintOptionsFactory;
     constructor() {
         super();
-        this.eslintFactory = new ESLintFactory();
+        this.eslintOptionsFactory = new ESLintOptionsFactory();
         for (const eventType of Object.values(EventType)) { // Forward events from composed classes
-            this.eslintFactory.onEvent(eventType, this.emitEvent.bind(this));
+            this.eslintOptionsFactory.onEvent(eventType, this.emitEvent.bind(this));
         }
     }
 
-    async calculateESLintContext(engineConfig: ESLintEngineConfig, eslintWorkspace: ESLintWorkspace, userConfigFile?: string): Promise<ESLintContext> {
+    async calculateESLintContext(engineConfig: ESLintEngineConfig, eslintWorkspace: ESLintWorkspace,
+                                 userConfigFile: string | undefined, emitProgress: (perc:number)=>void): Promise<ESLintContext> {
         const baseDirectory: string = await eslintWorkspace.getBaseDirectory();
-        const eslint: ESLint = await this.eslintFactory.createESLint(engineConfig, baseDirectory, userConfigFile);
+        const eslintOptions: ESLint.Options = await this.eslintOptionsFactory.createESLintOptions(engineConfig, baseDirectory, userConfigFile);
+        const eslint: ESLint = new ESLintWrapper(eslintOptions);
+        emitProgress(5);
 
         const context: ESLintContext = {
             baseDirectory: baseDirectory,
@@ -44,10 +47,16 @@ export class ESLintContextFactory extends EngineEventEmitter {
             filesToScan: await eslintWorkspace.getFilesToScan(eslint),
             ruleInfo: {}
         }
+        emitProgress(10);
 
         // Calculate configs for files
-        const calculatedConfigs: Linter.Config[] = await Promise.all(context.filesToScan.map(
-            f => eslint.calculateConfigForFile(f) as Linter.Config));
+        let numFilesProcessed: number = 0;
+        const numFilesToScan: number = context.filesToScan.length;
+        const calculatedConfigs: Linter.Config[] = await Promise.all(context.filesToScan.map(async (f) => {
+            const config = await eslint.calculateConfigForFile(f) as Linter.Config;
+            emitProgress(10 + 75*(++numFilesProcessed / numFilesToScan)); // 10% to 85%
+            return config;
+        }));
 
         // Calculate rule statuses
         for (const calculatedConfig of calculatedConfigs) {
@@ -66,6 +75,7 @@ export class ESLintContextFactory extends EngineEventEmitter {
                 }
             }
         }
+        emitProgress(90);
 
         // Walk through all configs, looking for plugins so that we can pull all the relevant rules from the plugins
         for (const calculatedConfig of calculatedConfigs) {
@@ -78,6 +88,8 @@ export class ESLintContextFactory extends EngineEventEmitter {
                 }
             }
         }
+        emitProgress(95);
+
         // Until ESLint 9 has moved the bundled rules into its own plugin, then we must use this to get the metadata
         // for the built-in rules.
         for (const [ruleName, ruleDefinition] of builtinRules) {
@@ -86,6 +98,7 @@ export class ESLintContextFactory extends EngineEventEmitter {
             }
         }
 
+        emitProgress(100);
         return context;
     }
 }

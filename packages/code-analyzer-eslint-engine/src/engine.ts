@@ -83,9 +83,10 @@ export class ESLintEngine extends Engine {
         }
 
         this.emitDescribeRulesProgressEvent(10);
-        const context: ESLintContext = await this.getESLintContext(describeOptions.workspace); // TODO: Add additional progress events while calculating the context
+        const context: ESLintContext = await this.getESLintContext(describeOptions.workspace, (perc: number) => {
+            this.emitDescribeRulesProgressEvent(10 + 80*(perc/100)); // 10% to 90%
+        });
 
-        this.emitDescribeRulesProgressEvent(90);
         let ruleDescriptions: RuleDescription[] = [];
         for (const [ruleName, ruleState] of Object.entries(context.ruleInfo)) {
             // If a user's configuration has a rule explicitly turned off, then since we have no way of turning
@@ -113,8 +114,9 @@ export class ESLintEngine extends Engine {
             return this.delegateV8Engine.runRules(ruleNames, runOptions);
         }
 
-        const context: ESLintContext = await this.getESLintContext(runOptions.workspace);
-        this.emitRunRulesProgressEvent(30);
+        const context: ESLintContext = await this.getESLintContext(runOptions.workspace, (perc: number) => {
+            this.emitRunRulesProgressEvent(30*(perc/100)); // 0% to 30%
+        });
 
         if (context.filesToScan.length === 0) {
             this.emitRunRulesProgressEvent(100);
@@ -129,19 +131,19 @@ export class ESLintEngine extends Engine {
         const runTaskInput: RunESLintWorkerTaskInput = {
             rulesToRun: ruleNames,
             engineConfig: this.engineConfig,
-            eslintContext: context
+            eslintContext: context,
+            progressRange: [30, 95] // 30% to 95%
         }
-        const lintResults: ESLint.LintResult[] = await this._runESLintWorkerTask.run(runTaskInput); // TODO: See if we can add in progress events when ESLint is running (maybe with a custom plugin?)
-        this.emitRunRulesProgressEvent(95);
+        const lintResults: ESLint.LintResult[] = await this._runESLintWorkerTask.run(runTaskInput);
 
         const engineResults: EngineRunResults = {
-            violations: this.toViolations(lintResults)
+            violations: this.toViolations(lintResults, new Set(ruleNames))
         };
         this.emitRunRulesProgressEvent(100);
         return engineResults;
     }
 
-    private toViolations(eslintResults: ESLint.LintResult[]): Violation[] {
+    private toViolations(eslintResults: ESLint.LintResult[], specifiedRules: Set<string>): Violation[] {
         const violations: Violation[] = [];
         for (const eslintResult of eslintResults) {
             for (const resultMsg of eslintResult.messages) {
@@ -150,7 +152,13 @@ export class ESLintEngine extends Engine {
                     continue;
                 }
                 const violation: Violation = toViolation(eslintResult.filePath, resultMsg);
-                violations.push(violation);
+
+                if (specifiedRules.has(violation.ruleName)) {
+                    violations.push(violation);
+                } else {
+                    // This may be possible if a user tries to suppress an eslint rule in their code that isn't available. We just ignore it but debug it just in case.
+                    this.emitLogEvent(LogLevel.Debug, getMessage('ViolationFoundFromUnregisteredRule', violation.ruleName, JSON.stringify(violation,null,2)))
+                }
             }
         }
         return violations;
@@ -173,14 +181,14 @@ export class ESLintEngine extends Engine {
         return this.userConfigInfoCache.get(cacheKey)!;
     }
 
-    private async getESLintContext(workspace?: Workspace): Promise<ESLintContext> {
+    private async getESLintContext(workspace: Workspace | undefined, emitProgress: (perc: number) => void): Promise<ESLintContext> {
         const cacheKey: string = workspace?.getWorkspaceId() ?? process.cwd();
         if (!this.eslintContextCache.has(cacheKey)) {
             const userConfigInfo: UserConfigInfo = this.getUserConfigInfo(workspace);
             const eslintWorkspace: ESLintWorkspace = ESLintWorkspace.from(workspace,
                 this.engineConfig.config_root, this.engineConfig.file_extensions, userConfigInfo.getChosenUserConfigFile());
             const context: ESLintContext = await this.contextFactory.calculateESLintContext(this.engineConfig, eslintWorkspace,
-                userConfigInfo.getChosenUserConfigFile());
+                userConfigInfo.getChosenUserConfigFile(), emitProgress);
             this.eslintContextCache.set(cacheKey, context);
         }
         return this.eslintContextCache.get(cacheKey)!;

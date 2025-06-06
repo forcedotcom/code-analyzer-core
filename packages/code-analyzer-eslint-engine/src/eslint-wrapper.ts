@@ -9,8 +9,8 @@ import {indent} from "@salesforce/code-analyzer-engine-api/utils";
 import {EngineEventEmitter, LogLevel} from "@salesforce/code-analyzer-engine-api";
 
 
-export class ESLintFactory extends EngineEventEmitter {
-    async createESLint(engineConfig: ESLintEngineConfig, baseDirectory: string, userConfigFile?: string, rulesToRun?: Set<string>): Promise<ESLintWrapper> {
+export class ESLintOptionsFactory extends EngineEventEmitter {
+    async createESLintOptions(engineConfig: ESLintEngineConfig, baseDirectory: string, userConfigFile?: string): Promise<ESLint.Options> {
         const baseConfigFactory: BaseConfigFactory = new BaseConfigFactory(engineConfig);
         const baseConfigArray: Linter.Config[] = baseConfigFactory.createBaseConfigArray();
 
@@ -24,7 +24,7 @@ export class ESLintFactory extends EngineEventEmitter {
             this.resolvePluginsFor(userConfigArray, resolvedPluginsMap, userConfigLabel, baseConfigLabel);
         }
 
-        const eslintOptions: ESLint.Options = {
+        return {
             // The base working directory. This must be an absolute path.
             cwd: baseDirectory,
 
@@ -39,13 +39,7 @@ export class ESLintFactory extends EngineEventEmitter {
 
             // "true" actually tells ESLint to not auto-detect config files (which we set since we manually process config files)
             overrideConfigFile: true,
-
-            // Using a ruleFilter ensures that we only run the rules that the user has selected. This approach is much
-            // cleaner than adding in another overrideConfig that turns off rules and saves us on some post-processing.
-            ruleFilter: rulesToRun ? (arg: {ruleId: string}) => rulesToRun.has(arg.ruleId) : undefined
         };
-
-        return new ESLintWrapper(eslintOptions);
     }
 
     private createResolvedPluginsMap(configArray: Linter.Config[]): Map<string, ESLint.Plugin> {

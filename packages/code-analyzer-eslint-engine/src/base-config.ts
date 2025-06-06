@@ -4,6 +4,7 @@ import eslintTs from "typescript-eslint";
 import lwcEslintPluginLwcPlatform from "@lwc/eslint-plugin-lwc-platform";
 import salesforceEslintConfigLwc from "@salesforce/eslint-config-lwc";
 import {ESLintEngineConfig} from "./config";
+import globals from "globals";
 
 export class BaseConfigFactory {
     private readonly engineConfig: ESLintEngineConfig;
@@ -25,7 +26,13 @@ export class BaseConfigFactory {
                     "$ContentAsset": "readonly", // ^
                     "$Label": "readonly",        // ^
                     "$Locale": "readonly",       // ^
-                    "$Resource": "readonly"      // ^
+                    "$Resource": "readonly",     // ^
+
+                    // ESLint doesn't natively know about various browser and node globals. So we add them here to
+                    // remove false positives for our users.
+                    ... globals.node,
+                    ... globals.browser,
+                    ... globals.es2017
                 }
             }
         }];
@@ -104,7 +111,6 @@ export class BaseConfigFactory {
             configs.push({
                 ...conf,
                 files: this.engineConfig.file_extensions.typescript.map(ext => `**/*${ext}`),
-                ignores: this.engineConfig.file_extensions.javascript.map(ext => `**/*${ext}`), // TODO: Confirm whether this works or not
                 languageOptions: {
                     ... (conf.languageOptions ?? {}),
                     parserOptions: {

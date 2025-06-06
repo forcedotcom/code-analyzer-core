@@ -1,9 +1,10 @@
 import * as path from "node:path";
-import {DEFAULT_CONFIG, ESLintEngineConfig, FileExtensionsObject} from "../src/config";
-import {ESLintFactory, ESLintWrapper, stringifyESLintOptions} from "../src/eslint-wrapper";
-import {ESLintWorkspace} from "../src/workspace";
-import {Workspace} from "@salesforce/code-analyzer-engine-api";
 import process from "node:process";
+import {ESLint} from "eslint";
+import {Workspace} from "@salesforce/code-analyzer-engine-api";
+import {DEFAULT_CONFIG, ESLintEngineConfig, FileExtensionsObject} from "../src/config";
+import {ESLintOptionsFactory, stringifyESLintOptions} from "../src/eslint-wrapper";
+import {ESLintWorkspace} from "../src/workspace";
 
 const DEFAULT_CONFIG_FOR_TESTING: ESLintEngineConfig = {
     ...DEFAULT_CONFIG,
@@ -13,10 +14,11 @@ const testDataFolder: string = path.join(__dirname, 'test-data');
 
 describe("Miscellaneous tests that test sensitive implementation details more directly", () => {
     it("Make sure that the ESLint.Options can be stringified to an output that is no larger than 1000 lines", async () => {
-        const eslintFactory: ESLintFactory = new ESLintFactory();
-        const eslint: ESLintWrapper = await eslintFactory.createESLint(
-            DEFAULT_CONFIG_FOR_TESTING, __dirname, undefined, new Set(['dummyRuleName']));
-        const optionsString: string = stringifyESLintOptions(eslint._options);
+        const eslintOptionsFactory: ESLintOptionsFactory = new ESLintOptionsFactory();
+        const eslintOptions: ESLint.Options = await eslintOptionsFactory.createESLintOptions(
+            DEFAULT_CONFIG_FOR_TESTING, __dirname, undefined);
+        eslintOptions.ruleFilter = () => true; // Doesn't matter
+        const optionsString: string = stringifyESLintOptions(eslintOptions);
         const numLines: number = optionsString.split('\n').length;
         expect(numLines).toBeLessThanOrEqual(1000);
 
