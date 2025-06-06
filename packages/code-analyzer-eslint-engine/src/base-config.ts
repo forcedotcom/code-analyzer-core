@@ -25,7 +25,11 @@ export class BaseConfigFactory {
                     "$ContentAsset": "readonly", // ^
                     "$Label": "readonly",        // ^
                     "$Locale": "readonly",       // ^
-                    "$Resource": "readonly"      // ^
+                    "$Resource": "readonly",     // ^
+
+                    // ESLint can sometimes think that a file is an ESM module instead of a CommonJs module, so it
+                    // can flag "require" as an unknown at times. To prevent this, we add it to the globals:
+                    "require": "readonly"
                 }
             }
         }];
