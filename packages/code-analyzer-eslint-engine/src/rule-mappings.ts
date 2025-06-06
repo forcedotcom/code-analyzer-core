@@ -556,6 +556,10 @@ export const RULE_MAPPINGS: Record<string, {severity: SeverityLevel, tags: strin
         severity: SeverityLevel.Moderate,
         tags: [/* NOT RECOMMENDED */    COMMON_TAGS.CATEGORIES.BEST_PRACTICES, COMMON_TAGS.LANGUAGES.JAVASCRIPT] // Not available with TypeScript
     },
+    "no-unassigned-vars": {
+        severity: SeverityLevel.High,
+        tags: [/* NOT RECOMMENDED */    COMMON_TAGS.CATEGORIES.ERROR_PRONE,    COMMON_TAGS.LANGUAGES.JAVASCRIPT, COMMON_TAGS.LANGUAGES.TYPESCRIPT]
+    },
     "no-undef": {
         severity: SeverityLevel.High,
         tags: [COMMON_TAGS.RECOMMENDED, COMMON_TAGS.CATEGORIES.ERROR_PRONE,    COMMON_TAGS.LANGUAGES.JAVASCRIPT] // Not available with TypeScript
@@ -1575,10 +1579,6 @@ export const RULE_MAPPINGS: Record<string, {severity: SeverityLevel, tags: strin
     "@typescript-eslint/triple-slash-reference": {
         severity: SeverityLevel.Moderate,
         tags: [COMMON_TAGS.RECOMMENDED, COMMON_TAGS.CATEGORIES.BEST_PRACTICES, COMMON_TAGS.LANGUAGES.TYPESCRIPT]
-    },
-    "@typescript-eslint/typedef": {
-        severity: SeverityLevel.Moderate,
-        tags: [/* NOT RECOMMENDED */    COMMON_TAGS.CATEGORIES.BEST_PRACTICES, COMMON_TAGS.LANGUAGES.TYPESCRIPT]
     },
     "@typescript-eslint/unbound-method": {
         severity: SeverityLevel.High,

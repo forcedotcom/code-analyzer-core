@@ -22,8 +22,8 @@
   "devDependencies": {
     "cross-env": "^7.0.3",
     "jest": "^29.7.0",
-    "rimraf": "*",
-    "ts-jest": "29.3.2"
+    "rimraf": "^6.0.1",
+    "ts-jest": "^29.3.4"
   },
   "jest": {
     "testTimeout": 60000,
