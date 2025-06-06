@@ -1769,6 +1769,19 @@
     ]
   },
   {
+    "description": "Disallow `let` or `var` variables that are read but never assigned",
+    "name": "no-unassigned-vars",
+    "resourceUrls": [
+      "https://eslint.org/docs/latest/rules/no-unassigned-vars"
+    ],
+    "severityLevel": 2,
+    "tags": [
+      "ErrorProne",
+      "JavaScript",
+      "TypeScript"
+    ]
+  },
+  {
     "description": "Disallow the use of undeclared variables unless mentioned in `/*global */` comments",
     "name": "no-undef",
     "resourceUrls": [

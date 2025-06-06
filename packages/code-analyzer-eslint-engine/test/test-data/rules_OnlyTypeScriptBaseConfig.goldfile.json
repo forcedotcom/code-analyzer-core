@@ -1472,18 +1472,6 @@
     ]
   },
   {
-    "description": "Require type annotations in certain places",
-    "name": "@typescript-eslint/typedef",
-    "resourceUrls": [
-      "https://typescript-eslint.io/rules/typedef"
-    ],
-    "severityLevel": 3,
-    "tags": [
-      "BestPractices",
-      "TypeScript"
-    ]
-  },
-  {
     "description": "Enforce unbound methods are called with their expected scope",
     "name": "@typescript-eslint/unbound-method",
     "resourceUrls": [
@@ -2923,6 +2911,19 @@
     "severityLevel": 3,
     "tags": [
       "BestPractices",
+      "JavaScript",
+      "TypeScript"
+    ]
+  },
+  {
+    "description": "Disallow `let` or `var` variables that are read but never assigned",
+    "name": "no-unassigned-vars",
+    "resourceUrls": [
+      "https://eslint.org/docs/latest/rules/no-unassigned-vars"
+    ],
+    "severityLevel": 2,
+    "tags": [
+      "ErrorProne",
       "JavaScript",
       "TypeScript"
     ]
