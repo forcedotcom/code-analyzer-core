@@ -4,6 +4,7 @@ import eslintTs from "typescript-eslint";
 import lwcEslintPluginLwcPlatform from "@lwc/eslint-plugin-lwc-platform";
 import salesforceEslintConfigLwc from "@salesforce/eslint-config-lwc";
 import {ESLintEngineConfig} from "./config";
+import globals from "globals";
 
 export class BaseConfigFactory {
     private readonly engineConfig: ESLintEngineConfig;
@@ -27,9 +28,11 @@ export class BaseConfigFactory {
                     "$Locale": "readonly",       // ^
                     "$Resource": "readonly",     // ^
 
-                    // ESLint can sometimes think that a file is an ESM module instead of a CommonJs module, so it
-                    // can flag "require" as an unknown at times. To prevent this, we add it to the globals:
-                    "require": "readonly"
+                    // ESLint doesn't natively know about various browser and node globals. So we add them here to
+                    // remove false positives for our users.
+                    ... globals.node,
+                    ... globals.browser,
+                    ... globals.es2017
                 }
             }
         }];
