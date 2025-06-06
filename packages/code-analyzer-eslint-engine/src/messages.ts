@@ -9,8 +9,9 @@ const MESSAGE_CATALOG : { [key: string]: string } = {
     ConfigFieldDescription_eslint_config_file:
         `Your project's main ESLint configuration file. May be an absolute path or a path relative to the config_root.\n` +
         `If null and auto_discover_eslint_config is true, then Code Analyzer will attempt to discover/apply it automatically.\n` +
-        `Currently only legacy ESLInt config files are supported.\n` +
-        `See https://eslint.org/docs/v8.x/use/configure/configuration-files to learn more.`,
+        `We currently support both flat and legacy ESLint configuration files, but will be removing support for legacy eslintrc\n` +
+        `ESLint configuration files in the coming months.\n` +
+        `See https://eslint.org/docs/latest/use/configure/configuration-files to learn more.`,
 
     ConfigFieldDescription_eslint_ignore_file:
         `Your project's ".eslintignore" file. May be an absolute path or a path relative to the config_root.\n` +
@@ -84,7 +85,7 @@ const MESSAGE_CATALOG : { [key: string]: string } = {
 
     DetectedLegacyConfig:
         `Using ESLint v8 instead of ESLint v9 because we detected the use of a legacy eslintrc ESLint configuration file or ignore file was detected: %s.\n` +
-        `Because ESLint v8 is no longer supported, Code Analyzer will be removing support for legacy eslint ESLint configuration files in the coming months.\n` +
+        `Because ESLint v8 is no longer supported, Code Analyzer will be removing support for legacy eslintrc ESLint configuration files in the coming months.\n` +
         `Therefore, we highly recommend that you migrate your legacy eslintrc configuration to the new flat configuration format as soon as possible.\n` +
         `Learn how at: https://eslint.org/docs/latest/use/configure/migration-guide`,
 
