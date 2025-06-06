@@ -10,7 +10,6 @@ import {makeUnique} from "./utils";
 export type ESLintEngineConfig = {
     // Your project's main ESLint configuration file. May be provided as a path relative to the config_root.
     // If not supplied, and auto_discover_eslint_config=true, then Code Analyzer will attempt to find and apply it automatically.
-    // Currently, only support legacy config files are supported.
     eslint_config_file?: string
 
     // Your project's ".eslintignore" file. May be provided as a path relative to the config_root.
