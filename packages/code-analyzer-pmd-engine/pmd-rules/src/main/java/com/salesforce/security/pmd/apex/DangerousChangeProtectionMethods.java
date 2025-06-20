@@ -25,17 +25,11 @@ public class DangerousChangeProtectionMethods extends AbstractApexRule {
 
     @Override
     public Object visit(ASTMethodCallExpression node, Object data) {
-        if (Helper.isTestMethodOrClass(node)) {
-            super.visit(node, data);
-        }
-
-        if (node.getFullMethodName().compareToIgnoreCase(
-            CHANGE_PROTECTION) == 0
-            || node.getFullMethodName().compareToIgnoreCase(SYSTEM_CHANGE_PROTECTION) == 0) {
+        if (!Helper.isTestMethodOrClass(node) && (node.getFullMethodName().compareToIgnoreCase(CHANGE_PROTECTION) == 0
+            || node.getFullMethodName().compareToIgnoreCase(SYSTEM_CHANGE_PROTECTION) == 0)) {
             this.handleChangeProtection(node, data);
         }
-        super.visit(node, data);
-        return data;
+        return super.visit(node, data);
     }
 
     private void handleChangeProtection(ASTMethodCallExpression node, Object data) {

@@ -21,13 +21,12 @@ public class DetectHardcodedSecretsInAttributes extends AbstractVfRule{
         } else if (APEX_ATTRIBUTE.equalsIgnoreCase(node.getName())) {
             processASTAttribute(node,data);
         }
-        super.visit(node, data);
-        return data;
+        return super.visit(node, data);
     }
 
     private void processComponentInclusion(ASTElement node,Object data) {
         List<ASTAttribute> allAttributes = node.children(ASTAttribute.class).toList();
-        
+
         for (ASTAttribute nextAttr: allAttributes) {
             String attrName = nextAttr.getName();
             if (SecretsInPackageUtils.isAPotentialSecret(attrName)) {

@@ -623,6 +623,22 @@ describe('Tests for the runRules method of PmdEngine', () => {
         expect(errorLogEvents).toHaveLength(1);
         expect(errorLogEvents[0].message).toContain('Message was null');
     });
+
+    it('When running a file that has a method that references a class name that is the same as itself, then the AppExchange rules should not run in infinite loop', async () => {
+        // This test is to ensure that we have resolved the issue associated with: W-18808343
+        const engine: PmdEngine = new PmdEngine(DEFAULT_PMD_ENGINE_CONFIG);
+
+        // Get AppExchange rules
+        const ruleDescriptions: RuleDescription[] = await engine.describeRules(createDescribeOptions());
+        const appExchangeRuleNames: string[] = ruleDescriptions.filter(r => r.tags.includes('AppExchange'))
+            .map(r => r.name);
+        expect(appExchangeRuleNames.length).toBeGreaterThan(0); // sanity check
+
+        const workspace: Workspace = new Workspace('id', [path.join(TEST_DATA_FOLDER, 'samplePmdWorkspaceFor_W-18808343')]);
+
+        const results: EngineRunResults = await engine.runRules(appExchangeRuleNames, createRunOptions(workspace)); // This should not run forever and ever.
+        expect(results.violations.length).toEqual(0);
+    });
 });
 
 describe('Tests for the getEngineVersion method of PmdEngine', () => {
