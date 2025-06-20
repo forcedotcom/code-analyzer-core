@@ -9,7 +9,7 @@
 @isTest
 private class ffhttp_GoogleDriveModelTest
 {
-	static testMethod void ffhttp_GoogleDriveModelAbout()
+	static testMethod void ffhttp_GoogleDriveModelAbout() // !!!!!! NOTICE THIS HERE ON LINE 12 USES THE SAME NAME OF THE CLASS BEING TESTED ON LINE 38
 	{
 		//Create all the required sub-classes
 		ffhttp_GoogleDriveModelUser user = createUser();
@@ -35,7 +35,7 @@ private class ffhttp_GoogleDriveModelTest
 		quotaBytesByService.setServiceName('DRIVE').setBytesUsed(70729294);
 
 		//Create the about class. Chain the set calls so that we can check that we correctly return the about object.
-		ffhttp_GoogleDriveModelAbout about = new ffhttp_GoogleDriveModelAbout();
+		ffhttp_GoogleDriveModelAbout about = new ffhttp_GoogleDriveModelAbout(); // !!!!!! NOTICE THIS CLASS IS THE SAME NAME AS THE TEST METHOD ON LINE 12
 		about.setEtag('"zyC8bkiH7Ao6tgclLWg5GHEYlAM/1m3rn2_HidxfB7hlHBSp-U1ARVI"')
 			 .setSelfLink('https://www.googleapis.com/drive/v2/about')
 			 .setName('Matthew Wood')
