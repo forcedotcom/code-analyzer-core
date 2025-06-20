@@ -10,7 +10,7 @@ import net.sourceforge.pmd.lang.visualforce.rule.AbstractVfRule;
 import net.sourceforge.pmd.reporting.RuleContext;
 
 public class DetectCreateElementScriptTag extends AbstractVfRule {
-    
+
     private static ArrayList<Pattern> CREATE_ELEMENT_PATTERNS = new ArrayList<Pattern>();
     private static final String[] CREATE_ELEMENT_REGEXES = {
             "createElement.*['\"]script",
@@ -35,8 +35,7 @@ public class DetectCreateElementScriptTag extends AbstractVfRule {
     public Object visit(ASTHtmlScript node, Object data) {
         Chars c = node.getText();
         searchForPatterns(node,data,c);
-        super.visit(node, data);
-        return data;
+        return super.visit(node, data);
     }
 
     private void searchForPatterns(ASTHtmlScript node, Object data, Chars c) {
@@ -44,7 +43,7 @@ public class DetectCreateElementScriptTag extends AbstractVfRule {
 
         for (Pattern nextPattern: CREATE_ELEMENT_PATTERNS) {
             Matcher match = nextPattern.matcher(staticJS);
-            if (match.find()) {                
+            if (match.find()) {
                 this.asCtx(data)
                 .addViolationWithMessage(node,
                         CREATE_ELEMENT_SCRIPT_CSS_VIOLATION);

@@ -14,7 +14,7 @@ import net.sourceforge.pmd.lang.apex.rule.internal.Helper;
 import net.sourceforge.pmd.lang.rule.RuleTargetSelector;
 
 public class DangerousPasswordMethods extends AbstractApexRule {
-    
+
     private static final String MOVE_PASSWORD = "movePassword";
     private static final String SYSTEM_MOVE_PASSWORD = "System.movePassword";
 
@@ -74,8 +74,7 @@ public class DangerousPasswordMethods extends AbstractApexRule {
         {
             this.handleSetPassword(node, data);
         }
-        super.visit(node, data);
-        return data;
+        return super.visit(node, data);
     }
 
     private void handleMovePassword(ASTMethodCallExpression node, Object data) {
@@ -113,7 +112,7 @@ public class DangerousPasswordMethods extends AbstractApexRule {
             } else {
                 asCtx(data).addViolationWithMessage(node, String.format(SET_PASSWORD_VIOLATION_LOW_CONFIDENCE, userIdVarName));
             }
-            
+
         }
     }
 

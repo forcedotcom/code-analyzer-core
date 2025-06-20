@@ -23,8 +23,7 @@ public class DetectHardcodedCredentialsInPasswordMethods extends AbstractApexRul
                     || node.getFullMethodName().compareToIgnoreCase(SYSTEM_SET_PASSWORD) == 0) {
                 this.handleSetPassword(node, data);
             }
-            super.visit(node, data);
-            return data;
+            return super.visit(node, data);
         }
 
         private void handleSetPassword(ASTMethodCallExpression node, Object data) {

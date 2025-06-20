@@ -16,7 +16,7 @@ import java.util.List;
 public class DetectHardcodedCredentialsInHttpRequests extends DetectHardcodedCredentialsBase {
     private static final List<String> HTTP_AUTH_HEADERS = SecretsInPackageUtils.AUTH_FIELD_MAPPINGS_LIST;
     private static final List<String> HTTP_AUTH_HEADER_VALUES_TO_IGNORE = Arrays.asList(SecretsInPackageUtils.STRINGS_TO_IGNORE);
-    
+
     private static final String HARD_CODED_SECRET_IN_HTTP_REQUEST_HEADER_VIOLATION = "Potentially hardcoded secret found in HTTP request header";
     private static final String MERGE_FIELD_LITERAL="{!$Credential.";
 
@@ -49,7 +49,7 @@ public class DetectHardcodedCredentialsInHttpRequests extends DetectHardcodedCre
 
         Node firstChild = childRefExpr.getNextSibling();
         Node secondChild = firstChild.getNextSibling();
-        
+
         List<ASTLiteralExpression> firstArgLiterals = firstChild.descendantsOrSelf()
                 .filterIs(ASTLiteralExpression.class).toList();
         List<ASTVariableExpression> firstArgVars =
@@ -99,8 +99,7 @@ public class DetectHardcodedCredentialsInHttpRequests extends DetectHardcodedCre
                 break;
             }
         }
-        super.visit(node, data);
-        return data;
+        return super.visit(node, data);
     }
 
     private boolean isAMergeField(String value) {
