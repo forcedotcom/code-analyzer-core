@@ -40,146 +40,212 @@ describe('Tests for selecting rules', () => {
         codeAnalyzer._setClock(new FixedClock(sampleTimestamp));
     })
 
-    it('When no rule selectors are provided then the Recommended tag is used', async () => {
-        const selection: RuleSelection = await codeAnalyzer.selectRules([]);
-        expect(selection).toEqual(await codeAnalyzer.selectRules(['Recommended']));
+    describe('Selector resolution', () => {
 
-        expect(selection.getEngineNames()).toEqual(['stubEngine1', 'stubEngine2', 'stubEngine3']);
-        expect(selection.getCount()).toEqual(6);
-        expect(ruleNamesFor(selection, 'stubEngine1')).toEqual(['stub1RuleA', 'stub1RuleB', 'stub1RuleC']);
-        expect(ruleNamesFor(selection, 'stubEngine2')).toEqual(['stub2RuleA', 'stub2RuleC']);
-        expect(ruleNamesFor(selection, 'stubEngine3')).toEqual(['stub3RuleA']);
+        it('When no rule selectors are provided then the Recommended tag is used', async () => {
+            const selection: RuleSelection = await codeAnalyzer.selectRules([]);
+            expect(selection).toEqual(await codeAnalyzer.selectRules(['Recommended']));
 
-        // Sanity check one of the rules in detail:
-        const selectedRulesForStubEngine1: Rule[] = selection.getRulesFor('stubEngine1');
-        const stub1RuleB = selectedRulesForStubEngine1[1];
-        expect(stub1RuleB.getEngineName()).toEqual('stubEngine1');
-        expect(stub1RuleB.getDescription()).toEqual('Some description for stub1RuleB');
-        expect(stub1RuleB.getName()).toEqual('stub1RuleB');
-        expect(stub1RuleB.getResourceUrls()).toEqual(['https://example.com/stub1RuleB']);
-        expect(stub1RuleB.getSeverityLevel()).toEqual(SeverityLevel.High);
-        expect(stub1RuleB.getTags()).toEqual(['Recommended', 'Security']);
+            expect(selection.getEngineNames()).toEqual(['stubEngine1', 'stubEngine2', 'stubEngine3']);
+            expect(selection.getCount()).toEqual(6);
+            expect(ruleNamesFor(selection, 'stubEngine1')).toEqual(['stub1RuleA', 'stub1RuleB', 'stub1RuleC']);
+            expect(ruleNamesFor(selection, 'stubEngine2')).toEqual(['stub2RuleA', 'stub2RuleC']);
+            expect(ruleNamesFor(selection, 'stubEngine3')).toEqual(['stub3RuleA']);
 
-        // Sanity check we can directly get one of the rules from the selection
-        expect(selection.getRule('stubEngine1', 'stub1RuleB')).toEqual(stub1RuleB);
-    });
+            // Sanity check one of the rules in detail:
+            const selectedRulesForStubEngine1: Rule[] = selection.getRulesFor('stubEngine1');
+            const stub1RuleB = selectedRulesForStubEngine1[1];
+            expect(stub1RuleB.getEngineName()).toEqual('stubEngine1');
+            expect(stub1RuleB.getDescription()).toEqual('Some description for stub1RuleB');
+            expect(stub1RuleB.getName()).toEqual('stub1RuleB');
+            expect(stub1RuleB.getResourceUrls()).toEqual(['https://example.com/stub1RuleB']);
+            expect(stub1RuleB.getSeverityLevel()).toEqual(SeverityLevel.High);
+            expect(stub1RuleB.getTags()).toEqual(['Recommended', 'Security']);
 
-    it('When all is provide then all is returned', async () => {
-        const selection: RuleSelection = await codeAnalyzer.selectRules(['all']);
+            // Sanity check we can directly get one of the rules from the selection
+            expect(selection.getRule('stubEngine1', 'stub1RuleB')).toEqual(stub1RuleB);
+        });
 
-        expect(selection.getEngineNames()).toEqual(['stubEngine1', 'stubEngine2', 'stubEngine3']);
-        expect(selection.getCount()).toEqual(9);
-        expect(ruleNamesFor(selection, 'stubEngine1')).toEqual(['stub1RuleA', 'stub1RuleB', 'stub1RuleC', 'stub1RuleD', 'stub1RuleE']);
-        expect(ruleNamesFor(selection, 'stubEngine2')).toEqual(['stub2RuleA', 'stub2RuleB', 'stub2RuleC']);
-        expect(ruleNamesFor(selection, 'stubEngine3')).toEqual(['stub3RuleA']);
-    })
+        it.each([
+            {
+                name: 'When test selector is \'all\', all rules are returned',
+                selectors: ['all'],
+                expectedEngineNames: ['stubEngine1', 'stubEngine2', 'stubEngine3'],
+                expectedCount: 9,
+                stub1Rules: ['stub1RuleA', 'stub1RuleB', 'stub1RuleC', 'stub1RuleD', 'stub1RuleE'],
+                stub2Rules: ['stub2RuleA', 'stub2RuleB', 'stub2RuleC'],
+                stub3Rules: ['stub3RuleA']
+            },
+            {
+                name: 'When test selectors are weirdly cased, they are still accepted and properly resolved. Case: aLl',
+                selectors: ['aLl'],
+                expectedEngineNames: ['stubEngine1', 'stubEngine2', 'stubEngine3'],
+                expectedCount: 9,
+                stub1Rules: ['stub1RuleA', 'stub1RuleB', 'stub1RuleC', 'stub1RuleD', 'stub1RuleE'],
+                stub2Rules: ['stub2RuleA', 'stub2RuleB', 'stub2RuleC'],
+                stub3Rules: ['stub3RuleA']
+            },
+            {
+                name: 'When test selector is an individual rule name, then only that rule is selected',
+                selectors: ['stub2RuleB'],
+                expectedEngineNames: ['stubEngine2'],
+                expectedCount: 1,
+                stub1Rules: [],
+                stub2Rules: ['stub2RuleB'],
+                stub3Rules: []
+            },
+            {
+                name: 'When test selector is a tag, then all all rules with that tag are selected',
+                selectors: ['CodeStyle'],
+                expectedEngineNames: ['stubEngine1'],
+                expectedCount: 2,
+                stub1Rules: ['stub1RuleA', 'stub1RuleD'],
+                stub2Rules: [],
+                stub3Rules: []
+            },
+            {
+                name: 'When test selectors are weirdly cased, they are still accepted and properly resolved. Case: cODEsTYLE',
+                selectors: ['cODEsTYLE'],
+                expectedEngineNames: ['stubEngine1'],
+                expectedCount: 2,
+                stub1Rules: ['stub1RuleA', 'stub1RuleD'],
+                stub2Rules: [],
+                stub3Rules: []
+            },
+            {
+                name: 'When test selector is an engine name, then all rules from that engine are selected',
+                selectors: ['stubEngine1'],
+                expectedEngineNames: ['stubEngine1'],
+                expectedCount: 5,
+                stub1Rules: ['stub1RuleA', 'stub1RuleB', 'stub1RuleC', 'stub1RuleD', 'stub1RuleE'],
+                stub2Rules: [],
+                stub3Rules: []
+            },
+            {
+                name: 'When test selector is a severity NUMBER, then all rules with that severity are selected',
+                selectors: ['3'],
+                expectedEngineNames: ['stubEngine1', 'stubEngine2', 'stubEngine3'],
+                expectedCount: 4,
+                stub1Rules: ['stub1RuleC', 'stub1RuleE'],
+                stub2Rules: ['stub2RuleA'],
+                stub3Rules: ['stub3RuleA']
+            },
+            {
+                name: 'When test selector is a severity NAME, then all rules with that severity are selected',
+                selectors: ['Moderate'],
+                expectedEngineNames: ['stubEngine1', 'stubEngine2', 'stubEngine3'],
+                expectedCount: 4,
+                stub1Rules: ['stub1RuleC', 'stub1RuleE'],
+                stub2Rules: ['stub2RuleA'],
+                stub3Rules: ['stub3RuleA']
+            },
+            {
+                name: 'When two selectors are joined with a colon, then selection resolves with an intersection. Case: stubEngine1:4',
+                selectors: ['stubEngine1:4'],
+                expectedEngineNames: ['stubEngine1'],
+                expectedCount: 2,
+                stub1Rules: ['stub1RuleA', 'stub1RuleD'],
+                stub2Rules: [],
+                stub3Rules: []
+            },
+            {
+                name: 'When two selectors are joined with a colon, then selection resolves with an intersection. Case: stubEngine2:Recommended',
+                selectors: ['stubEngine2:Recommended'],
+                expectedEngineNames: ['stubEngine2'],
+                expectedCount: 2,
+                stub1Rules: [],
+                stub2Rules: ['stub2RuleA', 'stub2RuleC'],
+                stub3Rules: []
+            },
+            {
+                name: 'When two selectors are joined with a colon, then selection resolves with an intersection. Case: all:stub1RuleC',
+                selectors: ['all:stub1RuleC'],
+                expectedEngineNames: ['stubEngine1'],
+                expectedCount: 1,
+                stub1Rules: ['stub1RuleC'],
+                stub2Rules: [],
+                stub3Rules: []
+            },
+            {
+                name: 'When two selectors are joined with a colon, then selection resolves with an intersection. Case: Recommended:2',
+                selectors: ['Recommended:2'],
+                expectedEngineNames: ['stubEngine1', 'stubEngine2'],
+                expectedCount: 2,
+                stub1Rules: ['stub1RuleB'],
+                stub2Rules: ['stub2RuleC'],
+                stub3Rules: []
+            },
+            {
+                name: 'When two selectors are joined with a colon, then selection resolves with an intersection. Case: Custom:Performance',
+                selectors: ['Custom:Performance'], // In conjunction with the other test case for 'Performance:Custom', this validates that intersection is commutative.
+                expectedEngineNames: ['stubEngine1', 'stubEngine2'],
+                expectedCount: 2,
+                stub1Rules: ['stub1RuleC'],
+                stub2Rules: ['stub2RuleB'],
+                stub3Rules: []
+            },
+            {
+                name: 'When two selectors are joined with a colon, then selection resolves with an intersection. Case: Performance:Custom',
+                selectors: ['Performance:Custom'], // In conjunction with the other test case for 'Custom:Performance', this validates that intersection is commutative.
+                expectedEngineNames: ['stubEngine1', 'stubEngine2'],
+                expectedCount: 2,
+                stub1Rules: ['stub1RuleC'],
+                stub2Rules: ['stub2RuleB'],
+                stub3Rules: []
+            },
+            {
+                name: 'When three selectors are joined with a colon, then selection resolves with an intersection. Case: Custom:Performance:3',
+                selectors: ['Custom:Performance:3'],
+                expectedEngineNames: ['stubEngine1'],
+                expectedCount: 1,
+                stub1Rules: ['stub1RuleC'],
+                stub2Rules: [],
+                stub3Rules: []
+            },
+            {
+                name: 'When two selectors are joined with a colon, then selection resolves with an intersection. Case: Performance:2',
+                selectors: ['Performance:2'],
+                expectedEngineNames: [],
+                expectedCount: 0,
+                stub1Rules: [],
+                stub2Rules: [],
+                stub3Rules: []
+            },
+            {
+                name: 'When multiple selectors are provided, then they act as a union',
+                selectors: ['Security', 'stubEngine2', 'stub1RuleD'], // A tag, an engine name, a rule name
+                expectedEngineNames: ['stubEngine1', 'stubEngine2'],
+                expectedCount: 5,
+                stub1Rules: ['stub1RuleB', 'stub1RuleD'],
+                stub2Rules: ['stub2RuleA', 'stub2RuleB', 'stub2RuleC'],
+                stub3Rules: []
+            },
+            {
+                name: 'When multiple selectors contain colons, intersections and unions resolve correctly',
+                selectors: ['Recommended:Performance', 'stubEngine2:2', 'stubEngine2:DoesNotExist'],
+                expectedEngineNames: ['stubEngine1', 'stubEngine2'],
+                expectedCount: 2,
+                stub1Rules: ['stub1RuleC'],
+                stub2Rules: ['stub2RuleC'],
+                stub3Rules: []
+            }
+        ])('$name', async ({
+                               selectors,
+                               expectedEngineNames,
+                               expectedCount,
+                               stub1Rules,
+                               stub2Rules,
+                               stub3Rules
+                           }) => {
+            const selection: RuleSelection = await codeAnalyzer.selectRules(selectors)
 
-    it('When test selector is an individual rule name then only that rule is selected', async () => {
-        const selection: RuleSelection = await codeAnalyzer.selectRules(['stub2RuleB'])
+            expect(selection.getEngineNames()).toEqual(expectedEngineNames)
+            expect(selection.getCount()).toEqual(expectedCount)
+            expect(ruleNamesFor(selection, 'stubEngine1')).toEqual(stub1Rules)
+            expect(ruleNamesFor(selection, 'stubEngine2')).toEqual(stub2Rules)
+            expect(ruleNamesFor(selection, 'stubEngine3')).toEqual(stub3Rules)
+        })
 
-        expect(selection.getEngineNames()).toEqual(['stubEngine2']);
-        expect(selection.getCount()).toEqual(1);
-        expect(ruleNamesFor(selection, 'stubEngine1')).toEqual([]);
-        expect(ruleNamesFor(selection, 'stubEngine2')).toEqual(['stub2RuleB']);
-    });
-
-    it('When test selector is tag then all rules with that tag are selected', async () => {
-        const selection: RuleSelection = await codeAnalyzer.selectRules(['CodeStyle'])
-
-        expect(selection.getEngineNames()).toEqual(['stubEngine1']);
-        expect(selection.getCount()).toEqual(2);
-        expect(ruleNamesFor(selection, 'stubEngine1')).toEqual(['stub1RuleA', 'stub1RuleD']);
-        expect(ruleNamesFor(selection, 'stubEngine2')).toEqual([]);
-    });
-
-    it('When test selector is an engine name then all rules from that engine are selected', async () => {
-        const selection: RuleSelection = await codeAnalyzer.selectRules(['stubEngine1'])
-
-        expect(selection.getEngineNames()).toEqual(['stubEngine1']);
-        expect(selection.getCount()).toEqual(5);
-        expect(ruleNamesFor(selection, 'stubEngine1')).toEqual(['stub1RuleA', 'stub1RuleB', 'stub1RuleC', 'stub1RuleD', 'stub1RuleE']);
-        expect(ruleNamesFor(selection, 'stubEngine2')).toEqual([]);
-    });
-
-    it('When test selector a severity level then all rules with that severity are selected', async () => {
-        const selection: RuleSelection = await codeAnalyzer.selectRules(['3'])
-
-        expect(selection.getEngineNames()).toEqual(['stubEngine1', 'stubEngine2','stubEngine3']);
-        expect(ruleNamesFor(selection, 'stubEngine1')).toEqual(['stub1RuleC', 'stub1RuleE']);
-        expect(ruleNamesFor(selection, 'stubEngine2')).toEqual(['stub2RuleA']);
-        expect(ruleNamesFor(selection, 'stubEngine3')).toEqual(['stub3RuleA']);
-    });
-
-    it('When using a colon with a rule selector, then it acts like an intersection of two selectors', async () => {
-        const selection1: RuleSelection = await codeAnalyzer.selectRules(['stubEngine1:4'])
-        expect(ruleNamesFor(selection1,'stubEngine1')).toEqual(['stub1RuleA', 'stub1RuleD'])
-        expect(ruleNamesFor(selection1,'stubEngine2')).toEqual([])
-
-        const selection2: RuleSelection = await codeAnalyzer.selectRules(['stubEngine2:Recommended'])
-        expect(ruleNamesFor(selection2,'stubEngine1')).toEqual([])
-        expect(ruleNamesFor(selection2,'stubEngine2')).toEqual(['stub2RuleA', 'stub2RuleC'])
-
-        const selection3: RuleSelection = await codeAnalyzer.selectRules(['all:stub1RuleC'])
-        expect(ruleNamesFor(selection3,'stubEngine1')).toEqual(['stub1RuleC'])
-        expect(ruleNamesFor(selection3,'stubEngine2')).toEqual([])
-
-        const selection4: RuleSelection = await codeAnalyzer.selectRules(['Recommended:2'])
-        expect(ruleNamesFor(selection4,'stubEngine1')).toEqual(['stub1RuleB'])
-        expect(ruleNamesFor(selection4,'stubEngine2')).toEqual(['stub2RuleC'])
-
-        const selection5: RuleSelection = await codeAnalyzer.selectRules(['Custom:Performance'])
-        expect(ruleNamesFor(selection5,'stubEngine1')).toEqual(['stub1RuleC'])
-        expect(ruleNamesFor(selection5,'stubEngine2')).toEqual(['stub2RuleB'])
-
-        const selection6: RuleSelection = await codeAnalyzer.selectRules(['Custom:Performance:3'])
-        expect(ruleNamesFor(selection6,'stubEngine1')).toEqual(['stub1RuleC'])
-        expect(ruleNamesFor(selection6,'stubEngine2')).toEqual([])
-
-        const selection7: RuleSelection = await codeAnalyzer.selectRules(['Performance:2'])
-        expect(ruleNamesFor(selection7,'stubEngine1')).toEqual([])
-        expect(ruleNamesFor(selection7,'stubEngine2')).toEqual([])
-    });
-
-    it('When multiple selectors are provided, then they act as a union', async () => {
-        const selection: RuleSelection = await codeAnalyzer.selectRules([
-            'Security', // a tag
-            'stubEngine2', // an engine name
-            'stub1RuleD' // a rule name
-        ]);
-
-        expect(selection.getEngineNames()).toEqual(['stubEngine1', 'stubEngine2']);
-        expect(ruleNamesFor(selection, 'stubEngine1')).toEqual(['stub1RuleB', 'stub1RuleD']);
-        expect(ruleNamesFor(selection, 'stubEngine2')).toEqual(['stub2RuleA', 'stub2RuleB', 'stub2RuleC']);
-
-        // Sanity check against duplicates
-        expect(await codeAnalyzer.selectRules(['all', 'Performance', 'DoesNotExist'])).toEqual(await codeAnalyzer.selectRules(['all']));
-    });
-
-    it('When colons are used and multiple selectors are provided then we get correct union and intersection behavior', async () => {
-        const selection: RuleSelection = await codeAnalyzer.selectRules(['Recommended:Performance', 'stubEngine2:2', 'stubEngine2:DoesNotExist']);
-
-        expect(selection.getEngineNames()).toEqual(['stubEngine1', 'stubEngine2']);
-        expect(ruleNamesFor(selection, 'stubEngine1')).toEqual(['stub1RuleC']);
-        expect(ruleNamesFor(selection, 'stubEngine2')).toEqual(['stub2RuleC']);
-    });
-
-    it('When selecting rules based on severity names instead of severity number, then we correctly return the rules', async () => {
-        const selection: RuleSelection = await codeAnalyzer.selectRules(['High', 'Recommended:Low']);
-
-        expect(selection.getEngineNames()).toEqual(['stubEngine1', 'stubEngine2']);
-        expect(ruleNamesFor(selection, 'stubEngine1')).toEqual(['stub1RuleA','stub1RuleB']);
-        expect(ruleNamesFor(selection, 'stubEngine2')).toEqual(['stub2RuleC']);
-    });
-
-    it('When selector is the wrong case, then we still accept the selector since we treat selection with case insensitivity', async () => {
-        const selection1: RuleSelection = await codeAnalyzer.selectRules(['RecOmmended:higH', 'perFORMance']);
-
-        expect(selection1.getEngineNames()).toEqual(['stubEngine1', 'stubEngine2']);
-        expect(ruleNamesFor(selection1, 'stubEngine1')).toEqual(['stub1RuleB','stub1RuleC','stub1RuleE']);
-        expect(ruleNamesFor(selection1, 'stubEngine2')).toEqual(['stub2RuleB','stub2RuleC']);
-
-        expect(await codeAnalyzer.selectRules(['Stub1RulEd'])).toEqual(await codeAnalyzer.selectRules(['stub1RuleD']));
-        expect(await codeAnalyzer.selectRules(['aLL'])).toEqual(await codeAnalyzer.selectRules(['all']));
     });
 
     it('When config contains rule overrides for the selected rules, then the rule selection contains these overrides', async () => {
@@ -420,6 +486,40 @@ describe('Tests for selecting rules', () => {
             }
         });
     });
+
+    /*
+it('When using a pipe with a rule selector, then it acts like a union of two selectors', async () => {
+    const selection1: RuleSelection = await codeAnalyzer.selectRules(['stubEngine1|4'])
+    expect(ruleNamesFor(selection1,'stubEngine1')).toEqual(['stub1RuleA', 'stub1RuleB', 'stub1RuleC', 'stub1RuleD', 'stub1RuleE'])
+    expect(ruleNamesFor(selection1,'stubEngine2')).toEqual(['stub2RuleB'])
+    expect(ruleNamesFor(selection1,'stubEngine3')).toEqual([])
+
+    const selection2: RuleSelection = await codeAnalyzer.selectRules(['stubEngine2|Recommended'])
+    expect(ruleNamesFor(selection2,'stubEngine1')).toEqual([])
+    expect(ruleNamesFor(selection2,'stubEngine2')).toEqual(['stub2RuleA', 'stub2RuleC'])
+
+    const selection3: RuleSelection = await codeAnalyzer.selectRules(['all|stub1RuleC'])
+    expect(ruleNamesFor(selection3,'stubEngine1')).toEqual(['stub1RuleC'])
+    expect(ruleNamesFor(selection3,'stubEngine2')).toEqual([])
+
+    const selection4: RuleSelection = await codeAnalyzer.selectRules(['Recommended|2'])
+    expect(ruleNamesFor(selection4,'stubEngine1')).toEqual(['stub1RuleB'])
+    expect(ruleNamesFor(selection4,'stubEngine2')).toEqual(['stub2RuleC'])
+
+    const selection5: RuleSelection = await codeAnalyzer.selectRules(['Custom|Performance'])
+    expect(ruleNamesFor(selection5,'stubEngine1')).toEqual(['stub1RuleC'])
+    expect(ruleNamesFor(selection5,'stubEngine2')).toEqual(['stub2RuleB'])
+
+    const selection6: RuleSelection = await codeAnalyzer.selectRules(['Custom|Performance|3'])
+    expect(ruleNamesFor(selection6,'stubEngine1')).toEqual(['stub1RuleC'])
+    expect(ruleNamesFor(selection6,'stubEngine2')).toEqual([])
+
+    const selection7: RuleSelection = await codeAnalyzer.selectRules(['Performance|2'])
+    expect(ruleNamesFor(selection7,'stubEngine1')).toEqual([])
+    expect(ruleNamesFor(selection7,'stubEngine2')).toEqual([])
+});
+
+ */
 });
 
 
