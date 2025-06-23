@@ -14,9 +14,12 @@ const MESSAGE_CATALOG : { [key: string]: string } = {
         `See https://eslint.org/docs/latest/use/configure/configuration-files to learn more.`,
 
     ConfigFieldDescription_eslint_ignore_file:
-        `Your project's ".eslintignore" file. May be an absolute path or a path relative to the config_root.\n` +
+        `Your project's legacy ".eslintignore" file. May be an absolute path or a path relative to the config_root.\n` +
         `If null and auto_discover_eslint_config is true, then Code Analyzer will attempt to discover/apply it automatically.\n` +
-        `See https://eslint.org/docs/v8.x/use/configure/ignore#the-eslintignore-file to learn more.`,
+        `Legacy ".eslintignore" files are currently only supported with ESLint v8 when used alongside of legacy ESLint configuration\n` +
+        `files. We will be removing support for ESLint v8 and this field in the coming months. Therefore, we recommend that you instead\n` +
+        `supply the files that you wish to ignore within a flat ESLint configuration file, specified by the eslint_config_file field.\n` +
+        `See https://eslint.org/docs/latest/use/configure/ignore to learn more.`,
 
     ConfigFieldDescription_auto_discover_eslint_config:
         `Whether to have Code Analyzer automatically discover/apply any ESLint configuration and ignore files from your workspace.`,
