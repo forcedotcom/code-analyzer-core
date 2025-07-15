@@ -220,6 +220,19 @@
     ]
   },
   {
+    "name": "AvoidBooleanMethodParameters",
+    "severityLevel": 3,
+    "tags": [
+      "Recommended",
+      "Design",
+      "Apex"
+    ],
+    "description": "Boolean parameters in a system's API can make method calls difficult to understand and maintain. They often indicate that a method is doing more than one thing and could benefit from being split into separate methods with more descriptive names. This rule flags any boolean parameters found in public or global methods, encouraging developers to use more expressive alternatives such as enums, separate methods, or configuration objects.",
+    "resourceUrls": [
+      "https://docs.pmd-code.org/pmd-doc-{{PMD_VERSION}}/pmd_rules_apex_design.html#avoidbooleanmethodparameters"
+    ]
+  },
+  {
     "name": "AvoidChangeProtectionUnprotected",
     "severityLevel": 1,
     "tags": [

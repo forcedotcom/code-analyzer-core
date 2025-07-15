@@ -165,22 +165,24 @@ function toRuleDescription(pmdRuleInfo: PmdRuleInfo): RuleDescription {
     const language: Language = toLanguageEnum(pmdRuleInfo.languageId);
     const uniqueRuleName: string = toUniqueRuleName(pmdRuleInfo.name, language);
 
+    let severityLevel: SeverityLevel;
     let tags: string[];
 
     const customRulesetNameTags: string[] = pmdRuleInfo.ruleSets.map(rs => rs.replaceAll(' ', '')).filter(
         tag => !Object.values(COMMON_TAGS.CATEGORIES).includes(tag) && !tag.startsWith("AppExchange_"));
 
     if (uniqueRuleName in RULE_MAPPINGS) {
+        // Only if a default PMD rule was not customized do we use the severity from the rule mappings
+        severityLevel = customRulesetNameTags.length === 0 ? RULE_MAPPINGS[uniqueRuleName].severity : toSeverityLevel(pmdRuleInfo.priority);
         // For the tags, we start with the overridden tags from the RULE_MAPPINGS and add in the customRulesetNameTags
         // since we want to allow users to reference the existing standard rules in their custom ruleset
         // files and still get the benefit of us adding in a tag for the name of their custom ruleset.
         tags = [...RULE_MAPPINGS[uniqueRuleName].tags, ...customRulesetNameTags];
     } else { // Any rule we don't know about from our RULE_MAPPINGS must be a custom rule. Unit tests prevent otherwise.
+        severityLevel = toSeverityLevel(pmdRuleInfo.priority);
         const languageTag: string = language.charAt(0).toUpperCase() + language.slice(1);
         tags = [COMMON_TAGS.RECOMMENDED, ...customRulesetNameTags, languageTag, COMMON_TAGS.CUSTOM];
     }
-    const severityLevel = customRulesetNameTags.length === 0 ? RULE_MAPPINGS[uniqueRuleName].severity : toSeverityLevel(pmdRuleInfo.priority);
-
     return {
         name: uniqueRuleName,
         severityLevel: severityLevel,
