@@ -48,6 +48,8 @@ describe('End to end test', () => {
         const defaultConfig: ConfigObject = await plugin.createEngineConfig(availableEngineNames[0], configValueExtractor);
         const engine: Engine = await plugin.createEngine(availableEngineNames[0], defaultConfig);
         const logEvents: LogEvent[] = [];
+        const telemetryEvents: TelemetryEvent[] = [];
+        engine.onEvent(EventType.TelemetryEvent, (e: TelemetryEvent) => telemetryEvents.push(e));
         engine.onEvent(EventType.LogEvent, (e: LogEvent) => logEvents.push(e));
         const workspace: Workspace = new Workspace('id', [path.resolve('.')]);
         const ruleDescriptions: RuleDescription[] = await engine.describeRules({logFolder: os.tmpdir(), workspace: workspace});
@@ -70,6 +72,8 @@ describe('End to end test', () => {
 
         const warnLogs: LogEvent[] = logEvents.filter(e => e.logLevel == LogLevel.Warn);
         expect(warnLogs).toHaveLength(0);
+
+        expect(telemetryEvents).toHaveLength(0);
     });
 
     it('Test that we delegate to eslint v8 engine when user has specified legacy eslint config file', async () => {
