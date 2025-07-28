@@ -68,6 +68,10 @@ export class ESLintEngine extends Engine {
         if (userConfigInfo.getState() === UserConfigState.LEGACY_USER_CONFIG) {
             this.emitLogEvent(LogLevel.Warn, getMessage('DetectedLegacyConfig',
                 userConfigInfo.getChosenUserConfigFile() ?? /* istanbul ignore next */ userConfigInfo.getChosenUserIgnoreFile()!));
+            this.emitTelemetryEvent('eslintLegacyConfigDetected', {
+                'eslint_engine_version': await this.getEngineVersion(),
+                'eslint8_engine_version': await this.delegateV8Engine.getEngineVersion()
+            });
             return this.delegateV8Engine.describeRules(describeOptions);
         }
 
