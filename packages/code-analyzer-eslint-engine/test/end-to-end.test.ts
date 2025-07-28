@@ -9,12 +9,14 @@ import {
     LogEvent,
     LogLevel,
     RuleDescription,
+    TelemetryEvent,
     Violation,
     Workspace
 } from "@salesforce/code-analyzer-engine-api";
 import path from "node:path";
 import * as os from "node:os";
 import process from "node:process";
+import {ESLint8EnginePlugin} from "@salesforce/code-analyzer-eslint8-engine";
 
 jest.setTimeout(30_000);
 
@@ -80,7 +82,9 @@ describe('End to end test', () => {
         const defaultConfig: ConfigObject = await plugin.createEngineConfig('eslint', configValueExtractor);
         const engine: Engine = await plugin.createEngine('eslint', defaultConfig);
         const logEvents: LogEvent[] = [];
+        const telemetryEvents: TelemetryEvent[] = [];
         engine.onEvent(EventType.LogEvent, (e: LogEvent) => logEvents.push(e));
+        engine.onEvent(EventType.TelemetryEvent, (e: TelemetryEvent) => telemetryEvents.push(e));
         const workspace: Workspace = new Workspace('id', [path.resolve('.')]);
         const ruleDescriptions: RuleDescription[] = await engine.describeRules({logFolder: os.tmpdir(), workspace: workspace});
         const recommendedRuleNames: string[] = ruleDescriptions.filter(rd => rd.tags.includes('Recommended')).map(rd => rd.name);
@@ -104,5 +108,15 @@ describe('End to end test', () => {
         const warnLogs: LogEvent[] = logEvents.filter(e => e.logLevel == LogLevel.Warn);
         expect(warnLogs).toHaveLength(1);
         expect(warnLogs[0].message).toContain('Using ESLint v8 instead of ESLint v9');
+
+        expect(telemetryEvents).toHaveLength(1);
+        expect(telemetryEvents[0]).toEqual({
+            "type": "TelemetryEvent",
+            "eventName": "eslintLegacyConfigDetected",
+            "data": {
+                "eslint_engine_version": await engine.getEngineVersion(),
+                "eslint8_engine_version": await (await new ESLint8EnginePlugin().createEngine("eslint", {})).getEngineVersion()
+            }
+        });
     });
 });
