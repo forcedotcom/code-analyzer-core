@@ -1571,7 +1571,7 @@
       </div>
 
       <main class="content" role="main">
-        <h3 id="summary">Found 0 violations across 0 files</h3>
+        <h3 id="summary">Found 0 violations</h3>
 
         <div class="toolbar">
           <div class="filter">
