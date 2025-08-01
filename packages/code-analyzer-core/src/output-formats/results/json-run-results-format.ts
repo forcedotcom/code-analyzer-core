@@ -54,16 +54,16 @@ export type JsonViolationOutput = {
     tags: string[]
 
     // The index of the primary code location within the code locations array
-    primaryLocationIndex?: number
+    primaryLocationIndex: number
 
     // An array of code locations associated with the violation
-    locations?: JsonCodeLocationOutput[]
+    locations: JsonCodeLocationOutput[]
 
     // The violation message
     message: string
 
     // An array of urls for resources associated with the violation
-    resources?: string[]
+    resources: string[]
 }
 export type JsonCodeLocationOutput = {
     // The path, relative to runDir, of the file associated with the violation
