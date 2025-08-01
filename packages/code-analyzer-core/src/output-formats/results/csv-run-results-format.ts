@@ -21,6 +21,7 @@ export class CsvRunResultsFormatter implements RunResultsFormatter {
                 'endLine', 'endColumn', 'message', 'resources'],
             cast: {
                 object: value => {
+                    /* istanbul ignore else */
                     if (Array.isArray(value)) {
                         return { value: value.join(','), quoted: true };
                     }
