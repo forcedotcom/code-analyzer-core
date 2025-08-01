@@ -56,7 +56,7 @@ export type JsonViolationOutput = {
     // The index of the primary code location within the code locations array
     primaryLocationIndex: number
 
-    // An array of code locations associated with the violation
+    // An non-empty array of code locations associated with the violation
     locations: JsonCodeLocationOutput[]
 
     // The violation message

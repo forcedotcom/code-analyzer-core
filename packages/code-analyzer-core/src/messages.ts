@@ -136,6 +136,9 @@ const MESSAGE_CATALOG : MessageCatalog = {
     FileOrFolderDoesNotExist:
         `The file or folder '%s' does not exist.`,
 
+    UndefinedCodeLocationComment:
+        `Undefined Code Location`,
+
     AtLeastOneFileOrFolderMustBeIncludedInWorkspace:
         `At least one file or folder must be included in the workspace.`,
 
@@ -168,6 +171,9 @@ const MESSAGE_CATALOG : MessageCatalog = {
 
     EngineReturnedViolationForUnselectedRule:
         `Engine failure. The engine '%s' returned a violation for rule '%s' which was not selected.`,
+
+    EngineReturnedViolationWithEmptyCodeLocationArray:
+        `Engine failure. The engine '%s' returned a violation for rule '%s' that contains an an empty code location array. Rule violations must have at least one code location object.`,
 
     EngineReturnedViolationWithInvalidPrimaryLocationIndex:
         `Engine failure. The engine '%s' returned a violation for rule '%s' that contains an out of bounds primary location index value of %d. Expected a non-negative integer that is less than %d.`,

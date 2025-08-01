@@ -163,9 +163,8 @@ export class UndefinedCodeLocation implements CodeLocation {
         return undefined;
     }
 
-    // istanbul ignore next - Unused method, required for interface
-    getComment(): undefined {
-        return undefined;
+    getComment(): string {
+        return getMessage('UndefinedCodeLocationComment');
     }
 
     getEndLine(): undefined {

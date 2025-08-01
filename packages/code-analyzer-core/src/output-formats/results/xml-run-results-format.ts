@@ -38,39 +38,36 @@ export class XmlRunResultsFormatter implements RunResultsFormatter {
             for (const tag of violationOutput.tags) {
                 tagsNode.node('tag').text(tag);
             }
-            if (violationOutput.primaryLocationIndex != null) {
-                violationNode.node('primaryLocationIndex').text(`${violationOutput.primaryLocationIndex}`);
-            }
-            if (violationOutput.locations) {
-                const pathLocationsNode: xmlbuilder.XMLElement = violationNode.node('locations');
-                for (const location of violationOutput.locations) {
-                    const locationNode: xmlbuilder.XMLElement = pathLocationsNode.node('location');
-                    if (location.file !== undefined) {
-                        locationNode.node('file').text(location.file);
-                    }
-                    if (location.startLine !== undefined) {
-                        locationNode.node('startLine').text(`${location.startLine}`);
-                    }
-                    if (location.startColumn !== undefined) {
-                        locationNode.node('startColumn').text(`${location.startColumn}`);
-                    }
-                    if (location.endLine !== undefined) {
-                        locationNode.node('endLine').text(`${location.endLine}`);
-                    }
-                    if (location.endColumn !== undefined) {
-                        locationNode.node('endColumn').text(`${location.endColumn}`);
-                    }
-                    if (location.comment !== undefined) {
-                        locationNode.node('comment').text(location.comment);
-                    }
+            violationNode.node('primaryLocationIndex').text(`${violationOutput.primaryLocationIndex}`);
+
+            const pathLocationsNode: xmlbuilder.XMLElement = violationNode.node('locations');
+            for (const location of violationOutput.locations) {
+                const locationNode: xmlbuilder.XMLElement = pathLocationsNode.node('location');
+                if (location.file !== undefined) {
+                    locationNode.node('file').text(location.file);
+                }
+                if (location.startLine !== undefined) {
+                    locationNode.node('startLine').text(`${location.startLine}`);
+                }
+                if (location.startColumn !== undefined) {
+                    locationNode.node('startColumn').text(`${location.startColumn}`);
+                }
+                if (location.endLine !== undefined) {
+                    locationNode.node('endLine').text(`${location.endLine}`);
+                }
+                if (location.endColumn !== undefined) {
+                    locationNode.node('endColumn').text(`${location.endColumn}`);
+                }
+                if (location.comment !== undefined) {
+                    locationNode.node('comment').text(location.comment);
                 }
             }
+
             violationNode.node('message').text(violationOutput.message);
-            if (violationOutput.resources) {
-                const resourcesNode: xmlbuilder.XMLElement = violationNode.node('resources');
-                for (const resource of violationOutput.resources) {
-                    resourcesNode.node('resource').text(resource);
-                }
+
+            const resourcesNode: xmlbuilder.XMLElement = violationNode.node('resources');
+            for (const resource of violationOutput.resources) {
+                resourcesNode.node('resource').text(resource);
             }
         }
 

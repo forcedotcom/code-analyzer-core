@@ -20,7 +20,9 @@
       "tags": [],
       "primaryLocationIndex": 0,
       "locations": [
-        {}
+        {
+          "comment": "Undefined Code Location"
+        }
       ],
       "message": "The engine with name 'throwingEngine' threw an unexpected error: SomeErrorMessageFromThrowingEngine",
       "resources": []

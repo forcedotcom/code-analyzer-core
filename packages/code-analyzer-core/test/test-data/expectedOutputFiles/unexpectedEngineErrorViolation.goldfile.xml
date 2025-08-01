@@ -21,7 +21,9 @@
       <tags></tags>
       <primaryLocationIndex>0</primaryLocationIndex>
       <locations>
-        <location></location>
+        <location>
+          <comment>Undefined Code Location</comment>
+        </location>
       </locations>
       <message>The engine with name 'throwingEngine' threw an unexpected error: SomeErrorMessageFromThrowingEngine</message>
       <resources></resources>

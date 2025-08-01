@@ -416,6 +416,22 @@ describe("Tests for the run method of CodeAnalyzer", () => {
             getMessage('EngineReturnedViolationWithInvalidPrimaryLocationIndex', 'stubEngine2', 'stub2RuleC', -2, 3));
     });
 
+    it("When an engine returns a violatoin that has zero code locations, then an error is thrown", async() => {
+        const badViolation: engApi.Violation = {
+            ruleName: 'stub1RuleC',
+            message: 'SomeViolationMessage2',
+            codeLocations: [],
+            primaryLocationIndex: 0,
+            resourceUrls: ["https://example.com/aViolationSpecificUrl1",]
+        };
+        badViolation.primaryLocationIndex = 0;
+        stubEngine1.resultsToReturn = {
+            violations: [badViolation]
+        };
+        await expect(codeAnalyzer.run(selection, sampleRunOptions)).rejects.toThrow(
+            getMessage('EngineReturnedViolationWithEmptyCodeLocationArray', 'stubEngine1', 'stub1RuleC'));
+    });
+
     it("When an engine returns a violation that has a primary location index that is not an integer, then an error is thrown", async () => {
         const badViolation: engApi.Violation = stubs.getSampleViolationForStub1RuleC();
         badViolation.primaryLocationIndex = 0.5;

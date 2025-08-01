@@ -635,8 +635,8 @@ function validateTargetLivesWithinWorkspace(target: string, workspaceFilesAndFol
 function validateEngineRunResults(engineName: string, apiEngineRunResults: engApi.EngineRunResults, ruleSelection: RuleSelection): void {
     for (const violation of apiEngineRunResults.violations) {
         validateViolationRuleName(violation, engineName, ruleSelection);
-        validateViolationPrimaryLocationIndex(violation, engineName);
         validateViolationCodeLocations(violation, engineName);
+        validateViolationPrimaryLocationIndex(violation, engineName);
     }
 }
 
@@ -656,6 +656,9 @@ function validateViolationPrimaryLocationIndex(violation: engApi.Violation, engi
 }
 
 function validateViolationCodeLocations(violation: engApi.Violation, engineName: string): void {
+    if (violation.codeLocations.length === 0) {
+        throw new Error(getMessage('EngineReturnedViolationWithEmptyCodeLocationArray', engineName, violation.ruleName));
+    }
     for (const codeLocation of violation.codeLocations) {
         const absFile: string = toAbsolutePath(codeLocation.file);
         fs.existsSync(absFile)
