@@ -258,7 +258,9 @@
         }
         updateSummary(data2) {
           const uniqueFiles = new Set(data2.map((v) => v.file));
-          (this.summary.textContent = `Found ${data2.length} violation${1 !== data2.length ? "s" : ""} across ${uniqueFiles.size} file${1 !== uniqueFiles.size ? "s" : ""}`),
+          0 === data2.length
+            ? (this.summary.textContent = "Found 0 violations")
+            : (this.summary.textContent = `Found ${data2.length} violation${1 !== data2.length ? "s" : ""} across ${uniqueFiles.size} file${1 !== uniqueFiles.size ? "s" : ""}`),
             this.violationsTable.classList.toggle("hidden", 0 === data2.length);
         }
         updateBoxes(data2) {
