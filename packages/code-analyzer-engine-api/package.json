@@ -17,7 +17,7 @@
   "types": "dist/index.d.ts",
   "dependencies": {
     "@types/node": "^20.0.0",
-    "tmp": "^0.2.3"
+    "tmp": "^0.2.4"
   },
   "devDependencies": {
     "@eslint/js": "^9.31.0",
