@@ -11,6 +11,11 @@ export default tseslint.config(
                 "varsIgnorePattern": "^_",
                 "caughtErrorsIgnorePattern": "^_"
             }]
+        },
+        languageOptions: {
+            parserOptions: {
+                projectService: true
+            }
         }
     }
 );
