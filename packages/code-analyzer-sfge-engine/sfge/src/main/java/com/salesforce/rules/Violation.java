@@ -332,8 +332,7 @@ public abstract class Violation implements Comparable<Violation>, RuleThrowable 
                             message),
                     vertex);
 
-            // TODO: reconsider the name and category. We want users to take followup action.
-            this.ruleName = "LimitReached";
+            this.ruleName = INTERNAL_ERROR_RULENAME;
             this.category = INTERNAL_ERROR_CATEGORY;
             this.description = "";
             this.severity = AbstractRule.SEVERITY.LOW.code;
