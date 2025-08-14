@@ -2,10 +2,11 @@ import * as fs from "fs";
 import path from "node:path";
 import { CodeAnalyzer, CodeAnalyzerConfig, OutputFormat } from "../src";
 import { RunResults, RunResultsImpl } from "../src/results";
-import { RuleSelection, RuleSelectionImpl } from "../src/rules";
+import { RuleImpl, RuleSelection, RuleSelectionImpl } from "../src/rules";
 import * as stubs from "./stubs";
 import { FixedClock } from "@salesforce/code-analyzer-engine-api/utils";
 import { changeWorkingDirectoryToPackageRoot } from "./test-helpers";
+import {SeverityLevel} from "@salesforce/code-analyzer-engine-api";
 
 changeWorkingDirectoryToPackageRoot();
 
@@ -13,7 +14,7 @@ let runResults: RunResults;
 let ruleSelection: RuleSelection;
 let fixedTime: Date;
 
-beforeAll(async () => {
+beforeEach(async () => {
     const codeAnalyzer: CodeAnalyzer = new CodeAnalyzer(CodeAnalyzerConfig.withDefaults());
     fixedTime = new Date(2024, 6, 3, 9, 14, 34, 567);
     codeAnalyzer._setClock(new FixedClock(fixedTime));
@@ -206,15 +207,25 @@ describe("RuleSelectionFormatter Tests", () => {
         });
 
         it("When multiple rules are selected, we create a CSV with populated rows", () => {
-            const formattedText: string = ruleSelection.toFormattedOutput(OutputFormat.CSV);
+            const complicatedRuleSelection: RuleSelectionImpl = new RuleSelectionImpl();
+            const rule1: RuleImpl = new RuleImpl('stubEngine1', {
+                name: 'stub1RuleA',
+                severityLevel: SeverityLevel.Moderate,
+                tags: ['Recommended', 'CodeStyle'],
+                description: 'A rule description that contains\na new line character, as well as `ticks`, "double quotes", \'single quotes\,\n<brackets>, and even {curly braces}!',
+                resourceUrls: ['https://example.com/stub1RuleA', 'https://example.com/stub1RuleA_2']
+            });
+            const rule2: RuleImpl = new RuleImpl('stubEngine1', {
+                name: 'stub1RuleB',
+                severityLevel: SeverityLevel.Low,
+                tags: ['Recommended', 'Performance'],
+                description: 'A simple description this time',
+                resourceUrls: []
+            });
+            complicatedRuleSelection.addRule(rule1);
+            complicatedRuleSelection.addRule(rule2);
+            const formattedText: string = complicatedRuleSelection.toFormattedOutput(OutputFormat.CSV);
             const expectedText: string = getContentsOfExpectedOutputFile('multipleRules.goldfile.csv', true, true);
-            expect(formattedText).toEqual(expectedText);
-        });
-
-        it("When a rule has newlines in its description, they are escaped in the output", async () => {
-            const ruleSelectionWithNewlineDescriptions = await createRulesWithNewlineDescription();
-            const formattedText: string = ruleSelectionWithNewlineDescriptions.toFormattedOutput(OutputFormat.CSV);
-            const expectedText: string = getContentsOfExpectedOutputFile('ruleSelectionWithNewlineDescriptions.goldfile.csv', true, true);
             expect(formattedText).toEqual(expectedText);
         });
     });
@@ -267,11 +278,4 @@ async function createRulesWithEmptyTags(): Promise<RuleSelection> {
     codeAnalyzer._setClock(new FixedClock(fixedTime));
     await codeAnalyzer.addEnginePlugin(new stubs.EmptyTagEnginePlugin());
     return codeAnalyzer.selectRules(['all'])
-}
-
-async function createRulesWithNewlineDescription(): Promise<RuleSelection> {
-    const codeAnalyzer: CodeAnalyzer = new CodeAnalyzer(CodeAnalyzerConfig.withDefaults());
-    codeAnalyzer._setClock(new FixedClock(fixedTime));
-    await codeAnalyzer.addEnginePlugin(new stubs.NewlineDescriptionEnginePlugin());
-    return codeAnalyzer.selectRules(['all']);
 }
