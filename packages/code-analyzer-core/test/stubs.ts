@@ -474,7 +474,6 @@ class EmptyTagEngine extends engApi.Engine {
     }
 }
 
-
 /**
  * FutureEnginePlugin - A plugin to help with testing forward compatibility
  */

@@ -2,10 +2,11 @@ import * as fs from "fs";
 import path from "node:path";
 import { CodeAnalyzer, CodeAnalyzerConfig, OutputFormat } from "../src";
 import { RunResults, RunResultsImpl } from "../src/results";
-import { RuleSelection, RuleSelectionImpl } from "../src/rules";
+import { RuleImpl, RuleSelection, RuleSelectionImpl } from "../src/rules";
 import * as stubs from "./stubs";
 import { FixedClock } from "@salesforce/code-analyzer-engine-api/utils";
 import { changeWorkingDirectoryToPackageRoot } from "./test-helpers";
+import {SeverityLevel} from "@salesforce/code-analyzer-engine-api";
 
 changeWorkingDirectoryToPackageRoot();
 
@@ -197,6 +198,38 @@ describe("RuleSelectionFormatter Tests", () => {
         });
     });
 
+    describe("Tests for the CSV output format", () => {
+        it("When no rules are selected, we create a CSV with headers but no rows", () => {
+            const emptyRules: RuleSelection = new RuleSelectionImpl();
+            const formattedText: string = emptyRules.toFormattedOutput(OutputFormat.CSV);
+            const expectedText: string = getContentsOfExpectedOutputFile('zeroRules.goldfile.csv', true, true);
+            expect(formattedText).toEqual(expectedText);
+        });
+
+        it("When multiple rules are selected, we create a CSV with populated rows", () => {
+            const complicatedRuleSelection: RuleSelectionImpl = new RuleSelectionImpl();
+            const rule1: RuleImpl = new RuleImpl('stubEngine1', {
+                name: 'stub1RuleA',
+                severityLevel: SeverityLevel.Moderate,
+                tags: ['Recommended', 'CodeStyle'],
+                description: 'A rule description that contains\na new line character, as well as `ticks`, "double quotes", \'single quotes\,\n<brackets>, and even {curly braces}!',
+                resourceUrls: ['https://example.com/stub1RuleA', 'https://example.com/stub1RuleA_2']
+            });
+            const rule2: RuleImpl = new RuleImpl('stubEngine1', {
+                name: 'stub1RuleB',
+                severityLevel: SeverityLevel.Low,
+                tags: ['Recommended', 'Performance'],
+                description: 'A simple description this time',
+                resourceUrls: []
+            });
+            complicatedRuleSelection.addRule(rule1);
+            complicatedRuleSelection.addRule(rule2);
+            const formattedText: string = complicatedRuleSelection.toFormattedOutput(OutputFormat.CSV);
+            const expectedText: string = getContentsOfExpectedOutputFile('multipleRules.goldfile.csv', true, true);
+            expect(formattedText).toEqual(expectedText);
+        });
+    });
+
     describe("Other misc output formatting tests", () => {
         it("When an output format is not supported, then we error", () => {
             const rules: RuleSelection = new RuleSelectionImpl();
@@ -244,5 +277,5 @@ async function createRulesWithEmptyTags(): Promise<RuleSelection> {
     const codeAnalyzer: CodeAnalyzer = new CodeAnalyzer(CodeAnalyzerConfig.withDefaults());
     codeAnalyzer._setClock(new FixedClock(fixedTime));
     await codeAnalyzer.addEnginePlugin(new stubs.EmptyTagEnginePlugin());
-    return await codeAnalyzer.selectRules(['all'])
+    return codeAnalyzer.selectRules(['all'])
 }
