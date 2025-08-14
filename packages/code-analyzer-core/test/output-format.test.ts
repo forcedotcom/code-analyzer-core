@@ -14,7 +14,7 @@ let runResults: RunResults;
 let ruleSelection: RuleSelection;
 let fixedTime: Date;
 
-beforeEach(async () => {
+beforeAll(async () => {
     const codeAnalyzer: CodeAnalyzer = new CodeAnalyzer(CodeAnalyzerConfig.withDefaults());
     fixedTime = new Date(2024, 6, 3, 9, 14, 34, 567);
     codeAnalyzer._setClock(new FixedClock(fixedTime));
