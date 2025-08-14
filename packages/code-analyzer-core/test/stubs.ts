@@ -474,6 +474,41 @@ class EmptyTagEngine extends engApi.Engine {
     }
 }
 
+export class NewlineDescriptionEnginePlugin extends engApi.EnginePluginV1 {
+    getAvailableEngineNames(): string[] {
+        return ['newlineDescription'];
+    }
+
+    async createEngine(_engineName: string, _config: engApi.ConfigObject): Promise<engApi.Engine> {
+        return new NewlineDescriptionEngine();
+    }
+}
+
+class NewlineDescriptionEngine extends engApi.Engine {
+    getName(): string {
+        return 'newlineDescription';
+    }
+
+    getEngineVersion(): Promise<string> {
+        return Promise.resolve('1.0.0');
+    }
+
+    describeRules(_describeOptions: engApi.DescribeOptions): Promise<engApi.RuleDescription[]> {
+        return Promise.resolve([
+            {
+                name: 'newlineDescriptionRule',
+                severityLevel: engApi.SeverityLevel.Moderate,
+                tags: ['Recommended', 'Performance'],
+                description: `This is a description\nit has multiple lines\nlike, I dunno, 3 maybe?`,
+                resourceUrls: [] // Deliberately left empty
+            }
+        ]);
+    }
+
+    runRules(_ruleNames: string[], _runOptions: engApi.RunOptions):Promise<engApi.EngineRunResults> {
+        return Promise.resolve({ violations: [] });
+    }
+}
 
 /**
  * FutureEnginePlugin - A plugin to help with testing forward compatibility

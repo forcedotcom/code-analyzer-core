@@ -1,10 +1,11 @@
 import { Clock, RealClock } from '@salesforce/code-analyzer-engine-api/utils';
 import { CsvRunResultsFormatter } from "./output-formats/results/csv-run-results-format";
-import { HtmlRunResultsFormatter } from "./output-formats/results/html-run-results-format";
+import { HtmlRunResultsFormatter} from "./output-formats/results/html-run-results-format";
 import { JsonRunResultsFormatter } from "./output-formats/results/json-run-results-format";
 import { SarifRunResultsFormatter } from "./output-formats/results/sarif-run-results-format";
 import { XmlRunResultsFormatter } from "./output-formats/results/xml-run-results-format";
 import { JsonRulesFormatter } from "./output-formats/rules/json-rules-format";
+import { CsvRulesFormatter } from "./output-formats/rules/csv-rules-format";
 import { RunResults } from "./results";
 import { RuleSelection } from "./rules";
 
@@ -74,6 +75,8 @@ export abstract class RuleSelectionFormatter {
         switch (format) {
             case OutputFormat.JSON:
                 return new JsonRulesFormatter();
+            case OutputFormat.CSV:
+                return new CsvRulesFormatter();
             default:
                 throw new Error(`Unsupported output format: ${format}`);
         }

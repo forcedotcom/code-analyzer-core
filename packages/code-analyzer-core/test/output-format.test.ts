@@ -197,6 +197,28 @@ describe("RuleSelectionFormatter Tests", () => {
         });
     });
 
+    describe("Tests for the CSV output format", () => {
+        it("When no rules are selected, we create a CSV with headers but no rows", () => {
+            const emptyRules: RuleSelection = new RuleSelectionImpl();
+            const formattedText: string = emptyRules.toFormattedOutput(OutputFormat.CSV);
+            const expectedText: string = getContentsOfExpectedOutputFile('zeroRules.goldfile.csv', true, true);
+            expect(formattedText).toEqual(expectedText);
+        });
+
+        it("When multiple rules are selected, we create a CSV with populated rows", () => {
+            const formattedText: string = ruleSelection.toFormattedOutput(OutputFormat.CSV);
+            const expectedText: string = getContentsOfExpectedOutputFile('multipleRules.goldfile.csv', true, true);
+            expect(formattedText).toEqual(expectedText);
+        });
+
+        it("When a rule has newlines in its description, they are escaped in the output", async () => {
+            const ruleSelectionWithNewlineDescriptions = await createRulesWithNewlineDescription();
+            const formattedText: string = ruleSelectionWithNewlineDescriptions.toFormattedOutput(OutputFormat.CSV);
+            const expectedText: string = getContentsOfExpectedOutputFile('ruleSelectionWithNewlineDescriptions.goldfile.csv', true, true);
+            expect(formattedText).toEqual(expectedText);
+        });
+    });
+
     describe("Other misc output formatting tests", () => {
         it("When an output format is not supported, then we error", () => {
             const rules: RuleSelection = new RuleSelectionImpl();
@@ -244,5 +266,12 @@ async function createRulesWithEmptyTags(): Promise<RuleSelection> {
     const codeAnalyzer: CodeAnalyzer = new CodeAnalyzer(CodeAnalyzerConfig.withDefaults());
     codeAnalyzer._setClock(new FixedClock(fixedTime));
     await codeAnalyzer.addEnginePlugin(new stubs.EmptyTagEnginePlugin());
-    return await codeAnalyzer.selectRules(['all'])
+    return codeAnalyzer.selectRules(['all'])
+}
+
+async function createRulesWithNewlineDescription(): Promise<RuleSelection> {
+    const codeAnalyzer: CodeAnalyzer = new CodeAnalyzer(CodeAnalyzerConfig.withDefaults());
+    codeAnalyzer._setClock(new FixedClock(fixedTime));
+    await codeAnalyzer.addEnginePlugin(new stubs.NewlineDescriptionEnginePlugin());
+    return codeAnalyzer.selectRules(['all']);
 }

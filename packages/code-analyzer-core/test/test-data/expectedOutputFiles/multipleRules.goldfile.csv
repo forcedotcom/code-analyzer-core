@@ -1,0 +1,10 @@
+"name","engine","description","severity","tags","resources"
+"stub1RuleA","stubEngine1","Some description for stub1RuleA",4,"Recommended,CodeStyle","https://example.com/stub1RuleA"
+"stub1RuleB","stubEngine1","Some description for stub1RuleB",2,"Recommended,Security","https://example.com/stub1RuleB"
+"stub1RuleC","stubEngine1","Some description for stub1RuleC",3,"Recommended,Performance,Custom","https://example.com/stub1RuleC"
+"stub1RuleD","stubEngine1","Some description for stub1RuleD",4,"CodeStyle","https://example.com/stub1RuleD"
+"stub1RuleE","stubEngine1","Some description for stub1RuleE",3,"Performance","https://example.com/stub1RuleE,https://example.com/stub1RuleE_2"
+"stub2RuleA","stubEngine2","Some description for stub2RuleA",3,"Recommended,Security","https://example.com/stub2RuleA"
+"stub2RuleB","stubEngine2","Some description for stub2RuleB",4,"Performance,Custom","https://example.com/stub2RuleB"
+"stub2RuleC","stubEngine2","Some description for stub2RuleC",2,"Recommended,BestPractice",
+"stub3RuleA","stubEngine3","Some description for stub3RuleA",3,"Recommended,ErrorProne",
