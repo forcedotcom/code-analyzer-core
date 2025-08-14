@@ -1,5 +1,5 @@
-"name","engine","description","severity","tags","resources"
-"stub1RuleA","stubEngine1","A rule description that contains
+"name","severity","engine","tags","resources","description"
+"stub1RuleA",3,"stubEngine1","Recommended,CodeStyle","https://example.com/stub1RuleA,https://example.com/stub1RuleA_2","A rule description that contains
 a new line character, as well as `ticks`, ""double quotes"", 'single quotes,
-<brackets>, and even {curly braces}!",3,"Recommended,CodeStyle","https://example.com/stub1RuleA,https://example.com/stub1RuleA_2"
-"stub1RuleB","stubEngine1","A simple description this time",4,"Recommended,Performance",
+<brackets>, and even {curly braces}!"
+"stub1RuleB",4,"stubEngine1","Recommended,Performance",,"A simple description this time"

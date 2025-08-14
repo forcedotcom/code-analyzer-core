@@ -10,7 +10,7 @@ export class CsvRulesFormatter implements RuleSelectionFormatter {
         const options: CsvOptions = {
             header: true,
             quoted_string: true,
-            columns: ["name", "engine", "description", "severity", "tags", "resources"],
+            columns: ["name", "severity", "engine", "tags", "resources", "description"],
             cast: {
                 object: value => {
                     /* istanbul ignore else */
