@@ -1,12 +1,6 @@
-import { defineConfig } from "eslint/config";
-
-export default defineConfig([
-    {
-        rules: {
-            "array-callback-return": ["error"],
-            "no-unused-vars": ["error", { argsIgnorePattern: "^_" }],
-            "no-useless-backreference": ["warn"],
-            "no-useless-escape": [0]
-        },
-    },
-]);
+export const rules = {
+    "array-callback-return": ["error"],
+    "no-unused-vars": ["error", { argsIgnorePattern: "^_" }],
+    "no-useless-backreference": ["warn"],
+    "no-useless-escape": [0]
+};

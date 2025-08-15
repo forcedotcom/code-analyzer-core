@@ -113,14 +113,7 @@ export class BaseConfigFactory {
         //todo: Should this need to be updated now to take CSS into consideration?
         return sldsEslintPlugin.configs['flat/recommended'].map(conf => ({
             ...conf,
-            files: this.engineConfig.file_extensions.html.map(ext => `**/*${ext}`),
-            languageOptions: {
-                    ... (conf.languageOptions ?? {}),
-                    parserOptions: {
-                        ... (conf.languageOptions?.parserOptions ?? {}),
-                        projectService: true
-                    }
-                }
+            files: this.engineConfig.file_extensions.html.map(ext => `**/*${ext}`)
         }));
     }
 
