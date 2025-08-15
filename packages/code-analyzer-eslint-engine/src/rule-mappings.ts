@@ -1601,15 +1601,15 @@ export const RULE_MAPPINGS: Record<string, {severity: SeverityLevel, tags: strin
     //   SLDS/HTML BASE RULES - @salesforce-ux/eslint-plugin-slds
     // =================================================================================================================
     "@salesforce-ux/slds/enforce-bem-usage": {
-        severity: SeverityLevel.High,
-        tags: [COMMON_TAGS.RECOMMENDED, COMMON_TAGS.LANGUAGES.HTML] //TODO: are there other tags?
+        severity: SeverityLevel.Low,
+        tags: [COMMON_TAGS.RECOMMENDED, COMMON_TAGS.CATEGORIES.BEST_PRACTICES, COMMON_TAGS.LANGUAGES.HTML] //TODO: are there other tags?
+    },
+    "@salesforce-ux/slds/modal-close-button-issue": {
+        severity: SeverityLevel.Moderate,
+        tags: [COMMON_TAGS.RECOMMENDED, COMMON_TAGS.CATEGORIES.BEST_PRACTICES, COMMON_TAGS.LANGUAGES.HTML]
     },
     "@salesforce-ux/slds/no-deprecated-classes-slds2": {
         severity: SeverityLevel.High,
-        tags: [COMMON_TAGS.RECOMMENDED, COMMON_TAGS.LANGUAGES.HTML]
-    },
-    "@salesforce-ux/slds/modal-close-button-issue": {
-        severity: SeverityLevel.High,
-        tags: [COMMON_TAGS.RECOMMENDED, COMMON_TAGS.LANGUAGES.HTML]
+        tags: [COMMON_TAGS.RECOMMENDED, COMMON_TAGS.CATEGORIES.ERROR_PRONE, COMMON_TAGS.LANGUAGES.HTML]
     }
 }

@@ -5,9 +5,10 @@
     "resourceUrls": [
       "https://developer.salesforce.com/docs/platform/slds-linter/guide/reference-rules.html#enforce-bem-usage"
     ],
-    "severityLevel": 2,
+    "severityLevel": 4,
     "tags": [
       "Recommended",
+      "BestPractices",
       "HTML"
     ]
   },
@@ -17,9 +18,10 @@
     "resourceUrls": [
       "https://developer.salesforce.com/docs/platform/slds-linter/guide/reference-rules.html#modal-close-button-issue"
     ],
-    "severityLevel": 2,
+    "severityLevel": 3,
     "tags": [
       "Recommended",
+      "BestPractices",
       "HTML"
     ]
   },
@@ -32,6 +34,7 @@
     "severityLevel": 2,
     "tags": [
       "Recommended",
+      "ErrorProne",
       "HTML"
     ]
   }
