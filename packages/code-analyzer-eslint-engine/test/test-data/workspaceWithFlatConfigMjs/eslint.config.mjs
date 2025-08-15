@@ -1,6 +1,4 @@
-import { defineConfig } from "eslint/config";
-
-export default defineConfig([
+export default [
     {
         rules: {
             "array-callback-return": ["error"],
@@ -9,4 +7,4 @@ export default defineConfig([
             "no-useless-escape": [0]
         },
     },
-]);
+];

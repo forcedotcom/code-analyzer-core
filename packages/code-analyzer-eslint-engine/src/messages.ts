@@ -35,6 +35,11 @@ const MESSAGE_CATALOG : { [key: string]: string } = {
         `and "plugin:@lwc/lwc-platform/recommended" configurations to Code Analyzer.\n` +
         `See https://github.com/salesforce/eslint-config-lwc and https://www.npmjs.com/package/@lwc/eslint-plugin-lwc-platform.`,
 
+    ConfigFieldDescription_disable_slds_base_config:
+        `Whether to turn off the default base configuration that supplies the SLDS rules for Lightning Web Components and Aura Components.\n` +
+        `The base configuration for SLDS adds the rules from the "plugin:@salesforce-ux/eslint-plugin-slds/recommended" configuration to Code Analyzer.\n` +
+        `See https://www.npmjs.com/package/@salesforce-ux/eslint-plugin-slds`,
+
     ConfigFieldDescription_disable_typescript_base_config:
         `Whether to turn off the default base configuration that supplies the standard rules for TypeScript files\n` +
         `The base configuration for TypeScript files adds the rules from the "plugin:@typescript-eslint:all" configuration to Code Analyzer.\n` +
@@ -44,9 +49,10 @@ const MESSAGE_CATALOG : { [key: string]: string } = {
         `Extensions of the files in your workspace that will be used to discover rules.\n` +
         `To associate file extensions to the standard ESLint JavaScript rules, LWC rules, or custom JavaScript-based\n` +
         `rules, add them under the 'javascript' language. To associate file extensions to the standard TypeScript\n` +
-        `rules or custom TypeScript-based rules, add them under the 'typescript' language. To allow for the\n` +
-        `discovery of custom rules that are associated with any other language, then add the associated file\n` +
-        `extensions under the 'other' language.`,
+        `rules or custom TypeScript-based rules, add them under the 'typescript' language.\n` +
+        `To associate file extensions to standard LWC HTML rules, Component (CMP) rules, or custom HTML rules, add them\n` +
+        `under the 'html' language. To allow for the discovery of custom rules that are associated with any other language,\n` +
+        `then add the associated file extensions under the 'other' language.`,
 
     UnsupportedEngineName:
         `The ESLintEnginePlugin doesn't support an engine with name '%s'.`,

@@ -34,6 +34,7 @@ describe("Miscellaneous tests that test sensitive implementation details more di
         const fileExts: FileExtensionsObject = {
             javascript: ['.js'],
             typescript: ['.ts'],
+            html: ['.html'],
             other: []
         }
 

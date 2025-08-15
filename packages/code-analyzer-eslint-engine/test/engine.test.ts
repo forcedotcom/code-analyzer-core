@@ -59,7 +59,8 @@ describe('Tests for the describeRules method of ESLintEngine', () => {
     const LWC_CONFIG_RULES: RuleDescription[] = loadRuleDescriptions('rules_OnlyLwcBaseConfig.goldfile.json');
     const JS_CONFIG_RULES: RuleDescription[] = loadRuleDescriptions('rules_OnlyJavaScriptBaseConfig.goldfile.json');
     const TS_CONFIG_RULES: RuleDescription[] = loadRuleDescriptions('rules_OnlyTypeScriptBaseConfig.goldfile.json');
-    const DEFAULT_RULES: RuleDescription[] = makeUniqueAndSorted([...LWC_CONFIG_RULES, ...JS_CONFIG_RULES, ...TS_CONFIG_RULES]);
+    const SLDS_CONFIG_RULES: RuleDescription[] = loadRuleDescriptions('rules_OnlySldsBaseConfig.goldfile.json');
+    const DEFAULT_RULES: RuleDescription[] = makeUniqueAndSorted([...LWC_CONFIG_RULES, ...JS_CONFIG_RULES, ...TS_CONFIG_RULES, ...SLDS_CONFIG_RULES]);
     const CUSTOM_RULES: RuleDescription[] = loadRuleDescriptions('rules_OnlyCustomConfigWithNewRules.goldfile.json');
 
     // The config for workspaceThatHasCustomConfigModifyingExistingRules modifies some rule properties. This does not
@@ -162,7 +163,7 @@ describe('Tests for the describeRules method of ESLintEngine', () => {
             disable_javascript_base_config: true
         });
         const ruleDescriptions: RuleDescription[] = await engine.describeRules(createDescribeOptions());
-        expect(ruleDescriptions).toEqual(makeUniqueAndSorted([...LWC_CONFIG_RULES, ...TS_CONFIG_RULES]));
+        expect(ruleDescriptions).toEqual(makeUniqueAndSorted([...LWC_CONFIG_RULES, ...TS_CONFIG_RULES, ...SLDS_CONFIG_RULES]));
     });
 
     it('When disable_lwc_base_config=true, then the lwc rules are removed but javascript rules remain', async() => {
@@ -170,7 +171,15 @@ describe('Tests for the describeRules method of ESLintEngine', () => {
             disable_lwc_base_config: true
         });
         const ruleDescriptions: RuleDescription[] = await engine.describeRules(createDescribeOptions());
-        expect(ruleDescriptions).toEqual(makeUniqueAndSorted([...JS_CONFIG_RULES, ...TS_CONFIG_RULES]));
+        expect(ruleDescriptions).toEqual(makeUniqueAndSorted([...JS_CONFIG_RULES, ...TS_CONFIG_RULES, ...SLDS_CONFIG_RULES]));
+    });
+
+    it('When disable_slds_base_config=true, then the slds rules are removed but other rules remain', async() => {
+        const engine: Engine = await createEngineFromPlugin({...DEFAULT_CONFIG_FOR_TESTING,
+            disable_slds_base_config: true
+        });
+        const ruleDescriptions: RuleDescription[] = await engine.describeRules(createDescribeOptions());
+        expect(ruleDescriptions).toEqual(makeUniqueAndSorted([...LWC_CONFIG_RULES, ...JS_CONFIG_RULES, ...TS_CONFIG_RULES]));
     });
 
     it('When disable_typescript_base_config=true, then the typescript rules are removed', async() => {
@@ -178,45 +187,60 @@ describe('Tests for the describeRules method of ESLintEngine', () => {
             disable_typescript_base_config: true
         });
         const ruleDescriptions: RuleDescription[] = await engine.describeRules(createDescribeOptions());
-        expect(ruleDescriptions).toEqual(makeUniqueAndSorted([...LWC_CONFIG_RULES, ...JS_CONFIG_RULES]));
+        expect(ruleDescriptions).toEqual(makeUniqueAndSorted([...LWC_CONFIG_RULES, ...JS_CONFIG_RULES, ...SLDS_CONFIG_RULES]));
     });
 
-    it('When disable_lwc_base_config=true and disable_typescript_base_config=true, then only base javascript rules remain', async() => {
+    it('When disable_lwc_base_config=true, disable_typescript_base_config=true, and disable_slds_base_config=true, then only base javascript rules remain', async() => {
         const engine: Engine = await createEngineFromPlugin({...DEFAULT_CONFIG_FOR_TESTING,
             disable_typescript_base_config: true,
             disable_lwc_base_config: true,
+            disable_slds_base_config: true
         });
         const ruleDescriptions: RuleDescription[] = await engine.describeRules(createDescribeOptions());
         expect(ruleDescriptions).toEqual(JS_CONFIG_RULES);
     });
 
-    it('When disable_javascript_base_config=true and disable_lwc_base_config=true, then only base typescript rules remain', async() => {
+    it('When disable_javascript_base_config=true, disable_lwc_base_config=true, and disable_slds_base_config=true, then only base typescript rules remain', async() => {
         const engine: Engine = await createEngineFromPlugin({...DEFAULT_CONFIG_FOR_TESTING,
             disable_javascript_base_config: true,
             disable_lwc_base_config: true,
+            disable_slds_base_config: true
         });
         const ruleDescriptions: RuleDescription[] = await engine.describeRules(createDescribeOptions());
         expect(ruleDescriptions).toEqual(TS_CONFIG_RULES);
     });
 
-    it('When disable_javascript_base_config=true and disable_typescript_base_config=true, then only base lwc rules remain', async() => {
+    it('When disable_javascript_base_config=true, disable_typescript_base_config=true, and and disable_slds_base_config=true, then only base lwc rules remain', async() => {
         const engine: Engine = await createEngineFromPlugin({...DEFAULT_CONFIG_FOR_TESTING,
             disable_javascript_base_config: true,
             disable_typescript_base_config: true,
+            disable_slds_base_config: true
         });
         const ruleDescriptions: RuleDescription[] = await engine.describeRules(createDescribeOptions());
         expect(ruleDescriptions).toEqual(LWC_CONFIG_RULES);
     });
 
-    it('When all *_javascript_base_config equal true and no custom config exists, then no rules should exist', async() => {
+    it('When disable_javascript_base_config=true, disable_typescript_base_config=true, and and disable_lwc_base_config=true, then only base slds rules remain', async() => {
         const engine: Engine = await createEngineFromPlugin({...DEFAULT_CONFIG_FOR_TESTING,
             disable_javascript_base_config: true,
             disable_typescript_base_config: true,
             disable_lwc_base_config: true
         });
         const ruleDescriptions: RuleDescription[] = await engine.describeRules(createDescribeOptions());
+        expect(ruleDescriptions).toEqual(SLDS_CONFIG_RULES);
+    });
+
+    it('When all *_base_config equal true and no custom config exists, then no rules should exist', async() => {
+        const engine: Engine = await createEngineFromPlugin({...DEFAULT_CONFIG_FOR_TESTING,
+            disable_javascript_base_config: true,
+            disable_typescript_base_config: true,
+            disable_lwc_base_config: true,
+            disable_slds_base_config: true
+        });
+        const ruleDescriptions: RuleDescription[] = await engine.describeRules(createDescribeOptions());
         expect(ruleDescriptions).toHaveLength(0);
     });
+
     it('When file_extensions.javascript is empty, then javascript rules do not get picked up', async () => {
         const engine: Engine = await createEngineFromPlugin({...DEFAULT_CONFIG_FOR_TESTING,
             file_extensions: {
@@ -225,7 +249,7 @@ describe('Tests for the describeRules method of ESLintEngine', () => {
             }
         });
         const ruleDescriptions: RuleDescription[] = await engine.describeRules(createDescribeOptions());
-        expect(ruleDescriptions).toEqual(TS_CONFIG_RULES);
+        expect(ruleDescriptions).toEqual(makeUniqueAndSorted([...TS_CONFIG_RULES, ...SLDS_CONFIG_RULES]));
     });
 
     it('When file_extensions.typescript is empty, then javascript rules do not get picked up', async () => {
@@ -236,15 +260,28 @@ describe('Tests for the describeRules method of ESLintEngine', () => {
             }
         });
         const ruleDescriptions: RuleDescription[] = await engine.describeRules(createDescribeOptions());
-        expect(ruleDescriptions).toEqual(makeUniqueAndSorted([...LWC_CONFIG_RULES, ...JS_CONFIG_RULES]));
+        expect(ruleDescriptions).toEqual(makeUniqueAndSorted([...LWC_CONFIG_RULES, ...JS_CONFIG_RULES, ...SLDS_CONFIG_RULES]));
     });
 
-    it('When file_extensions.javascript and file_extensions.typescript are both empty, then no rules are returned', async () => {
+    it('When file_extensions.html is empty, then html rules do not get picked up', async () => {
+        const engine: Engine = await createEngineFromPlugin({...DEFAULT_CONFIG_FOR_TESTING,
+            file_extensions: {
+                ... DEFAULT_CONFIG_FOR_TESTING.file_extensions,
+                html: []
+            }
+        });
+        const ruleDescriptions: RuleDescription[] = await engine.describeRules(createDescribeOptions());
+        expect(ruleDescriptions).toEqual(makeUniqueAndSorted([...LWC_CONFIG_RULES, ...JS_CONFIG_RULES, ...TS_CONFIG_RULES]));
+    });
+
+    it('When file_extensions are all empty, then no rules are returned', async () => {
         const engine: Engine = await createEngineFromPlugin({...DEFAULT_CONFIG_FOR_TESTING,
             file_extensions: {
                 ...DEFAULT_CONFIG_FOR_TESTING.file_extensions,
                 javascript: [],
-                typescript: []
+                typescript: [],
+                html: [],
+                other: []
             }
         });
         const ruleDescriptions: RuleDescription[] = await engine.describeRules(createDescribeOptions());
@@ -325,7 +362,8 @@ describe('Tests for the describeRules method of ESLintEngine', () => {
             auto_discover_eslint_config: true, // Sanity test that we can auto discover in config root
             disable_javascript_base_config: true,
             disable_typescript_base_config: true,
-            disable_lwc_base_config: true
+            disable_lwc_base_config: true,
+            disable_slds_base_config: true
         });
         const logEvents: LogEvent[] = [];
         engine.onEvent(EventType.LogEvent, (event: LogEvent) => logEvents.push(event));
@@ -346,13 +384,13 @@ describe('Tests for the describeRules method of ESLintEngine', () => {
         expect(ruleDescriptions).toEqual(EXPECTED_RULES_FOR_ONLY_CONFIG_THAT_MODIFIES_EXISTING_RULES);
     });
 
-    it('When workspace contains a config that globally ignores file, then those files are ignored during rule calculation', async () => {
+    it('When workspace contains a config that globally ignores js files, then those files are ignored during rule calculation', async () => {
         const engine: Engine = await createEngineFromPlugin({...DEFAULT_CONFIG_FOR_TESTING,
             eslint_config_file: path.join(testDataFolder, 'workspaceWithFlatConfigJs', 'a-config-file-that-uses-ignores.js')
         });
         const ruleDescriptions: RuleDescription[] = await engine.describeRules(createDescribeOptions(
             new Workspace('id', [path.join(testDataFolder, 'workspaceWithFlatConfigJs')])));
-        expect(ruleDescriptions).toEqual(TS_CONFIG_RULES);
+        expect(ruleDescriptions).toEqual(makeUniqueAndSorted([...TS_CONFIG_RULES, ...SLDS_CONFIG_RULES]));
     });
 
     it('When a .eslintignore file is auto discovered and a flat eslint config file is specified, then we warn that we ignore it', async () => {
@@ -372,11 +410,12 @@ describe('Tests for the describeRules method of ESLintEngine', () => {
             path.join(testDataFolder, 'workspaceWithLegacyIgnoreFile', '.eslintignore')));
     });
 
-   it('When custom rules only apply to file extensions that are not javascript or typescript based, then without specifying file extensions, they are not picked up', async () => {
+   it('When custom rules only apply to other file extensions, then without specifying file extensions in custom config, they are not picked up', async () => {
        const engine: Engine = await createEngineFromPlugin({...DEFAULT_CONFIG_FOR_TESTING,
             disable_lwc_base_config: true,
             disable_javascript_base_config: true,
             disable_typescript_base_config: true,
+            disable_slds_base_config: true,
             eslint_config_file: path.join(workspaceThatHasCustomConfigWithNewRules, 'eslint-config-only-for-other-files.js')
         });
         const ruleDescriptions: RuleDescription[] = await engine.describeRules(createDescribeOptions(
@@ -385,11 +424,12 @@ describe('Tests for the describeRules method of ESLintEngine', () => {
         expect(ruleDescriptions).toHaveLength(0);
     });
 
-    it('When custom rules only apply to file extensions that are not javascript or typescript based, then when specifying file extensions, they are picked up', async () => {
+    it('When custom rules only apply to other file extensions, then when specifying file extensions in custom config, they are picked up', async () => {
         const engine: Engine = await createEngineFromPlugin({...DEFAULT_CONFIG_FOR_TESTING,
          disable_lwc_base_config: true,
          disable_javascript_base_config: true,
          disable_typescript_base_config: true,
+         disable_slds_base_config: true,
          eslint_config_file: path.join(workspaceThatHasCustomConfigWithNewRules, 'eslint-config-only-for-other-files.js'),
          file_extensions:{
              ... DEFAULT_CONFIG.file_extensions,
@@ -459,16 +499,31 @@ describe('Typical tests for the runRules method of ESLintEngine', () => {
         "primaryLocationIndex": 0,
         "ruleName": "@typescript-eslint/no-wrapper-object-types"
     };
+    const expectedHTMLViolation_enforceBemUsage: Violation = {
+        "codeLocations": [
+            {
+                "endColumn": 27,
+                "endLine": 1,
+                "file": path.join(workspaceWithNoCustomConfig, 'dummy1.html'),
+                "startColumn": 11,
+                "startLine": 1
+            }
+        ],
+        "message": "slds-m-top--none has been retired. Update it to the new name slds-m-top_none.",
+        "primaryLocationIndex": 0,
+        "ruleName": "@salesforce-ux/slds/enforce-bem-usage"
+    };
 
-    it('When running with defaults and no customizations, then violations for javascript and typescript are found correctly', async () => {
+    it('When running with defaults and no customizations, then violations for javascript, typescript and html are found correctly', async () => {
         const engine: Engine = await createEngineFromPlugin(DEFAULT_CONFIG_FOR_TESTING);
         const runOptions: RunOptions = createRunOptions(new Workspace('id', [workspaceWithNoCustomConfig]));
-        const results: EngineRunResults = await engine.runRules(['no-invalid-regexp', '@typescript-eslint/no-wrapper-object-types'], runOptions);
+        const results: EngineRunResults = await engine.runRules(['no-invalid-regexp', '@typescript-eslint/no-wrapper-object-types', '@salesforce-ux/slds/enforce-bem-usage'], runOptions);
 
-        expect(results.violations).toHaveLength(3);
+        expect(results.violations).toHaveLength(4);
         expect(results.violations).toContainEqual(expectedJsViolation_noInvalidRegexp);
         expect(results.violations).toContainEqual(expectedTsViolation_noInvalidRegexp);
         expect(results.violations).toContainEqual(expectedTsViolation_noWrapperObjectTypes);
+        expect(results.violations).toContainEqual(expectedHTMLViolation_enforceBemUsage);
     });
 
     it('When workspace only targets javascript files, then only javascript violations are returned', async () => {
@@ -488,7 +543,15 @@ describe('Typical tests for the runRules method of ESLintEngine', () => {
         expect(results.violations).toEqual([expectedTsViolation_noInvalidRegexp]);
     });
 
-    it('When workspace does not contains javascript or typescript files, then zero violations are returned', async () => {
+    it('When workspace only contains html files, then only html violations are returned', async () => {
+        const engine: Engine = await createEngineFromPlugin(DEFAULT_CONFIG_FOR_TESTING);
+        const runOptions: RunOptions = createRunOptions(new Workspace('id', [path.join(workspaceWithNoCustomConfig, 'dummy1.html')]));
+        const results: EngineRunResults = await engine.runRules(['@salesforce-ux/slds/enforce-bem-usage'], runOptions);
+
+        expect(results.violations).toEqual([expectedHTMLViolation_enforceBemUsage]);
+    });
+
+    it('When workspace does not contains javascript, typescript or html files, then zero violations are returned', async () => {
         const engine: Engine = await createEngineFromPlugin(DEFAULT_CONFIG_FOR_TESTING);
         const runOptions: RunOptions = createRunOptions(new Workspace('id', [path.join(workspaceWithNoCustomConfig, 'dummy3.txt')]));
         const results: EngineRunResults = await engine.runRules(['no-invalid-regexp'], runOptions);
@@ -547,7 +610,7 @@ describe('Typical tests for the runRules method of ESLintEngine', () => {
     });
 
 
-    it('When custom rules only apply to file extensions that are not javascript or typescript based, then when specifying file extensions, the rules run', async () => {
+    it('When custom rules only apply to file extensions that are not javascript, typescript, or html based, then when specifying file extensions, the rules run', async () => {
         const engine: Engine = await createEngineFromPlugin({...DEFAULT_CONFIG_FOR_TESTING,
             eslint_config_file: path.join(workspaceThatHasCustomConfigWithNewRules, 'eslint-config-only-for-other-files.js'),
             file_extensions:{
@@ -582,7 +645,7 @@ describe('Typical tests for the runRules method of ESLintEngine', () => {
         engine.onEvent(EventType.LogEvent, (event: LogEvent) => logEvents.push(event));
 
         const runOptions: RunOptions = createRunOptions(new Workspace('id', [path.join(testDataFolder,'workspaceWithFlatConfigJs')]));
-        const results: EngineRunResults = await engine.runRules(['no-invalid-regexp', '@typescript-eslint/no-wrapper-object-types'], runOptions);
+        const results: EngineRunResults = await engine.runRules(['no-invalid-regexp', '@typescript-eslint/no-wrapper-object-types', '@salesforce-ux/slds/enforce-bem-usage'], runOptions);
 
         expect(results.violations).toHaveLength(2); // Should not contain js violations but should contain ts violations
         expect(path.extname(results.violations[0].codeLocations[0].file)).toEqual('.ts');
@@ -734,14 +797,14 @@ describe('Tests for emitting events', () => {
         await engine.describeRules(createDescribeOptions());
         // TODO: We should make our DescribeRulesProgressEvents more refined while calculating the eslint context information
         expect(describeRulesProgressEvents.map(e => e.percentComplete)).toEqual(
-            [0, 10, 14, 18, 33, 48, 63, 78, 82, 86, 90, 95, 100]);
+            [0, 10, 14, 18, 26.57, 35.14, 43.71, 52.29, 60.86, 69.43, 78, 82, 86, 90, 95, 100]);
     });
 
     it('When runRules is called, then it emits correct progress events', async () => {
         const runOptions: RunOptions = createRunOptions(new Workspace('id', [workspaceWithNoCustomConfig]));
         await engine.runRules(['no-unused-vars'], runOptions);
         expect(runRulesProgressEvents.map(e => e.percentComplete)).toEqual(
-            [0, 1.5, 3, 14.25, 25.5, 27, 28.5, 30, 62.5, 95, 100]);
+            [0, 1.5, 3, 10.5, 18, 25.5, 27, 28.5, 30, 51.67, 73.33, 95, 100]);
     });
 });
 

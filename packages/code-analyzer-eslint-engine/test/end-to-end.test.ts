@@ -69,6 +69,9 @@ describe('End to end test', () => {
             '@typescript-eslint/no-unused-vars', // there are 4 of these
             'no-invalid-regexp'
         ]));
+        const violationsFromHTMLFile: Violation[] = engineRunResults.violations.filter(v => path.extname(v.codeLocations[0].file) === '.html');
+        expect(violationsFromHTMLFile).toHaveLength(1);
+        expect(violationsFromHTMLFile[0].ruleName).toEqual('@salesforce-ux/slds/enforce-bem-usage');
 
         const warnLogs: LogEvent[] = logEvents.filter(e => e.logLevel == LogLevel.Warn);
         expect(warnLogs).toHaveLength(0);
@@ -108,6 +111,10 @@ describe('End to end test', () => {
             'no-unused-vars', // There are 4 of these. Typically, these rules are turned off by typescript-eslint but the supplied '.eslintrc.json' turns them back on
             'no-invalid-regexp'
         ]));
+
+        // SLDS violations are only relevant for v9+
+        const violationsFromHTMLFile: Violation[] = engineRunResults.violations.filter(v => path.extname(v.codeLocations[0].file) === '.html');
+        expect(violationsFromHTMLFile).toHaveLength(0);
 
         const warnLogs: LogEvent[] = logEvents.filter(e => e.logLevel == LogLevel.Warn);
         expect(warnLogs).toHaveLength(1);

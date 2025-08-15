@@ -1,6 +1,4 @@
-const { defineConfig } = require("eslint/config");
-
-module.exports = defineConfig([
+module.exports = [
     {
         rules: {
             "array-callback-return": ["error"],
@@ -9,4 +7,4 @@ module.exports = defineConfig([
             "no-useless-escape": [0]
         },
     },
-]);
+];

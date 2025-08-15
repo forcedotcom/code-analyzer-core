@@ -49,7 +49,8 @@ describe('Tests for the ESLintEnginePlugin', () => {
         await expect(callCreateEngineConfig(plugin, userProvidedOverrides)).rejects.toThrow(
             getMessageFromCatalog(SHARED_MESSAGE_CATALOG, 'ConfigObjectContainsInvalidKey', 'engines.eslint', 'dummy',
                 '["auto_discover_eslint_config","disable_javascript_base_config","disable_lwc_base_config",' +
-                '"disable_typescript_base_config","eslint_config_file","eslint_ignore_file","file_extensions"]'));
+                '"disable_slds_base_config","disable_typescript_base_config","eslint_config_file","eslint_ignore_file",' +
+                '"file_extensions"]'));
     });
 
     it('When a valid legacy eslint_config_file is passed to createEngineConfig, then it is set on the config', async () => {
@@ -169,6 +170,14 @@ describe('Tests for the ESLintEnginePlugin', () => {
                 'engines.eslint.disable_lwc_base_config', 'boolean', 'object'));
     });
 
+    it('When disable_slds_base_config is passed to createEngineConfig, then it is set on the config', async () => {
+        const userProvidedOverrides: ConfigObject = {
+            disable_slds_base_config: true
+        };
+        const resolvedConfig: ConfigObject = await callCreateEngineConfig(plugin, userProvidedOverrides);
+        expect(resolvedConfig['disable_slds_base_config']).toEqual(true);
+    });
+
     it('When disable_typescript_base_config is passed to createEngineConfig, then it is set on the config', async () => {
         const userProvidedOverrides1: ConfigObject = {
             disable_typescript_base_config: true
@@ -194,7 +203,7 @@ describe('Tests for the ESLintEnginePlugin', () => {
         };
         await expect(callCreateEngineConfig(plugin, userProvidedOverrides)).rejects.toThrow(
             getMessageFromCatalog(SHARED_MESSAGE_CATALOG, 'ConfigObjectContainsInvalidKey', 'engines.eslint.file_extensions',
-                'oops', '["javascript","other","typescript"]'));
+                'oops', '["html","javascript","other","typescript"]'));
     });
 
     it('When a valid file_extensions.javascript value is passed to createEngineConfig, then it is set on the config', async () => {
@@ -218,6 +227,30 @@ describe('Tests for the ESLintEnginePlugin', () => {
         await expect(callCreateEngineConfig(plugin, userProvidedOverrides)).rejects.toThrow(
             getMessageFromCatalog(SHARED_MESSAGE_CATALOG, 'ConfigValueMustBeOfType',
                 'engines.eslint.file_extensions.javascript[0]', 'string', 'number'));
+    });
+
+    it('When a valid file_extensions.html value is passed to createEngineConfig, then it is set on the config', async () => {
+        const userProvidedOverrides: ConfigObject = {
+            file_extensions: {
+                html: ['.html']
+            }
+        };
+        const resolvedConfig: ConfigObject = await callCreateEngineConfig(plugin, userProvidedOverrides);
+        expect(resolvedConfig['file_extensions']).toEqual({
+            ...DEFAULT_CONFIG.file_extensions,
+            html: ['.html']
+        });
+    });
+
+    it('When file_extensions.html is invalid, then createEngineConfig errors', async () => {
+        const userProvidedOverrides: ConfigObject = {
+            file_extensions: {
+                html: [false]
+            }
+        };
+        await expect(callCreateEngineConfig(plugin, userProvidedOverrides)).rejects.toThrow(
+            getMessageFromCatalog(SHARED_MESSAGE_CATALOG, 'ConfigValueMustBeOfType',
+                'engines.eslint.file_extensions.html[0]', 'string', 'boolean'));
     });
 
     it('When a valid file_extensions.typescript value is passed to createEngineConfig, then it is set on the config', async () => {
@@ -253,6 +286,17 @@ describe('Tests for the ESLintEnginePlugin', () => {
         await expect(callCreateEngineConfig(plugin, userProvidedOverrides)).rejects.toThrow(
             getMessage('InvalidFileExtensionDueToItBeingListedTwice',
                 'engines.eslint.file_extensions', '.js', '["javascript","typescript"]'));
+    });
+
+    it('When a supported extension is listed under other language in file_extensions, then createEngineConfig errors', async () => {
+        const userProvidedOverrides: ConfigObject = {
+            file_extensions: {
+                other: ['.html']
+            }
+        };
+        await expect(callCreateEngineConfig(plugin, userProvidedOverrides)).rejects.toThrow(
+            getMessage('InvalidFileExtensionDueToItBeingListedTwice',
+                'engines.eslint.file_extensions', '.html', '["html","other"]'));
     });
 
     it('When createEngine is passed an invalid engine name, then an error is thrown', async () => {
