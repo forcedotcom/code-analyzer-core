@@ -1602,7 +1602,7 @@ export const RULE_MAPPINGS: Record<string, {severity: SeverityLevel, tags: strin
     // =================================================================================================================
     "@salesforce-ux/slds/enforce-bem-usage": {
         severity: SeverityLevel.Low,
-        tags: [COMMON_TAGS.RECOMMENDED, COMMON_TAGS.CATEGORIES.BEST_PRACTICES, COMMON_TAGS.LANGUAGES.HTML] //TODO: are there other tags?
+        tags: [COMMON_TAGS.RECOMMENDED, COMMON_TAGS.CATEGORIES.BEST_PRACTICES, COMMON_TAGS.LANGUAGES.HTML]
     },
     "@salesforce-ux/slds/modal-close-button-issue": {
         severity: SeverityLevel.Moderate,

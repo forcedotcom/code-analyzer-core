@@ -288,6 +288,17 @@ describe('Tests for the ESLintEnginePlugin', () => {
                 'engines.eslint.file_extensions', '.js', '["javascript","typescript"]'));
     });
 
+    it('When a supported extension is listed under other language in file_extensions, then createEngineConfig errors', async () => {
+        const userProvidedOverrides: ConfigObject = {
+            file_extensions: {
+                other: ['.html']
+            }
+        };
+        await expect(callCreateEngineConfig(plugin, userProvidedOverrides)).rejects.toThrow(
+            getMessage('InvalidFileExtensionDueToItBeingListedTwice',
+                'engines.eslint.file_extensions', '.html', '["html","other"]'));
+    });
+
     it('When createEngine is passed an invalid engine name, then an error is thrown', async () => {
         await expect(plugin.createEngine('oops', DEFAULT_CONFIG)).rejects.toThrow(
             getMessage('UnsupportedEngineName' ,'oops'));

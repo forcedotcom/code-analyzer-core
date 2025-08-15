@@ -110,7 +110,6 @@ export class BaseConfigFactory {
     }
 
     private createSldsConfigArray(): Linter.Config[] {
-        //todo: Should this need to be updated now to take CSS into consideration?
         return sldsEslintPlugin.configs['flat/recommended'].map(conf => ({
             ...conf,
             files: this.engineConfig.file_extensions.html.map(ext => `**/*${ext}`)
