@@ -67,7 +67,7 @@ export const DEFAULT_CONFIG: ESLintEngineConfig = {
     file_extensions: {
         javascript: ['.js', '.cjs', '.mjs'],
         typescript: ['.ts'],
-        html: ['.html', '.cmp'],
+        html: ['.html', '.htm', '.cmp'],
         other: []
     },
     config_root: process.cwd() // INTERNAL USE ONLY

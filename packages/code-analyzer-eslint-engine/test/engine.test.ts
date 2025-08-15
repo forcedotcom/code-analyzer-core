@@ -797,7 +797,7 @@ describe('Tests for emitting events', () => {
         await engine.describeRules(createDescribeOptions());
         // TODO: We should make our DescribeRulesProgressEvents more refined while calculating the eslint context information
         expect(describeRulesProgressEvents.map(e => e.percentComplete)).toEqual(
-            [0, 10, 14, 18, 28, 38, 48, 58, 68, 78, 82, 86, 90, 95, 100]);
+            [0, 10, 14, 18, 26.57, 35.14, 43.71, 52.29, 60.86, 69.43, 78, 82, 86, 90, 95, 100]);
     });
 
     it('When runRules is called, then it emits correct progress events', async () => {
