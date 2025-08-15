@@ -499,16 +499,31 @@ describe('Typical tests for the runRules method of ESLintEngine', () => {
         "primaryLocationIndex": 0,
         "ruleName": "@typescript-eslint/no-wrapper-object-types"
     };
+    const expectedHTMLViolation_enforceBemUsage: Violation = {
+        "codeLocations": [
+            {
+                "endColumn": 27,
+                "endLine": 1,
+                "file": path.join(workspaceWithNoCustomConfig, 'dummy1.html'),
+                "startColumn": 11,
+                "startLine": 1
+            }
+        ],
+        "message": "slds-m-top--none has been retired. Update it to the new name slds-m-top_none.",
+        "primaryLocationIndex": 0,
+        "ruleName": "@salesforce-ux/slds/enforce-bem-usage"
+    };
 
-    it('When running with defaults and no customizations, then violations for javascript and typescript are found correctly', async () => {
+    it('When running with defaults and no customizations, then violations for javascript, typescript and html are found correctly', async () => {
         const engine: Engine = await createEngineFromPlugin(DEFAULT_CONFIG_FOR_TESTING);
         const runOptions: RunOptions = createRunOptions(new Workspace('id', [workspaceWithNoCustomConfig]));
-        const results: EngineRunResults = await engine.runRules(['no-invalid-regexp', '@typescript-eslint/no-wrapper-object-types'], runOptions);
+        const results: EngineRunResults = await engine.runRules(['no-invalid-regexp', '@typescript-eslint/no-wrapper-object-types', '@salesforce-ux/slds/enforce-bem-usage'], runOptions);
 
-        expect(results.violations).toHaveLength(3);
+        expect(results.violations).toHaveLength(4);
         expect(results.violations).toContainEqual(expectedJsViolation_noInvalidRegexp);
         expect(results.violations).toContainEqual(expectedTsViolation_noInvalidRegexp);
         expect(results.violations).toContainEqual(expectedTsViolation_noWrapperObjectTypes);
+        expect(results.violations).toContainEqual(expectedHTMLViolation_enforceBemUsage);
     });
 
     it('When workspace only targets javascript files, then only javascript violations are returned', async () => {
@@ -528,7 +543,15 @@ describe('Typical tests for the runRules method of ESLintEngine', () => {
         expect(results.violations).toEqual([expectedTsViolation_noInvalidRegexp]);
     });
 
-    it('When workspace does not contains javascript or typescript files, then zero violations are returned', async () => {
+    it('When workspace only contains html files, then only html violations are returned', async () => {
+        const engine: Engine = await createEngineFromPlugin(DEFAULT_CONFIG_FOR_TESTING);
+        const runOptions: RunOptions = createRunOptions(new Workspace('id', [path.join(workspaceWithNoCustomConfig, 'dummy1.html')]));
+        const results: EngineRunResults = await engine.runRules(['@salesforce-ux/slds/enforce-bem-usage'], runOptions);
+
+        expect(results.violations).toEqual([expectedHTMLViolation_enforceBemUsage]);
+    });
+
+    it('When workspace does not contains javascript, typescript or html files, then zero violations are returned', async () => {
         const engine: Engine = await createEngineFromPlugin(DEFAULT_CONFIG_FOR_TESTING);
         const runOptions: RunOptions = createRunOptions(new Workspace('id', [path.join(workspaceWithNoCustomConfig, 'dummy3.txt')]));
         const results: EngineRunResults = await engine.runRules(['no-invalid-regexp'], runOptions);
@@ -587,7 +610,7 @@ describe('Typical tests for the runRules method of ESLintEngine', () => {
     });
 
 
-    it('When custom rules only apply to file extensions that are not javascript or typescript based, then when specifying file extensions, the rules run', async () => {
+    it('When custom rules only apply to file extensions that are not javascript, typescript, or html based, then when specifying file extensions, the rules run', async () => {
         const engine: Engine = await createEngineFromPlugin({...DEFAULT_CONFIG_FOR_TESTING,
             eslint_config_file: path.join(workspaceThatHasCustomConfigWithNewRules, 'eslint-config-only-for-other-files.js'),
             file_extensions:{
@@ -622,7 +645,7 @@ describe('Typical tests for the runRules method of ESLintEngine', () => {
         engine.onEvent(EventType.LogEvent, (event: LogEvent) => logEvents.push(event));
 
         const runOptions: RunOptions = createRunOptions(new Workspace('id', [path.join(testDataFolder,'workspaceWithFlatConfigJs')]));
-        const results: EngineRunResults = await engine.runRules(['no-invalid-regexp', '@typescript-eslint/no-wrapper-object-types'], runOptions);
+        const results: EngineRunResults = await engine.runRules(['no-invalid-regexp', '@typescript-eslint/no-wrapper-object-types', '@salesforce-ux/slds/enforce-bem-usage'], runOptions);
 
         expect(results.violations).toHaveLength(2); // Should not contain js violations but should contain ts violations
         expect(path.extname(results.violations[0].codeLocations[0].file)).toEqual('.ts');
