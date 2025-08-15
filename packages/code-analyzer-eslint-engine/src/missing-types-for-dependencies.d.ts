@@ -35,3 +35,18 @@ declare module '@salesforce/eslint-config-lwc' {
     };
     export = moduleObject;
 }
+
+// This declaration adds in the missing types for "@salesforce-ux/eslint-plugin-slds" whose package.json file's main field points to:
+//     node_modules/@salesforce-ux/eslint-plugin-slds/build/index.js
+declare module '@salesforce-ux/eslint-plugin-slds' {
+    import type { ESLint, Linter } from 'eslint';
+    import type { RuleDefinition } from "@eslint/core";
+
+    const plugin: ESLint.ObjectMetaProperties & {
+        readonly rules: Record<string, RuleDefinition>;
+        readonly configs: {
+            readonly "flat/recommended": Linter.Config[];
+        };
+    };
+    export = plugin;
+}

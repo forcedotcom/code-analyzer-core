@@ -1,0 +1,38 @@
+[
+  {
+    "description": "Replace BEM double-dash syntax in class names with single underscore syntax.",
+    "name": "@salesforce-ux/slds/enforce-bem-usage",
+    "resourceUrls": [
+      "https://developer.salesforce.com/docs/platform/slds-linter/guide/reference-rules.html#enforce-bem-usage"
+    ],
+    "severityLevel": 2,
+    "tags": [
+      "Recommended",
+      "HTML"
+    ]
+  },
+  {
+    "description": "Update component attributes or CSS classes for the modal close button to comply with the modal component blueprint.",
+    "name": "@salesforce-ux/slds/modal-close-button-issue",
+    "resourceUrls": [
+      "https://developer.salesforce.com/docs/platform/slds-linter/guide/reference-rules.html#modal-close-button-issue"
+    ],
+    "severityLevel": 2,
+    "tags": [
+      "Recommended",
+      "HTML"
+    ]
+  },
+  {
+    "description": "Replace classes that aren’t available with SLDS 2 classes. See lightningdesignsystem.com for more info.",
+    "name": "@salesforce-ux/slds/no-deprecated-classes-slds2",
+    "resourceUrls": [
+      "https://developer.salesforce.com/docs/platform/slds-linter/guide/reference-rules.html#no-deprecated-classes-slds2"
+    ],
+    "severityLevel": 2,
+    "tags": [
+      "Recommended",
+      "HTML"
+    ]
+  }
+]

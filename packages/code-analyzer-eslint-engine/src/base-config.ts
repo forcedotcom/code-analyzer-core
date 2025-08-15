@@ -3,6 +3,7 @@ import eslintJs from "@eslint/js";
 import eslintTs from "typescript-eslint";
 import lwcEslintPluginLwcPlatform from "@lwc/eslint-plugin-lwc-platform";
 import salesforceEslintConfigLwc from "@salesforce/eslint-config-lwc";
+import sldsEslintPlugin from "@salesforce-ux/eslint-plugin-slds";
 import {ESLintEngineConfig} from "./config";
 import globals from "globals";
 
@@ -43,6 +44,9 @@ export class BaseConfigFactory {
             configArray.push(...this.createJavascriptConfigArray());
         } else if (this.useLwcBaseConfig()) {
             configArray.push(...this.createLwcConfigArray());
+        }
+        if (this.useSldsBaseConfig()) {
+            configArray.push(...this.createSldsConfigArray());
         }
         if (this.useTsBaseConfig()) {
             configArray.push(...this.createTypescriptConfigArray());
@@ -105,6 +109,21 @@ export class BaseConfigFactory {
         }];
     }
 
+    private createSldsConfigArray(): Linter.Config[] {
+        //todo: Should this need to be updated now to take CSS into consideration?
+        return sldsEslintPlugin.configs['flat/recommended'].map(conf => ({
+            ...conf,
+            files: this.engineConfig.file_extensions.html.map(ext => `**/*${ext}`),
+            languageOptions: {
+                    ... (conf.languageOptions ?? {}),
+                    parserOptions: {
+                        ... (conf.languageOptions?.parserOptions ?? {}),
+                        projectService: true
+                    }
+                }
+        }));
+    }
+
     private createTypescriptConfigArray(): Linter.Config[] {
         const configs: Linter.Config[] = [];
         for (const conf of ([eslintJs.configs.all, ...eslintTs.configs.all] as Linter.Config[])) {
@@ -134,6 +153,10 @@ export class BaseConfigFactory {
 
     private useLwcBaseConfig(): boolean {
         return !this.engineConfig.disable_lwc_base_config && this.engineConfig.file_extensions.javascript.length > 0;
+    }
+
+    private useSldsBaseConfig(): boolean {
+        return !this.engineConfig.disable_slds_base_config && this.engineConfig.file_extensions.html.length > 0;
     }
 
     private useTsBaseConfig(): boolean {

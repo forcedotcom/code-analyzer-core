@@ -97,6 +97,7 @@ class SpecifiedESLintWorkspace extends ESLintWorkspace {
             const relevantFileExtensions: string[] = [
                 ...this.fileExts.javascript,
                 ...this.fileExts.typescript,
+                ...this.fileExts.html,
                 ...this.fileExts.other];
             this.cachedPreIgnoredFilesToScan = (await this.workspace.getTargetedFiles())
                 .filter(file => relevantFileExtensions.includes(path.extname(file).toLowerCase()));
@@ -126,6 +127,7 @@ class UnspecifiedESLintWorkspace extends ESLintWorkspace {
         const relevantFileExtensions: string[] = [
             ...this.fileExts.javascript,
             ...this.fileExts.typescript,
+            ...this.fileExts.html,
             ...this.fileExts.other];
         return relevantFileExtensions.map(ext => `${baseDir}${path.sep}placeholderCandidateFile${ext}`);
     }

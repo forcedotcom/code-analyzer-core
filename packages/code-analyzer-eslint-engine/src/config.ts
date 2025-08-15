@@ -28,6 +28,10 @@ export type ESLintEngineConfig = {
     // Default: false
     disable_lwc_base_config: boolean
 
+    // If true then the base configuration that supplies the slds rules for html and cmp files will not be applied.
+    // Default: false
+    disable_slds_base_config: boolean
+
     // If true then the base configuration that supplies the standard rules for typescript files will not be applied.
     // Default: false
     disable_typescript_base_config: boolean
@@ -35,9 +39,10 @@ export type ESLintEngineConfig = {
     // Extensions of the files in your workspace that will be used to discover rules.
     // To associate file extensions to the standard ESLint JavaScript rules, LWC rules, or custom JavaScript-based
     // rules, add them under the 'javascript' language. To associate file extensions to the standard TypeScript
-    // rules or custom TypeScript-based rules, add them under the 'typescript' language. To allow for the
-    // discovery of custom rules that are associated with any other language, then add the associated file
-    // extensions under the 'other' language.
+    // rules or custom TypeScript-based rules, add them under the 'typescript' language. To associate file extensions
+    // to standard LWC HTML rules, Component (CMP) rules, or custom HTML rules, add them under the 'html' language.
+    // To allow for the discovery of custom rules that are associated with any other language, then add the associated
+    // file extensions under the 'other' language.
     file_extensions: FileExtensionsObject
 
     // (INTERNAL USE ONLY) Copy of the code analyzer config root.
@@ -47,6 +52,7 @@ export type ESLintEngineConfig = {
 export type FileExtensionsObject = {
     javascript: string[],
     typescript: string[],
+    html: string[],
     other: string[]
 };
 
@@ -56,10 +62,12 @@ export const DEFAULT_CONFIG: ESLintEngineConfig = {
     auto_discover_eslint_config: false,
     disable_javascript_base_config: false,
     disable_lwc_base_config: false,
+    disable_slds_base_config: false,
     disable_typescript_base_config: false,
     file_extensions: {
         javascript: ['.js', '.cjs', '.mjs'],
         typescript: ['.ts'],
+        html: ['.html', '.cmp'],
         other: []
     },
     config_root: process.cwd() // INTERNAL USE ONLY
@@ -93,6 +101,11 @@ export const ESLINT_ENGINE_CONFIG_DESCRIPTION: ConfigDescription = {
             valueType: "boolean",
             defaultValue: DEFAULT_CONFIG.disable_lwc_base_config
         },
+        disable_slds_base_config: {
+            descriptionText: getMessage('ConfigFieldDescription_disable_slds_base_config'),
+            valueType: "boolean",
+            defaultValue: DEFAULT_CONFIG.disable_slds_base_config
+        },
         disable_typescript_base_config: {
             descriptionText: getMessage('ConfigFieldDescription_disable_typescript_base_config'),
             valueType: "boolean",
@@ -122,7 +135,7 @@ export const LEGACY_ESLINT_IGNORE_FILE: string = '.eslintignore';
 export function validateAndNormalizeConfig(configValueExtractor: ConfigValueExtractor): ESLintEngineConfig {
     configValueExtractor.validateContainsOnlySpecifiedKeys(['eslint_config_file', 'eslint_ignore_file',
         'auto_discover_eslint_config', 'disable_javascript_base_config', 'disable_lwc_base_config',
-        'disable_typescript_base_config', 'file_extensions']);
+        'disable_slds_base_config', 'disable_typescript_base_config', 'file_extensions']);
 
     const eslintConfigValueExtractor: ESLintEngineConfigValueExtractor = new ESLintEngineConfigValueExtractor(configValueExtractor);
     return {
@@ -132,6 +145,7 @@ export function validateAndNormalizeConfig(configValueExtractor: ConfigValueExtr
         auto_discover_eslint_config: eslintConfigValueExtractor.extractBooleanValue('auto_discover_eslint_config'),
         disable_javascript_base_config: eslintConfigValueExtractor.extractBooleanValue('disable_javascript_base_config'),
         disable_lwc_base_config: eslintConfigValueExtractor.extractBooleanValue('disable_lwc_base_config'),
+        disable_slds_base_config: eslintConfigValueExtractor.extractBooleanValue('disable_slds_base_config'),
         disable_typescript_base_config: eslintConfigValueExtractor.extractBooleanValue('disable_typescript_base_config'),
         file_extensions:  eslintConfigValueExtractor.extractFileExtensionsValue(),
     };
