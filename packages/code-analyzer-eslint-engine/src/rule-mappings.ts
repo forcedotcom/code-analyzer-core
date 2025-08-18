@@ -1,7 +1,8 @@
 import {COMMON_TAGS, SeverityLevel} from "@salesforce/code-analyzer-engine-api";
 
-// Convenience tag to apply to the LWC rules
+// Convenience tag to apply to framework specific rules
 const LWC = "LWC";
+const SLDS = "SLDS";
 
 /**
  * The following is a list of the base rules that we have reviewed where we have designated the rule tags and
@@ -1601,15 +1602,15 @@ export const RULE_MAPPINGS: Record<string, {severity: SeverityLevel, tags: strin
     //   SLDS/HTML BASE RULES - @salesforce-ux/eslint-plugin-slds
     // =================================================================================================================
     "@salesforce-ux/slds/enforce-bem-usage": {
-        severity: SeverityLevel.Low,
-        tags: [COMMON_TAGS.RECOMMENDED, COMMON_TAGS.CATEGORIES.BEST_PRACTICES, COMMON_TAGS.LANGUAGES.HTML]
+        severity: SeverityLevel.Moderate,
+        tags: [COMMON_TAGS.RECOMMENDED, SLDS, COMMON_TAGS.CATEGORIES.BEST_PRACTICES, COMMON_TAGS.LANGUAGES.HTML]
     },
     "@salesforce-ux/slds/modal-close-button-issue": {
-        severity: SeverityLevel.Moderate,
-        tags: [COMMON_TAGS.RECOMMENDED, COMMON_TAGS.CATEGORIES.BEST_PRACTICES, COMMON_TAGS.LANGUAGES.HTML]
+        severity: SeverityLevel.High,
+        tags: [COMMON_TAGS.RECOMMENDED, SLDS, COMMON_TAGS.CATEGORIES.ERROR_PRONE, COMMON_TAGS.LANGUAGES.HTML]
     },
     "@salesforce-ux/slds/no-deprecated-classes-slds2": {
         severity: SeverityLevel.High,
-        tags: [COMMON_TAGS.RECOMMENDED, COMMON_TAGS.CATEGORIES.ERROR_PRONE, COMMON_TAGS.LANGUAGES.HTML]
+        tags: [COMMON_TAGS.RECOMMENDED, SLDS, COMMON_TAGS.CATEGORIES.ERROR_PRONE, COMMON_TAGS.LANGUAGES.HTML]
     }
 }
