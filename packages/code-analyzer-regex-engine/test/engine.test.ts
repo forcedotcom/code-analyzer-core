@@ -39,7 +39,7 @@ const SAMPLE_CUSTOM_RULES: RegexRules = {
     NoTalkingAboutFightClub: {
         regex: '/fight club/gi',
         description: "The first rule of Fight Club is do not talk about Fight Club",
-        file_extensions: [".abc-def.xyz"],
+        file_extensions: [".abc-def.xyz", ".lf.cls"],
         violation_message: "The second rule of Fight Club is DO NOT. TALK. ABOUT FIGHT CLUB.",
         severity: DEFAULT_SEVERITY_LEVEL,
         tags: ['PopCulture']
@@ -772,6 +772,34 @@ describe('Tests for runRules', () => {
                         startColumn: 26,
                         endLine: 1,
                         endColumn: 36
+                    }
+                ]
+            }
+        ];
+
+        expect(runResults.violations).toHaveLength(expectedViolations.length);
+        for (const expectedViolation of expectedViolations) {
+            expect(runResults.violations).toContainEqual(expectedViolation);
+        }
+    });
+
+    it('When workspace contains files that use \\n instead of \\r\\n, violations are right regardless of OS', async () => {
+        const runOptions: RunOptions = createRunOptions(
+            new Workspace('id', [path.resolve(__dirname, "test-data", "workspaceWithLfNewlines")]));
+        const runResults: EngineRunResults = await engine.runRules(['NoTalkingAboutFightClub'], runOptions);
+
+        const expectedViolations: Violation[] = [
+            {
+                ruleName: "NoTalkingAboutFightClub",
+                message: "The second rule of Fight Club is DO NOT. TALK. ABOUT FIGHT CLUB.",
+                primaryLocationIndex: 0,
+                codeLocations: [
+                    {
+                        file: path.resolve(__dirname, "test-data", "workspaceWithLfNewlines", "testClass.lf.cls"),
+                        startLine: 3,
+                        startColumn: 87,
+                        endLine: 3,
+                        endColumn: 97
                     }
                 ]
             }

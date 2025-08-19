@@ -3,3 +3,5 @@
 # So we forcefully set any file that ends in .goldfile.<ext> to only have \n characters:
 # See https://help.github.com/articles/dealing-with-line-endings/
 *.goldfile.*    text eol=lf
+
+*.lf.* text eol=lf
