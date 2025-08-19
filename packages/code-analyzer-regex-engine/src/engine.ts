@@ -11,7 +11,6 @@ import {
 import path from "node:path";
 import fs from "node:fs";
 import * as fsp from 'node:fs/promises';
-import os from "node:os";
 import {RegexRule, RegexRules} from "./config";
 import {isBinaryFile} from "isbinaryfile";
 import {convertToRegex, PromiseExecutionLimiter} from "./utils";
@@ -137,7 +136,8 @@ export class RegexEngine extends Engine {
     private async scanFileContents(fileName: string, fileContents: string, ruleName: string): Promise<Violation[]> {
         const violations: Violation[] = [];
         const regex: RegExp = this.getRegExpFor(ruleName);
-        const newlineIndexes: number[] = getNewlineIndices(fileContents);
+        const contextuallyDerivedEol: string = contextuallyDeriveEolString(fileContents);
+        const newlineIndexes: number[] = getNewlineIndices(fileContents, contextuallyDerivedEol);
 
         for (const match of fileContents.matchAll(regex)) {
             let startIndex: number = match.index;
@@ -151,9 +151,9 @@ export class RegexEngine extends Engine {
             }
 
             const startLine: number = getLineNumber(startIndex, newlineIndexes);
-            const startColumn: number = getColumnNumber(startIndex, newlineIndexes);
+            const startColumn: number = getColumnNumber(startIndex, newlineIndexes, contextuallyDerivedEol);
             const endLine: number = getLineNumber(startIndex + matchLength, newlineIndexes);
-            const endColumn: number = getColumnNumber(startIndex + matchLength, newlineIndexes);
+            const endColumn: number = getColumnNumber(startIndex + matchLength, newlineIndexes, contextuallyDerivedEol);
             const codeLocation: CodeLocation = {
                 file: fileName,
                 startLine: startLine,
@@ -180,13 +180,13 @@ export class RegexEngine extends Engine {
 }
 
 
-function getColumnNumber(charIndex: number, newlineIndexes: number[]): number {
+function getColumnNumber(charIndex: number, newlineIndexes: number[], contextuallyDerivedEol: string): number {
     const idxOfNextNewline = newlineIndexes.findIndex(el => el >= charIndex);
     const idxOfCurrentLine = idxOfNextNewline === -1 ? newlineIndexes.length - 1: idxOfNextNewline - 1;
     if (idxOfCurrentLine === 0){
         return charIndex + 1;
     } else {
-        const eolOffset = os.EOL.length - 1;
+        const eolOffset = contextuallyDerivedEol.length - 1;
         return charIndex - newlineIndexes.at(idxOfCurrentLine)! - eolOffset;
     }
 }
@@ -196,8 +196,8 @@ function getLineNumber(charIndex: number, newlineIndexes: number[]): number{
     return idxOfNextNewline === -1 ? newlineIndexes.length : idxOfNextNewline;
 }
 
-function getNewlineIndices(fileContents: string): number[] {
-    const newlineRegex: RegExp = new RegExp(os.EOL, "g");
+function getNewlineIndices(fileContents: string, contextuallyDerivedEol: string): number[] {
+    const newlineRegex: RegExp = new RegExp(contextuallyDerivedEol, "g");
     const matches = fileContents.matchAll(newlineRegex);
     const newlineIndexes = [-1];
 
@@ -205,6 +205,15 @@ function getNewlineIndices(fileContents: string): number[] {
         newlineIndexes.push(match.index);
     }
     return newlineIndexes;
+}
+
+/**
+ * We can't assume that the file's EOL indicator matches the OS's, because of edge cases such as a file created on Unix
+ * but scanned on Windows. So instead of consulting the OS for the EOL indicator, we look at the file and find which one it uses.
+ * @param contents
+ */
+function contextuallyDeriveEolString(contents: string): string {
+    return contents.indexOf('\r\n') !== -1 ? '\r\n' : '\n';
 }
 
 async function isTextFile(fileName: string): Promise<boolean> {
