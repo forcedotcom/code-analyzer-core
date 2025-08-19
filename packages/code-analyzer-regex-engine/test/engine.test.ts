@@ -39,7 +39,7 @@ const SAMPLE_CUSTOM_RULES: RegexRules = {
     NoTalkingAboutFightClub: {
         regex: '/fight club/gi',
         description: "The first rule of Fight Club is do not talk about Fight Club",
-        file_extensions: [".abc-def.xyz", ".lf.cls"],
+        file_extensions: [".abc-def.xyz", ".lf.cls", ".crlf.cls"],
         violation_message: "The second rule of Fight Club is DO NOT. TALK. ABOUT FIGHT CLUB.",
         severity: DEFAULT_SEVERITY_LEVEL,
         tags: ['PopCulture']
@@ -783,9 +783,9 @@ describe('Tests for runRules', () => {
         }
     });
 
-    it('When workspace contains files that use \\n instead of \\r\\n, violations are right regardless of OS', async () => {
+    it('When files indicate EOL differently than OS, violations are still correct', async () => {
         const runOptions: RunOptions = createRunOptions(
-            new Workspace('id', [path.resolve(__dirname, "test-data", "workspaceWithLfNewlines")]));
+            new Workspace('id', [path.resolve(__dirname, "test-data", "workspaceWithOddNewlines")]));
         const runResults: EngineRunResults = await engine.runRules(['NoTalkingAboutFightClub'], runOptions);
 
         const expectedViolations: Violation[] = [
@@ -795,7 +795,21 @@ describe('Tests for runRules', () => {
                 primaryLocationIndex: 0,
                 codeLocations: [
                     {
-                        file: path.resolve(__dirname, "test-data", "workspaceWithLfNewlines", "testClass.lf.cls"),
+                        file: path.resolve(__dirname, "test-data", "workspaceWithOddNewlines", "testClass.lf.cls"),
+                        startLine: 3,
+                        startColumn: 87,
+                        endLine: 3,
+                        endColumn: 97
+                    }
+                ]
+            },
+            {
+                ruleName: "NoTalkingAboutFightClub",
+                message: "The second rule of Fight Club is DO NOT. TALK. ABOUT FIGHT CLUB.",
+                primaryLocationIndex: 0,
+                codeLocations: [
+                    {
+                        file: path.resolve(__dirname, "test-data", "workspaceWithOddNewlines", "testClass.crlf.cls"),
                         startLine: 3,
                         startColumn: 87,
                         endLine: 3,

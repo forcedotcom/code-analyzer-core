@@ -4,4 +4,7 @@
 # See https://help.github.com/articles/dealing-with-line-endings/
 *.goldfile.*    text eol=lf
 
+# Some of our input files must be forced to use a certain EOL signifier no matter what the OS wants.
+# So we forcefully set any file that includes lf or crlf in its file extension to use the corresponding EOL.
 *.lf.* text eol=lf
+*.crlf.* text eol=crlf
