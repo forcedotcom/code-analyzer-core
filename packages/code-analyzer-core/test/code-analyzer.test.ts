@@ -19,6 +19,7 @@ import {
 } from "../src";
 import * as stubs from "./stubs";
 import {getMessage} from "../src/messages";
+import os from "node:os";
 import path from "node:path";
 import {changeWorkingDirectoryToPackageRoot, FixedUniqueIdGenerator} from "./test-helpers";
 import * as engApi from "@salesforce/code-analyzer-engine-api"
@@ -186,13 +187,15 @@ describe("Tests for the run method of CodeAnalyzer", () => {
     let stubEngine1: stubs.StubEngine1;
     let stubEngine2: stubs.StubEngine2;
     let selection: RuleSelection;
+    let fixedClock: FixedClock;
     const expectedStubEngine1RuleNames: string[] = ['stub1RuleA', 'stub1RuleB', 'stub1RuleC'];
     const expectedStubEngine2RuleNames: string[] = ['stub2RuleA', 'stub2RuleC'];
 
     beforeEach(async () => {
         sampleTimestamp = new Date();
         codeAnalyzer = new CodeAnalyzer(CodeAnalyzerConfig.withDefaults());
-        codeAnalyzer._setClock(new FixedClock(sampleTimestamp));
+        fixedClock = new FixedClock(sampleTimestamp);
+        codeAnalyzer._setClock(fixedClock);
         codeAnalyzer._setUniqueIdGenerator(new FixedUniqueIdGenerator());
         sampleRunOptions = {workspace: await codeAnalyzer.createWorkspace([__dirname])};
         const stubPlugin: stubs.StubEnginePlugin = new stubs.StubEnginePlugin();
@@ -209,17 +212,26 @@ describe("Tests for the run method of CodeAnalyzer", () => {
             ]),
         });
 
-        const expectedEngineRunOptions: engApi.RunOptions = {
+        const workingDirectoriesRoot: string = `code-analyzer-${fixedClock.formatToDateTimeString()}`;
+
+        const expectedEngineRunOptionsEngine1: engApi.RunOptions = {
             logFolder: codeAnalyzer.getConfig().getLogFolder(),
+            workingDirectory: path.join(os.tmpdir(), workingDirectoriesRoot, 'run', 'stubEngine1'),
+            workspace: new engApi.Workspace("FixedId", [SAMPLE_WORKSPACE_FOLDER], [
+                path.join(SAMPLE_WORKSPACE_FOLDER, 'someFile.cls')])
+        };
+        const expectedEngineRunOptionsEngine2: engApi.RunOptions = {
+            logFolder: codeAnalyzer.getConfig().getLogFolder(),
+            workingDirectory: path.join(os.tmpdir(), workingDirectoriesRoot, 'run', 'stubEngine2'),
             workspace: new engApi.Workspace("FixedId", [SAMPLE_WORKSPACE_FOLDER], [
                 path.join(SAMPLE_WORKSPACE_FOLDER, 'someFile.cls')])
         };
         expect(stubEngine1.runRulesCallHistory).toHaveLength(1);
         expect(stubEngine1.runRulesCallHistory[0].ruleNames).toEqual(expectedStubEngine1RuleNames);
-        expectEquivalentRunOptions(stubEngine1.runRulesCallHistory[0].runOptions, expectedEngineRunOptions);
+        expectEquivalentRunOptions(stubEngine1.runRulesCallHistory[0].runOptions, expectedEngineRunOptionsEngine1);
         expect(stubEngine2.runRulesCallHistory).toHaveLength(1);
         expect(stubEngine2.runRulesCallHistory[0].ruleNames).toEqual(expectedStubEngine2RuleNames);
-        expectEquivalentRunOptions(stubEngine2.runRulesCallHistory[0].runOptions, expectedEngineRunOptions);
+        expectEquivalentRunOptions(stubEngine2.runRulesCallHistory[0].runOptions, expectedEngineRunOptionsEngine2);
     });
 
     it("When the workspace provided is one that is not constructed from CodeAnalyzer's createWorkspace method, then it should still work", async () => {
@@ -242,8 +254,11 @@ describe("Tests for the run method of CodeAnalyzer", () => {
         selection = await codeAnalyzer.selectRules(['stubEngine1:Recommended']);
         await codeAnalyzer.run(selection, sampleRunOptions);
 
+        const workingDirectoriesRoot: string = `code-analyzer-${fixedClock.formatToDateTimeString()}`;
+
         const expectedEngineRunOptions: engApi.RunOptions = {
             logFolder: codeAnalyzer.getConfig().getLogFolder(),
+            workingDirectory: path.join(os.tmpdir(), workingDirectoriesRoot, 'run', 'stubEngine1'),
             workspace: new engApi.Workspace("FixedId", [__dirname])
         };
         expect(stubEngine1.runRulesCallHistory).toHaveLength(1);

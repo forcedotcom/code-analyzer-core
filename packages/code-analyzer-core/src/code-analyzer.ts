@@ -333,8 +333,13 @@ export class CodeAnalyzer {
         if (!this.rulesCache.has(cacheKey)) {
             this.engineRuleDiscoveryProgressAggregator.reset(this.getEngineNames());
             const engApiWorkspace: engApi.Workspace | undefined = workspace ? toEngApiWorkspace(workspace) : undefined;
+
             const rulePromises: Promise<RuleImpl[]>[] = this.getEngineNames().map(engineName =>
-                this.getAllRulesFor(engineName, {workspace: engApiWorkspace, logFolder: this.config.getLogFolder()}));
+                this.getAllRulesFor(engineName, {
+                    workspace: engApiWorkspace,
+                    workingDirectory: '.',
+                    logFolder: this.config.getLogFolder()
+                }));
             this.rulesCache.set(cacheKey, (await Promise.all(rulePromises)).flat());
         }
         return this.rulesCache.get(cacheKey)!;
@@ -605,6 +610,7 @@ function validateRuleDescriptions(ruleDescriptions: engApi.RuleDescription[], en
 function extractEngineRunOptions(runOptions: RunOptions, logFolder: string): engApi.RunOptions {
     return {
         logFolder: logFolder,
+        workingDirectory: '.',
         workspace: toEngApiWorkspace(runOptions.workspace),
     };
 }

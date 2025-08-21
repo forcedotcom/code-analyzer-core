@@ -16,6 +16,7 @@ import * as engApi from "@salesforce/code-analyzer-engine-api"
 import {FixedClock} from "@salesforce/code-analyzer-engine-api/utils";
 import {RepeatedRuleNameEnginePlugin, StubEnginePlugin} from "./stubs";
 import path from "node:path";
+import os from "node:os";
 import {changeWorkingDirectoryToPackageRoot, FixedUniqueIdGenerator} from "./test-helpers";
 import {getMessage} from "../src/messages";
 import * as stubs from "./stubs";
@@ -26,6 +27,7 @@ describe('Tests for selecting rules', () => {
     let codeAnalyzer: CodeAnalyzer;
     let plugin: StubEnginePlugin;
     let sampleTimestamp: Date;
+    let fixedClock: FixedClock;
 
     async function setupCodeAnalyzer(codeAnalyzer: CodeAnalyzer) : Promise<void> {
         plugin = new StubEnginePlugin();
@@ -37,7 +39,8 @@ describe('Tests for selecting rules', () => {
         codeAnalyzer = new CodeAnalyzer(CodeAnalyzerConfig.withDefaults());
         await setupCodeAnalyzer(codeAnalyzer);
         sampleTimestamp = new Date();
-        codeAnalyzer._setClock(new FixedClock(sampleTimestamp));
+        fixedClock = new FixedClock(sampleTimestamp);
+        codeAnalyzer._setClock(fixedClock);
     })
 
     it('When no rule selectors are provided then the Recommended tag is used', async () => {
@@ -269,14 +272,22 @@ describe('Tests for selecting rules', () => {
     it('When selectRules is not provided with SelectOptions, then workspace should be undefined for all engines', async () => {
         await codeAnalyzer.selectRules(['all']);
 
-        const expectedDescribeOptions: engApi.DescribeOptions = {
+        const workingDirectoriesRoot: string = `code-analyzer-${fixedClock.formatToDateTimeString()}`;
+
+        const expectedDescribeOptionsEngine1: engApi.DescribeOptions = {
             logFolder: codeAnalyzer.getConfig().getLogFolder(),
+            workingDirectory: path.join(os.tmpdir(), workingDirectoriesRoot, 'describe', 'stubEngine1'),
+            workspace: undefined
+        };
+        const expectedDescribeOptionsEngine2: engApi.DescribeOptions = {
+            logFolder: codeAnalyzer.getConfig().getLogFolder(),
+            workingDirectory: path.join(os.tmpdir(), workingDirectoriesRoot, 'describe', 'stubEngine2'),
             workspace: undefined
         };
         const stubEngine1: stubs.StubEngine1 = plugin.getCreatedEngine('stubEngine1') as stubs.StubEngine1;
-        expect(stubEngine1.describeRulesCallHistory).toEqual([{describeOptions: expectedDescribeOptions}]);
+        expect(stubEngine1.describeRulesCallHistory).toEqual([{describeOptions: expectedDescribeOptionsEngine1}]);
         const stubEngine2: stubs.StubEngine2 = plugin.getCreatedEngine('stubEngine2') as stubs.StubEngine2;
-        expect(stubEngine2.describeRulesCallHistory).toEqual([{describeOptions: expectedDescribeOptions}]);
+        expect(stubEngine2.describeRulesCallHistory).toEqual([{describeOptions: expectedDescribeOptionsEngine2}]);
     });
 
     it('When selectRules is provided with SelectOptions, then they are forwarded to the engines', async () => {
@@ -285,7 +296,7 @@ describe('Tests for selecting rules', () => {
         }
         await codeAnalyzer.selectRules(['all'], selectOptions);
 
-        const expectedDescribeOptions: engApi.DescribeOptions = {
+        const expectedDescribeOptions: Partial<engApi.DescribeOptions> = {
             logFolder: codeAnalyzer.getConfig().getLogFolder(),
             workspace: new engApi.Workspace('FixedId', [path.resolve('src'), path.resolve('test')])
         };
