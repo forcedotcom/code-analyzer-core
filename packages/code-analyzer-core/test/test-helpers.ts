@@ -1,6 +1,6 @@
 import process from "node:process";
 import path from "node:path";
-import {UniqueIdGenerator} from "../src/utils";
+import {FileSystemHandler, UniqueIdGenerator} from "../src/utils";
 
 export function changeWorkingDirectoryToPackageRoot() {
     let original_working_directory: string;
@@ -25,5 +25,42 @@ export class FixedUniqueIdGenerator implements UniqueIdGenerator {
 
     getUniversallyUniqueId(): string {
         return "FixedUUID";
+    }
+}
+
+export class FakeFileSystemHandler implements FileSystemHandler {
+    private fsMap: Map<string, {
+        created: boolean
+        deleted: boolean
+    }> = new Map();
+
+    createDirectory(absolutePath: string): Promise<void> {
+        if (this.fsMap.has(absolutePath)) {
+            throw new Error(`TEST ERROR: Path ${absolutePath} was created twice`);
+        }
+        this.fsMap.set(absolutePath, {
+            created: true,
+            deleted: false
+        });
+        return Promise.resolve();
+    }
+
+    deleteDirectory(absolutePath: string): Promise<void> {
+        if (!this.fsMap.has(absolutePath)) {
+            throw new Error(`TEST ERROR: Path ${absolutePath} was deleted without being created`);
+        }
+        if (this.fsMap.get(absolutePath)!.deleted) {
+            throw new Error(`TEST ERROR: Path ${absolutePath} was deleted twice`);
+        }
+        this.fsMap.get(absolutePath)!.deleted = true;
+        return Promise.resolve();
+    }
+
+    dirWasCreated(absolutePath: string): boolean {
+        return this.fsMap.has(absolutePath) && this.fsMap.get(absolutePath)!.created;
+    }
+
+    dirWasDeleted(absolutePath: string): boolean {
+        return this.fsMap.has(absolutePath) && this.fsMap.get(absolutePath)!.deleted;
     }
 }

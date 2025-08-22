@@ -17,7 +17,7 @@ import {FixedClock} from "@salesforce/code-analyzer-engine-api/utils";
 import {RepeatedRuleNameEnginePlugin, StubEnginePlugin} from "./stubs";
 import path from "node:path";
 import os from "node:os";
-import {changeWorkingDirectoryToPackageRoot, FixedUniqueIdGenerator} from "./test-helpers";
+import {changeWorkingDirectoryToPackageRoot, FakeFileSystemHandler, FixedUniqueIdGenerator} from "./test-helpers";
 import {getMessage} from "../src/messages";
 import * as stubs from "./stubs";
 
@@ -28,6 +28,7 @@ describe('Tests for selecting rules', () => {
     let plugin: StubEnginePlugin;
     let sampleTimestamp: Date;
     let fixedClock: FixedClock;
+    let fakeFileSystemHandler: FakeFileSystemHandler;
 
     async function setupCodeAnalyzer(codeAnalyzer: CodeAnalyzer) : Promise<void> {
         plugin = new StubEnginePlugin();
@@ -41,6 +42,8 @@ describe('Tests for selecting rules', () => {
         sampleTimestamp = new Date();
         fixedClock = new FixedClock(sampleTimestamp);
         codeAnalyzer._setClock(fixedClock);
+        fakeFileSystemHandler = new FakeFileSystemHandler();
+        codeAnalyzer._setFileSystemHandler(fakeFileSystemHandler);
     })
 
     it('When no rule selectors are provided then the Recommended tag is used', async () => {
@@ -272,22 +275,28 @@ describe('Tests for selecting rules', () => {
     it('When selectRules is not provided with SelectOptions, then workspace should be undefined for all engines', async () => {
         await codeAnalyzer.selectRules(['all']);
 
-        const workingDirectoriesRoot: string = `code-analyzer-${fixedClock.formatToDateTimeString()}`;
+        const workingDirectoriesRoot: string = path.join(os.tmpdir(), `code-analyzer`, `describe-${fixedClock.formatToDateTimeString()}`);
 
         const expectedDescribeOptionsEngine1: engApi.DescribeOptions = {
             logFolder: codeAnalyzer.getConfig().getLogFolder(),
-            workingDirectory: path.join(os.tmpdir(), workingDirectoriesRoot, 'describe', 'stubEngine1'),
+            workingDirectory: path.join(workingDirectoriesRoot, 'stubEngine1'),
             workspace: undefined
         };
         const expectedDescribeOptionsEngine2: engApi.DescribeOptions = {
             logFolder: codeAnalyzer.getConfig().getLogFolder(),
-            workingDirectory: path.join(os.tmpdir(), workingDirectoriesRoot, 'describe', 'stubEngine2'),
+            workingDirectory: path.join(workingDirectoriesRoot, 'stubEngine2'),
             workspace: undefined
         };
+        expect(fakeFileSystemHandler.dirWasCreated(workingDirectoriesRoot)).toEqual(true);
+        expect(fakeFileSystemHandler.dirWasDeleted(workingDirectoriesRoot)).toEqual(true);
         const stubEngine1: stubs.StubEngine1 = plugin.getCreatedEngine('stubEngine1') as stubs.StubEngine1;
         expect(stubEngine1.describeRulesCallHistory).toEqual([{describeOptions: expectedDescribeOptionsEngine1}]);
+        expect(fakeFileSystemHandler.dirWasCreated(expectedDescribeOptionsEngine1.workingDirectory)).toEqual(true);
+        expect(fakeFileSystemHandler.dirWasDeleted(expectedDescribeOptionsEngine1.workingDirectory)).toEqual(true);
         const stubEngine2: stubs.StubEngine2 = plugin.getCreatedEngine('stubEngine2') as stubs.StubEngine2;
         expect(stubEngine2.describeRulesCallHistory).toEqual([{describeOptions: expectedDescribeOptionsEngine2}]);
+        expect(fakeFileSystemHandler.dirWasCreated(expectedDescribeOptionsEngine2.workingDirectory)).toEqual(true);
+        expect(fakeFileSystemHandler.dirWasDeleted(expectedDescribeOptionsEngine2.workingDirectory)).toEqual(true);
     });
 
     it('When selectRules is provided with SelectOptions, then they are forwarded to the engines', async () => {

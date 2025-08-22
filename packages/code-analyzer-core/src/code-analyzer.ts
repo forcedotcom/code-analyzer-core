@@ -1,4 +1,5 @@
 import {pathToFileURL} from "node:url";
+import os from "node:os";
 import {RuleImpl, RuleSelection, RuleSelectionImpl} from "./rules"
 import {
     EngineRunResults,
@@ -24,7 +25,13 @@ import * as engApi from "@salesforce/code-analyzer-engine-api"
 import {Clock, RealClock} from '@salesforce/code-analyzer-engine-api/utils';
 import {EventEmitter} from "node:events";
 import {CodeAnalyzerConfig, ConfigDescription, EngineOverrides, FIELDS, RuleOverride} from "./config";
-import {EngineProgressAggregator, RuntimeUniqueIdGenerator, toAbsolutePath, UniqueIdGenerator} from "./utils";
+import {
+    EngineProgressAggregator,
+    FileSystemHandler,
+    RuntimeFileSystemHandler,
+    RuntimeUniqueIdGenerator,
+    toAbsolutePath,
+    UniqueIdGenerator} from "./utils";
 import fs from "node:fs";
 import path from 'node:path';
 
@@ -95,6 +102,7 @@ export class CodeAnalyzer {
     private readonly config: CodeAnalyzerConfig;
     private clock: Clock = new RealClock();
     private uniqueIdGenerator: UniqueIdGenerator = new RuntimeUniqueIdGenerator();
+    private fileSystemHandler: FileSystemHandler = new RuntimeFileSystemHandler();
     private readonly eventEmitter: EventEmitter = new EventEmitter();
     private readonly engines: Map<string, engApi.Engine> = new Map();
     private readonly uninstantiableEnginesMap: Map<string, Error> = new Map();
@@ -123,6 +131,9 @@ export class CodeAnalyzer {
     }
     _setUniqueIdGenerator(uniqueIdGenerator: UniqueIdGenerator) {
         this.uniqueIdGenerator = uniqueIdGenerator;
+    }
+    _setFileSystemHandler(fileSystemHandler: FileSystemHandler): void {
+        this.fileSystemHandler = fileSystemHandler;
     }
 
     /**
@@ -296,15 +307,16 @@ export class CodeAnalyzer {
         //  called a second time before the first call to run hasn't finished. This can occur if someone builds
         //  up a bunch of RunResults promises and then does a Promise.all on them. Otherwise, the progress events may
         //  override each other.
-
-        const engineRunOptions: engApi.RunOptions = extractEngineRunOptions(runOptions, this.config.getLogFolder());
+        const tmpDirRoot: string = path.join(os.tmpdir(), `code-analyzer`, `run-${this.clock.formatToDateTimeString()}`);
+        await this.fileSystemHandler.createDirectory(tmpDirRoot);
+        const workspace: engApi.Workspace = toEngApiWorkspace(runOptions.workspace);
         this.emitLogEvent(LogLevel.Debug, getMessage('RunningWithWorkspace', JSON.stringify({
             filesAndFolders: runOptions.workspace.getRawFilesAndFolders(),
             targets: runOptions.workspace.getRawTargets()
         })));
 
         const runPromises: Promise<EngineRunResults>[] = ruleSelection.getEngineNames().map(
-            engineName => this.runEngineAndValidateResults(engineName, ruleSelection, engineRunOptions));
+            engineName => this.runEngineAndValidateResults(engineName, ruleSelection, this.config.getLogFolder(), workspace, tmpDirRoot));
         const engineRunResultsList: EngineRunResults[] = await Promise.all(runPromises);
 
         const runResults: RunResultsImpl = new RunResultsImpl(this.clock);
@@ -314,6 +326,7 @@ export class CodeAnalyzer {
         for (const [uninstantiableEngine, error] of this.uninstantiableEnginesMap.entries()) {
             runResults.addEngineRunResults(new UninstantiableEngineRunResults(uninstantiableEngine, error));
         }
+        await this.fileSystemHandler.deleteDirectory(tmpDirRoot);
         return runResults;
     }
 
@@ -331,25 +344,33 @@ export class CodeAnalyzer {
     private async getAllRules(workspace?: Workspace): Promise<RuleImpl[]> {
         const cacheKey: string = workspace ? workspace.getWorkspaceId() : process.cwd();
         if (!this.rulesCache.has(cacheKey)) {
+            // TODO: THIS WILL BE CONFIGURABLE SOON.
+            const tmpDirRoot: string = path.join(os.tmpdir(), `code-analyzer`, `describe-${this.clock.formatToDateTimeString()}`);
+            await this.fileSystemHandler.createDirectory(tmpDirRoot);
             this.engineRuleDiscoveryProgressAggregator.reset(this.getEngineNames());
             const engApiWorkspace: engApi.Workspace | undefined = workspace ? toEngApiWorkspace(workspace) : undefined;
 
             const rulePromises: Promise<RuleImpl[]>[] = this.getEngineNames().map(engineName =>
-                this.getAllRulesFor(engineName, {
-                    workspace: engApiWorkspace,
-                    workingDirectory: '.',
-                    logFolder: this.config.getLogFolder()
-                }));
+                this.getAllRulesFor(engineName, engApiWorkspace, tmpDirRoot, this.config.getLogFolder()));
             this.rulesCache.set(cacheKey, (await Promise.all(rulePromises)).flat());
+            await this.fileSystemHandler.deleteDirectory(tmpDirRoot);
         }
         return this.rulesCache.get(cacheKey)!;
     }
 
-    private async getAllRulesFor(engineName: string, describeOptions: engApi.DescribeOptions): Promise<RuleImpl[]> {
+    private async getAllRulesFor(engineName: string, workspace: engApi.Workspace | undefined, tmpDirRoot: string, logFolder: string): Promise<RuleImpl[]> {
+        const workingDirectory: string = path.join(tmpDirRoot, engineName);
+        await this.fileSystemHandler.createDirectory(workingDirectory);
+        const describeOptions: engApi.DescribeOptions = {
+            workspace,
+            workingDirectory,
+            logFolder
+        };
         this.emitLogEvent(LogLevel.Debug, getMessage('GatheringRulesFromEngine', engineName));
         let ruleDescriptions: engApi.RuleDescription[] = [];
         try {
             ruleDescriptions = await this.getEngine(engineName).describeRules(describeOptions);
+            await this.fileSystemHandler.deleteDirectory(workingDirectory);
         } catch (err) {
             this.uninstantiableEnginesMap.set(engineName, err as Error);
             this.emitLogEvent(LogLevel.Error, getMessage('PluginErrorWhenGettingRules', engineName, (err as Error).message + '\n\n' +
@@ -371,7 +392,14 @@ export class CodeAnalyzer {
         this.emitEvent({type: EventType.RuleSelectionProgressEvent, timestamp: this.clock.now(), percentComplete: aggregatedPerc});
     }
 
-    private async runEngineAndValidateResults(engineName: string, ruleSelection: RuleSelection, engineRunOptions: engApi.RunOptions): Promise<EngineRunResults> {
+    private async runEngineAndValidateResults(engineName: string, ruleSelection: RuleSelection, logFolder: string, workspace: engApi.Workspace, tmpDirRoot: string): Promise<EngineRunResults> {
+        const workingDirectory: string = path.join(tmpDirRoot, engineName);
+        await this.fileSystemHandler.createDirectory(workingDirectory);
+        const engineRunOptions: engApi.RunOptions = {
+            logFolder,
+            workspace,
+            workingDirectory
+        };
         this.emitEvent<EngineRunProgressEvent>({
             type: EventType.EngineRunProgressEvent, timestamp: this.clock.now(), engineName: engineName, percentComplete: 0
         });
@@ -383,6 +411,7 @@ export class CodeAnalyzer {
         let apiEngineRunResults: engApi.EngineRunResults;
         try {
             apiEngineRunResults = await engine.runRules(rulesToRun, engineRunOptions);
+            await this.fileSystemHandler.deleteDirectory(workingDirectory);
         } catch (error) {
             return new UnexpectedErrorEngineRunResults(engineName, await engine.getEngineVersion(), error as Error);
         }
@@ -607,14 +636,6 @@ function validateRuleDescriptions(ruleDescriptions: engApi.RuleDescription[], en
     }
 }
 
-function extractEngineRunOptions(runOptions: RunOptions, logFolder: string): engApi.RunOptions {
-    return {
-        logFolder: logFolder,
-        workingDirectory: '.',
-        workspace: toEngApiWorkspace(runOptions.workspace),
-    };
-}
-
 async function validateFileOrFolder(fileOrFolder: string): Promise<string> {
     const absFileOrFolder: string = toAbsolutePath(fileOrFolder);
     try {
@@ -698,6 +719,7 @@ function validateViolationCodeLocations(violation: engApi.Violation, engineName:
                     engineName, violation.ruleName, codeLocation.endLine, codeLocation.startLine));
             }
 
+            // istanbul ignore else
             if (codeLocation.endColumn !== undefined) {
                 if (!isValidLineOrColumn(codeLocation.endColumn)) {
                     throw new Error(getMessage('EngineReturnedViolationWithCodeLocationWithInvalidLineOrColumn',

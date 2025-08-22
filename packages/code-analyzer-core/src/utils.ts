@@ -1,5 +1,6 @@
 import * as path from "node:path";
 import * as crypto from "node:crypto";
+import fs from "node:fs";
 
 // THIS FILE CONTAINS UTILITIES WHICH ARE USED INTERNALLY ONLY.
 // None of the following exported interfaces and functions should be exported from the index file.
@@ -7,6 +8,25 @@ import * as crypto from "node:crypto";
 export function toAbsolutePath(fileOrFolder: string): string {
     // Convert slashes to platform specific slashes and then convert to absolute path
     return path.resolve(fileOrFolder.replace(/[\\/]/g, path.sep));
+}
+
+export interface FileSystemHandler {
+    createDirectory(absolutePath: string): Promise<void>;
+    deleteDirectory(absolutePath: string): Promise<void>;
+}
+
+export class RuntimeFileSystemHandler implements FileSystemHandler {
+    async createDirectory(absolutePath: string): Promise<void> {
+        await fs.promises.mkdir(absolutePath, {
+            recursive: true
+        });
+    }
+
+    async deleteDirectory(absolutePath: string): Promise<void> {
+        await fs.promises.rm(absolutePath, {
+            recursive: true,
+        });
+    }
 }
 
 export interface UniqueIdGenerator {

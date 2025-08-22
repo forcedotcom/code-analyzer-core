@@ -21,7 +21,7 @@ import * as stubs from "./stubs";
 import {getMessage} from "../src/messages";
 import os from "node:os";
 import path from "node:path";
-import {changeWorkingDirectoryToPackageRoot, FixedUniqueIdGenerator} from "./test-helpers";
+import {changeWorkingDirectoryToPackageRoot, FakeFileSystemHandler, FixedUniqueIdGenerator} from "./test-helpers";
 import * as engApi from "@salesforce/code-analyzer-engine-api"
 import {FixedClock} from "@salesforce/code-analyzer-engine-api/utils"
 import {UnexpectedEngineErrorRule} from "../src/rules";
@@ -188,6 +188,7 @@ describe("Tests for the run method of CodeAnalyzer", () => {
     let stubEngine2: stubs.StubEngine2;
     let selection: RuleSelection;
     let fixedClock: FixedClock;
+    let fakeFileSystemHandler: FakeFileSystemHandler;
     const expectedStubEngine1RuleNames: string[] = ['stub1RuleA', 'stub1RuleB', 'stub1RuleC'];
     const expectedStubEngine2RuleNames: string[] = ['stub2RuleA', 'stub2RuleC'];
 
@@ -195,8 +196,10 @@ describe("Tests for the run method of CodeAnalyzer", () => {
         sampleTimestamp = new Date();
         codeAnalyzer = new CodeAnalyzer(CodeAnalyzerConfig.withDefaults());
         fixedClock = new FixedClock(sampleTimestamp);
+        fakeFileSystemHandler = new FakeFileSystemHandler();
         codeAnalyzer._setClock(fixedClock);
         codeAnalyzer._setUniqueIdGenerator(new FixedUniqueIdGenerator());
+        codeAnalyzer._setFileSystemHandler(fakeFileSystemHandler);
         sampleRunOptions = {workspace: await codeAnalyzer.createWorkspace([__dirname])};
         const stubPlugin: stubs.StubEnginePlugin = new stubs.StubEnginePlugin();
         await codeAnalyzer.addEnginePlugin(stubPlugin);
@@ -212,30 +215,38 @@ describe("Tests for the run method of CodeAnalyzer", () => {
             ]),
         });
 
-        const workingDirectoriesRoot: string = `code-analyzer-${fixedClock.formatToDateTimeString()}`;
+        const workingDirectoriesRoot: string = path.join(os.tmpdir(), `code-analyzer`, `run-${fixedClock.formatToDateTimeString()}`);
 
         const expectedEngineRunOptionsEngine1: engApi.RunOptions = {
             logFolder: codeAnalyzer.getConfig().getLogFolder(),
-            workingDirectory: path.join(os.tmpdir(), workingDirectoriesRoot, 'run', 'stubEngine1'),
+            workingDirectory: path.join(workingDirectoriesRoot, 'stubEngine1'),
             workspace: new engApi.Workspace("FixedId", [SAMPLE_WORKSPACE_FOLDER], [
                 path.join(SAMPLE_WORKSPACE_FOLDER, 'someFile.cls')])
         };
         const expectedEngineRunOptionsEngine2: engApi.RunOptions = {
             logFolder: codeAnalyzer.getConfig().getLogFolder(),
-            workingDirectory: path.join(os.tmpdir(), workingDirectoriesRoot, 'run', 'stubEngine2'),
+            workingDirectory: path.join(workingDirectoriesRoot, 'stubEngine2'),
             workspace: new engApi.Workspace("FixedId", [SAMPLE_WORKSPACE_FOLDER], [
                 path.join(SAMPLE_WORKSPACE_FOLDER, 'someFile.cls')])
         };
+        expect(fakeFileSystemHandler.dirWasCreated(workingDirectoriesRoot)).toEqual(true);
+        expect(fakeFileSystemHandler.dirWasDeleted(workingDirectoriesRoot)).toEqual(true);
         expect(stubEngine1.runRulesCallHistory).toHaveLength(1);
         expect(stubEngine1.runRulesCallHistory[0].ruleNames).toEqual(expectedStubEngine1RuleNames);
         expectEquivalentRunOptions(stubEngine1.runRulesCallHistory[0].runOptions, expectedEngineRunOptionsEngine1);
+        expect(fakeFileSystemHandler.dirWasCreated(expectedEngineRunOptionsEngine1.workingDirectory)).toEqual(true);
+        expect(fakeFileSystemHandler.dirWasDeleted(expectedEngineRunOptionsEngine1.workingDirectory)).toEqual(true);
         expect(stubEngine2.runRulesCallHistory).toHaveLength(1);
         expect(stubEngine2.runRulesCallHistory[0].ruleNames).toEqual(expectedStubEngine2RuleNames);
         expectEquivalentRunOptions(stubEngine2.runRulesCallHistory[0].runOptions, expectedEngineRunOptionsEngine2);
+        expect(fakeFileSystemHandler.dirWasCreated(expectedEngineRunOptionsEngine2.workingDirectory)).toEqual(true);
+        expect(fakeFileSystemHandler.dirWasDeleted(expectedEngineRunOptionsEngine2.workingDirectory)).toEqual(true);
     });
 
     it("When the workspace provided is one that is not constructed from CodeAnalyzer's createWorkspace method, then it should still work", async () => {
         const dummyWorkspace: Workspace = new StubWorkspace();
+        const workingDirectoriesRoot: string = path.join(os.tmpdir(), `code-analyzer`, `run-${fixedClock.formatToDateTimeString()}`);
+
         await codeAnalyzer.run(selection, {
             workspace: dummyWorkspace
         });
@@ -244,6 +255,7 @@ describe("Tests for the run method of CodeAnalyzer", () => {
             ruleNames: expectedStubEngine1RuleNames,
             runOptions: {
                 logFolder: codeAnalyzer.getConfig().getLogFolder(),
+                workingDirectory: path.join(workingDirectoriesRoot, 'stubEngine1'),
                 workspace: new engApi.Workspace(dummyWorkspace.getWorkspaceId(), dummyWorkspace.getRawFilesAndFolders(),
                     dummyWorkspace.getRawTargets())
             }
@@ -254,11 +266,11 @@ describe("Tests for the run method of CodeAnalyzer", () => {
         selection = await codeAnalyzer.selectRules(['stubEngine1:Recommended']);
         await codeAnalyzer.run(selection, sampleRunOptions);
 
-        const workingDirectoriesRoot: string = `code-analyzer-${fixedClock.formatToDateTimeString()}`;
+        const workingDirectoriesRoot: string = path.join(os.tmpdir(), `code-analyzer`, `run-${fixedClock.formatToDateTimeString()}`);
 
         const expectedEngineRunOptions: engApi.RunOptions = {
             logFolder: codeAnalyzer.getConfig().getLogFolder(),
-            workingDirectory: path.join(os.tmpdir(), workingDirectoriesRoot, 'run', 'stubEngine1'),
+            workingDirectory: path.join(workingDirectoriesRoot, 'stubEngine1'),
             workspace: new engApi.Workspace("FixedId", [__dirname])
         };
         expect(stubEngine1.runRulesCallHistory).toHaveLength(1);
