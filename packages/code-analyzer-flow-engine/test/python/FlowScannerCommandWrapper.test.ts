@@ -13,10 +13,12 @@ const PATH_TO_EXAMPLE2: string = path.join(PATH_TO_MULTIPLE_FLOWS_WORKSPACE, 'ex
 describe('FlowScannerCommandWrapper implementations', () => {
     describe('RunTimeFlowScannerCommandWrapper', () => {
         let tempLogFile: string;
+        let workingDirectory: string;
 
         beforeAll(async() => {
             const tempFolder: string = await fs.promises.mkdtemp(path.join(os.tmpdir(), 'engine-test'));
             tempLogFile = path.join(tempFolder, "flow_scanner_logfile.log");
+            workingDirectory = await fs.promises.mkdtemp(path.join(os.tmpdir(), 'flow-engine-working-directory'));
         })
 
         describe('#runFlowScannerRules()', () => {
@@ -30,7 +32,7 @@ describe('FlowScannerCommandWrapper implementations', () => {
                 };
 
                 beforeAll(async () => {
-                    results = await wrapper.runFlowScannerRules([PATH_TO_EXAMPLE1, PATH_TO_EXAMPLE2], [PATH_TO_EXAMPLE1, PATH_TO_EXAMPLE2], tempLogFile, statusProcessorFunction);
+                    results = await wrapper.runFlowScannerRules([PATH_TO_EXAMPLE1, PATH_TO_EXAMPLE2], [PATH_TO_EXAMPLE1, PATH_TO_EXAMPLE2], tempLogFile, workingDirectory, statusProcessorFunction);
                     // The `counter` property is irrelevant to us, and causes problems across platforms. So delete it.
                     for (const queryName of Object.keys(results.results)) {
                         for (const queryResults of results.results[queryName]) {
@@ -100,7 +102,7 @@ describe('FlowScannerCommandWrapper implementations', () => {
                     });
 
                     const wrapper: RunTimeFlowScannerCommandWrapper = new RunTimeFlowScannerCommandWrapper(PYTHON_COMMAND);
-                    await expect(wrapper.runFlowScannerRules([PATH_TO_EXAMPLE1, PATH_TO_EXAMPLE2], [PATH_TO_EXAMPLE1, PATH_TO_EXAMPLE2], tempLogFile, (_num: number) => {}))
+                    await expect(wrapper.runFlowScannerRules([PATH_TO_EXAMPLE1, PATH_TO_EXAMPLE2], [PATH_TO_EXAMPLE1, PATH_TO_EXAMPLE2], tempLogFile, workingDirectory, (_num: number) => {}))
                         .rejects
                         .toThrow(expectedMessage);
                 });

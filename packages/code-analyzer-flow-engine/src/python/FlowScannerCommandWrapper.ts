@@ -1,4 +1,3 @@
-import {createTempDir} from '@salesforce/code-analyzer-engine-api/utils';
 import {PythonCommandExecutor} from './PythonCommandExecutor';
 import {getMessage} from '../messages';
 import path from "node:path";
@@ -9,6 +8,7 @@ export interface FlowScannerCommandWrapper {
         workspaceFlowFiles: string[],
         targetedFlowFiles: string[],
         absLogFilePath: string,
+        workingDirectory: string,
         completionPercentageHandler: (percentage: number) => void
     ): Promise<FlowScannerExecutionResult>;
 }
@@ -50,15 +50,15 @@ export class RunTimeFlowScannerCommandWrapper implements FlowScannerCommandWrapp
         workspaceFlowFiles: string[],
         targetedFlowFiles: string[],
         absLogFilePath: string,
+        workingDirectory: string,
         completionPercentageHandler: (percentage: number) => void
     ): Promise<FlowScannerExecutionResult> {
-        const tempDir: string = await createTempDir();
-        const workspaceFlowsFile: string = path.join(tempDir, 'workspaceFiles.txt');
-        const targetedFlowsFile: string = path.join(tempDir, 'targetedFiles.txt');
+        const workspaceFlowsFile: string = path.join(workingDirectory, 'workspaceFiles.txt');
+        const targetedFlowsFile: string = path.join(workingDirectory, 'targetedFiles.txt');
         await fs.promises.writeFile(workspaceFlowsFile, workspaceFlowFiles.join('\n'), 'utf-8');
         await fs.promises.writeFile(targetedFlowsFile, targetedFlowFiles.join('\n'), 'utf-8');
 
-        const flowScannerResultsFile: string = path.join(tempDir, 'flowScannerResultsFile.json')
+        const flowScannerResultsFile: string = path.join(workingDirectory, 'flowScannerResultsFile.json')
         const commandName = 'flowtest'; //pythonModuleName set by internal team
 
         const pythonArgs: string[] = [

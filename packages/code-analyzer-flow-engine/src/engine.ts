@@ -85,6 +85,7 @@ export class FlowScannerEngine extends Engine {
             workspaceFlows,
             targetedFlows,
             logFile,
+            runOptions.workingDirectory,
             percentageUpdateHandler
         );
         const convertedResults: EngineRunResults = toEngineRunResults(executionResults, ruleNames);
