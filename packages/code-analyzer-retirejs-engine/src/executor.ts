@@ -6,7 +6,6 @@ import path from "node:path";
 import {DecoratedStreamZip} from './zip-decorator';
 import {getMessage} from "./messages";
 import {LogLevel} from "@salesforce/code-analyzer-engine-api";
-import {createTempDir} from "@salesforce/code-analyzer-engine-api/utils";
 
 // To handle the special case where a vulnerable library is found within a zip archive, a RetireJsExecutor can use this
 // marker to update the file field to look like <zip_file>::[ZIPPED_FILE]::<embedded_file> which the engine handles.
@@ -17,7 +16,7 @@ const RETIRE_COMMAND: string = utils.findCommand('retire');
 export const JS_EXTENSIONS = ['.js', '.mjs', '.cjs'];
 
 export interface RetireJsExecutor {
-    execute(filesAndFolders: string[]): Promise<Finding[]>
+    execute(filesAndFolders: string[], workingDir: string): Promise<Finding[]>
 }
 
 export type EmitLogEventFcn = (logLevel: LogLevel, msg: string) => void;
@@ -44,13 +43,13 @@ export class SimpleRetireJsExecutor implements RetireJsExecutor {
         this.emitLogEvent = emitLogEvent;
     }
 
-    async execute(targetFilesAndFolders: string[]): Promise<Finding[]> {
+    async execute(targetFilesAndFolders: string[], workingDir: string): Promise<Finding[]> {
         let findings: Finding[] = [];
         for (const fileOrFolder of targetFilesAndFolders) {
             if (fs.statSync(fileOrFolder).isFile()) {
                 findings = findings.concat(await this.scanFile(fileOrFolder));
             } else {
-                findings = findings.concat(await this.scanFolder(fileOrFolder));
+                findings = findings.concat(await this.scanFolder(fileOrFolder, workingDir));
             }
         }
         return findings;
@@ -62,8 +61,10 @@ export class SimpleRetireJsExecutor implements RetireJsExecutor {
         throw new Error('Currently the SimpleRetireJsExecutor does not support scanning individual files.');
     }
 
-    private async scanFolder(folder: string): Promise<Finding[]> {
-        const tempOutputFile: string = (await createTempDir()) + path.sep + 'output.json';
+    private async scanFolder(folder: string, workingDir: string): Promise<Finding[]> {
+        const outputDir: string = path.join(workingDir, 'output');
+        await fs.promises.mkdir(outputDir);
+        const tempOutputFile: string = outputDir + path.sep + 'output.json';
         const commandArgs: string[] = [
             '--path', folder,
             '--exitwith', '13',
@@ -159,13 +160,13 @@ export class AdvancedRetireJsExecutor implements RetireJsExecutor {
     /**
      * Note that this execute function assumes that only files are passed in.
      */
-    async execute(targetFiles: string[]): Promise<Finding[]> {
+    async execute(targetFiles: string[], workingDir: string): Promise<Finding[]> {
         const { textFiles, zipFiles } = separateTextAndZipFiles(targetFiles);
         if (textFiles.length + zipFiles.length === 0) {
             return []; // Quick return
         }
 
-        await this.prepareTempDirs(textFiles);
+        await this.prepareTempDirs(textFiles, workingDir);
         this.emitLogEvent(LogLevel.Fine, `Created a temporary directory where relevant files will be copied to for scanning: ${this.parentTempDir}`);
 
         await Promise.all([
@@ -173,7 +174,7 @@ export class AdvancedRetireJsExecutor implements RetireJsExecutor {
             ...zipFiles.map(file => this.processZipFile(file))]);
         this.emitLogEvent(LogLevel.Fine, `Finished copying relevant files to temporary directory: '${this.parentTempDir}'`);
 
-        const findings: Finding[] = await this.simpleExecutor.execute([this.parentTempDir]);
+        const findings: Finding[] = await this.simpleExecutor.execute([this.parentTempDir], workingDir);
         for (let i = 0; i < findings.length; i++) {
             findings[i].file = this.tempToOrigFileMap.get(findings[i].file) as string;
         }
@@ -184,11 +185,13 @@ export class AdvancedRetireJsExecutor implements RetireJsExecutor {
      *  Create parent temporary directory (that cleans up after itself when process exits) and add subdirectories under
      *  the parent for each of the unique folders containing text files
      */
-    private async prepareTempDirs(textFiles: string[]): Promise<void[]> {
+    private async prepareTempDirs(textFiles: string[], workingDir: string): Promise<void[]> {
         this.origToTempDirMap.clear();
         this.tempToOrigFileMap.clear();
         this.uniqNameCounter = 0;
-        this.parentTempDir = await createTempDir();
+        const parentTempDir: string = path.join(workingDir, 'input-copies');
+        await fs.promises.mkdir(parentTempDir);
+        this.parentTempDir = parentTempDir;
         const mkdirPromises: Promise<void>[] = [];
         for (const textFile of textFiles) {
             const folder: string = path.dirname(textFile);
