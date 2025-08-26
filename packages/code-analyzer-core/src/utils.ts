@@ -1,6 +1,7 @@
 import * as path from "node:path";
 import * as crypto from "node:crypto";
 import fs from "node:fs";
+import { createNamedTempDir } from "@salesforce/code-analyzer-engine-api/utils";
 
 // THIS FILE CONTAINS UTILITIES WHICH ARE USED INTERNALLY ONLY.
 // None of the following exported interfaces and functions should be exported from the index file.
@@ -16,16 +17,29 @@ export interface FileSystemHandler {
 }
 
 export class RuntimeFileSystemHandler implements FileSystemHandler {
+
     async createDirectory(absolutePath: string): Promise<void> {
-        await fs.promises.mkdir(absolutePath, {
-            recursive: true
-        });
+        const directories: string[] = this.breakPathIntoDirectoryArray(absolutePath);
+        for (const directory of directories) {
+            if (!fs.existsSync(directory)) {
+                await createNamedTempDir(path.basename(directory), path.dirname(directory));
+            }
+        }
     }
 
-    async deleteDirectory(absolutePath: string): Promise<void> {
-        await fs.promises.rm(absolutePath, {
-            recursive: true,
-        });
+    private breakPathIntoDirectoryArray(absolutePath: string): string[] {
+        const directoryArray: string[] = [];
+        let currentDir: string = absolutePath;
+        do {
+            directoryArray.unshift(currentDir);
+            currentDir = path.dirname(currentDir);
+        } while (currentDir && currentDir != directoryArray[0]);
+        return directoryArray;
+    }
+
+    deleteDirectory(_absolutePath: string): Promise<void> {
+        // CURRENTLY DELIBERATE NO-OP, BECAUSE THE DIRECTORIES SHOULD CLEAN THEMSELVES UP.
+        return Promise.resolve();
     }
 }
 

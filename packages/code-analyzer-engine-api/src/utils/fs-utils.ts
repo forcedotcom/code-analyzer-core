@@ -6,6 +6,10 @@ import fs from "node:fs";
 tmp.setGracefulCleanup();
 const tmpDirAsync = promisify((options: tmp.DirOptions, cb: tmp.DirCallback) => tmp.dir(options, cb));
 
+export async function createNamedTempDir(name: string, parentTempDir?: string): Promise<string> {
+    return tmpDirAsync({name, dir: parentTempDir, keep: false, unsafeCleanup: true});
+}
+
 /**
  * Creates a temporary directory that eventually cleans up after itself
  * @param parentTempDir - if supplied, then a temporary folder is placed directly underneath this parent folder.

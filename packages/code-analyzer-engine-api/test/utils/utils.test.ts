@@ -1,6 +1,6 @@
 import fs from 'node:fs';
 import os from 'node:os';
-import {createTempDir, FixedClock, indent, JavaCommandExecutor, RealClock} from "../../src/utils";
+import {createTempDir, createNamedTempDir, FixedClock, indent, JavaCommandExecutor, RealClock} from "../../src/utils";
 
 
 describe('Tests for Clock', () => {
@@ -25,6 +25,15 @@ describe('Tests for Clock', () => {
         });
     });
 })
+
+describe('Tests for createNamedTempDir', () => {
+    it('Successfully creates named directory', async () => {
+        const timestamp: number = Date.now();
+        const tmpDir: string = await createNamedTempDir(`tmp-${timestamp}`, os.tmpdir());
+
+        expect(fs.existsSync(tmpDir)).toEqual(true);
+    });
+});
 
 describe('Tests for createTempDir', () => {
     it('Successfully creates temporary directory', async () => {
