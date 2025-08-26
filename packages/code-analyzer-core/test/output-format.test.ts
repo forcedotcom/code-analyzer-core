@@ -5,7 +5,7 @@ import { RunResults, RunResultsImpl } from "../src/results";
 import { RuleImpl, RuleSelection, RuleSelectionImpl } from "../src/rules";
 import * as stubs from "./stubs";
 import { FixedClock } from "@salesforce/code-analyzer-engine-api/utils";
-import { changeWorkingDirectoryToPackageRoot } from "./test-helpers";
+import {changeWorkingDirectoryToPackageRoot, FakeFileSystemHandler} from "./test-helpers";
 import {SeverityLevel} from "@salesforce/code-analyzer-engine-api";
 
 changeWorkingDirectoryToPackageRoot();
@@ -19,6 +19,7 @@ beforeAll(async () => {
     fixedTime = new Date(2024, 6, 3, 9, 14, 34, 567);
     codeAnalyzer._setClock(new FixedClock(fixedTime));
     const stubPlugin: stubs.StubEnginePlugin = new stubs.StubEnginePlugin();
+    codeAnalyzer._setFileSystemHandler(new FakeFileSystemHandler());
     await codeAnalyzer.addEnginePlugin(stubPlugin);
     (stubPlugin.getCreatedEngine('stubEngine1') as stubs.StubEngine1).resultsToReturn = {
         violations: [
@@ -269,6 +270,7 @@ function getContentsOfExpectedOutputFile(expectedOutputFileName: string, escapeB
 async function createResultsWithUnexpectedError(): Promise<RunResults> {
     const codeAnalyzer: CodeAnalyzer = new CodeAnalyzer(CodeAnalyzerConfig.withDefaults());
     codeAnalyzer._setClock(new FixedClock(fixedTime));
+    codeAnalyzer._setFileSystemHandler(new FakeFileSystemHandler());
     await codeAnalyzer.addEnginePlugin(new stubs.ThrowingEnginePlugin());
     return codeAnalyzer.run(await codeAnalyzer.selectRules([]), {workspace: await codeAnalyzer.createWorkspace(['test'])});
 }
@@ -276,6 +278,7 @@ async function createResultsWithUnexpectedError(): Promise<RunResults> {
 async function createRulesWithEmptyTags(): Promise<RuleSelection> {
     const codeAnalyzer: CodeAnalyzer = new CodeAnalyzer(CodeAnalyzerConfig.withDefaults());
     codeAnalyzer._setClock(new FixedClock(fixedTime));
+    codeAnalyzer._setFileSystemHandler(new FakeFileSystemHandler());
     await codeAnalyzer.addEnginePlugin(new stubs.EmptyTagEnginePlugin());
     return codeAnalyzer.selectRules(['all'])
 }

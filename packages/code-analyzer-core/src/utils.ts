@@ -12,34 +12,18 @@ export function toAbsolutePath(fileOrFolder: string): string {
 }
 
 export interface FileSystemHandler {
+    directoryExists(absolutePath: string): boolean;
     createDirectory(absolutePath: string): Promise<void>;
-    deleteDirectory(absolutePath: string): Promise<void>;
 }
 
 export class RuntimeFileSystemHandler implements FileSystemHandler {
 
+    directoryExists(absolutePath: string): boolean {
+        return fs.existsSync(absolutePath);
+    }
+
     async createDirectory(absolutePath: string): Promise<void> {
-        const directories: string[] = this.breakPathIntoDirectoryArray(absolutePath);
-        for (const directory of directories) {
-            if (!fs.existsSync(directory)) {
-                await createNamedTempDir(path.basename(directory), path.dirname(directory));
-            }
-        }
-    }
-
-    private breakPathIntoDirectoryArray(absolutePath: string): string[] {
-        const directoryArray: string[] = [];
-        let currentDir: string = absolutePath;
-        do {
-            directoryArray.unshift(currentDir);
-            currentDir = path.dirname(currentDir);
-        } while (currentDir && currentDir != directoryArray[0]);
-        return directoryArray;
-    }
-
-    deleteDirectory(_absolutePath: string): Promise<void> {
-        // CURRENTLY DELIBERATE NO-OP, BECAUSE THE DIRECTORIES SHOULD CLEAN THEMSELVES UP.
-        return Promise.resolve();
+        await createNamedTempDir(path.basename(absolutePath), path.dirname(absolutePath));
     }
 }
 

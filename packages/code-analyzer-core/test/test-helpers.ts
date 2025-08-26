@@ -29,38 +29,21 @@ export class FixedUniqueIdGenerator implements UniqueIdGenerator {
 }
 
 export class FakeFileSystemHandler implements FileSystemHandler {
-    private fsMap: Map<string, {
-        created: boolean
-        deleted: boolean
-    }> = new Map();
+    private fsSet: Set<string> = new Set();
 
-    createDirectory(absolutePath: string): Promise<void> {
-        if (this.fsMap.has(absolutePath)) {
-            throw new Error(`TEST ERROR: Path ${absolutePath} was created twice`);
-        }
-        this.fsMap.set(absolutePath, {
-            created: true,
-            deleted: false
-        });
-        return Promise.resolve();
+    directoryExists(absolutePath: string): boolean {
+        return this.fsSet.has(absolutePath);
     }
 
-    deleteDirectory(absolutePath: string): Promise<void> {
-        if (!this.fsMap.has(absolutePath)) {
-            throw new Error(`TEST ERROR: Path ${absolutePath} was deleted without being created`);
+    createDirectory(absolutePath: string): Promise<void> {
+        if (this.fsSet.has(absolutePath)) {
+            throw new Error(`TEST ERROR: Path ${absolutePath} was created twice`);
         }
-        if (this.fsMap.get(absolutePath)!.deleted) {
-            throw new Error(`TEST ERROR: Path ${absolutePath} was deleted twice`);
-        }
-        this.fsMap.get(absolutePath)!.deleted = true;
+        this.fsSet.add(absolutePath);
         return Promise.resolve();
     }
 
     dirWasCreated(absolutePath: string): boolean {
-        return this.fsMap.has(absolutePath) && this.fsMap.get(absolutePath)!.created;
-    }
-
-    dirWasDeleted(absolutePath: string): boolean {
-        return this.fsMap.has(absolutePath) && this.fsMap.get(absolutePath)!.deleted;
+        return this.fsSet.has(absolutePath);
     }
 }

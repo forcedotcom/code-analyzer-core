@@ -110,6 +110,7 @@ export class CodeAnalyzer {
     private readonly engineConfigDescriptions: Map<string, ConfigDescription> = new Map();
     private readonly rulesCache: Map<string, RuleImpl[]> = new Map();
     private readonly engineRuleDiscoveryProgressAggregator: EngineProgressAggregator = new EngineProgressAggregator();
+    private workingFolderRoot?: string;
 
     constructor(config: CodeAnalyzerConfig, version: string = process.version) {
         this.validateEnvironment(version);
@@ -307,7 +308,7 @@ export class CodeAnalyzer {
         //  called a second time before the first call to run hasn't finished. This can occur if someone builds
         //  up a bunch of RunResults promises and then does a Promise.all on them. Otherwise, the progress events may
         //  override each other.
-        const tmpDirRoot: string = path.join(os.tmpdir(), `code-analyzer`, `run-${this.clock.formatToDateTimeString()}`);
+        const tmpDirRoot: string = path.join(await this.getWorkingFolderRoot(), `run-${this.clock.formatToDateTimeString()}`);
         await this.fileSystemHandler.createDirectory(tmpDirRoot);
         const workspace: engApi.Workspace = toEngApiWorkspace(runOptions.workspace);
         this.emitLogEvent(LogLevel.Debug, getMessage('RunningWithWorkspace', JSON.stringify({
@@ -326,7 +327,6 @@ export class CodeAnalyzer {
         for (const [uninstantiableEngine, error] of this.uninstantiableEnginesMap.entries()) {
             runResults.addEngineRunResults(new UninstantiableEngineRunResults(uninstantiableEngine, error));
         }
-        await this.fileSystemHandler.deleteDirectory(tmpDirRoot);
         return runResults;
     }
 
@@ -345,7 +345,7 @@ export class CodeAnalyzer {
         const cacheKey: string = workspace ? workspace.getWorkspaceId() : process.cwd();
         if (!this.rulesCache.has(cacheKey)) {
             // TODO: THIS WILL BE CONFIGURABLE SOON.
-            const tmpDirRoot: string = path.join(os.tmpdir(), `code-analyzer`, `describe-${this.clock.formatToDateTimeString()}`);
+            const tmpDirRoot: string = path.join(await this.getWorkingFolderRoot(), `describe-${this.clock.formatToDateTimeString()}`);
             await this.fileSystemHandler.createDirectory(tmpDirRoot);
             this.engineRuleDiscoveryProgressAggregator.reset(this.getEngineNames());
             const engApiWorkspace: engApi.Workspace | undefined = workspace ? toEngApiWorkspace(workspace) : undefined;
@@ -353,7 +353,6 @@ export class CodeAnalyzer {
             const rulePromises: Promise<RuleImpl[]>[] = this.getEngineNames().map(engineName =>
                 this.getAllRulesFor(engineName, engApiWorkspace, tmpDirRoot, this.config.getLogFolder()));
             this.rulesCache.set(cacheKey, (await Promise.all(rulePromises)).flat());
-            await this.fileSystemHandler.deleteDirectory(tmpDirRoot);
         }
         return this.rulesCache.get(cacheKey)!;
     }
@@ -370,7 +369,6 @@ export class CodeAnalyzer {
         let ruleDescriptions: engApi.RuleDescription[] = [];
         try {
             ruleDescriptions = await this.getEngine(engineName).describeRules(describeOptions);
-            await this.fileSystemHandler.deleteDirectory(workingFolder);
         } catch (err) {
             this.uninstantiableEnginesMap.set(engineName, err as Error);
             this.emitLogEvent(LogLevel.Error, getMessage('PluginErrorWhenGettingRules', engineName, (err as Error).message + '\n\n' +
@@ -411,7 +409,6 @@ export class CodeAnalyzer {
         let apiEngineRunResults: engApi.EngineRunResults;
         try {
             apiEngineRunResults = await engine.runRules(rulesToRun, engineRunOptions);
-            await this.fileSystemHandler.deleteDirectory(workingFolder);
         } catch (error) {
             return new UnexpectedErrorEngineRunResults(engineName, await engine.getEngineVersion(), error as Error);
         }
@@ -572,6 +569,17 @@ export class CodeAnalyzer {
 
     private getEngine(engineName: string): engApi.Engine {
         return this.engines.get(engineName)!;
+    }
+
+    private async getWorkingFolderRoot(): Promise<string> {
+        if (!this.workingFolderRoot) {
+            const workingFolderRoot: string = path.join(os.tmpdir(), 'code-analyzer');
+            if (!this.fileSystemHandler.directoryExists(workingFolderRoot)) {
+                await this.fileSystemHandler.createDirectory(workingFolderRoot);
+            }
+            this.workingFolderRoot = workingFolderRoot;
+        }
+        return this.workingFolderRoot;
     }
 }
 
