@@ -22,7 +22,7 @@ export type DescribeOptions = {
      * A temporary folder created specifically for use by the current engine. If the engine ever needs to create temporary
      * files or folders, that should be done here.
      */
-    workingDirectory: string
+    workingFolder: string
 
     /**
      * The workspace may or may not be available. If available, then engines should use this workspace object to give a
@@ -51,7 +51,7 @@ export type RunOptions = {
      * A temporary folder created specifically for use by the current engine. If the engine ever needs to create temporary
      * files or folders, that should be done here.
      */
-    workingDirectory: string
+    workingFolder: string
 
     /**
      * The workspace object specifying the files that make up the user's workspace and which files should be targeted.

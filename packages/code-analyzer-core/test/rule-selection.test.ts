@@ -279,24 +279,24 @@ describe('Tests for selecting rules', () => {
 
         const expectedDescribeOptionsEngine1: engApi.DescribeOptions = {
             logFolder: codeAnalyzer.getConfig().getLogFolder(),
-            workingDirectory: path.join(workingDirectoriesRoot, 'stubEngine1'),
+            workingFolder: path.join(workingDirectoriesRoot, 'stubEngine1'),
             workspace: undefined
         };
         const expectedDescribeOptionsEngine2: engApi.DescribeOptions = {
             logFolder: codeAnalyzer.getConfig().getLogFolder(),
-            workingDirectory: path.join(workingDirectoriesRoot, 'stubEngine2'),
+            workingFolder: path.join(workingDirectoriesRoot, 'stubEngine2'),
             workspace: undefined
         };
         expect(fakeFileSystemHandler.dirWasCreated(workingDirectoriesRoot)).toEqual(true);
         expect(fakeFileSystemHandler.dirWasDeleted(workingDirectoriesRoot)).toEqual(true);
         const stubEngine1: stubs.StubEngine1 = plugin.getCreatedEngine('stubEngine1') as stubs.StubEngine1;
         expect(stubEngine1.describeRulesCallHistory).toEqual([{describeOptions: expectedDescribeOptionsEngine1}]);
-        expect(fakeFileSystemHandler.dirWasCreated(expectedDescribeOptionsEngine1.workingDirectory)).toEqual(true);
-        expect(fakeFileSystemHandler.dirWasDeleted(expectedDescribeOptionsEngine1.workingDirectory)).toEqual(true);
+        expect(fakeFileSystemHandler.dirWasCreated(expectedDescribeOptionsEngine1.workingFolder)).toEqual(true);
+        expect(fakeFileSystemHandler.dirWasDeleted(expectedDescribeOptionsEngine1.workingFolder)).toEqual(true);
         const stubEngine2: stubs.StubEngine2 = plugin.getCreatedEngine('stubEngine2') as stubs.StubEngine2;
         expect(stubEngine2.describeRulesCallHistory).toEqual([{describeOptions: expectedDescribeOptionsEngine2}]);
-        expect(fakeFileSystemHandler.dirWasCreated(expectedDescribeOptionsEngine2.workingDirectory)).toEqual(true);
-        expect(fakeFileSystemHandler.dirWasDeleted(expectedDescribeOptionsEngine2.workingDirectory)).toEqual(true);
+        expect(fakeFileSystemHandler.dirWasCreated(expectedDescribeOptionsEngine2.workingFolder)).toEqual(true);
+        expect(fakeFileSystemHandler.dirWasDeleted(expectedDescribeOptionsEngine2.workingFolder)).toEqual(true);
     });
 
     it('When selectRules is provided with SelectOptions, then they are forwarded to the engines', async () => {

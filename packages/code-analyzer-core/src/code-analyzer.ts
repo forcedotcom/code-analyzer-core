@@ -359,18 +359,18 @@ export class CodeAnalyzer {
     }
 
     private async getAllRulesFor(engineName: string, workspace: engApi.Workspace | undefined, tmpDirRoot: string, logFolder: string): Promise<RuleImpl[]> {
-        const workingDirectory: string = path.join(tmpDirRoot, engineName);
-        await this.fileSystemHandler.createDirectory(workingDirectory);
+        const workingFolder: string = path.join(tmpDirRoot, engineName);
+        await this.fileSystemHandler.createDirectory(workingFolder);
         const describeOptions: engApi.DescribeOptions = {
             workspace,
-            workingDirectory,
+            workingFolder,
             logFolder
         };
         this.emitLogEvent(LogLevel.Debug, getMessage('GatheringRulesFromEngine', engineName));
         let ruleDescriptions: engApi.RuleDescription[] = [];
         try {
             ruleDescriptions = await this.getEngine(engineName).describeRules(describeOptions);
-            await this.fileSystemHandler.deleteDirectory(workingDirectory);
+            await this.fileSystemHandler.deleteDirectory(workingFolder);
         } catch (err) {
             this.uninstantiableEnginesMap.set(engineName, err as Error);
             this.emitLogEvent(LogLevel.Error, getMessage('PluginErrorWhenGettingRules', engineName, (err as Error).message + '\n\n' +
@@ -393,12 +393,12 @@ export class CodeAnalyzer {
     }
 
     private async runEngineAndValidateResults(engineName: string, ruleSelection: RuleSelection, logFolder: string, workspace: engApi.Workspace, tmpDirRoot: string): Promise<EngineRunResults> {
-        const workingDirectory: string = path.join(tmpDirRoot, engineName);
-        await this.fileSystemHandler.createDirectory(workingDirectory);
+        const workingFolder: string = path.join(tmpDirRoot, engineName);
+        await this.fileSystemHandler.createDirectory(workingFolder);
         const engineRunOptions: engApi.RunOptions = {
             logFolder,
             workspace,
-            workingDirectory
+            workingFolder
         };
         this.emitEvent<EngineRunProgressEvent>({
             type: EventType.EngineRunProgressEvent, timestamp: this.clock.now(), engineName: engineName, percentComplete: 0
@@ -411,7 +411,7 @@ export class CodeAnalyzer {
         let apiEngineRunResults: engApi.EngineRunResults;
         try {
             apiEngineRunResults = await engine.runRules(rulesToRun, engineRunOptions);
-            await this.fileSystemHandler.deleteDirectory(workingDirectory);
+            await this.fileSystemHandler.deleteDirectory(workingFolder);
         } catch (error) {
             return new UnexpectedErrorEngineRunResults(engineName, await engine.getEngineVersion(), error as Error);
         }
