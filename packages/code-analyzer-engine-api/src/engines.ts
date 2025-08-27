@@ -19,6 +19,13 @@ export type DescribeOptions = {
     logFolder: string
 
     /**
+     * A temporary folder created specifically for use by the current engine.
+     * 
+     * If the engine ever needs to create temporary files or folders, they should be placed under this working folder.
+     */
+    workingFolder: string
+
+    /**
      * The workspace may or may not be available. If available, then engines should use this workspace object to give a
      * more accurate list of which of the engine's rules are relevant to the targeted files in the workspace. That is
      * if there are rules for this engine that are simply not applicable to the targeted files, then the rule
@@ -48,6 +55,13 @@ export type RunOptions = {
      * the other workspace files (returned by the getWorkspaceFiles method) if needed to support the analysis.
      */
     workspace: Workspace
+
+    /**
+     * A temporary folder created specifically for use by the current engine.
+     * 
+     * If the engine ever needs to create temporary files or folders, they should be placed under this working folder.
+     */
+    workingFolder: string
 }
 
 /**

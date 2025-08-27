@@ -1,5 +1,7 @@
+import * as fs from "node:fs";
 import * as path from "node:path";
 import * as crypto from "node:crypto";
+import { createTempDir } from "@salesforce/code-analyzer-engine-api/utils";
 
 // THIS FILE CONTAINS UTILITIES WHICH ARE USED INTERNALLY ONLY.
 // None of the following exported interfaces and functions should be exported from the index file.
@@ -101,4 +103,28 @@ export function deepEquals(value1: unknown, value2: unknown): boolean {
 
     // For all other types (number, string, boolean, etc.), use strict equality
     return false;
+}
+
+
+export interface TempFolder {
+    getPath(): Promise<string>;
+
+    createSubfolder(...subFolders: string[]): Promise<string>;
+}
+
+export class RuntimeTempFolder implements TempFolder {
+    private rootFolder?: string;
+
+    async getPath(): Promise<string> {
+        if (this.rootFolder === undefined) {
+            this.rootFolder = await createTempDir();
+        }
+        return this.rootFolder;
+    }
+
+    async createSubfolder(...subFolders: string[]): Promise<string> {
+        const absPathToSubFolder: string = path.join(await this.getPath(), ...subFolders);
+        await fs.promises.mkdir(absPathToSubFolder, {recursive: true});
+        return absPathToSubFolder;
+    }
 }

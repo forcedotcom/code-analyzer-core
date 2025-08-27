@@ -24,7 +24,7 @@ import * as engApi from "@salesforce/code-analyzer-engine-api"
 import {Clock, RealClock} from '@salesforce/code-analyzer-engine-api/utils';
 import {EventEmitter} from "node:events";
 import {CodeAnalyzerConfig, ConfigDescription, EngineOverrides, FIELDS, RuleOverride} from "./config";
-import {EngineProgressAggregator, RuntimeUniqueIdGenerator, toAbsolutePath, UniqueIdGenerator} from "./utils";
+import {EngineProgressAggregator, RuntimeTempFolder, RuntimeUniqueIdGenerator, TempFolder, toAbsolutePath, UniqueIdGenerator} from "./utils";
 import fs from "node:fs";
 import path from 'node:path';
 
@@ -95,6 +95,7 @@ export class CodeAnalyzer {
     private readonly config: CodeAnalyzerConfig;
     private clock: Clock = new RealClock();
     private uniqueIdGenerator: UniqueIdGenerator = new RuntimeUniqueIdGenerator();
+    private tempFolder: TempFolder = new RuntimeTempFolder();
     private readonly eventEmitter: EventEmitter = new EventEmitter();
     private readonly engines: Map<string, engApi.Engine> = new Map();
     private readonly uninstantiableEnginesMap: Map<string, Error> = new Map();
@@ -123,6 +124,9 @@ export class CodeAnalyzer {
     }
     _setUniqueIdGenerator(uniqueIdGenerator: UniqueIdGenerator) {
         this.uniqueIdGenerator = uniqueIdGenerator;
+    }
+    _setTempFolder(tempFolder: TempFolder) {
+        this.tempFolder = tempFolder;
     }
 
     /**
@@ -297,14 +301,20 @@ export class CodeAnalyzer {
         //  up a bunch of RunResults promises and then does a Promise.all on them. Otherwise, the progress events may
         //  override each other.
 
-        const engineRunOptions: engApi.RunOptions = extractEngineRunOptions(runOptions, this.config.getLogFolder());
         this.emitLogEvent(LogLevel.Debug, getMessage('RunningWithWorkspace', JSON.stringify({
             filesAndFolders: runOptions.workspace.getRawFilesAndFolders(),
             targets: runOptions.workspace.getRawTargets()
         })));
 
-        const runPromises: Promise<EngineRunResults>[] = ruleSelection.getEngineNames().map(
-            engineName => this.runEngineAndValidateResults(engineName, ruleSelection, engineRunOptions));
+        const runWorkingFolderName: string = `code-analyzer-run-${this.clock.formatToDateTimeString()}`;
+        const engApiWorkspace: engApi.Workspace = toEngApiWorkspace(runOptions.workspace);
+        const runPromises: Promise<EngineRunResults>[] = ruleSelection.getEngineNames().map(async engineName => {
+            return await this.runEngineAndValidateResults(engineName, ruleSelection, {
+                logFolder: this.config.getLogFolder(),
+                workingFolder: await this.tempFolder.createSubfolder(runWorkingFolderName, engineName),
+                workspace: engApiWorkspace
+            });
+        });
         const engineRunResultsList: EngineRunResults[] = await Promise.all(runPromises);
 
         const runResults: RunResultsImpl = new RunResultsImpl(this.clock);
@@ -333,8 +343,14 @@ export class CodeAnalyzer {
         if (!this.rulesCache.has(cacheKey)) {
             this.engineRuleDiscoveryProgressAggregator.reset(this.getEngineNames());
             const engApiWorkspace: engApi.Workspace | undefined = workspace ? toEngApiWorkspace(workspace) : undefined;
-            const rulePromises: Promise<RuleImpl[]>[] = this.getEngineNames().map(engineName =>
-                this.getAllRulesFor(engineName, {workspace: engApiWorkspace, logFolder: this.config.getLogFolder()}));
+            const rulesWorkingFolderName: string = `code-analyzer-rules-${this.clock.formatToDateTimeString()}`;
+            const rulePromises: Promise<RuleImpl[]>[] = this.getEngineNames().map(async engineName => {
+                return await this.getAllRulesFor(engineName, {
+                    logFolder: this.config.getLogFolder(),
+                    workingFolder: await this.tempFolder.createSubfolder(rulesWorkingFolderName, engineName),
+                    workspace: engApiWorkspace,
+                });
+            });
             this.rulesCache.set(cacheKey, (await Promise.all(rulePromises)).flat());
         }
         return this.rulesCache.get(cacheKey)!;
@@ -600,13 +616,6 @@ function validateRuleDescriptions(ruleDescriptions: engApi.RuleDescription[], en
         }
         ruleNamesSeen.add(ruleDescription.name);
     }
-}
-
-function extractEngineRunOptions(runOptions: RunOptions, logFolder: string): engApi.RunOptions {
-    return {
-        logFolder: logFolder,
-        workspace: toEngApiWorkspace(runOptions.workspace),
-    };
 }
 
 async function validateFileOrFolder(fileOrFolder: string): Promise<string> {
