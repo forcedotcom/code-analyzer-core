@@ -1,6 +1,6 @@
 import process from "node:process";
 import path from "node:path";
-import {UniqueIdGenerator} from "../src/utils";
+import {UniqueIdGenerator, TempFolder} from "../src/utils";
 
 export function changeWorkingDirectoryToPackageRoot() {
     let original_working_directory: string;
@@ -25,5 +25,27 @@ export class FixedUniqueIdGenerator implements UniqueIdGenerator {
 
     getUniversallyUniqueId(): string {
         return "FixedUUID";
+    }
+}
+
+export class SimulatedTempFolder implements TempFolder {
+    private readonly simulatedRoot: string = 'simulatedRoot';
+    private subfolderSet: Set<string> = new Set();
+
+    getPath(): Promise<string> {
+        return Promise.resolve(this.simulatedRoot);
+    }
+
+    createSubfolder(...subFolderPathSegs: string[]): Promise<string> {
+        const joinedPath: string = path.join(this.simulatedRoot, ...subFolderPathSegs);
+        if (this.subfolderSet.has(joinedPath)) {
+            throw new Error(`Attempted to create path ${joinedPath} twice`);
+        }
+        this.subfolderSet.add(joinedPath);
+        return Promise.resolve(joinedPath);
+    }
+
+    getCreatedSubfolders(): Set<string> {
+        return this.subfolderSet;
     }
 }

@@ -16,7 +16,7 @@ import * as engApi from "@salesforce/code-analyzer-engine-api"
 import {FixedClock} from "@salesforce/code-analyzer-engine-api/utils";
 import {RepeatedRuleNameEnginePlugin, StubEnginePlugin} from "./stubs";
 import path from "node:path";
-import {changeWorkingDirectoryToPackageRoot, FixedUniqueIdGenerator} from "./test-helpers";
+import {changeWorkingDirectoryToPackageRoot, FixedUniqueIdGenerator, SimulatedTempFolder} from "./test-helpers";
 import {getMessage} from "../src/messages";
 import * as stubs from "./stubs";
 
@@ -26,6 +26,8 @@ describe('Tests for selecting rules', () => {
     let codeAnalyzer: CodeAnalyzer;
     let plugin: StubEnginePlugin;
     let sampleTimestamp: Date;
+    let fixedClock: FixedClock;
+    let simulatedTempFolder: SimulatedTempFolder;
 
     async function setupCodeAnalyzer(codeAnalyzer: CodeAnalyzer) : Promise<void> {
         plugin = new StubEnginePlugin();
@@ -37,7 +39,10 @@ describe('Tests for selecting rules', () => {
         codeAnalyzer = new CodeAnalyzer(CodeAnalyzerConfig.withDefaults());
         await setupCodeAnalyzer(codeAnalyzer);
         sampleTimestamp = new Date();
-        codeAnalyzer._setClock(new FixedClock(sampleTimestamp));
+        fixedClock = new FixedClock(sampleTimestamp);
+        codeAnalyzer._setClock(fixedClock);
+        simulatedTempFolder = new SimulatedTempFolder();
+        codeAnalyzer._setTempFolder(simulatedTempFolder);
     })
 
     it('When no rule selectors are provided then the Recommended tag is used', async () => {
@@ -269,14 +274,31 @@ describe('Tests for selecting rules', () => {
     it('When selectRules is not provided with SelectOptions, then workspace should be undefined for all engines', async () => {
         await codeAnalyzer.selectRules(['all']);
 
-        const expectedDescribeOptions: engApi.DescribeOptions = {
+        const tempSubfolders: Set<string> = simulatedTempFolder.getCreatedSubfolders();
+
+        const stubEngine1WorkingFolder: string|undefined = [...tempSubfolders.keys()].find(f => {
+            return f.includes('code-analyzer-describe') && f.includes('stubEngine1');
+        });
+        expect(stubEngine1WorkingFolder).toBeDefined();
+        const expectedStub1DescribeOptions: engApi.DescribeOptions = {
             logFolder: codeAnalyzer.getConfig().getLogFolder(),
+            workingFolder: stubEngine1WorkingFolder!,
             workspace: undefined
         };
         const stubEngine1: stubs.StubEngine1 = plugin.getCreatedEngine('stubEngine1') as stubs.StubEngine1;
-        expect(stubEngine1.describeRulesCallHistory).toEqual([{describeOptions: expectedDescribeOptions}]);
+        expect(stubEngine1.describeRulesCallHistory).toEqual([{describeOptions: expectedStub1DescribeOptions}]);
+
+        const stubEngine2WorkingFolder: string|undefined = [...tempSubfolders.keys()].find(f => {
+            return f.includes('code-analyzer-describe') && f.includes('stubEngine2');
+        });
+        expect(stubEngine2WorkingFolder).toBeDefined();
+        const expectedStub2DescribeOptions: engApi.DescribeOptions = {
+            logFolder: codeAnalyzer.getConfig().getLogFolder(),
+            workingFolder: stubEngine2WorkingFolder!,
+            workspace: undefined
+        };
         const stubEngine2: stubs.StubEngine2 = plugin.getCreatedEngine('stubEngine2') as stubs.StubEngine2;
-        expect(stubEngine2.describeRulesCallHistory).toEqual([{describeOptions: expectedDescribeOptions}]);
+        expect(stubEngine2.describeRulesCallHistory).toEqual([{describeOptions: expectedStub2DescribeOptions}]);
     });
 
     it('When selectRules is provided with SelectOptions, then they are forwarded to the engines', async () => {
@@ -285,7 +307,7 @@ describe('Tests for selecting rules', () => {
         }
         await codeAnalyzer.selectRules(['all'], selectOptions);
 
-        const expectedDescribeOptions: engApi.DescribeOptions = {
+        const expectedDescribeOptions: Partial<engApi.DescribeOptions> = {
             logFolder: codeAnalyzer.getConfig().getLogFolder(),
             workspace: new engApi.Workspace('FixedId', [path.resolve('src'), path.resolve('test')])
         };

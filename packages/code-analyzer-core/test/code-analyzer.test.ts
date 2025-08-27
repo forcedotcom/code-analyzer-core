@@ -20,7 +20,7 @@ import {
 import * as stubs from "./stubs";
 import {getMessage} from "../src/messages";
 import path from "node:path";
-import {changeWorkingDirectoryToPackageRoot, FixedUniqueIdGenerator} from "./test-helpers";
+import {changeWorkingDirectoryToPackageRoot, FixedUniqueIdGenerator, SimulatedTempFolder} from "./test-helpers";
 import * as engApi from "@salesforce/code-analyzer-engine-api"
 import {FixedClock} from "@salesforce/code-analyzer-engine-api/utils"
 import {UnexpectedEngineErrorRule} from "../src/rules";
@@ -182,6 +182,7 @@ describe("Tests for the createWorkspace method", () => {
 describe("Tests for the run method of CodeAnalyzer", () => {
     let sampleRunOptions: RunOptions;
     let sampleTimestamp: Date;
+    let simulatedTempFolder: SimulatedTempFolder;
     let codeAnalyzer: CodeAnalyzer;
     let stubEngine1: stubs.StubEngine1;
     let stubEngine2: stubs.StubEngine2;
@@ -193,6 +194,8 @@ describe("Tests for the run method of CodeAnalyzer", () => {
         sampleTimestamp = new Date();
         codeAnalyzer = new CodeAnalyzer(CodeAnalyzerConfig.withDefaults());
         codeAnalyzer._setClock(new FixedClock(sampleTimestamp));
+        simulatedTempFolder = new SimulatedTempFolder();
+        codeAnalyzer._setTempFolder(simulatedTempFolder);
         codeAnalyzer._setUniqueIdGenerator(new FixedUniqueIdGenerator());
         sampleRunOptions = {workspace: await codeAnalyzer.createWorkspace([__dirname])};
         const stubPlugin: stubs.StubEnginePlugin = new stubs.StubEnginePlugin();
@@ -209,17 +212,35 @@ describe("Tests for the run method of CodeAnalyzer", () => {
             ]),
         });
 
-        const expectedEngineRunOptions: engApi.RunOptions = {
+        const tempSubfolders: Set<string> = simulatedTempFolder.getCreatedSubfolders();
+
+        const stubEngine1WorkingFolder: string|undefined = [...tempSubfolders.keys()].find(f => {
+            return f.includes('code-analyzer-run') && f.includes('stubEngine1');
+        });
+        expect(stubEngine1WorkingFolder).toBeDefined();
+        const expectedStub1EngineRunOptions: engApi.RunOptions = {
             logFolder: codeAnalyzer.getConfig().getLogFolder(),
+            workingFolder: stubEngine1WorkingFolder!,
             workspace: new engApi.Workspace("FixedId", [SAMPLE_WORKSPACE_FOLDER], [
                 path.join(SAMPLE_WORKSPACE_FOLDER, 'someFile.cls')])
         };
         expect(stubEngine1.runRulesCallHistory).toHaveLength(1);
         expect(stubEngine1.runRulesCallHistory[0].ruleNames).toEqual(expectedStubEngine1RuleNames);
-        expectEquivalentRunOptions(stubEngine1.runRulesCallHistory[0].runOptions, expectedEngineRunOptions);
+        expectEquivalentRunOptions(stubEngine1.runRulesCallHistory[0].runOptions, expectedStub1EngineRunOptions);
+
+        const stubEngine2WorkingFolder: string|undefined = [...tempSubfolders.keys()].find(f => {
+            return f.includes('code-analyzer-run') && f.includes('stubEngine2');
+        });
+        expect(stubEngine2WorkingFolder).toBeDefined();
+        const expectedStub2EngineRunOptions: engApi.RunOptions = {
+            logFolder: codeAnalyzer.getConfig().getLogFolder(),
+            workingFolder: stubEngine2WorkingFolder!,
+            workspace: new engApi.Workspace("FixedId", [SAMPLE_WORKSPACE_FOLDER], [
+                path.join(SAMPLE_WORKSPACE_FOLDER, 'someFile.cls')])
+        };
         expect(stubEngine2.runRulesCallHistory).toHaveLength(1);
         expect(stubEngine2.runRulesCallHistory[0].ruleNames).toEqual(expectedStubEngine2RuleNames);
-        expectEquivalentRunOptions(stubEngine2.runRulesCallHistory[0].runOptions, expectedEngineRunOptions);
+        expectEquivalentRunOptions(stubEngine2.runRulesCallHistory[0].runOptions, expectedStub2EngineRunOptions);
     });
 
     it("When the workspace provided is one that is not constructed from CodeAnalyzer's createWorkspace method, then it should still work", async () => {
@@ -228,10 +249,17 @@ describe("Tests for the run method of CodeAnalyzer", () => {
             workspace: dummyWorkspace
         });
 
+
+        const tempSubfolders: Set<string> = simulatedTempFolder.getCreatedSubfolders();
+        const stubEngine1WorkingFolder: string|undefined = [...tempSubfolders.keys()].find(f => {
+            return f.includes('code-analyzer-run') && f.includes('stubEngine1');
+        });
+        expect(stubEngine1WorkingFolder).toBeDefined();
         expect(stubEngine1.runRulesCallHistory).toEqual([{
             ruleNames: expectedStubEngine1RuleNames,
             runOptions: {
                 logFolder: codeAnalyzer.getConfig().getLogFolder(),
+                workingFolder: stubEngine1WorkingFolder,
                 workspace: new engApi.Workspace(dummyWorkspace.getWorkspaceId(), dummyWorkspace.getRawFilesAndFolders(),
                     dummyWorkspace.getRawTargets())
             }
@@ -242,8 +270,14 @@ describe("Tests for the run method of CodeAnalyzer", () => {
         selection = await codeAnalyzer.selectRules(['stubEngine1:Recommended']);
         await codeAnalyzer.run(selection, sampleRunOptions);
 
+        const tempSubfolders: Set<string> = simulatedTempFolder.getCreatedSubfolders();
+        const stubEngine1WorkingFolder: string|undefined = [...tempSubfolders.keys()].find(f => {
+            return f.includes('code-analyzer-run') && f.includes('stubEngine1');
+        });
+        expect(stubEngine1WorkingFolder).toBeDefined();
         const expectedEngineRunOptions: engApi.RunOptions = {
             logFolder: codeAnalyzer.getConfig().getLogFolder(),
+            workingFolder: stubEngine1WorkingFolder!,
             workspace: new engApi.Workspace("FixedId", [__dirname])
         };
         expect(stubEngine1.runRulesCallHistory).toHaveLength(1);
@@ -824,6 +858,7 @@ function assertCodeLocation(codeLocation: CodeLocation, file: string, startLine:
 
 function expectEquivalentRunOptions(actual: engApi.RunOptions, expected: engApi.RunOptions): void {
     expect(actual.logFolder).toEqual(expected.logFolder);
+    expect(actual.workingFolder).toEqual(expected.workingFolder);
     expectEquivalentWorkspaces(actual.workspace, expected.workspace);
 }
 

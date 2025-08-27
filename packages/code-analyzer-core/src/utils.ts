@@ -1,5 +1,7 @@
-import * as path from "node:path";
-import * as crypto from "node:crypto";
+import path from "node:path";
+import crypto from "node:crypto";
+import fs from "node:fs";
+import {createTempDir} from "@salesforce/code-analyzer-engine-api/utils";
 
 // THIS FILE CONTAINS UTILITIES WHICH ARE USED INTERNALLY ONLY.
 // None of the following exported interfaces and functions should be exported from the index file.
@@ -24,6 +26,28 @@ export class RuntimeUniqueIdGenerator implements UniqueIdGenerator {
 
     getUniversallyUniqueId(): string {
         return crypto.randomUUID();
+    }
+}
+
+export interface TempFolder {
+    getPath(): Promise<string>;
+    createSubfolder(...subfolderPathSegs: string[]): Promise<string>;
+}
+
+export class RuntimeTempFolder implements TempFolder {
+    private rootFolder?: string;
+
+    async getPath(): Promise<string> {
+        if (!this.rootFolder) {
+            this.rootFolder = await createTempDir();
+        }
+        return this.rootFolder;
+    }
+
+    async createSubfolder(...subFolderPathSegs: string[]): Promise<string> {
+        const absPathToSubFolder: string = path.join(await this.getPath(), ...subFolderPathSegs);
+        await fs.promises.mkdir(absPathToSubFolder, {recursive: true});
+        return absPathToSubFolder;
     }
 }
 
