@@ -83,7 +83,7 @@ function identifyIncorrectlyVersionedPackages(changedPackages) {
         }
         const releasedPackageVersion = getLatestReleasedVersion(changedPackage);
         if (semver.lte(semver.parse(packageVersion.slice(0, packageVersion.length - 9)), semver.parse(releasedPackageVersion))) {
-            incorrectlyVersionedPackages.push(`${changedPackage} (currently versioned as ${packageVersion}) is semantically behind latest published release ${releasedPackageVersion}`);
+            incorrectlyVersionedPackages.push(`${changedPackage} (currently versioned as ${packageVersion}) is not semantically ahead of latest published release ${releasedPackageVersion}`);
         }
     }
     return incorrectlyVersionedPackages;
