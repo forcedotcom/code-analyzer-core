@@ -1,6 +1,7 @@
 const path = require('path');
 const fs = require('fs');
 const cp = require('child_process');
+const semver = require('semver');
 
 function main() {
     const changedFiles = readChangedFilesFile(process.argv[2]);
@@ -80,24 +81,24 @@ function identifyIncorrectlyVersionedPackages(changedPackages) {
             incorrectlyVersionedPackages.push(`${changedPackage} (currently versioned as ${packageVersion}) lacks a trailing "-SNAPSHOT"`);
             continue;
         }
-        const releasedPackageVersions = getReleasedPackageVersions(changedPackage);
-        if (releasedPackageVersions.includes(packageVersion.slice(0, packageVersion.length - 9))) {
-            incorrectlyVersionedPackages.push(`${changedPackage} (currently versioned as ${packageVersion}) corresponds to an already-published release, and must be incremented.`);
+        const releasedPackageVersion = getLatestReleasedVersion(changedPackage);
+        if (semver.lte(semver.parse(packageVersion.slice(0, packageVersion.length - 9)), semver.parse(releasedPackageVersion))) {
+            incorrectlyVersionedPackages.push(`${changedPackage} (currently versioned as ${packageVersion}) is semantically behind latest published release ${releasedPackageVersion}`);
         }
     }
     return incorrectlyVersionedPackages;
 }
 
-function getReleasedPackageVersions(changedPackage) {
+function getLatestReleasedVersion(changedPackage) {
     const publishedPackageName = JSON.parse(fs.readFileSync(path.join(changedPackage, 'package.json'), 'utf-8')).name;
     try {
-        const execResult = cp.execSync(`npm view ${publishedPackageName} versions --json`, {
+
+        return cp.execSync(`npm view ${publishedPackageName} version`, {
             encoding: 'utf-8'
         });
-        return JSON.parse(execResult);
     } catch (e) {
-        console.log(`NOTE: Could not fetch released versions of ${publishedPackageName} (located in ${changedPackage}. Is that an error?`);
-        return [];
+        console.log(`NOTE: Could not fetch latest release version of ${publishedPackageName} (located in ${changedPackage}). Is that an error?`);
+        return undefined;
     }
 }
 
