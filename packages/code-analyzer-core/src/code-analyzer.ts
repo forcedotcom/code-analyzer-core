@@ -24,7 +24,13 @@ import * as engApi from "@salesforce/code-analyzer-engine-api"
 import {Clock, RealClock} from '@salesforce/code-analyzer-engine-api/utils';
 import {EventEmitter} from "node:events";
 import {CodeAnalyzerConfig, ConfigDescription, EngineOverrides, FIELDS, RuleOverride} from "./config";
-import {EngineProgressAggregator, RuntimeUniqueIdGenerator, toAbsolutePath, UniqueIdGenerator} from "./utils";
+import {
+    EngineProgressAggregator, RuntimeTempFolder,
+    RuntimeUniqueIdGenerator,
+    TempFolder,
+    toAbsolutePath,
+    UniqueIdGenerator
+} from "./utils";
 import fs from "node:fs";
 import path from 'node:path';
 
@@ -94,6 +100,7 @@ const MINIMUM_SUPPORTED_NODE = 20;
 export class CodeAnalyzer {
     private readonly config: CodeAnalyzerConfig;
     private clock: Clock = new RealClock();
+    private tempFolder: TempFolder = new RuntimeTempFolder();
     private uniqueIdGenerator: UniqueIdGenerator = new RuntimeUniqueIdGenerator();
     private readonly eventEmitter: EventEmitter = new EventEmitter();
     private readonly engines: Map<string, engApi.Engine> = new Map();
@@ -118,11 +125,14 @@ export class CodeAnalyzer {
     }
 
     // For testing purposes only
-    _setClock(clock: Clock) {
+    _setClock(clock: Clock): void {
         this.clock = clock;
     }
-    _setUniqueIdGenerator(uniqueIdGenerator: UniqueIdGenerator) {
+    _setUniqueIdGenerator(uniqueIdGenerator: UniqueIdGenerator): void {
         this.uniqueIdGenerator = uniqueIdGenerator;
+    }
+    _setTempFolder(tempFolder: TempFolder): void {
+        this.tempFolder = tempFolder;
     }
 
     /**
@@ -296,15 +306,19 @@ export class CodeAnalyzer {
         //  called a second time before the first call to run hasn't finished. This can occur if someone builds
         //  up a bunch of RunResults promises and then does a Promise.all on them. Otherwise, the progress events may
         //  override each other.
+        const runWorkingFolderName: string = `code-analyzer-run-${this.clock.formatToDateTimeString()}`;
 
-        const engineRunOptions: engApi.RunOptions = extractEngineRunOptions(runOptions, this.config.getLogFolder());
         this.emitLogEvent(LogLevel.Debug, getMessage('RunningWithWorkspace', JSON.stringify({
             filesAndFolders: runOptions.workspace.getRawFilesAndFolders(),
             targets: runOptions.workspace.getRawTargets()
         })));
 
         const runPromises: Promise<EngineRunResults>[] = ruleSelection.getEngineNames().map(
-            engineName => this.runEngineAndValidateResults(engineName, ruleSelection, engineRunOptions));
+            async (engineName) => this.runEngineAndValidateResults(engineName, ruleSelection, {
+                logFolder: this.config.getLogFolder(),
+                workingFolder: await this.tempFolder.createSubfolder(runWorkingFolderName, engineName),
+                workspace: toEngApiWorkspace(runOptions.workspace)
+            }));
         const engineRunResultsList: EngineRunResults[] = await Promise.all(runPromises);
 
         const runResults: RunResultsImpl = new RunResultsImpl(this.clock);
@@ -330,11 +344,16 @@ export class CodeAnalyzer {
 
     private async getAllRules(workspace?: Workspace): Promise<RuleImpl[]> {
         const cacheKey: string = workspace ? workspace.getWorkspaceId() : process.cwd();
+        const describeWorkingFolderName: string = `code-analyzer-describe-${this.clock.formatToDateTimeString()}`;
         if (!this.rulesCache.has(cacheKey)) {
             this.engineRuleDiscoveryProgressAggregator.reset(this.getEngineNames());
             const engApiWorkspace: engApi.Workspace | undefined = workspace ? toEngApiWorkspace(workspace) : undefined;
-            const rulePromises: Promise<RuleImpl[]>[] = this.getEngineNames().map(engineName =>
-                this.getAllRulesFor(engineName, {workspace: engApiWorkspace, logFolder: this.config.getLogFolder()}));
+            const rulePromises: Promise<RuleImpl[]>[] = this.getEngineNames().map(async (engineName) =>
+                this.getAllRulesFor(engineName, {
+                    workspace: engApiWorkspace,
+                    workingFolder: await this.tempFolder.createSubfolder(describeWorkingFolderName, engineName),
+                    logFolder: this.config.getLogFolder()
+                }));
             this.rulesCache.set(cacheKey, (await Promise.all(rulePromises)).flat());
         }
         return this.rulesCache.get(cacheKey)!;
@@ -602,13 +621,6 @@ function validateRuleDescriptions(ruleDescriptions: engApi.RuleDescription[], en
     }
 }
 
-function extractEngineRunOptions(runOptions: RunOptions, logFolder: string): engApi.RunOptions {
-    return {
-        logFolder: logFolder,
-        workspace: toEngApiWorkspace(runOptions.workspace),
-    };
-}
-
 async function validateFileOrFolder(fileOrFolder: string): Promise<string> {
     const absFileOrFolder: string = toAbsolutePath(fileOrFolder);
     try {
@@ -692,6 +704,7 @@ function validateViolationCodeLocations(violation: engApi.Violation, engineName:
                     engineName, violation.ruleName, codeLocation.endLine, codeLocation.startLine));
             }
 
+            // istanbul ignore else
             if (codeLocation.endColumn !== undefined) {
                 if (!isValidLineOrColumn(codeLocation.endColumn)) {
                     throw new Error(getMessage('EngineReturnedViolationWithCodeLocationWithInvalidLineOrColumn',
