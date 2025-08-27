@@ -1,6 +1,6 @@
 git diff --name-only --cached --diff-filter=ACMR > `pwd`/changed_files.txt
-node ./.husky/node-scripts/validate-changed-package-versions.js `pwd`/changed_files.txt
+node ./.node-scripts/validate-changed-package-versions.js `pwd`/changed_files.txt
 cd packages
 PACKAGE_NAMES=`ls`
 cd ..
-node ./.husky/node-scripts/validate-package-interdependencies.js "$PACKAGE_NAMES"
+node ./.node-scripts/validate-package-interdependencies.js "$PACKAGE_NAMES"

@@ -21,6 +21,48 @@ jobs:
               echo "::error::Invalid PR title: '$title'. Please following the format: POSTRELEASE|FIX|CHANGE|NEW (__) @W-XXXXXXXX@ Summary"
               exit 1
           fi
+  check_for_postrelease_keyword:
+    runs-on: macos-latest
+    outputs:
+      is-postrelease: ${{ steps.main.outputs.is_postrelease }}
+    steps:
+      - name: Check for "Postrelease" keyword in PR title.
+        id: main
+        if: github.base_ref == 'dev'
+        run: |
+          title="${{ github.event.pull_request.title }}"
+          if [[ "$title" =~ ^POSTRELEASE ]]; then
+            echo "is_postrelease=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "is_postrelease=false" >> "$GITHUB_OUTPUT"
+          fi
+  validate_packages:
+    runs-on: macos-latest
+    needs: check_for_postrelease_keyword
+    steps:
+      - name: Support long paths
+        run: git config --global core.longpaths true
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 'lts/*'
+      - name: Validate that changed packages are versioned as snapshots
+        if: ${{ needs.check_for_postrelease_keyword.outputs.is-postrelease == 'false' }}
+        run: |
+          BASE_SHA=${{ github.event.pull_request.base.sha }}
+          HEAD_SHA=${{ github.event.pull_request.head.sha }}
+          git diff --name-only $HEAD_SHA $BASE_SHA > `pwd`/changed_files.txt
+          node ./.node-scripts/validate-changed-package-versions.js `pwd`/changed_files.txt
+      - name: Validate that packages properly depend on each other
+        if: ${{ needs.check_for_postrelease_keyword.outputs.is-postrelease == 'false' }}
+        run: |
+          cd packages
+          PACKAGE_NAMES=`ls`
+          cd ..
+          node ./.node-scripts/validate-package-interdependencies.js "$PACKAGE_NAMES"
   run_tests:
     runs-on: ${{ matrix.os }}
     strategy:
