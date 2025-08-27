@@ -49,6 +49,7 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 'lts/*'
+      - run: npm install
       - name: Validate that changed packages are versioned as snapshots
         if: ${{ needs.check_for_postrelease_keyword.outputs.is-postrelease == 'false' }}
         run: |
