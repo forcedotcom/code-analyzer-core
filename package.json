@@ -17,7 +17,8 @@
     "scrub": "npm run clean && npm run scrub --workspaces --if-present && rimraf node_modules && rimraf package-lock.json",
     "showcoverage-java": "npm run showcoverage-java --workspaces --if-present",
     "showcoverage-typescript": "open ./coverage/lcov-report/index.html",
-    "showcoverage": "npm run showcoverage-java && npm run showcoverage-typescript"
+    "showcoverage": "npm run showcoverage-java && npm run showcoverage-typescript",
+    "prepare": "husky"
   },
   "devDependencies": {
     "cross-env": "^10.0.0",
