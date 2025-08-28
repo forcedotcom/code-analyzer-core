@@ -1,5 +1,7 @@
 const path = require('path');
 const fs = require('fs');
+const cp = require('child_process');
+const semver = require('semver');
 
 function main() {
     const changedFiles = readChangedFilesFile(process.argv[2]);
@@ -39,7 +41,7 @@ function displayList(header, list) {
 }
 
 function readChangedFilesFile(changedFilesFileName) {
-    return fs.readFileSync(path.join(__dirname, '..', '..', '..', changedFilesFileName), 'utf-8').split('\n').map(s => s.trim());
+    return fs.readFileSync(changedFilesFileName, 'utf-8').split('\n').map(s => s.trim());
 }
 
 function identifyMeaningfullyChangedPackages(changedFiles) {
@@ -74,18 +76,31 @@ function isFileInTestFolder(changedFile) {
 function identifyIncorrectlyVersionedPackages(changedPackages) {
     const incorrectlyVersionedPackages = [];
     for (const changedPackage of changedPackages) {
-        //A temporary workaround for the rename of the flowtest-engine package to flow-engine
-        if (changedPackage === 'packages/code-analyzer-flowtest-engine') {
-            continue;
-        }
         const packageVersion = getPackageVersion(changedPackage);
         if (!packageVersion.endsWith('-SNAPSHOT')) {
             incorrectlyVersionedPackages.push(`${changedPackage} (currently versioned as ${packageVersion}) lacks a trailing "-SNAPSHOT"`);
+            continue;
+        }
+        const releasedPackageVersion = getLatestReleasedVersion(changedPackage);
+        if (semver.lte(semver.parse(packageVersion.slice(0, packageVersion.length - 9)), semver.parse(releasedPackageVersion))) {
+            incorrectlyVersionedPackages.push(`${changedPackage} (currently versioned as ${packageVersion}) is not semantically ahead of latest published release ${releasedPackageVersion}`);
         }
     }
     return incorrectlyVersionedPackages;
 }
 
+function getLatestReleasedVersion(changedPackage) {
+    const publishedPackageName = JSON.parse(fs.readFileSync(path.join(changedPackage, 'package.json'), 'utf-8')).name;
+    try {
+
+        return cp.execSync(`npm view ${publishedPackageName} version`, {
+            encoding: 'utf-8'
+        });
+    } catch (e) {
+        console.log(`NOTE: Could not fetch latest release version of ${publishedPackageName} (located in ${changedPackage}). Is that an error?`);
+        return undefined;
+    }
+}
 
 function getPackageVersion(changedPackage) {
     const packageJsonPath = path.join(changedPackage, 'package.json');

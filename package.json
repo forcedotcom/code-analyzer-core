@@ -17,12 +17,15 @@
     "scrub": "npm run clean && npm run scrub --workspaces --if-present && rimraf node_modules && rimraf package-lock.json",
     "showcoverage-java": "npm run showcoverage-java --workspaces --if-present",
     "showcoverage-typescript": "open ./coverage/lcov-report/index.html",
-    "showcoverage": "npm run showcoverage-java && npm run showcoverage-typescript"
+    "showcoverage": "npm run showcoverage-java && npm run showcoverage-typescript",
+    "prepare": "husky"
   },
   "devDependencies": {
     "cross-env": "^10.0.0",
+    "husky": "^9.1.7",
     "jest": "^30.0.5",
     "rimraf": "^6.0.1",
+    "semver": "^7.7.2",
     "ts-jest": "^29.4.1"
   },
   "jest": {

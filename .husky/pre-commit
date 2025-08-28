@@ -1,0 +1,6 @@
+git diff --name-only --cached --diff-filter=ACMR > `pwd`/.scratchfile
+node ./.node-scripts/validate-changed-package-versions.js `pwd`/.scratchfile
+cd packages
+PACKAGE_NAMES=`ls`
+cd ..
+node ./.node-scripts/validate-package-interdependencies.js "$PACKAGE_NAMES"

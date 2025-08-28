@@ -49,20 +49,21 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 'lts/*'
+      - run: npm install
       - name: Validate that changed packages are versioned as snapshots
         if: ${{ needs.check_for_postrelease_keyword.outputs.is-postrelease == 'false' }}
         run: |
           BASE_SHA=${{ github.event.pull_request.base.sha }}
           HEAD_SHA=${{ github.event.pull_request.head.sha }}
-          git diff --name-only $HEAD_SHA $BASE_SHA > changed_files.txt
-          node ./.github/workflows/verify-pr/validate-changed-package-versions.js changed_files.txt
+          git diff --name-only $HEAD_SHA $BASE_SHA > `pwd`/changed_files.txt
+          node ./.node-scripts/validate-changed-package-versions.js `pwd`/changed_files.txt
       - name: Validate that packages properly depend on each other
         if: ${{ needs.check_for_postrelease_keyword.outputs.is-postrelease == 'false' }}
         run: |
           cd packages
           PACKAGE_NAMES=`ls`
           cd ..
-          node ./.github/workflows/verify-pr/validate-package-interdependencies.js "$PACKAGE_NAMES"
+          node ./.node-scripts/validate-package-interdependencies.js "$PACKAGE_NAMES"
   run_tests:
     runs-on: ${{ matrix.os }}
     strategy:
