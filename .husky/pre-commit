@@ -1,3 +1,4 @@
+npm run lint
 git diff --name-only --cached --diff-filter=ACMR > `pwd`/.scratchfile
 node ./.node-scripts/validate-changed-package-versions.js `pwd`/.scratchfile
 cd packages
