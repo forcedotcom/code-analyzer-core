@@ -5,7 +5,7 @@ function main() {
     const packageNames = process.argv[2].split('\n');
 
     if (packageNames.length > 0) {
-        displayList('WILL ATTEMPT TO VALIDATE THESE PACKAGES:', packageNames);
+        displayList('WILL ATTEMPT TO VALIDATE INTERDEPENDENCIES BETWEEN THESE PACKAGES:', packageNames);
     } else {
         console.log('NO PACKAGES PROVIDED FOR VALIDATION');
         process.exit(0);
