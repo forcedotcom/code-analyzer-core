@@ -10,7 +10,10 @@
     "url": "git+https://github.com/forcedotcom/code-analyzer-core.git",
     "directory": "packages/code-analyzer-core"
   },
-  "main": "dist/index.js",
+  "exports": {
+    ".": "./dist/index.js",
+    "./output-formats": "./dist/output-formats/index.js"
+  },
   "types": "dist/index.d.ts",
   "dependencies": {
     "@salesforce/code-analyzer-engine-api": "0.28.0-SNAPSHOT",
