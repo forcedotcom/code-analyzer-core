@@ -18,7 +18,7 @@
     "@eslint/js": "8.57.1",
     "@lwc/eslint-plugin-lwc": "2.2.0",
     "@lwc/eslint-plugin-lwc-platform": "5.2.0",
-    "@salesforce/code-analyzer-engine-api": "0.28.0-SNAPSHOT",
+    "@salesforce/code-analyzer-engine-api": "0.28.0",
     "@salesforce/eslint-config-lwc": "3.7.2",
     "@salesforce/eslint-plugin-lightning": "1.0.1",
     "@types/node": "^20.0.0",
