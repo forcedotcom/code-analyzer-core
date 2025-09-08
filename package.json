@@ -18,7 +18,7 @@
     "showcoverage-java": "npm run showcoverage-java --workspaces --if-present",
     "showcoverage-typescript": "open ./coverage/lcov-report/index.html",
     "showcoverage": "npm run showcoverage-java && npm run showcoverage-typescript",
-    "prepare": "husky"
+    "prepare": "husky || true"
   },
   "devDependencies": {
     "cross-env": "^10.0.0",
