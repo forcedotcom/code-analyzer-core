@@ -11,31 +11,35 @@ export type JsonResultsOutput = {
     runDir: string
 
     // Object containing the aggregate counts of the violations
-    violationCounts: {
-        // The total amount of violations
-        total: number
-
-        // The amount of Critical severity level violations
-        sev1: number
-
-        // The amount of High severity level violations
-        sev2: number
-
-        // The amount of Moderate severity level violations
-        sev3: number
-
-        // The amount of Low severity level violations
-        sev4: number
-
-        // The amount of Info severity level violations
-        sev5: number
-    }
+    violationCounts: ViolationCounts
 
     // Object containing the versions of core and engine modules that ran
     versions: JsonVersionOutput
 
     // Array of objects containing information about the violations detected
     violations: JsonViolationOutput[]
+}
+/**
+ * Type representing violation counts by severity level; this is specifically exported externally.
+ */
+export type ViolationCounts = {
+    // The total amount of violations
+    total: number
+
+    // The amount of Critical severity level violations
+    sev1: number
+
+    // The amount of High severity level violations
+    sev2: number
+
+    // The amount of Moderate severity level violations
+    sev3: number
+
+    // The amount of Low severity level violations
+    sev4: number
+
+    // The amount of Info severity level violations
+    sev5: number
 }
 export type JsonVersionOutput = {
     [coreOrEngineName: string]: string
