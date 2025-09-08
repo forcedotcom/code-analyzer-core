@@ -47,10 +47,6 @@ export {
 } from "./output-format"
 
 export type {
-    ViolationCounts
-} from "./output-formats/results/json-run-results-format"
-
-export type {
     CodeLocation,
     EngineRunResults,
     RunResults,
