@@ -91,7 +91,9 @@ export class CpdEngine extends Engine {
 
         this.emitRunRulesProgressEvent(5);
 
-        const cpdRunResults: CpdRunResults = await this.cpdWrapperInvoker.invokeRunCommand(inputData,
+        const cpdRunResults: CpdRunResults = await this.cpdWrapperInvoker.invokeRunCommand(
+            inputData,
+            runOptions.workingFolder,
             (innerPerc: number) => this.emitRunRulesProgressEvent(5 + 93*(innerPerc/100))); // 5 to 98%
 
         const violations: Violation[] = [];

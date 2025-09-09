@@ -1,6 +1,6 @@
 import * as path from "node:path";
 import * as fsp from "node:fs/promises";
-import {createTempDir} from "@salesforce/code-analyzer-engine-api/utils";
+import * as os from "node:os";
 import {Serializable, Worker} from "node:worker_threads";
 import {EngineEventEmitter, Event} from "@salesforce/code-analyzer-engine-api";
 
@@ -13,7 +13,7 @@ import {EngineEventEmitter, Event} from "@salesforce/code-analyzer-engine-api";
 export abstract class WorkerTask<Input extends Serializable, Output extends Serializable> extends EngineEventEmitter {
     private readonly taskJsFilePath: string;
     private readonly taskClassName: string;
-    private workerScriptFile?: string;
+    private workerScriptFileCache: Map<string, string> = new Map();
 
     /**
      * Internal use and testing use only:
@@ -47,12 +47,12 @@ export abstract class WorkerTask<Input extends Serializable, Output extends Seri
      * a worker script to run the task in a background worker thread.
      * @param taskInput The serializable input to the task
      */
-    async run(taskInput?: Input): Promise<Output> {
+    async run(taskInput?: Input, workingFolder?: string): Promise<Output> {
         if (this._runInCurrentThreadInsteadofNewThread) {
             return this.exec(taskInput);
         }
 
-        const worker: Worker = new Worker(await this.getWorkerScriptFile(), { workerData: { input: taskInput } });
+        const worker: Worker = new Worker(await this.getWorkerScriptFile(workingFolder), { workerData: { input: taskInput } });
 
         return new Promise((resolve, reject) => {
             worker.on('message', (msg: Event | {type: "output", output: Output}) => {
@@ -73,16 +73,14 @@ export abstract class WorkerTask<Input extends Serializable, Output extends Seri
         });
     }
 
-    private async getWorkerScriptFile(): Promise<string> {
+    private async getWorkerScriptFile(workingFolder: string = os.tmpdir()): Promise<string> {
         /* istanbul ignore if */
-        if (this.workerScriptFile !== undefined) {
-            return this.workerScriptFile;
+        if (this.workerScriptFileCache.has(workingFolder)) {
+            return this.workerScriptFileCache.get(workingFolder)!;
         }
 
-        const tempDir: string = await createTempDir();
-
         // We must use common JS since the taskJsFilePath points to a transpiled common JS file
-        this.workerScriptFile = path.join(tempDir, `${this.taskClassName}_worker_script.cjs`);
+        const workerScriptFile = path.join(workingFolder, `${this.taskClassName}_worker_script.cjs`);
         const workerScriptFileContents: string =
             `const { parentPort, workerData } = require("node:worker_threads");\n` +
             `const engineApi = require("${require.resolve("@salesforce/code-analyzer-engine-api").replace(/\\/g, '\\\\')}");\n` +
@@ -100,7 +98,8 @@ export abstract class WorkerTask<Input extends Serializable, Output extends Seri
             `    parentPort.postMessage({type: "output", output: output});\n` +
             `})();\n`;
 
-        await fsp.writeFile(this.workerScriptFile, workerScriptFileContents, 'utf-8');
-        return this.workerScriptFile;
+        await fsp.writeFile(workerScriptFile, workerScriptFileContents, 'utf-8');
+        this.workerScriptFileCache.set(workingFolder, workerScriptFile);
+        return workerScriptFile;
     }
 }

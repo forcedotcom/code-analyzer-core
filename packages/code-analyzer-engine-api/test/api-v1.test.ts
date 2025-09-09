@@ -16,6 +16,8 @@ import {
     Workspace
 } from "../src";
 import * as os from "node:os";
+import * as fs from "node:fs";
+import * as path from "node:path";
 
 describe('Tests for v1', () => {
     it('EnginePluginV1 getApiVersion should return 1.0', () => {
@@ -55,8 +57,8 @@ describe('Tests for v1', () => {
         });
 
         const workspace: Workspace = new Workspace('id', []);
-        await dummyEngine.describeRules({workspace: workspace, logFolder: os.tmpdir()});
-        await dummyEngine.runRules(["dummy"], {workspace: workspace, logFolder: os.tmpdir()});
+        await dummyEngine.describeRules(createDescribeOptions(workspace));
+        await dummyEngine.runRules(["dummy"], createRunOptions(workspace));
 
         expect(logEvents).toHaveLength(2);
         expect(logEvents[0]).toEqual({
@@ -155,5 +157,21 @@ class DummyEngineV1 extends Engine {
         return {
             violations: []
         };
+    }
+}
+
+export function createDescribeOptions(workspace?: Workspace): DescribeOptions {
+    return {
+        logFolder: os.tmpdir(),
+        workspace: workspace,
+        workingFolder: fs.mkdtempSync(path.join(os.tmpdir(),'tmp-'))
+    }
+}
+
+export function createRunOptions(workspace: Workspace): RunOptions {
+    return {
+        logFolder: os.tmpdir(),
+        workspace: workspace,
+        workingFolder: fs.mkdtempSync(path.join(os.tmpdir(),'tmp-'))
     }
 }

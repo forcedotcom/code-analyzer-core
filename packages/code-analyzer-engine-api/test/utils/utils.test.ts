@@ -1,6 +1,4 @@
-import fs from 'node:fs';
-import os from 'node:os';
-import {createTempDir, FixedClock, indent, JavaCommandExecutor, RealClock} from "../../src/utils";
+import {FixedClock, indent, JavaCommandExecutor, RealClock} from "../../src/utils";
 
 
 describe('Tests for Clock', () => {
@@ -23,21 +21,6 @@ describe('Tests for Clock', () => {
             expect(now).toBeGreaterThanOrEqual(floor);
             expect(now).toBeLessThanOrEqual(ceiling);
         });
-    });
-})
-
-describe('Tests for createTempDir', () => {
-    it('Successfully creates temporary directory', async () => {
-        // Before testing, figure out how many entries are in the temp folder.
-        const preTestTempContentsCount: number = (await fs.promises.readdir(os.tmpdir())).length;
-
-        // Create the directory.
-        const tempDir: string = await createTempDir();
-
-        // Verify that the temp folder has at least one additional entry, and that an entry with the temporary name now exists.
-        const postTestTempContentsCount: number = (await fs.promises.readdir(os.tmpdir())).length;
-        expect(postTestTempContentsCount).toBeGreaterThan(preTestTempContentsCount);
-        expect(fs.existsSync(tempDir)).toEqual(true);
     });
 })
 

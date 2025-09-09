@@ -77,13 +77,16 @@ function identifyIncorrectlyVersionedPackages(changedPackages) {
     const incorrectlyVersionedPackages = [];
     
     for (const changedPackage of changedPackages) {
+        if (isPackageThatHasNotPublished(changedPackage)) {
+            continue; // We can't check previous versions of this package because it hasn't published yet, so the version must be correct
+        }
 
         const packageJsonPath = path.join(changedPackage, 'package.json');
         if (!fs.existsSync(packageJsonPath)) {
             continue; // This means the package was deleted, so we ignore this package
         }
+        
         const packageVersion =  JSON.parse(fs.readFileSync(packageJsonPath, 'utf-8')).version;
-
         if (!packageVersion.endsWith('-SNAPSHOT')) {
             incorrectlyVersionedPackages.push(`${changedPackage} (currently versioned as ${packageVersion}) lacks a trailing "-SNAPSHOT"`);
             continue;
@@ -107,6 +110,12 @@ function getLatestReleasedVersion(changedPackage) {
         console.log(`NOTE: Could not fetch latest release version of ${publishedPackageName} (located in ${changedPackage}). Is that an error?`);
         return undefined;
     }
+}
+
+function isPackageThatHasNotPublished(changedPackage) {
+    return [
+        "packages/ENGINE-TEMPLATE"
+    ].includes(changedPackage.replace("\\","/"));
 }
 
 main();

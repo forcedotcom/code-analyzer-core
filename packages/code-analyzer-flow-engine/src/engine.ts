@@ -82,6 +82,7 @@ export class FlowScannerEngine extends Engine {
         }
 
         const executionResults: FlowScannerExecutionResult = await this.commandWrapper.runFlowScannerRules(
+            runOptions.workingFolder,
             workspaceFlows,
             targetedFlows,
             logFile,

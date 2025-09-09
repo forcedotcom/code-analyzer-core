@@ -1,8 +1,7 @@
 import {RegexEngine} from "../src/engine";
 import path from "node:path";
-import {changeWorkingDirectoryToPackageRoot} from "./test-helpers";
+import {changeWorkingDirectoryToPackageRoot, createDescribeOptions, createRunOptions} from "./test-helpers";
 import {
-    DescribeOptions,
     EngineRunResults,
     RuleDescription,
     RunOptions,
@@ -16,7 +15,6 @@ import {
     DEFAULT_SEVERITY_LEVEL
 } from "../src/config";
 import {createBaseRegexRules, RULE_RESOURCE_URLS, TERMS_WITH_IMPLICIT_BIAS} from "../src/plugin";
-import os from "node:os";
 
 changeWorkingDirectoryToPackageRoot();
 
@@ -850,17 +848,3 @@ describe('Tests for getEngineVersion', () => {
         expect(version).toMatch(/\d+\.\d+\.\d+.*/);
     });
 });
-
-function createDescribeOptions(workspace?: Workspace): DescribeOptions {
-    return {
-        logFolder: os.tmpdir(),
-        workspace: workspace
-    }
-}
-
-function createRunOptions(workspace: Workspace): RunOptions {
-    return {
-        logFolder: os.tmpdir(),
-        workspace: workspace
-    }
-}

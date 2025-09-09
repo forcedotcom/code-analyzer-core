@@ -1,9 +1,8 @@
 import { EngineRunResults, RuleDescription, RunOptions, Workspace } from "@salesforce/code-analyzer-engine-api";
-import fs from "node:fs";
-import * as os from "node:os";
-import path from "path";
+import * as fs from "node:fs";
+import * as path from "path";
 import { TemplateEngine } from "../src/engine";
-import { changeWorkingDirectoryToPackageRoot } from "./test-helpers";
+import { changeWorkingDirectoryToPackageRoot, createDescribeOptions, createRunOptions } from "./test-helpers";
 
 changeWorkingDirectoryToPackageRoot();
 
@@ -41,7 +40,7 @@ describe('Template Engine Tests', () => {
         // add more checks for specific rules, describe options, and logging events
         it('When no workspace is provided, then all rules are returned', async () => {
             const engine: TemplateEngine = new TemplateEngine();
-            const rules: RuleDescription[] = await engine.describeRules({logFolder: os.tmpdir()});
+            const rules: RuleDescription[] = await engine.describeRules(createDescribeOptions());
     
             expect(rules).toEqual(ALL_EXPECTED_RULES);
         });
@@ -63,12 +62,5 @@ describe('Template Engine Tests', () => {
     async function getExpectedRulesFromGoldFile(relativeExpectedFile: string): Promise<RuleDescription[]> {
         const expectedRulesJsonStr: string =  (await fs.promises.readFile(path.join(TEST_DATA_FOLDER, relativeExpectedFile), 'utf-8'));
         return JSON.parse(expectedRulesJsonStr) as RuleDescription[];
-    }
-
-    function createRunOptions(workspace: Workspace): RunOptions {
-        return {
-            logFolder: os.tmpdir(),
-            workspace: workspace
-        }
     }
 });

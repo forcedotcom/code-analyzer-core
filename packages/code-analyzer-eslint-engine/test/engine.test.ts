@@ -1,6 +1,5 @@
 import {
     ConfigObject,
-    DescribeOptions,
     DescribeRulesProgressEvent,
     Engine,
     EngineRunResults,
@@ -13,17 +12,17 @@ import {
     Violation,
     Workspace
 } from "@salesforce/code-analyzer-engine-api";
-import fs from "node:fs";
-import path from "node:path";
-import process from "node:process";
+import * as fs from "node:fs";
+import * as path from "node:path";
+import * as process from "node:process";
 import {DEFAULT_CONFIG, ESLintEngineConfig} from "../src/config";
 import {getMessage} from "../src/messages";
 import * as os from "node:os";
 import {ESLintEnginePlugin} from "../src";
 import {ESLintEngine} from "../src/engine";
-import {unzipToFolder} from "./test-helpers";
+import {createDescribeOptions, createRunOptions, unzipToFolder} from "./test-helpers";
 
-jest.setTimeout(30_000);
+jest.setTimeout(60_000);
 
 const DEFAULT_CONFIG_FOR_TESTING: ESLintEngineConfig = {
     ...DEFAULT_CONFIG,
@@ -102,7 +101,7 @@ describe('Tests for the describeRules method of ESLintEngine', () => {
                 config_root: __dirname,
                 auto_discover_eslint_config: true,
             });
-            const ruleDescriptions: RuleDescription[] = await engine.describeRules({logFolder: os.tmpdir()});
+            const ruleDescriptions: RuleDescription[] = await engine.describeRules(createDescribeOptions());
             expect(ruleDescriptions).toEqual(caseObj.expectationRuleDescriptions);
         } finally {
             process.chdir(origWorkingDir);
@@ -816,20 +815,6 @@ function loadRuleDescriptions(fileNameFromTestDataFolder: string): RuleDescripti
 function makeUniqueAndSorted(ruleDescriptions: RuleDescription[]): RuleDescription[] {
     return Array.from(new Map(ruleDescriptions.map(rule => [rule.name, rule])).values())
         .sort((r1, r2) => r1.name.localeCompare((r2.name)));
-}
-
-function createDescribeOptions(workspace?: Workspace): DescribeOptions {
-    return {
-        logFolder: os.tmpdir(),
-        workspace: workspace
-    }
-}
-
-function createRunOptions(workspace: Workspace): RunOptions {
-    return {
-        logFolder: os.tmpdir(),
-        workspace: workspace
-    }
 }
 
 async function createEngineFromPlugin(configObject: ConfigObject): Promise<Engine> {

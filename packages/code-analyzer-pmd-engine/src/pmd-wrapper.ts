@@ -1,4 +1,4 @@
-import {createTempDir, JavaCommandExecutor} from "@salesforce/code-analyzer-engine-api/utils";
+import {JavaCommandExecutor} from "@salesforce/code-analyzer-engine-api/utils";
 import path from "node:path";
 import fs from "node:fs";
 import {getMessageFromCatalog, LogLevel, SHARED_MESSAGE_CATALOG} from "@salesforce/code-analyzer-engine-api";
@@ -52,7 +52,6 @@ const STDOUT_ERROR_MARKER = '[Error] ';
 export class PmdWrapperInvoker {
     private readonly javaCommandExecutor: JavaCommandExecutor;
     private readonly userProvidedJavaClasspathEntries: string[];
-    private temporaryWorkingDir?: string;
     private readonly emitLogEvent: (logLevel: LogLevel, message: string) => void;
 
     constructor(javaCommandExecutor: JavaCommandExecutor, userProvidedJavaClasspathEntries: string[], emitLogEvent: (logLevel: LogLevel, message: string) => void) {
@@ -61,10 +60,11 @@ export class PmdWrapperInvoker {
         this.emitLogEvent = emitLogEvent;
     }
 
-    async invokeDescribeCommand(customRulesets: string[], pmdRuleLanguageIds: string[], emitProgress: (percComplete: number) => void): Promise<PmdRuleInfo[]> {
-        const tempDir: string = await this.getTemporaryWorkingDir();
-        const pmdRulesOutputFile: string = path.join(tempDir, 'ruleInfo.json');
-        const customRulesetsListFile: string = path.join(tempDir, 'customRulesetsList.txt');
+    async invokeDescribeCommand(customRulesets: string[], pmdRuleLanguageIds: string[],
+        workingFolder: string, emitProgress: (percComplete: number) => void): Promise<PmdRuleInfo[]> {
+
+        const pmdRulesOutputFile: string = path.join(workingFolder, 'ruleInfo.json');
+        const customRulesetsListFile: string = path.join(workingFolder, 'customRulesetsList.txt');
         await fs.promises.writeFile(customRulesetsListFile, customRulesets.join('\n'), 'utf-8');
         emitProgress(10);
 
@@ -95,12 +95,13 @@ export class PmdWrapperInvoker {
         }
     }
 
-    async invokeRunCommand(pmdRuleInfoList: PmdRuleInfo[], runDataPerLanguage: Record<string, LanguageSpecificPmdRunData>, emitProgress: (percComplete: number) => void): Promise<PmdResults> {
-        const tempDir: string = await this.getTemporaryWorkingDir();
+    async invokeRunCommand(pmdRuleInfoList: PmdRuleInfo[], runDataPerLanguage: Record<string, LanguageSpecificPmdRunData>,
+        workingFolder: string, emitProgress: (percComplete: number) => void): Promise<PmdResults> {
+
         emitProgress(2);
 
         const ruleSetFileContents: string = createRuleSetFileContentsFor(pmdRuleInfoList);
-        const ruleSetInputFile: string = path.join(tempDir, 'ruleSetInputFile.xml');
+        const ruleSetInputFile: string = path.join(workingFolder, 'ruleSetInputFile.xml');
         await fs.promises.writeFile(ruleSetInputFile, ruleSetFileContents, 'utf-8');
         emitProgress(6);
 
@@ -109,11 +110,11 @@ export class PmdWrapperInvoker {
             runDataPerLanguage: runDataPerLanguage
         }
 
-        const inputFile: string = path.join(tempDir, 'pmdRunInput.json');
+        const inputFile: string = path.join(workingFolder, 'pmdRunInput.json');
         await fs.promises.writeFile(inputFile, JSON.stringify(inputData), 'utf-8');
         emitProgress(10);
 
-        const resultsOutputFile: string = path.join(tempDir, 'resultsFile.json');
+        const resultsOutputFile: string = path.join(workingFolder, 'resultsFile.json');
         const javaCmdArgs: string[] = [PMD_WRAPPER_JAVA_CLASS, 'run', inputFile, resultsOutputFile];
         const javaClassPaths: string[] = [
             path.join(PMD_WRAPPER_LIB_FOLDER, '*'),
@@ -141,13 +142,6 @@ export class PmdWrapperInvoker {
             const errMsg: string = err instanceof Error ? err.message : String(err);
             throw new Error(getMessageFromCatalog(SHARED_MESSAGE_CATALOG, 'ErrorParsingOutputFile', resultsOutputFile, errMsg), {cause: err});
         }
-    }
-
-    private async getTemporaryWorkingDir(): Promise<string> {
-        if (this.temporaryWorkingDir === undefined) {
-            this.temporaryWorkingDir = await createTempDir();
-        }
-        return this.temporaryWorkingDir!;
     }
 }
 

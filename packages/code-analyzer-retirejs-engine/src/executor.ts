@@ -6,7 +6,6 @@ import path from "node:path";
 import {DecoratedStreamZip} from './zip-decorator';
 import {getMessage} from "./messages";
 import {LogLevel} from "@salesforce/code-analyzer-engine-api";
-import {createTempDir} from "@salesforce/code-analyzer-engine-api/utils";
 
 // To handle the special case where a vulnerable library is found within a zip archive, a RetireJsExecutor can use this
 // marker to update the file field to look like <zip_file>::[ZIPPED_FILE]::<embedded_file> which the engine handles.
@@ -17,7 +16,7 @@ const RETIRE_COMMAND: string = utils.findCommand('retire');
 export const JS_EXTENSIONS = ['.js', '.mjs', '.cjs'];
 
 export interface RetireJsExecutor {
-    execute(filesAndFolders: string[]): Promise<Finding[]>
+    execute(filesAndFolders: string[], workingFolder: string): Promise<Finding[]>
 }
 
 export type EmitLogEventFcn = (logLevel: LogLevel, msg: string) => void;
@@ -40,17 +39,20 @@ const IS_WINDOWS: boolean = process.platform.startsWith('win');
 export class SimpleRetireJsExecutor implements RetireJsExecutor {
     private readonly emitLogEvent: EmitLogEventFcn;
 
+    // A counter to just help generate unique numbers to be appended to the generated result files.
+    private uniqNameCounter: number = 0;
+
     constructor(emitLogEvent: EmitLogEventFcn = NO_OP) {
         this.emitLogEvent = emitLogEvent;
     }
 
-    async execute(targetFilesAndFolders: string[]): Promise<Finding[]> {
+    async execute(targetFilesAndFolders: string[], workingFolder: string): Promise<Finding[]> {
         let findings: Finding[] = [];
         for (const fileOrFolder of targetFilesAndFolders) {
             if (fs.statSync(fileOrFolder).isFile()) {
                 findings = findings.concat(await this.scanFile(fileOrFolder));
             } else {
-                findings = findings.concat(await this.scanFolder(fileOrFolder));
+                findings = findings.concat(await this.scanFolder(fileOrFolder, workingFolder));
             }
         }
         return findings;
@@ -62,10 +64,10 @@ export class SimpleRetireJsExecutor implements RetireJsExecutor {
         throw new Error('Currently the SimpleRetireJsExecutor does not support scanning individual files.');
     }
 
-    private async scanFolder(folder: string): Promise<Finding[]> {
-        const tempOutputFile: string = (await createTempDir()) + path.sep + 'output.json';
+    private async scanFolder(folderToScan: string, workingFolder: string): Promise<Finding[]> {
+        const tempOutputFile: string = path.join(workingFolder, `output_${this.uniqNameCounter++}.json`);
         const commandArgs: string[] = [
-            '--path', folder,
+            '--path', folderToScan,
             '--exitwith', '13',
             '--outputformat', 'jsonsimple',
             '--outputpath', tempOutputFile,
@@ -138,9 +140,6 @@ export class AdvancedRetireJsExecutor implements RetireJsExecutor {
     private readonly simpleExecutor: RetireJsExecutor;
     private readonly emitLogEvent: EmitLogEventFcn;
 
-    // Will contain the parent temporary directory where we place all files to be scanned
-    private parentTempDir: string = '';
-
     // Map to associate each temp file (under the parentTempDir) to its original file
     private readonly tempToOrigFileMap: Map<string, string> = new Map();
 
@@ -159,21 +158,21 @@ export class AdvancedRetireJsExecutor implements RetireJsExecutor {
     /**
      * Note that this execute function assumes that only files are passed in.
      */
-    async execute(targetFiles: string[]): Promise<Finding[]> {
+    async execute(targetFiles: string[], workingFolder: string): Promise<Finding[]> {
         const { textFiles, zipFiles } = separateTextAndZipFiles(targetFiles);
         if (textFiles.length + zipFiles.length === 0) {
             return []; // Quick return
         }
 
-        await this.prepareTempDirs(textFiles);
-        this.emitLogEvent(LogLevel.Fine, `Created a temporary directory where relevant files will be copied to for scanning: ${this.parentTempDir}`);
+        const parentFolder: string = await this.prepareTempDirs(textFiles, workingFolder);
+        this.emitLogEvent(LogLevel.Fine, `Created a temporary directory where relevant files will be copied to for scanning: ${parentFolder}`);
 
         await Promise.all([
             ...textFiles.map(file => this.processTextFile(file)),
-            ...zipFiles.map(file => this.processZipFile(file))]);
-        this.emitLogEvent(LogLevel.Fine, `Finished copying relevant files to temporary directory: '${this.parentTempDir}'`);
+            ...zipFiles.map(file => this.processZipFile(file, parentFolder))]);
+        this.emitLogEvent(LogLevel.Fine, `Finished copying relevant files to temporary directory: '${parentFolder}'`);
 
-        const findings: Finding[] = await this.simpleExecutor.execute([this.parentTempDir]);
+        const findings: Finding[] = await this.simpleExecutor.execute([parentFolder], workingFolder);
         for (let i = 0; i < findings.length; i++) {
             findings[i].file = this.tempToOrigFileMap.get(findings[i].file) as string;
         }
@@ -184,21 +183,23 @@ export class AdvancedRetireJsExecutor implements RetireJsExecutor {
      *  Create parent temporary directory (that cleans up after itself when process exits) and add subdirectories under
      *  the parent for each of the unique folders containing text files
      */
-    private async prepareTempDirs(textFiles: string[]): Promise<void[]> {
+    private async prepareTempDirs(textFiles: string[], workingFolder: string): Promise<string> {
+        const parentFolder =  this.makeUniqueTempDirName(workingFolder);
+        await fs.promises.mkdir(parentFolder);
         this.origToTempDirMap.clear();
         this.tempToOrigFileMap.clear();
         this.uniqNameCounter = 0;
-        this.parentTempDir = await createTempDir();
         const mkdirPromises: Promise<void>[] = [];
         for (const textFile of textFiles) {
             const folder: string = path.dirname(textFile);
             if (!this.origToTempDirMap.has(folder)) {
-                const tempDir: string = this.makeUniqueTempDirName();
+                const tempDir: string = this.makeUniqueTempDirName(parentFolder);
                 this.origToTempDirMap.set(folder, tempDir);
                 mkdirPromises.push(fs.promises.mkdir(tempDir));
             }
         }
-        return Promise.all(mkdirPromises);
+        await Promise.all(mkdirPromises);
+        return parentFolder;
     }
 
     /**
@@ -219,7 +220,7 @@ export class AdvancedRetireJsExecutor implements RetireJsExecutor {
      * Additionally, we update the tempToOrigFileMap so that the temp file points to the embedded zip file as:
      *   <zip_file>::[ZIPPED_FILE]::<embedded_file>
      */
-    private async processZipFile(zipFile: string): Promise<void> {
+    private async processZipFile(zipFile: string, parentFolder: string): Promise<void> {
         const zip: DecoratedStreamZip = new DecoratedStreamZip({file: zipFile, storeEntries: true});
         const entries = await zip.entries();
         for (const entry of Object.values(entries)) {
@@ -229,7 +230,7 @@ export class AdvancedRetireJsExecutor implements RetireJsExecutor {
             const zippedFileInfo: path.ParsedPath = path.parse(entry.name);
             const folderInZip: string = `${zipFile}${ZIPPED_FILE_MARKER}${zippedFileInfo.dir}`;
             if (!this.origToTempDirMap.has(folderInZip)) {
-                const tempSubDir: string = this.makeUniqueTempDirName();
+                const tempSubDir: string = this.makeUniqueTempDirName(parentFolder);
                 this.origToTempDirMap.set(folderInZip, tempSubDir);
                 await fs.promises.mkdir(tempSubDir);
             }
@@ -250,8 +251,8 @@ export class AdvancedRetireJsExecutor implements RetireJsExecutor {
         return JS_EXTENSIONS.includes(fileInfo.ext) ? fileInfo.base : `TMPFILE_${this.uniqNameCounter++}.js`;
     }
 
-    private makeUniqueTempDirName(): string {
-        return `${this.parentTempDir}${path.sep}TMPDIR_${this.uniqNameCounter++}`;
+    private makeUniqueTempDirName(parentFolder: string): string {
+        return `${parentFolder}${path.sep}TMPDIR_${this.uniqNameCounter++}`;
     }
 }
 

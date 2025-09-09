@@ -62,7 +62,7 @@ export class PmdEngine extends Engine {
         const workspaceLiaison: WorkspaceLiaison = this.getWorkspaceLiaison(describeOptions.workspace);
         this.emitDescribeRulesProgressEvent(5);
 
-        const ruleInfoList: PmdRuleInfo[] = await this.getPmdRuleInfoList(workspaceLiaison,
+        const ruleInfoList: PmdRuleInfo[] = await this.getPmdRuleInfoList(workspaceLiaison, describeOptions.workingFolder,
             (innerPerc: number) => this.emitDescribeRulesProgressEvent(5 + 90*(innerPerc/100))); // 5 to 95%
 
         const ruleDescriptions: RuleDescription[] = ruleInfoList.map(toRuleDescription);
@@ -76,7 +76,7 @@ export class PmdEngine extends Engine {
         const relevantLanguageToFilesMap: Map<Language, string[]> = await workspaceLiaison.getRelevantLanguageToFilesMap();
         this.emitRunRulesProgressEvent(2);
 
-        const ruleInfoList: PmdRuleInfo[] = await this.getPmdRuleInfoList(workspaceLiaison,
+        const ruleInfoList: PmdRuleInfo[] = await this.getPmdRuleInfoList(workspaceLiaison, runOptions.workingFolder,
             (innerPerc: number) => this.emitRunRulesProgressEvent(2 + 3*(innerPerc/100))); // 2 to 5%
 
         const selectedRuleInfoList: PmdRuleInfo[] = ruleNames
@@ -100,7 +100,10 @@ export class PmdEngine extends Engine {
         }
 
 
-        const pmdResults: PmdResults = await this.pmdWrapperInvoker.invokeRunCommand(selectedRuleInfoList, runDataPerLanguage,
+        const pmdResults: PmdResults = await this.pmdWrapperInvoker.invokeRunCommand(
+            selectedRuleInfoList,
+            runDataPerLanguage,
+            runOptions.workingFolder,
             (innerPerc: number) => this.emitRunRulesProgressEvent(5 + 93*(innerPerc/100))); // 5 to 98%
 
         const violations: Violation[] = [];
@@ -118,7 +121,9 @@ export class PmdEngine extends Engine {
         };
     }
 
-    private async getPmdRuleInfoList(workspaceLiaison: WorkspaceLiaison, emitProgress: (percComplete: number) => void): Promise<PmdRuleInfo[]> {
+    private async getPmdRuleInfoList(workspaceLiaison: WorkspaceLiaison, workingFolder: string,
+        emitProgress: (percComplete: number) => void): Promise<PmdRuleInfo[]> {
+
         const cacheKey: string = getCacheKey(workspaceLiaison.getWorkspace());
         if (!this.pmdRuleInfoListCache.has(cacheKey)) {
             const relevantLanguages: Language[] = await workspaceLiaison.getRelevantLanguages();
@@ -128,7 +133,7 @@ export class PmdEngine extends Engine {
                 ... this.config.custom_rulesets // The user's custom rulesets
             ]
             const ruleInfoList: PmdRuleInfo[] = relevantLanguages.length === 0 ? [] :
-                await this.pmdWrapperInvoker.invokeDescribeCommand(allCustomRulesets, pmdRuleLanguageIds, emitProgress);
+                await this.pmdWrapperInvoker.invokeDescribeCommand(allCustomRulesets, pmdRuleLanguageIds, workingFolder, emitProgress);
             this.pmdRuleInfoListCache.set(cacheKey, ruleInfoList);
         }
         return this.pmdRuleInfoListCache.get(cacheKey)!;
