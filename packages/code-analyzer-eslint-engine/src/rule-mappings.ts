@@ -1599,7 +1599,7 @@ export const RULE_MAPPINGS: Record<string, {severity: SeverityLevel, tags: strin
     },
     
     // =================================================================================================================
-    //   SLDS/HTML BASE RULES - @salesforce-ux/eslint-plugin-slds
+    //   SLDS - HTML BASE RULES - @salesforce-ux/eslint-plugin-slds
     // =================================================================================================================
     "@salesforce-ux/slds/enforce-bem-usage": {
         severity: SeverityLevel.Moderate,
@@ -1615,7 +1615,7 @@ export const RULE_MAPPINGS: Record<string, {severity: SeverityLevel, tags: strin
     },
 
     // =================================================================================================================
-    //   SLDS/CSS BASE RULES - @salesforce-ux/eslint-plugin-slds
+    //   SLDS - CSS BASE RULES - @salesforce-ux/eslint-plugin-slds
     // =================================================================================================================
     "@salesforce-ux/slds/enforce-component-hook-naming-convention": {
         severity: SeverityLevel.Moderate,
