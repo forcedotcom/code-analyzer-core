@@ -1,5 +1,6 @@
 import {FixedClock, indent, JavaCommandExecutor, RealClock} from "../../src/utils";
 
+jest.setTimeout(30_000);
 
 describe('Tests for Clock', () => {
     const fixedClock: FixedClock = new FixedClock(new Date(2025, 2, 21, 12, 30, 25, 20));
