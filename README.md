@@ -8,7 +8,7 @@ See our external products:
 
 # Adding Additional Engines
 
-If you are an internal team looking to add Engine capabilities to Salesforce Code Analyzer, refer to the [ENGINE-TEMPLATE READ.ME](/packages/ENGINE-TEMPLATE/README.md).
+If you are an internal team looking to add Engine capabilities to Salesforce Code Analyzer, refer to the [ENGINE-TEMPLATE README.md](/packages/ENGINE-TEMPLATE/README.md).
 
 # Adding New Engine Functionality
 
