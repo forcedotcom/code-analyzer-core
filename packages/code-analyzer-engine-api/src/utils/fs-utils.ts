@@ -1,19 +1,5 @@
-import * as tmp from 'tmp';
-import {promisify} from "node:util";
 import path from "node:path";
 import fs from "node:fs";
-
-tmp.setGracefulCleanup();
-const tmpDirAsync = promisify((options: tmp.DirOptions, cb: tmp.DirCallback) => tmp.dir(options, cb));
-
-/**
- * Creates a temporary directory that eventually cleans up after itself
- * @param parentTempDir - if supplied, then a temporary folder is placed directly underneath this parent folder.
- */
-export async function createTempDir(parentTempDir?: string) : Promise<string> {
-    return tmpDirAsync({dir: parentTempDir, keep: false, unsafeCleanup: true});
-}
-
 
 /**
  * Returns the longest common parent folder of the provided paths.

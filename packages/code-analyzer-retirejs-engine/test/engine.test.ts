@@ -11,12 +11,11 @@ import {
 } from "@salesforce/code-analyzer-engine-api";
 import {RetireJsEngine} from "../src/engine";
 import {RetireJsExecutor} from "../src/executor";
-import {changeWorkingDirectoryToPackageRoot} from "./test-helpers";
-import path from "node:path";
-import fs from "node:fs";
+import {changeWorkingDirectoryToPackageRoot, createDescribeOptions, createRunOptions} from "./test-helpers";
+import * as path from "node:path";
+import * as fs from "node:fs";
 import {Finding} from "retire/lib/types";
 import {getMessage} from "../src/messages";
-import os from "node:os";
 
 changeWorkingDirectoryToPackageRoot();
 
@@ -221,20 +220,5 @@ class StubRetireJsExecutor implements RetireJsExecutor {
     async execute(_targetFiles: string[]): Promise<Finding[]> {
         const jsonStr: string = fs.readFileSync(path.resolve('test','test-data','sampleRetireJsExecutorFindings.json'),'utf-8');
         return JSON.parse(jsonStr) as Finding[];
-    }
-}
-
-
-function createDescribeOptions(workspace?: Workspace): DescribeOptions {
-    return {
-        logFolder: os.tmpdir(),
-        workspace: workspace
-    }
-}
-
-function createRunOptions(workspace: Workspace): RunOptions {
-    return {
-        logFolder: os.tmpdir(),
-        workspace: workspace
     }
 }

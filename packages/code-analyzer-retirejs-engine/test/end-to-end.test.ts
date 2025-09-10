@@ -7,8 +7,7 @@ import {
     Workspace
 } from "@salesforce/code-analyzer-engine-api";
 import path from "node:path";
-import {changeWorkingDirectoryToPackageRoot} from "./test-helpers";
-import os from "node:os";
+import {changeWorkingDirectoryToPackageRoot, createDescribeOptions, createRunOptions} from "./test-helpers";
 
 changeWorkingDirectoryToPackageRoot();
 
@@ -27,10 +26,10 @@ describe('End to end test', () => {
             path.resolve('test', 'test-data', 'scenarios', '1_hasJsLibraryWithVulnerability'), // Expect 3 violations: 1 file with 3 vulnerabilities
             path.resolve('test', 'test-data', 'scenarios', '6_hasVulnerableResourceAndZipFiles', 'ZipFileAsResource.resource'), // Expect 6 violations: 2 files each with 3 vulnerabilities
         ]);
-        const ruleDescriptions: RuleDescription[] = await engine.describeRules({logFolder: os.tmpdir(), workspace: workspace});
+        const ruleDescriptions: RuleDescription[] = await engine.describeRules(createDescribeOptions(workspace));
         expect(ruleDescriptions).toHaveLength(4);
         const ruleNames: string[] = ruleDescriptions.map(rd => rd.name);
-        const engineRunResults: EngineRunResults = await engine.runRules(ruleNames, {logFolder: os.tmpdir(), workspace: workspace});
+        const engineRunResults: EngineRunResults = await engine.runRules(ruleNames, createRunOptions(workspace));
         expect(engineRunResults.violations).toHaveLength(9);
         // The details of these violations are already tested in the unit test files so no need to go crazy here.
     });

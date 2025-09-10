@@ -1,13 +1,13 @@
-import {changeWorkingDirectoryToPackageRoot} from "./test-helpers";
+import {changeWorkingDirectoryToPackageRoot, createDescribeOptions, createRunOptions} from "./test-helpers";
 import {
     ConfigObject,
-    ConfigValueExtractor, DescribeOptions,
+    ConfigValueExtractor,
     DescribeRulesProgressEvent,
     EngineRunResults,
     EventType,
     LogEvent,
     LogLevel,
-    RuleDescription, RunOptions,
+    RuleDescription,
     RunRulesProgressEvent,
     SeverityLevel,
     Violation,
@@ -670,20 +670,6 @@ function expectNoDuplicateRuleNames(ruleDescriptions: RuleDescription[]): void {
             throw new Error(`The rule name ${ruleDescription.name} appears more than once among the rule descriptions.`);
         }
         seen.add(ruleDescription.name);
-    }
-}
-
-function createDescribeOptions(workspace?: Workspace): DescribeOptions {
-    return {
-        logFolder: os.tmpdir(),
-        workspace: workspace
-    }
-}
-
-function createRunOptions(workspace: Workspace): RunOptions {
-    return {
-        logFolder: os.tmpdir(),
-        workspace: workspace
     }
 }
 

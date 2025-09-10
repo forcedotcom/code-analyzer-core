@@ -2,21 +2,19 @@ import os from 'node:os';
 import fs from 'node:fs';
 import path from 'node:path';
 import {
-    DescribeOptions,
     DescribeRulesProgressEvent,
     EngineRunResults,
     EventType,
     LogEvent,
     LogLevel,
     RuleDescription,
-    RunOptions,
     RunRulesProgressEvent,
     TelemetryEvent,
     Workspace
 } from "@salesforce/code-analyzer-engine-api";
 import {DEFAULT_SFGE_ENGINE_CONFIG, SfgeEngineConfig} from "../src/config";
 import {SfgeEngine} from "../src/engine";
-import {changeWorkingDirectoryToPackageRoot, FixedClock} from "./test-helpers";
+import {changeWorkingDirectoryToPackageRoot, createDescribeOptions, createRunOptions, FixedClock} from "./test-helpers";
 
 changeWorkingDirectoryToPackageRoot();
 
@@ -398,18 +396,4 @@ function expectProgressEventsToAscend(progressEvents: number[]): void {
     for (let i = 0; i < progressEvents.length - 1; i++) {
         expect(progressEvents[i]).toBeLessThan(progressEvents[i + 1]);
     }
-}
-
-function createDescribeOptions(workspace?: Workspace): DescribeOptions {
-    return {
-        logFolder: os.tmpdir(),
-        workspace
-    };
-}
-
-function createRunOptions(workspace: Workspace): RunOptions {
-    return {
-        logFolder: os.tmpdir(),
-        workspace
-    };
 }

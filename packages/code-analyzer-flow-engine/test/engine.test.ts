@@ -1,6 +1,6 @@
-import path from 'node:path';
+import * as path from "node:path";
+import * as os from "node:os";
 import {
-    DescribeOptions,
     DescribeRulesProgressEvent,
     EngineRunResults,
     EventType,
@@ -16,10 +16,9 @@ import {
 import {FixedClock} from "@salesforce/code-analyzer-engine-api/utils";
 import {FlowScannerEngine} from "../src/engine";
 import {RunTimeFlowScannerCommandWrapper} from "../src/python/FlowScannerCommandWrapper";
-import {changeWorkingDirectoryToPackageRoot} from "./test-helpers";
-import os from "node:os";
+import {changeWorkingDirectoryToPackageRoot, createDescribeOptions, createRunOptions} from "./test-helpers";
 import {getMessage} from "../src/messages";
-import fs from "node:fs";
+import * as fs from "node:fs";
 
 changeWorkingDirectoryToPackageRoot();
 
@@ -41,13 +40,10 @@ const ALL_FLOW_RULES: string[] = [
     'PreventPassingUserDataIntoElementWithoutSharing'
 ];
 
+jest.setTimeout(60_000);
+
 describe('Tests for the FlowScannerEngine', () => {
     const flowScannerCommandWrapper: RunTimeFlowScannerCommandWrapper = new RunTimeFlowScannerCommandWrapper('python3');
-    let tempFolder: string;
-
-    beforeAll(async() => {
-        tempFolder = await fs.promises.mkdtemp(path.join(os.tmpdir(), 'flow-engine-test'));
-    });
 
     it('getName() returns correct name', () => {
         const engine: FlowScannerEngine = new FlowScannerEngine(flowScannerCommandWrapper);
@@ -68,15 +64,21 @@ describe('Tests for the FlowScannerEngine', () => {
             engine.onEvent(EventType.LogEvent, (e: LogEvent)=> logEvents.push(e));
 
             // Part 1: Describing production rules.
-            const ruleDescriptors: RuleDescription[] = await engine.describeRules(createDescribeOptions(tempFolder, workspace));
+            const ruleDescriptors: RuleDescription[] = await engine.describeRules(createDescribeOptions(workspace));
             // No need to do in-depth examination of the rules, since other tests already do that. Just make sure we got
             // the right number of rules.
             expect(ruleDescriptors).toHaveLength(2);
             expect(describeProgressEvents.map(e => e.percentComplete)).toEqual([0, 75, 100]);
 
             // Part 2: Running production rules.
-            const results: EngineRunResults = await engine.runRules(ruleDescriptors.map(r => r.name),
-                createRunOptions(tempFolder, workspace));
+            const runOptions: RunOptions = createRunOptions(workspace);
+            const expectedFlowLogFile: string = path.join(runOptions.logFolder, 'sfca-flow-2025_02_20_14_30_18_014.log');
+            if (fs.existsSync(expectedFlowLogFile)) {
+                // Since we are fixing the timestamp, we should make sure that before we run the file doesn't exist, to
+                // properly test that the runRules makes it exist.
+                fs.rmSync(expectedFlowLogFile);
+            }
+            const results: EngineRunResults = await engine.runRules(ruleDescriptors.map(r => r.name), runOptions);
             // No need to do in-depth examination of the results, since other tests already do that. Just make sure we
             // got the right number of violations.
             expect(results.violations).toHaveLength(7);
@@ -85,7 +87,6 @@ describe('Tests for the FlowScannerEngine', () => {
             // Confirm separate flow log file exists and the main log points to this file
             const debugLogMsgs: string[] = logEvents.filter(e => e.logLevel == LogLevel.Debug).map(e => e.message);
             expect(debugLogMsgs).toHaveLength(1);
-            const expectedFlowLogFile: string = path.join(tempFolder, 'sfca-flow-2025_02_20_14_30_18_014.log');
             expect(debugLogMsgs[0]).toEqual(getMessage('WritingFlowLogToFile', expectedFlowLogFile));
             const flowLogContents: string = await fs.promises.readFile(expectedFlowLogFile, 'utf-8');
             expect(flowLogContents).toContain('DEBUG'); // Sanity check that we are using --debug log level
@@ -98,7 +99,7 @@ describe('Tests for the FlowScannerEngine', () => {
                 it('Consolidates well-formed Flow Scanner rule descriptors into Code Analyzer rule descriptors', async () => {
                     const engine: FlowScannerEngine = new FlowScannerEngine(flowScannerCommandWrapper);
 
-                    const ruleDescriptors: RuleDescription[] = await engine.describeRules(createDescribeOptions(tempFolder));
+                    const ruleDescriptors: RuleDescription[] = await engine.describeRules(createDescribeOptions());
 
                     expect(ruleDescriptors).toHaveLength(2);
                     expect(ruleDescriptors[0]).toEqual({
@@ -136,7 +137,7 @@ describe('Tests for the FlowScannerEngine', () => {
                 ])('When workspace $desc, rules are returned', async ({workspace}) => {
                     const engine: FlowScannerEngine = new FlowScannerEngine(flowScannerCommandWrapper);
 
-                    const ruleDescriptors: RuleDescription[] = await engine.describeRules(createDescribeOptions(tempFolder, workspace));
+                    const ruleDescriptors: RuleDescription[] = await engine.describeRules(createDescribeOptions(workspace));
 
                     expect(ruleDescriptors).toHaveLength(2);
                 });
@@ -153,7 +154,7 @@ describe('Tests for the FlowScannerEngine', () => {
                 ])('When workspace $desc, no rules are returned', async ({workspace}) => {
                     const engine: FlowScannerEngine = new FlowScannerEngine(flowScannerCommandWrapper);
 
-                    const ruleDescriptors: RuleDescription[] = await engine.describeRules(createDescribeOptions(tempFolder, workspace));
+                    const ruleDescriptors: RuleDescription[] = await engine.describeRules(createDescribeOptions(workspace));
 
                     expect(ruleDescriptors).toHaveLength(0);
                 });
@@ -359,7 +360,7 @@ describe('Tests for the FlowScannerEngine', () => {
 
             it('When running both rules on workspace that contains violations for SystemModeWithoutSharing and SystemModeWithSharing, then results are as expected', async () => {
                 const engineResults: EngineRunResults = await engine.runRules(ALL_FLOW_RULES, createRunOptions(
-                    tempFolder, new Workspace('id', [PATH_TO_MULTIPLE_FLOWS_WORKSPACE])));
+                    new Workspace('id', [PATH_TO_MULTIPLE_FLOWS_WORKSPACE])));
 
                 expect(engineResults.violations).toHaveLength(7);
                 expect(engineResults.violations).toContainEqual(expectedExample1Violation1);
@@ -376,7 +377,7 @@ describe('Tests for the FlowScannerEngine', () => {
 
                 const selectedRuleNames: string[] = ['PreventPassingUserDataIntoElementWithSharing'];
                 const engineResults: EngineRunResults = await engine.runRules(selectedRuleNames, createRunOptions(
-                    tempFolder, new Workspace('id', [path.resolve(__dirname, 'test-data', 'example workspaces')],
+                    new Workspace('id', [path.resolve(__dirname, 'test-data', 'example workspaces')],
                         [PATH_TO_MULTIPLE_FLOWS_WORKSPACE])));
 
                 expect(engineResults.violations).toHaveLength(2);
@@ -388,7 +389,7 @@ describe('Tests for the FlowScannerEngine', () => {
                 const engine: FlowScannerEngine = new FlowScannerEngine(flowScannerCommandWrapper);
 
                 const engineResults: EngineRunResults = await engine.runRules(ALL_FLOW_RULES, createRunOptions(
-                    tempFolder, new Workspace('id', [PATH_TO_EXAMPLE2])));
+                    new Workspace('id', [PATH_TO_EXAMPLE2])));
 
                 expect(engineResults.violations).toHaveLength(2);
                 expect(engineResults.violations).toContainEqual(expectedExample2Violation1);
@@ -397,7 +398,7 @@ describe('Tests for the FlowScannerEngine', () => {
 
             it('When workspace does not contain flow files, then return zero violations', async () => {
                 const engineResults: EngineRunResults = await engine.runRules(ALL_FLOW_RULES, createRunOptions(
-                    tempFolder, new Workspace('id', [PATH_TO_NO_FLOWS_WORKSPACE])));
+                    new Workspace('id', [PATH_TO_NO_FLOWS_WORKSPACE])));
 
                 expect(engineResults.violations).toHaveLength(0);
             });
@@ -406,7 +407,7 @@ describe('Tests for the FlowScannerEngine', () => {
                 const engine: FlowScannerEngine = new FlowScannerEngine(flowScannerCommandWrapper);
 
                 const engineResults: EngineRunResults = await engine.runRules(ALL_FLOW_RULES, createRunOptions(
-                    tempFolder, new Workspace('id', [PATH_TO_EXAMPLE3])));
+                    new Workspace('id', [PATH_TO_EXAMPLE3])));
 
                 expect(engineResults.violations).toHaveLength(0);
             });
@@ -415,7 +416,7 @@ describe('Tests for the FlowScannerEngine', () => {
                 const engine: FlowScannerEngine = new FlowScannerEngine(flowScannerCommandWrapper);
 
                 const engineResults: EngineRunResults = await engine.runRules(ALL_FLOW_RULES, createRunOptions(
-                    tempFolder, new Workspace('id', [PATH_TO_MULTIPLE_FLOWS_WORKSPACE], [PATH_TO_EXAMPLE3])));
+                    new Workspace('id', [PATH_TO_MULTIPLE_FLOWS_WORKSPACE], [PATH_TO_EXAMPLE3])));
 
                 expect(engineResults.violations).toHaveLength(0);
             });
@@ -424,7 +425,7 @@ describe('Tests for the FlowScannerEngine', () => {
                 const engine: FlowScannerEngine = new FlowScannerEngine(flowScannerCommandWrapper);
 
                 const engineResults: EngineRunResults = await engine.runRules(ALL_FLOW_RULES, createRunOptions(
-                    tempFolder, new Workspace('id', [PATH_TO_MULTIPLE_FLOWS_WORKSPACE], [PATH_TO_EXAMPLE1])));
+                    new Workspace('id', [PATH_TO_MULTIPLE_FLOWS_WORKSPACE], [PATH_TO_EXAMPLE1])));
 
                 expect(engineResults.violations).toHaveLength(2);
                 expect(engineResults.violations).toContainEqual(expectedExample1Violation1);
@@ -438,7 +439,7 @@ describe('Tests for the FlowScannerEngine', () => {
                 const engine: FlowScannerEngine = new FlowScannerEngine(flowScannerCommandWrapper);
 
                 const engineResults: EngineRunResults = await engine.runRules(ALL_FLOW_RULES, createRunOptions(
-                    tempFolder, new Workspace('id', [PATH_TO_ONE_FLOW_NO_VIOLATIONS_WORKSPACE])));
+                    new Workspace('id', [PATH_TO_ONE_FLOW_NO_VIOLATIONS_WORKSPACE])));
 
                 expect(engineResults.violations).toHaveLength(0);
             });
@@ -449,7 +450,7 @@ describe('Tests for the FlowScannerEngine', () => {
             ])('When workspace contains a parent flow but not its child subflow, then return valid results with zero violations', async (workspace) => {
                 const engine: FlowScannerEngine = new FlowScannerEngine(flowScannerCommandWrapper);
 
-                const engineResults1: EngineRunResults = await engine.runRules(ALL_FLOW_RULES, createRunOptions(tempFolder, workspace));
+                const engineResults1: EngineRunResults = await engine.runRules(ALL_FLOW_RULES, createRunOptions(workspace));
                 expect(engineResults1.violations).toHaveLength(0);
             });
 
@@ -459,7 +460,7 @@ describe('Tests for the FlowScannerEngine', () => {
             ])('When workspace contains a child subflow but not its parent flow, then return valid results with zero violations', async (workspace) => {
                 const engine: FlowScannerEngine = new FlowScannerEngine(flowScannerCommandWrapper);
 
-                const engineResults1: EngineRunResults = await engine.runRules(ALL_FLOW_RULES, createRunOptions(tempFolder, workspace));
+                const engineResults1: EngineRunResults = await engine.runRules(ALL_FLOW_RULES, createRunOptions(workspace));
                 expect(engineResults1.violations).toHaveLength(0);
             });
 
@@ -508,7 +509,7 @@ describe('Tests for the FlowScannerEngine', () => {
                 it('When both parent and child are in workspace and targeted, then expect violation', async () => {
                     const workspace: Workspace = new Workspace("someId", [PARENT_WITH_SOURCE_CALLS_SUB_WITH_SINK_WORKSPACE]);
 
-                    const results: EngineRunResults = await engine.runRules(ALL_FLOW_RULES, createRunOptions(tempFolder, workspace));
+                    const results: EngineRunResults = await engine.runRules(ALL_FLOW_RULES, createRunOptions(workspace));
 
                     expect(results.violations).toHaveLength(1);
                     expect(results.violations[0]).toEqual(expectedViolation);
@@ -523,7 +524,7 @@ describe('Tests for the FlowScannerEngine', () => {
                             PATH_TO_ONE_FLOW_NO_VIOLATIONS_WORKSPACE
                         ]);
 
-                    const results: EngineRunResults = await engine.runRules(ALL_FLOW_RULES, createRunOptions(tempFolder, workspace));
+                    const results: EngineRunResults = await engine.runRules(ALL_FLOW_RULES, createRunOptions(workspace));
 
                     expect(results.violations).toHaveLength(0);
                 });
@@ -531,7 +532,7 @@ describe('Tests for the FlowScannerEngine', () => {
                 it('When both parent and child are in workspace but only child is targeted, then expect no violation', async () => {
                     const workspace: Workspace = new Workspace("someId", [PARENT_WITH_SOURCE_CALLS_SUB_WITH_SINK_WORKSPACE], [childFlowFile]);
 
-                    const results: EngineRunResults = await engine.runRules(ALL_FLOW_RULES, createRunOptions(tempFolder, workspace));
+                    const results: EngineRunResults = await engine.runRules(ALL_FLOW_RULES, createRunOptions(workspace));
 
                     expect(results.violations).toHaveLength(0);
                 });
@@ -539,7 +540,7 @@ describe('Tests for the FlowScannerEngine', () => {
                 it('When both parent and child are in workspace but only parent is targeted, then expect violation since sink is found in workspace', async () => {
                     const workspace: Workspace = new Workspace("someId", [PARENT_WITH_SOURCE_CALLS_SUB_WITH_SINK_WORKSPACE], [parentFlowFile]);
 
-                    const results: EngineRunResults = await engine.runRules(ALL_FLOW_RULES, createRunOptions(tempFolder, workspace));
+                    const results: EngineRunResults = await engine.runRules(ALL_FLOW_RULES, createRunOptions(workspace));
 
                     expect(results.violations).toHaveLength(1);
                     expect(results.violations[0]).toEqual(expectedViolation);
@@ -548,7 +549,7 @@ describe('Tests for the FlowScannerEngine', () => {
                 it('When only parent is in workspace and only parent is targeted, then expect no violation since sink is not in workspace', async () => {
                     const workspace: Workspace = new Workspace("someId", [parentFlowFile], [parentFlowFile]);
 
-                    const results: EngineRunResults = await engine.runRules(ALL_FLOW_RULES, createRunOptions(tempFolder, workspace));
+                    const results: EngineRunResults = await engine.runRules(ALL_FLOW_RULES, createRunOptions(workspace));
 
                     expect(results.violations).toHaveLength(0);
                 });
@@ -556,7 +557,7 @@ describe('Tests for the FlowScannerEngine', () => {
                 it('When only child is in workspace and only child is targeted, then expect no violation since source is not in workspace', async () => {
                     const workspace: Workspace = new Workspace("someId", [childFlowFile], [childFlowFile]);
 
-                    const results: EngineRunResults = await engine.runRules(ALL_FLOW_RULES, createRunOptions(tempFolder, workspace));
+                    const results: EngineRunResults = await engine.runRules(ALL_FLOW_RULES, createRunOptions(workspace));
 
                     expect(results.violations).toHaveLength(0);
                 });
@@ -607,7 +608,7 @@ describe('Tests for the FlowScannerEngine', () => {
                 it('When both parent and child are in workspace and targeted, then expect violation', async () => {
                     const workspace: Workspace = new Workspace("someId", [PARENT_WITH_SINK_CALLS_SUB_WITH_SOURCE_WORKSPACE]);
 
-                    const results: EngineRunResults = await engine.runRules(ALL_FLOW_RULES, createRunOptions(tempFolder, workspace));
+                    const results: EngineRunResults = await engine.runRules(ALL_FLOW_RULES, createRunOptions(workspace));
 
                     expect(results.violations).toHaveLength(1);
                     expect(results.violations[0]).toEqual(expectedViolation);
@@ -616,7 +617,7 @@ describe('Tests for the FlowScannerEngine', () => {
                 it('When both parent and child are in workspace but neither are targeted, then expect no violation', async () => {
                     const workspace: Workspace = new Workspace("someId", [parentFlowFile, childFlowFile, PATH_TO_EXAMPLE3], [PATH_TO_EXAMPLE3]);
 
-                    const results: EngineRunResults = await engine.runRules(ALL_FLOW_RULES, createRunOptions(tempFolder, workspace));
+                    const results: EngineRunResults = await engine.runRules(ALL_FLOW_RULES, createRunOptions(workspace));
 
                     expect(results.violations).toHaveLength(0);
                 });
@@ -624,7 +625,7 @@ describe('Tests for the FlowScannerEngine', () => {
                 it('When both parent and child are in workspace but only child is targeted, then expect no violation since child would not be called', async () => {
                     const workspace: Workspace = new Workspace("someId", [PARENT_WITH_SINK_CALLS_SUB_WITH_SOURCE_WORKSPACE], [childFlowFile]);
 
-                    const results: EngineRunResults = await engine.runRules(ALL_FLOW_RULES, createRunOptions(tempFolder, workspace));
+                    const results: EngineRunResults = await engine.runRules(ALL_FLOW_RULES, createRunOptions(workspace));
 
                     expect(results.violations).toHaveLength(0);
                 });
@@ -632,7 +633,7 @@ describe('Tests for the FlowScannerEngine', () => {
                 it('When both parent and child are in workspace but only parent is targeted, then expect a violation since the parent is targeted', async () => {
                     const workspace: Workspace = new Workspace("someId", [PARENT_WITH_SINK_CALLS_SUB_WITH_SOURCE_WORKSPACE], [parentFlowFile]);
 
-                    const results: EngineRunResults = await engine.runRules(ALL_FLOW_RULES, createRunOptions(tempFolder, workspace));
+                    const results: EngineRunResults = await engine.runRules(ALL_FLOW_RULES, createRunOptions(workspace));
 
                     expect(results.violations).toHaveLength(1);
                     expect(results.violations[0]).toEqual(expectedViolation);
@@ -641,7 +642,7 @@ describe('Tests for the FlowScannerEngine', () => {
                 it('When only parent is in workspace and only parent is targeted, then expect no violation since sink is not in workspace', async () => {
                     const workspace: Workspace = new Workspace("someId", [parentFlowFile], [parentFlowFile]);
 
-                    const results: EngineRunResults = await engine.runRules(ALL_FLOW_RULES, createRunOptions(tempFolder, workspace));
+                    const results: EngineRunResults = await engine.runRules(ALL_FLOW_RULES, createRunOptions(workspace));
 
                     expect(results.violations).toHaveLength(0);
                 });
@@ -649,7 +650,7 @@ describe('Tests for the FlowScannerEngine', () => {
                 it('When only child is in workspace and only child is targeted, then expect no violation since source is not in workspace', async () => {
                     const workspace: Workspace = new Workspace("someId", [childFlowFile], [childFlowFile]);
 
-                    const results: EngineRunResults = await engine.runRules(ALL_FLOW_RULES, createRunOptions(tempFolder, workspace));
+                    const results: EngineRunResults = await engine.runRules(ALL_FLOW_RULES, createRunOptions(workspace));
 
                     expect(results.violations).toHaveLength(0);
                 });
@@ -670,17 +671,3 @@ describe('Tests for the FlowScannerEngine', () => {
         });
     });
 });
-
-function createDescribeOptions(logFolder: string, workspace?: Workspace): DescribeOptions {
-    return {
-        logFolder: logFolder,
-        workspace: workspace
-    }
-}
-
-function createRunOptions(logFolder: string, workspace: Workspace): RunOptions {
-    return {
-        logFolder: logFolder,
-        workspace: workspace
-    }
-}

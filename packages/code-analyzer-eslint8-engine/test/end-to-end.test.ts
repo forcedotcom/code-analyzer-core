@@ -9,9 +9,8 @@ import {
     Violation,
     Workspace
 } from "@salesforce/code-analyzer-engine-api";
-import path from "node:path";
-import {changeWorkingDirectoryToPackageRoot} from "./test-helpers";
-import * as os from "node:os";
+import * as path from "node:path";
+import {changeWorkingDirectoryToPackageRoot, createDescribeOptions, createRunOptions} from "./test-helpers";
 
 changeWorkingDirectoryToPackageRoot();
 
@@ -33,9 +32,9 @@ describe('End to end test', () => {
         const workspace: Workspace = new Workspace('id', [
             path.resolve('test', 'test-data', 'legacyConfigCases', 'workspace_NoCustomConfig')
         ]);
-        const ruleDescriptions: RuleDescription[] = await engine.describeRules({logFolder: os.tmpdir(), workspace: workspace});
+        const ruleDescriptions: RuleDescription[] = await engine.describeRules(createDescribeOptions(workspace));
         const recommendedRuleNames: string[] = ruleDescriptions.filter(rd => rd.tags.includes('Recommended')).map(rd => rd.name);
-        const engineRunResults: EngineRunResults = await engine.runRules(recommendedRuleNames, {logFolder: os.tmpdir(), workspace: workspace});
+        const engineRunResults: EngineRunResults = await engine.runRules(recommendedRuleNames, createRunOptions(workspace));
 
         const violationsFromJsFile: Violation[] = engineRunResults.violations.filter(v => path.extname(v.codeLocations[0].file) === '.js');
         expect(violationsFromJsFile).toHaveLength(3);

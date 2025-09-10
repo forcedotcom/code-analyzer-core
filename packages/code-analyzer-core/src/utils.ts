@@ -1,10 +1,15 @@
-import path from "node:path";
+import * as tmp from 'tmp';
+import * as path from "node:path";
 import crypto from "node:crypto";
-import fs from "node:fs";
-import {createTempDir} from "@salesforce/code-analyzer-engine-api/utils";
+import * as fs from "node:fs";
+import {promisify} from "node:util";
 
 // THIS FILE CONTAINS UTILITIES WHICH ARE USED INTERNALLY ONLY.
 // None of the following exported interfaces and functions should be exported from the index file.
+
+tmp.setGracefulCleanup();
+const tmpDirAsync = promisify((options: tmp.DirOptions, cb: tmp.DirCallback) => tmp.dir(options, cb));
+
 
 export function toAbsolutePath(fileOrFolder: string): string {
     // Convert slashes to platform specific slashes and then convert to absolute path
@@ -39,7 +44,7 @@ export class RuntimeTempFolder implements TempFolder {
 
     async getPath(): Promise<string> {
         if (!this.rootFolder) {
-            this.rootFolder = await createTempDir();
+            this.rootFolder = await tmpDirAsync({keep: false, unsafeCleanup: true});
         }
         return this.rootFolder;
     }

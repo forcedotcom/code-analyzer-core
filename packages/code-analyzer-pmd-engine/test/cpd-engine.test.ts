@@ -1,11 +1,9 @@
-import {changeWorkingDirectoryToPackageRoot} from "./test-helpers";
+import {changeWorkingDirectoryToPackageRoot, createDescribeOptions, createRunOptions} from "./test-helpers";
 import {
-    DescribeOptions,
     DescribeRulesProgressEvent,
     EngineRunResults,
     EventType,
     RuleDescription,
-    RunOptions,
     RunRulesProgressEvent,
     Violation,
     Workspace
@@ -15,7 +13,6 @@ import fs from "node:fs";
 import path from "node:path";
 import {DEFAULT_CPD_ENGINE_CONFIG} from "../src/config";
 import {Language} from "../src/constants";
-import os from "node:os";
 
 changeWorkingDirectoryToPackageRoot();
 
@@ -363,17 +360,3 @@ describe('Tests for the getEngineVersion method of CpdEngine', () => {
         expect(version).toMatch(/\d+\.\d+\.\d+.*/);
     });
 });
-
-function createDescribeOptions(workspace?: Workspace): DescribeOptions {
-    return {
-        logFolder: os.tmpdir(),
-        workspace: workspace
-    }
-}
-
-function createRunOptions(workspace: Workspace): RunOptions {
-    return {
-        logFolder: os.tmpdir(),
-        workspace: workspace
-    }
-}

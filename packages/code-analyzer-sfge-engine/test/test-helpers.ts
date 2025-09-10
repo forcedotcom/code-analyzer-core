@@ -1,5 +1,8 @@
-import process from "node:process";
-import path from "node:path";
+import { DescribeOptions, RunOptions, Workspace } from "@salesforce/code-analyzer-engine-api";
+import * as fs from "node:fs";
+import * as os from "node:os";
+import * as path from "node:path";
+import * as process from "node:process";
 import {Clock} from '../src/utils';
 
 export function changeWorkingDirectoryToPackageRoot() {
@@ -27,5 +30,21 @@ export class FixedClock implements Clock {
 
     public now(): Date {
         return this.fixedTimestamp;
+    }
+}
+
+export function createDescribeOptions(workspace?: Workspace): DescribeOptions {
+    return {
+        logFolder: os.tmpdir(),
+        workspace: workspace,
+        workingFolder: fs.mkdtempSync(path.join(os.tmpdir(),'tmp-'))
+    }
+}
+
+export function createRunOptions(workspace: Workspace): RunOptions {
+    return {
+        logFolder: os.tmpdir(),
+        workspace: workspace,
+        workingFolder: fs.mkdtempSync(path.join(os.tmpdir(),'tmp-'))
     }
 }

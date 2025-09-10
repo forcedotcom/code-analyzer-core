@@ -13,7 +13,7 @@
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "dependencies": {
-    "@salesforce/code-analyzer-engine-api": "0.28.0",
+    "@salesforce/code-analyzer-engine-api": "0.29.0-SNAPSHOT",
     "@types/node": "^20.0.0",
     "isbinaryfile": "^5.0.4",
     "node-stream-zip": "^1.15.0",
@@ -41,7 +41,7 @@
   "scripts": {
     "prebuild": "node build-tools/updateRetireJsVulns.mjs",
     "build": "tsc --build tsconfig.build.json --verbose",
-    "test": "jest --coverage",
+    "test": "tsc --build tsconfig.json && jest --coverage",
     "lint": "eslint src/**/*.ts",
     "package": "npm pack",
     "all": "npm run build && npm run lint && npm run test && npm run package",

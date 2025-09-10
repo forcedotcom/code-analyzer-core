@@ -138,7 +138,7 @@ export class ESLintEngine extends Engine {
             eslintContext: context,
             progressRange: [30, 95] // 30% to 95%
         }
-        const lintResults: ESLint.LintResult[] = await this._runESLintWorkerTask.run(runTaskInput);
+        const lintResults: ESLint.LintResult[] = await this._runESLintWorkerTask.run(runTaskInput, runOptions.workingFolder);
 
         const engineResults: EngineRunResults = {
             violations: this.toViolations(lintResults, new Set(ruleNames))

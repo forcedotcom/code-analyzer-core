@@ -6,7 +6,7 @@ import {
     SHARED_MESSAGE_CATALOG,
     TelemetryData
 } from '@salesforce/code-analyzer-engine-api';
-import {createTempDir, JavaCommandExecutor} from '@salesforce/code-analyzer-engine-api/utils';
+import {JavaCommandExecutor} from '@salesforce/code-analyzer-engine-api/utils';
 import {getMessage} from "./messages";
 import {Clock, formatToDateTimeString} from './utils';
 
@@ -90,10 +90,9 @@ export class RuntimeSfgeWrapper {
         this.emitTelemetryEvent = emitTelemetryEvent;
     }
 
-    public async invokeDescribeCommand(emitProgress: (percComplete: number) => void, logFolder: string): Promise<SfgeRuleInfo[]> {
-        const tmpDir: string = await this.getTemporaryWorkingDir();
+    public async invokeDescribeCommand(workingFolder: string, emitProgress: (percComplete: number) => void, logFolder: string): Promise<SfgeRuleInfo[]> {
         const logFilePath: string = path.join(logFolder, this.logFileName);
-        const sfgeRulesOutputFile: string = path.join(tmpDir, 'ruleInfo.json');
+        const sfgeRulesOutputFile: string = path.join(workingFolder, 'ruleInfo.json');
         this.emitLogEvent(LogLevel.Debug, getMessage('LoggingToFile', 'describe', logFilePath));
         emitProgress(10);
 
@@ -116,16 +115,16 @@ export class RuntimeSfgeWrapper {
         }
     }
 
-    public async invokeRunCommand(selectedRuleInfos: SfgeRuleInfo[], targetPaths: string[], projectFilePaths: string[], sfgeRunOptions: SfgeRunOptions, emitProgress: (percComplete: number) => void): Promise<SfgeRunResult[]> {
-        const tmpDir: string = await this.getTemporaryWorkingDir();
+    public async invokeRunCommand(selectedRuleInfos: SfgeRuleInfo[], targetPaths: string[], projectFilePaths: string[], 
+                                  sfgeRunOptions: SfgeRunOptions, workingFolder: string, emitProgress: (percComplete: number) => void): Promise<SfgeRunResult[]> {
         emitProgress(2);
 
-        const inputFileName: string = path.join(tmpDir, 'sfgeInput.json');
+        const inputFileName: string = path.join(workingFolder, 'sfgeInput.json');
         const logFilePath: string = path.join(sfgeRunOptions.logFolder, this.logFileName);
         const ruleNames: string[] = selectedRuleInfos.map(sri => sri.name);
 
         await this.createSfgeInputFile(inputFileName, ruleNames, targetPaths, projectFilePaths);
-        const resultsOutputFile: string = path.join(tmpDir, 'resultsFile.json');
+        const resultsOutputFile: string = path.join(workingFolder, 'resultsFile.json');
         this.emitLogEvent(LogLevel.Debug, getMessage('LoggingToFile', 'run', logFilePath));
         emitProgress(10);
 
@@ -162,13 +161,6 @@ export class RuntimeSfgeWrapper {
             const errMsg: string = err instanceof Error ? err.message : String(err);
             throw new Error(getMessageFromCatalog(SHARED_MESSAGE_CATALOG, 'ErrorParsingOutputFile', resultsOutputFile, errMsg), {cause: err});
         }
-    }
-
-    private async getTemporaryWorkingDir(): Promise<string> {
-        if (this.temporaryWorkingDir === undefined) {
-            this.temporaryWorkingDir = await createTempDir();
-        }
-        return this.temporaryWorkingDir;
     }
 
     private async createSfgeInputFile(filePath: string, rules: string[], targets: string[], allWorkspaceFiles: string[]): Promise<void> {

@@ -10,9 +10,9 @@ import {
     Violation,
     Workspace, DescribeOptions
 } from "@salesforce/code-analyzer-engine-api";
-import {changeWorkingDirectoryToPackageRoot, unzipToFolder} from "./test-helpers";
-import fs from "node:fs";
-import path from "node:path";
+import {changeWorkingDirectoryToPackageRoot, createDescribeOptions, createRunOptions, unzipToFolder} from "./test-helpers";
+import * as fs from "node:fs";
+import * as path from "node:path";
 import process from "node:process";
 import {ESLint8Engine} from "../src/engine";
 import {DEFAULT_CONFIG} from "../src/config";
@@ -21,7 +21,7 @@ import * as os from "node:os";
 
 changeWorkingDirectoryToPackageRoot();
 
-jest.setTimeout(30_000);
+jest.setTimeout(60_000);
 
 const legacyConfigCasesFolder: string = path.join(__dirname, 'test-data', 'legacyConfigCases');
 const workspaceWithNoCustomConfig: string =
@@ -75,7 +75,7 @@ describe('Tests for the describeRules method of ESLint8Engine', () => {
             const engine: ESLint8Engine = new ESLint8Engine({...DEFAULT_CONFIG,
                 auto_discover_eslint_config: true
             });
-            const ruleDescriptions: RuleDescription[] = await engine.describeRules({logFolder: os.tmpdir()});
+            const ruleDescriptions: RuleDescription[] = await engine.describeRules(createDescribeOptions());
             expect(ruleDescriptions).toEqual(caseObj.expectationRuleDescriptions);
         } finally {
             process.chdir(origWorkingDir);
@@ -687,18 +687,4 @@ function loadRuleDescriptions(fileNameFromLegacyConfigCasesFolder: string): Rule
 function makeUniqueAndSorted(ruleDescriptions: RuleDescription[]): RuleDescription[] {
     return Array.from(new Map(ruleDescriptions.map(rule => [rule.name, rule])).values())
         .sort((r1, r2) => r1.name.localeCompare((r2.name)));
-}
-
-function createDescribeOptions(workspace?: Workspace): DescribeOptions {
-    return {
-        logFolder: os.tmpdir(),
-        workspace: workspace
-    }
-}
-
-function createRunOptions(workspace: Workspace): RunOptions {
-    return {
-        logFolder: os.tmpdir(),
-        workspace: workspace
-    }
 }

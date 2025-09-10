@@ -98,6 +98,7 @@ export class SfgeEngine extends Engine {
             await runOptions.workspace.getTargetedFiles(),
             relevantWorkspaceFiles,
             sfgeRunOptions,
+            runOptions.workingFolder,
             (innerPerc: number, message?: string) => this.emitRunRulesProgressEvent(5 + 93*innerPerc/100, message) // 5%-98%
         );
 
@@ -144,7 +145,7 @@ export class SfgeEngine extends Engine {
             if (workspace && (await this.getRelevantFilesInWorkspace(workspace)).length === 0) {
                 this.sfgeRuleInfoListCache.set(cacheKey, []);
             } else {
-                const ruleInfoList: SfgeRuleInfo[] = await this.sfgeWrapper.invokeDescribeCommand(emitProgress, logFolder);
+                const ruleInfoList: SfgeRuleInfo[] = await this.sfgeWrapper.invokeDescribeCommand(options.workingFolder, emitProgress, logFolder);
                 this.sfgeRuleInfoListCache.set(cacheKey, ruleInfoList);
             }
         }

@@ -13,10 +13,10 @@ import {
     Violation,
     Workspace
 } from "@salesforce/code-analyzer-engine-api";
-import path from "node:path";
-import * as os from "node:os";
-import process from "node:process";
+import * as path from "node:path";
+import * as process from "node:process";
 import {ESLint8EnginePlugin} from "@salesforce/code-analyzer-eslint8-engine";
+import { createDescribeOptions, createRunOptions } from "./test-helpers";
 
 jest.setTimeout(30_000);
 
@@ -52,9 +52,9 @@ describe('End to end test', () => {
         engine.onEvent(EventType.TelemetryEvent, (e: TelemetryEvent) => telemetryEvents.push(e));
         engine.onEvent(EventType.LogEvent, (e: LogEvent) => logEvents.push(e));
         const workspace: Workspace = new Workspace('id', [path.resolve('.')]);
-        const ruleDescriptions: RuleDescription[] = await engine.describeRules({logFolder: os.tmpdir(), workspace: workspace});
+        const ruleDescriptions: RuleDescription[] = await engine.describeRules(createDescribeOptions(workspace));
         const recommendedRuleNames: string[] = ruleDescriptions.filter(rd => rd.tags.includes('Recommended')).map(rd => rd.name);
-        const engineRunResults: EngineRunResults = await engine.runRules(recommendedRuleNames, {logFolder: os.tmpdir(), workspace: workspace});
+        const engineRunResults: EngineRunResults = await engine.runRules(recommendedRuleNames, createRunOptions(workspace));
 
         const violationsFromJsFile: Violation[] = engineRunResults.violations.filter(v => path.extname(v.codeLocations[0].file) === '.js');
         expect(violationsFromJsFile).toHaveLength(3);
@@ -93,9 +93,9 @@ describe('End to end test', () => {
         engine.onEvent(EventType.LogEvent, (e: LogEvent) => logEvents.push(e));
         engine.onEvent(EventType.TelemetryEvent, (e: TelemetryEvent) => telemetryEvents.push(e));
         const workspace: Workspace = new Workspace('id', [path.resolve('.')]);
-        const ruleDescriptions: RuleDescription[] = await engine.describeRules({logFolder: os.tmpdir(), workspace: workspace});
+        const ruleDescriptions: RuleDescription[] = await engine.describeRules(createDescribeOptions(workspace));
         const recommendedRuleNames: string[] = ruleDescriptions.filter(rd => rd.tags.includes('Recommended')).map(rd => rd.name);
-        const engineRunResults: EngineRunResults = await engine.runRules(recommendedRuleNames, {logFolder: os.tmpdir(), workspace: workspace});
+        const engineRunResults: EngineRunResults = await engine.runRules(recommendedRuleNames, createRunOptions(workspace));
 
         const violationsFromJsFile: Violation[] = engineRunResults.violations.filter(v => path.extname(v.codeLocations[0].file) === '.js');
         expect(violationsFromJsFile).toHaveLength(3);

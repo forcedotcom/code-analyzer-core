@@ -17,7 +17,7 @@
     "@lwc/eslint-plugin-lwc": "^3.2.0",
     "@lwc/eslint-plugin-lwc-platform": "^6.1.0",
     "@salesforce-ux/eslint-plugin-slds": "^0.5.0",
-    "@salesforce/code-analyzer-engine-api": "0.28.0",
+    "@salesforce/code-analyzer-engine-api": "0.29.0-SNAPSHOT",
     "@salesforce/code-analyzer-eslint8-engine": "0.6.0-SNAPSHOT",
     "@salesforce/eslint-config-lwc": "^4.0.0",
     "@salesforce/eslint-plugin-lightning": "^2.0.0",
@@ -35,7 +35,6 @@
   "devDependencies": {
     "@types/jest": "^30.0.0",
     "@types/semver": "^7.7.0",
-    "@types/tmp": "^0.2.6",
     "@types/unzipper": "^0.10.11",
     "cross-env": "^10.0.0",
     "jest": "^30.0.5",
@@ -53,7 +52,7 @@
   ],
   "scripts": {
     "build": "tsc --build tsconfig.build.json --verbose",
-    "test": "cross-env NODE_OPTIONS=--experimental-vm-modules jest --coverage",
+    "test": "tsc --build tsconfig.json && cross-env NODE_OPTIONS=--experimental-vm-modules jest --coverage",
     "lint": "eslint src/**/*.ts",
     "package": "npm pack",
     "all": "npm run build && npm run lint && npm run test && npm run package",

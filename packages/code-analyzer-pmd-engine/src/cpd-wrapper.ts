@@ -1,5 +1,5 @@
 import {getMessageFromCatalog, LogLevel, SHARED_MESSAGE_CATALOG} from "@salesforce/code-analyzer-engine-api";
-import {createTempDir, JavaCommandExecutor} from "@salesforce/code-analyzer-engine-api/utils";
+import {JavaCommandExecutor} from "@salesforce/code-analyzer-engine-api/utils";
 import path from "node:path";
 import fs from "node:fs";
 
@@ -45,7 +45,6 @@ export type CpdProcessingError = {
 
 export class CpdWrapperInvoker {
     private readonly javaCommandExecutor: JavaCommandExecutor;
-    private temporaryWorkingDir?: string;
     private readonly emitLogEvent: (logLevel: LogLevel, message: string) => void;
 
     constructor(javaCommandExecutor: JavaCommandExecutor, emitLogEvent: (logLevel: LogLevel, message: string) => void) {
@@ -53,15 +52,14 @@ export class CpdWrapperInvoker {
         this.emitLogEvent = emitLogEvent;
     }
 
-    async invokeRunCommand(inputData: CpdRunInputData, emitProgress: (percComplete: number) => void): Promise<CpdRunResults> {
-        const tempDir: string = await this.getTemporaryWorkingDir();
+    async invokeRunCommand(inputData: CpdRunInputData, workingFolder: string, emitProgress: (percComplete: number) => void): Promise<CpdRunResults> {
         emitProgress(5);
 
-        const inputFile: string = path.join(tempDir, 'cpdRunInput.json');
+        const inputFile: string = path.join(workingFolder, 'cpdRunInput.json');
         await fs.promises.writeFile(inputFile, JSON.stringify(inputData), 'utf-8');
         emitProgress(10);
 
-        const outputFile: string = path.join(tempDir, 'cpdRunOutput.json');
+        const outputFile: string = path.join(workingFolder, 'cpdRunOutput.json');
 
         const javaCmdArgs: string[] = [CPD_WRAPPER_JAVA_CLASS, 'run', inputFile, outputFile];
         const javaClassPaths: string[] = [
@@ -88,12 +86,5 @@ export class CpdWrapperInvoker {
             const errMsg: string = err instanceof Error ? err.message : String(err);
             throw new Error(getMessageFromCatalog(SHARED_MESSAGE_CATALOG, 'ErrorParsingOutputFile', outputFile, errMsg), {cause: err});
         }
-    }
-
-    private async getTemporaryWorkingDir(): Promise<string> {
-        if (this.temporaryWorkingDir === undefined) {
-            this.temporaryWorkingDir = await createTempDir();
-        }
-        return this.temporaryWorkingDir!;
     }
 }

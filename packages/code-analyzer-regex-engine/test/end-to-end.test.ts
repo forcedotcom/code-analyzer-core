@@ -10,8 +10,7 @@ import {
     Workspace
 } from "@salesforce/code-analyzer-engine-api";
 import path from "node:path";
-import {changeWorkingDirectoryToPackageRoot} from "./test-helpers";
-import os from "node:os";
+import {changeWorkingDirectoryToPackageRoot, createDescribeOptions, createRunOptions} from "./test-helpers";
 
 changeWorkingDirectoryToPackageRoot();
 
@@ -31,9 +30,9 @@ describe('End to end test', () => {
         const resolvedConfig: ConfigObject = await plugin.createEngineConfig(availableEngineNames[0], new ConfigValueExtractor(customConfig, 'engines.regex'));
         const engine: Engine = await plugin.createEngine(availableEngineNames[0], resolvedConfig);
         const workspace: Workspace = new Workspace('id', [path.resolve(__dirname, 'test-data', 'workspaceWithPythonFile')]);
-        const ruleDescriptions: RuleDescription[] = await engine.describeRules({logFolder: os.tmpdir(), workspace: workspace});
+        const ruleDescriptions: RuleDescription[] = await engine.describeRules(createDescribeOptions(workspace));
         const recommendedRuleNames: string[] = ruleDescriptions.filter(rd => rd.tags.includes('Recommended')).map(rd => rd.name);
-        const engineRunResults: EngineRunResults = await engine.runRules(recommendedRuleNames, {logFolder: os.tmpdir(), workspace: workspace});
+        const engineRunResults: EngineRunResults = await engine.runRules(recommendedRuleNames, createRunOptions(workspace));
         const violationsFromPyFile: Violation[] = engineRunResults.violations.filter(v => path.extname(v.codeLocations[0].file) === '.py');
 
         expect(violationsFromPyFile).toHaveLength(1);
