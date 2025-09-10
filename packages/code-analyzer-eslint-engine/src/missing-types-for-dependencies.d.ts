@@ -45,7 +45,8 @@ declare module '@salesforce-ux/eslint-plugin-slds' {
     const plugin: ESLint.ObjectMetaProperties & {
         readonly rules: Record<string, RuleDefinition>;
         readonly configs: {
-            readonly "flat/recommended": Linter.Config[];
+            readonly "flat/recommended-html": Linter.Config[];
+            readonly "flat/recommended-css": Linter.Config[];
         };
     };
     export = plugin;

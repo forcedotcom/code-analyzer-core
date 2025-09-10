@@ -1,0 +1,12 @@
+/* Test CSS file for SLDS rules */
+.my-component {
+  --slds-c-color-background: #ffffff;
+  --lwc-c-color-text: #000000;
+  --slds-c-spacing-small: 0.5rem;
+  --_slds-c-private-var: red;
+}
+
+.slds-button {
+  background-color: #0070d2;
+  color: white;
+}

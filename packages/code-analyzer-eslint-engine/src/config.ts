@@ -28,7 +28,7 @@ export type ESLintEngineConfig = {
     // Default: false
     disable_lwc_base_config: boolean
 
-    // If true then the base configuration that supplies the slds rules for html and cmp files will not be applied.
+    // If true then the base configuration that supplies the slds rules for html, cmp, and css files will not be applied.
     // Default: false
     disable_slds_base_config: boolean
 
@@ -41,8 +41,9 @@ export type ESLintEngineConfig = {
     // rules, add them under the 'javascript' language. To associate file extensions to the standard TypeScript
     // rules or custom TypeScript-based rules, add them under the 'typescript' language. To associate file extensions
     // to standard LWC HTML rules, Component (CMP) rules, or custom HTML rules, add them under the 'html' language.
-    // To allow for the discovery of custom rules that are associated with any other language, then add the associated
-    // file extensions under the 'other' language.
+    // To associate file extensions to CSS or SCSS rules, add them under the 'css' language. To allow for the 
+    // discovery of custom rules that are associated with any other language, then add the associated file extensions
+    // under the 'other' language.
     file_extensions: FileExtensionsObject
 
     // (INTERNAL USE ONLY) Copy of the code analyzer config root.
@@ -53,6 +54,7 @@ export type FileExtensionsObject = {
     javascript: string[],
     typescript: string[],
     html: string[],
+    css: string[],
     other: string[]
 };
 
@@ -68,6 +70,7 @@ export const DEFAULT_CONFIG: ESLintEngineConfig = {
         javascript: ['.js', '.cjs', '.mjs'],
         typescript: ['.ts'],
         html: ['.html', '.htm', '.cmp'],
+        css: ['.css', '.scss'],
         other: []
     },
     config_root: process.cwd() // INTERNAL USE ONLY

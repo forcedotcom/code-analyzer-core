@@ -1,11 +1,11 @@
 [
   {
-    "description": "Replace BEM double-dash syntax in class names with single underscore syntax.",
+    "description": "Replace BEM double-dash syntax in class names with single underscore syntax",
     "name": "@salesforce-ux/slds/enforce-bem-usage",
     "resourceUrls": [
       "https://developer.salesforce.com/docs/platform/slds-linter/guide/reference-rules.html#enforce-bem-usage"
     ],
-    "severityLevel": 3,
+    "severityLevel": 4,
     "tags": [
       "Recommended",
       "SLDS",
@@ -14,12 +14,12 @@
     ]
   },
   {
-    "description": "Update component attributes or CSS classes for the modal close button to comply with the modal component blueprint.",
+    "description": "Update component attributes or CSS classes for the modal close button to comply with the modal component blueprint",
     "name": "@salesforce-ux/slds/modal-close-button-issue",
     "resourceUrls": [
       "https://developer.salesforce.com/docs/platform/slds-linter/guide/reference-rules.html#modal-close-button-issue"
     ],
-    "severityLevel": 2,
+    "severityLevel": 3,
     "tags": [
       "Recommended",
       "SLDS",
@@ -28,12 +28,12 @@
     ]
   },
   {
-    "description": "Replace classes that aren’t available with SLDS 2 classes. See lightningdesignsystem.com for more info.",
+    "description": "Replace classes that aren't available with SLDS 2 classes",
     "name": "@salesforce-ux/slds/no-deprecated-classes-slds2",
     "resourceUrls": [
       "https://developer.salesforce.com/docs/platform/slds-linter/guide/reference-rules.html#no-deprecated-classes-slds2"
     ],
-    "severityLevel": 2,
+    "severityLevel": 3,
     "tags": [
       "Recommended",
       "SLDS",

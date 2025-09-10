@@ -58,7 +58,9 @@ describe('Tests for the describeRules method of ESLintEngine', () => {
     const LWC_CONFIG_RULES: RuleDescription[] = loadRuleDescriptions('rules_OnlyLwcBaseConfig.goldfile.json');
     const JS_CONFIG_RULES: RuleDescription[] = loadRuleDescriptions('rules_OnlyJavaScriptBaseConfig.goldfile.json');
     const TS_CONFIG_RULES: RuleDescription[] = loadRuleDescriptions('rules_OnlyTypeScriptBaseConfig.goldfile.json');
-    const SLDS_CONFIG_RULES: RuleDescription[] = loadRuleDescriptions('rules_OnlySldsBaseConfig.goldfile.json');
+    const CSS_CONFIG_RULES: RuleDescription[] = loadRuleDescriptions('rules_OnlySldsCssBaseConfig.goldfile.json');
+    const HTML_CONFIG_RULES: RuleDescription[] = loadRuleDescriptions('rules_OnlySldsHtmlBaseConfig.goldfile.json');
+    const SLDS_CONFIG_RULES: RuleDescription[] = makeUniqueAndSorted([...CSS_CONFIG_RULES, ...HTML_CONFIG_RULES]);
     const DEFAULT_RULES: RuleDescription[] = makeUniqueAndSorted([...LWC_CONFIG_RULES, ...JS_CONFIG_RULES, ...TS_CONFIG_RULES, ...SLDS_CONFIG_RULES]);
     const CUSTOM_RULES: RuleDescription[] = loadRuleDescriptions('rules_OnlyCustomConfigWithNewRules.goldfile.json');
 
@@ -270,7 +272,18 @@ describe('Tests for the describeRules method of ESLintEngine', () => {
             }
         });
         const ruleDescriptions: RuleDescription[] = await engine.describeRules(createDescribeOptions());
-        expect(ruleDescriptions).toEqual(makeUniqueAndSorted([...LWC_CONFIG_RULES, ...JS_CONFIG_RULES, ...TS_CONFIG_RULES]));
+        expect(ruleDescriptions).toEqual(makeUniqueAndSorted([...LWC_CONFIG_RULES, ...JS_CONFIG_RULES, ...TS_CONFIG_RULES, ...CSS_CONFIG_RULES]));
+    });
+
+    it('When file_extensions.css is empty, then css rules do not get picked up', async () => {
+        const engine: Engine = await createEngineFromPlugin({...DEFAULT_CONFIG_FOR_TESTING,
+            file_extensions: {
+                ... DEFAULT_CONFIG_FOR_TESTING.file_extensions,
+                css: []
+            }
+        });
+        const ruleDescriptions: RuleDescription[] = await engine.describeRules(createDescribeOptions());
+        expect(ruleDescriptions).toEqual(makeUniqueAndSorted([...LWC_CONFIG_RULES, ...JS_CONFIG_RULES, ...TS_CONFIG_RULES, ...HTML_CONFIG_RULES]));
     });
 
     it('When file_extensions are all empty, then no rules are returned', async () => {
@@ -280,6 +293,7 @@ describe('Tests for the describeRules method of ESLintEngine', () => {
                 javascript: [],
                 typescript: [],
                 html: [],
+                css: [],
                 other: []
             }
         });
@@ -796,14 +810,14 @@ describe('Tests for emitting events', () => {
         await engine.describeRules(createDescribeOptions());
         // TODO: We should make our DescribeRulesProgressEvents more refined while calculating the eslint context information
         expect(describeRulesProgressEvents.map(e => e.percentComplete)).toEqual(
-            [0, 10, 14, 18, 26.57, 35.14, 43.71, 52.29, 60.86, 69.43, 78, 82, 86, 90, 95, 100]);
+            [0, 10, 14, 18, 24.67, 31.33, 38, 44.67, 51.33, 58, 64.67, 71.33, 78, 82, 86, 90, 95, 100]);
     });
 
     it('When runRules is called, then it emits correct progress events', async () => {
         const runOptions: RunOptions = createRunOptions(new Workspace('id', [workspaceWithNoCustomConfig]));
         await engine.runRules(['no-unused-vars'], runOptions);
         expect(runRulesProgressEvents.map(e => e.percentComplete)).toEqual(
-            [0, 1.5, 3, 10.5, 18, 25.5, 27, 28.5, 30, 51.67, 73.33, 95, 100]);
+            [0, 1.5, 3, 8.63, 14.25, 19.88, 25.5, 27, 28.5, 30, 46.25, 62.5, 78.75, 95, 100]);
     });
 });
 
