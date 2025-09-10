@@ -56,12 +56,14 @@ describe('End to end test', () => {
         const recommendedRuleNames: string[] = ruleDescriptions.filter(rd => rd.tags.includes('Recommended')).map(rd => rd.name);
         const engineRunResults: EngineRunResults = await engine.runRules(recommendedRuleNames, createRunOptions(workspace));
 
+        // JS violations
         const violationsFromJsFile: Violation[] = engineRunResults.violations.filter(v => path.extname(v.codeLocations[0].file) === '.js');
         expect(violationsFromJsFile).toHaveLength(3);
         expect(new Set(violationsFromJsFile.map(v => v.ruleName))).toEqual(new Set([
             'no-invalid-regexp',
             'no-unused-vars' // there are 2 of these
         ]));
+        // TS violations
         const violationsFromTsFile: Violation[] = engineRunResults.violations.filter(v => path.extname(v.codeLocations[0].file) === '.ts');
         expect(violationsFromTsFile).toHaveLength(6);
         expect(new Set(violationsFromTsFile.map(v => v.ruleName))).toEqual(new Set([
@@ -69,9 +71,14 @@ describe('End to end test', () => {
             '@typescript-eslint/no-unused-vars', // there are 4 of these
             'no-invalid-regexp'
         ]));
+        // HTML violations
         const violationsFromHTMLFile: Violation[] = engineRunResults.violations.filter(v => path.extname(v.codeLocations[0].file) === '.html');
         expect(violationsFromHTMLFile).toHaveLength(1);
         expect(violationsFromHTMLFile[0].ruleName).toEqual('@salesforce-ux/slds/enforce-bem-usage');
+        // CSS violations
+        const violationsFromCSSFile: Violation[] = engineRunResults.violations.filter(v => path.extname(v.codeLocations[0].file) === '.css');
+        expect(violationsFromCSSFile).toHaveLength(8);
+        expect(violationsFromCSSFile.some(v => v.ruleName === '@salesforce-ux/slds/no-slds-namespace-for-custom-hooks')).toBe(true);
 
         const warnLogs: LogEvent[] = logEvents.filter(e => e.logLevel == LogLevel.Warn);
         expect(warnLogs).toHaveLength(0);

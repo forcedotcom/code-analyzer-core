@@ -110,10 +110,35 @@ export class BaseConfigFactory {
     }
 
     private createSldsConfigArray(): Linter.Config[] {
-        return sldsEslintPlugin.configs['flat/recommended'].map(conf => ({
-            ...conf,
-            files: this.engineConfig.file_extensions.html.map(ext => `**/*${ext}`)
-        }));
+        const configs: Linter.Config[] = [];
+        
+        // Add HTML config if HTML files are configured
+        if (this.engineConfig.file_extensions.html.length > 0) {
+            const htmlConfig = sldsEslintPlugin.configs['flat/recommended'].find(conf => 
+                conf.files && conf.files.includes('**/*.html')
+            );
+            if (htmlConfig) {
+                configs.push({
+                    ...htmlConfig,
+                    files: this.engineConfig.file_extensions.html.map(ext => `**/*${ext}`)
+                });
+            }
+        }
+        
+        // Add CSS config if CSS files are configured
+        if (this.engineConfig.file_extensions.css.length > 0) {
+            const cssConfig = sldsEslintPlugin.configs['flat/recommended'].find(conf => 
+                conf.files && conf.files.includes('**/*.{css,scss}')
+            );
+            if (cssConfig) {
+                configs.push({
+                    ...cssConfig,
+                    files: this.engineConfig.file_extensions.css.map(ext => `**/*${ext}`)
+                });
+            }
+        }
+        
+        return configs;
     }
 
     private createTypescriptConfigArray(): Linter.Config[] {
@@ -148,7 +173,8 @@ export class BaseConfigFactory {
     }
 
     private useSldsBaseConfig(): boolean {
-        return !this.engineConfig.disable_slds_base_config && this.engineConfig.file_extensions.html.length > 0;
+        return !this.engineConfig.disable_slds_base_config && 
+               (this.engineConfig.file_extensions.html.length > 0 || this.engineConfig.file_extensions.css.length > 0);
     }
 
     private useTsBaseConfig(): boolean {

@@ -1,0 +1,198 @@
+[
+  {
+    "description": "Replace component styling hooks that use a deprecated naming convention.",
+    "name": "@salesforce-ux/slds/enforce-component-hook-naming-convention",
+    "resourceUrls": [
+      "https://developer.salesforce.com/docs/platform/slds-linter/guide/reference-rules.html#enforce-component-hook-naming-convention"
+    ],
+    "severityLevel": 3,
+    "tags": [
+      "Recommended",
+      "SLDS",
+      "CodeStyle",
+      "CSS"
+    ]
+  },
+  {
+    "description": "Convert your existing --sds styling hooks to --slds styling hooks. See lightningdesignsystem.com for more info.",
+    "name": "@salesforce-ux/slds/enforce-sds-to-slds-hooks",
+    "resourceUrls": [
+      "https://developer.salesforce.com/docs/platform/slds-linter/guide/reference-rules.html#enforce-sds-to-slds-hooks"
+    ],
+    "severityLevel": 3,
+    "tags": [
+      "Recommended",
+      "SLDS",
+      "Design",
+      "CSS"
+    ]
+  },
+  {
+    "description": "Replace the deprecated --lwc tokens with the latest --slds tokens. See lightningdesignsystem.com for more info.",
+    "name": "@salesforce-ux/slds/lwc-token-to-slds-hook",
+    "resourceUrls": [
+      "https://developer.salesforce.com/docs/platform/slds-linter/guide/reference-rules.html#lwc-token-to-slds-hook"
+    ],
+    "severityLevel": 2,
+    "tags": [
+      "Recommended",
+      "SLDS",
+      "ErrorProne",
+      "CSS"
+    ]
+  },
+  {
+    "description": "Please replace the deprecated classes with a modern equivalent",
+    "name": "@salesforce-ux/slds/no-deprecated-slds-classes",
+    "resourceUrls": [
+      "https://developer.salesforce.com/docs/platform/slds-linter/guide/reference-rules.html#no-deprecated-slds-classes"
+    ],
+    "severityLevel": 2,
+    "tags": [
+      "Recommended",
+      "SLDS",
+      "ErrorProne",
+      "CSS"
+    ]
+  },
+  {
+    "description": "Update outdated design tokens to SLDS 2 styling hooks with similar values. For more information, see Styling Hooks on lightningdesignsystem.com.",
+    "name": "@salesforce-ux/slds/no-deprecated-tokens-slds1",
+    "resourceUrls": [
+      "https://developer.salesforce.com/docs/platform/slds-linter/guide/reference-rules.html#no-deprecated-tokens-slds1"
+    ],
+    "severityLevel": 2,
+    "tags": [
+      "Recommended",
+      "SLDS",
+      "ErrorProne",
+      "CSS"
+    ]
+  },
+  {
+    "description": "Replace static values with SLDS 1 design tokens. For more information, look up design tokens on lightningdesignsystem.com.",
+    "name": "@salesforce-ux/slds/no-hardcoded-values-slds1",
+    "resourceUrls": [
+      "https://developer.salesforce.com/docs/platform/slds-linter/guide/reference-rules.html#no-hardcoded-value"
+    ],
+    "severityLevel": 3,
+    "tags": [
+      "Recommended",
+      "SLDS",
+      "Design",
+      "CSS"
+    ]
+  },
+  {
+    "description": "Replace static values with SLDS 2 styling hooks. For more information, look up design tokens on lightningdesignsystem.com.",
+    "name": "@salesforce-ux/slds/no-hardcoded-values-slds2",
+    "resourceUrls": [
+      "https://developer.salesforce.com/docs/platform/slds-linter/guide/reference-rules.html#no-hardcoded-value"
+    ],
+    "severityLevel": 3,
+    "tags": [
+      "Recommended",
+      "SLDS",
+      "Design",
+      "CSS"
+    ]
+  },
+  {
+    "description": "Create new custom CSS classes instead of overriding SLDS selectors",
+    "name": "@salesforce-ux/slds/no-slds-class-overrides",
+    "resourceUrls": [
+      "https://developer.salesforce.com/docs/platform/slds-linter/guide/reference-rules.html#no-slds-class-overrides"
+    ],
+    "severityLevel": 3,
+    "tags": [
+      "Recommended",
+      "SLDS",
+      "BestPractices",
+      "CSS"
+    ]
+  },
+  {
+    "description": "To differentiate custom styling hooks from SLDS styling hooks, create custom styling hooks in your namespace.",
+    "name": "@salesforce-ux/slds/no-slds-namespace-for-custom-hooks",
+    "resourceUrls": [
+      "https://developer.salesforce.com/docs/platform/slds-linter/guide/reference-rules.html#no-slds-namespace-for-custom-hooks"
+    ],
+    "severityLevel": 3,
+    "tags": [
+      "Recommended",
+      "SLDS",
+      "BestPractices",
+      "CSS"
+    ]
+  },
+  {
+    "description": "Some SLDS styling hooks are private and reserved only for internal Salesforce use. Private SLDS styling hooks have prefixes --_slds- and --slds-s-. For more information, look up private CSS in lightningdesignsystem.com.",
+    "name": "@salesforce-ux/slds/no-slds-private-var",
+    "resourceUrls": [
+      "https://developer.salesforce.com/docs/platform/slds-linter/guide/reference-rules.html#no-slds-private-var"
+    ],
+    "severityLevel": 2,
+    "tags": [
+      "Recommended",
+      "SLDS",
+      "ErrorProne",
+      "CSS"
+    ]
+  },
+  {
+    "description": "Add fallback values to SLDS styling hooks. The fallback values are used in Salesforce environments where styling hooks are unavailable.",
+    "name": "@salesforce-ux/slds/no-slds-var-without-fallback",
+    "resourceUrls": [
+      "https://developer.salesforce.com/docs/platform/slds-linter/guide/reference-rules.html#no-slds-var-without-fallback"
+    ],
+    "severityLevel": 2,
+    "tags": [
+      "Recommended",
+      "SLDS",
+      "ErrorProne",
+      "CSS"
+    ]
+  },
+  {
+    "description": "Avoid using --slds styling hooks as fallback values for --lwc tokens.",
+    "name": "@salesforce-ux/slds/no-sldshook-fallback-for-lwctoken",
+    "resourceUrls": [
+      "https://developer.salesforce.com/docs/platform/slds-linter/guide/reference-rules.html#no-sldshook-fallback-for-lwctoken"
+    ],
+    "severityLevel": 3,
+    "tags": [
+      "Recommended",
+      "SLDS",
+      "BestPractices",
+      "CSS"
+    ]
+  },
+  {
+    "description": "Identifies styling hooks that aren't present in SLDS 2. They must be replaced with styling hooks that have a similar effect, or they must be removed.",
+    "name": "@salesforce-ux/slds/no-unsupported-hooks-slds2",
+    "resourceUrls": [
+      "https://developer.salesforce.com/docs/platform/slds-linter/guide/reference-rules.html#no-unsupported-hooks-slds2"
+    ],
+    "severityLevel": 2,
+    "tags": [
+      "Recommended",
+      "SLDS",
+      "ErrorProne",
+      "CSS"
+    ]
+  },
+  {
+    "description": "Remove your annotations and update your code.",
+    "name": "@salesforce-ux/slds/reduce-annotations",
+    "resourceUrls": [
+      "https://developer.salesforce.com/docs/platform/slds-linter/guide/reference-rules.html#reduce-annotations"
+    ],
+    "severityLevel": 3,
+    "tags": [
+      "Recommended",
+      "SLDS",
+      "BestPractices",
+      "CSS"
+    ]
+  }
+]

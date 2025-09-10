@@ -35,6 +35,7 @@ describe("Miscellaneous tests that test sensitive implementation details more di
             javascript: ['.js'],
             typescript: ['.ts'],
             html: ['.html'],
+            css: ['.css'],
             other: []
         }
 
