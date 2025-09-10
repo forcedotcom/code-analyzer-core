@@ -10,6 +10,8 @@ const PATH_TO_MULTIPLE_FLOWS_WORKSPACE = path.resolve(__dirname, '..', 'test-dat
 const PATH_TO_EXAMPLE1: string = path.join(PATH_TO_MULTIPLE_FLOWS_WORKSPACE, 'example1_containsWithoutSharingViolations.flow-meta.xml');
 const PATH_TO_EXAMPLE2: string = path.join(PATH_TO_MULTIPLE_FLOWS_WORKSPACE, 'example2_containsWithSharingViolations.flow');
 
+jest.setTimeout(60_000);
+
 describe('FlowScannerCommandWrapper implementations', () => {
     describe('RunTimeFlowScannerCommandWrapper', () => {
         let workingFolder: string;

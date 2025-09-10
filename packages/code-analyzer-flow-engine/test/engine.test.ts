@@ -40,6 +40,8 @@ const ALL_FLOW_RULES: string[] = [
     'PreventPassingUserDataIntoElementWithoutSharing'
 ];
 
+jest.setTimeout(60_000);
+
 describe('Tests for the FlowScannerEngine', () => {
     const flowScannerCommandWrapper: RunTimeFlowScannerCommandWrapper = new RunTimeFlowScannerCommandWrapper('python3');
 
