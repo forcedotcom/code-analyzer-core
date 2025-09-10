@@ -19,6 +19,7 @@ function main() {
     displayList('THE FOLLOWING FILES WERE CHANGED:', changedFiles);
 
     const changedPackages = identifyChangedPackages(changedFiles);
+
     if (changedPackages.length === 0) {
         console.log(`No package-level changes. Using empty workspace arg to test all packages.`);
         fs.writeFileSync(tmpFilePath, '');
@@ -34,7 +35,17 @@ function main() {
         console.log(`NO PACKAGES HAVE DEPENDENCIES ON CHANGED PACKAGES.\n`);
     }
 
-    const affectedPackages = [...(new Set([...changedPackages, ...dependentPackages]).keys())];
+    const undeletedChangedPackages = changedPackages.filter(pkgLocation => {
+        const packageName = pkgLocation.replace("packages","").replace("/","").replace("\\","");
+        if(fs.existsSync(getPackageJsonFile(packageName))) {
+            return true;
+        } else {
+            console.log(`Removing package '${packageName}' from list of workspaces since it seems to have been deleted.`);
+        }
+    });
+
+
+    const affectedPackages = [...(new Set([...undeletedChangedPackages, ...dependentPackages]).keys())];
     displayList('BASED ON THE ABOVE, THE FOLLOWING PACKAGES ARE AFFECTED BY CHANGES, AND WILL REQUIRE TESTING:', affectedPackages);
 
     const correspondingWorkspaceArgs = affectedPackages.map(name => `--workspace ${name}`);
@@ -100,8 +111,12 @@ function getAllPackageJsons() {
     return packagesDir.filter(f => fs.statSync(path.join(pathToRoot, 'packages', f)).isDirectory()).map(getPackageJson);
 }
 
+function getPackageJsonFile(packageName) {
+    return path.join(pathToRoot, 'packages', packageName, 'package.json');
+}
+
 function getPackageJson(packageName) {
-    const packageJsonPath = path.join(pathToRoot, 'packages', packageName, 'package.json');
+    const packageJsonPath = getPackageJsonFile(packageName);
     return JSON.parse(fs.readFileSync(packageJsonPath, 'utf-8'));
 }
 

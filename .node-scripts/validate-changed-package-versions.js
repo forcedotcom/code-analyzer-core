@@ -75,8 +75,15 @@ function isFileInTestFolder(changedFile) {
 
 function identifyIncorrectlyVersionedPackages(changedPackages) {
     const incorrectlyVersionedPackages = [];
+    
     for (const changedPackage of changedPackages) {
-        const packageVersion = getPackageVersion(changedPackage);
+
+        const packageJsonPath = path.join(changedPackage, 'package.json');
+        if (!fs.existsSync(packageJsonPath)) {
+            continue; // This means the package was deleted, so we ignore this package
+        }
+        const packageVersion =  JSON.parse(fs.readFileSync(packageJsonPath, 'utf-8')).version;
+
         if (!packageVersion.endsWith('-SNAPSHOT')) {
             incorrectlyVersionedPackages.push(`${changedPackage} (currently versioned as ${packageVersion}) lacks a trailing "-SNAPSHOT"`);
             continue;
@@ -100,11 +107,6 @@ function getLatestReleasedVersion(changedPackage) {
         console.log(`NOTE: Could not fetch latest release version of ${publishedPackageName} (located in ${changedPackage}). Is that an error?`);
         return undefined;
     }
-}
-
-function getPackageVersion(changedPackage) {
-    const packageJsonPath = path.join(changedPackage, 'package.json');
-    return JSON.parse(fs.readFileSync(packageJsonPath, 'utf-8')).version;
 }
 
 main();
