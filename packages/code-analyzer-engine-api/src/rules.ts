@@ -69,6 +69,9 @@ export const COMMON_TAGS = {
         /** Rules that analyze files that have APEX code */
         APEX: "Apex",
 
+        /** Rules that analyze files that have CSS code */
+        CSS: "CSS",
+
         /** Rules that analyze files that have HTML code */
         HTML: "HTML",
 
