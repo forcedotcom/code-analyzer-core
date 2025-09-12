@@ -47,11 +47,11 @@
           fetch(link.href, fetchOpts);
         }
       })();
-
+      
 // ==== START OF VIOLATIONS ====
         const data = {"runDir":"{{ESCAPEDRUNDIR}}","violationCounts":{"total":1,"sev1":1,"sev2":0,"sev3":0,"sev4":0,"sev5":0},"versions":{"code-analyzer":"{{CORE_VERSION}}","throwingEngine":"3.0.0"},"violations":[{"rule":"UnexpectedEngineError","engine":"throwingEngine","severity":1,"tags":[],"primaryLocationIndex":0,"locations":[{"comment":"Undefined Code Location"}],"message":"The engine with name &#39;throwingEngine&#39; threw an unexpected error: SomeErrorMessageFromThrowingEngine","resources":[]}]};
 // ==== END OF VIOLATIONS ====
-
+      
       class Model {
         constructor(data2) {
           (this.violations = this.processViolations(data2)),
@@ -182,6 +182,7 @@
             (this.defaultSort = { column: "file", direction: "asc" }),
             (this.currentViolations = []),
             (this.currentViolationIndex = -1),
+            (this.triggeringElement = null),
             (this.summary = document.getElementById("summary")),
             (this.violationsTable = document.getElementById("violationsTable")),
             (this.tableBody = this.violationsTable.querySelector("tbody")),
@@ -265,11 +266,48 @@
         }
         updateBoxes(data2) {
           const counts = data2.reduce(
-            (acc, v) => ((acc[v.severity] = (acc[v.severity] || 0) + 1), acc),
-            {},
-          );
-          for (let i = 1; i <= 5; i++)
-            document.getElementById(`sev${i}`).textContent = counts[i] || 0;
+              (acc, v) => ((acc[v.severity] = (acc[v.severity] || 0) + 1), acc),
+              {},
+            ),
+            severityNames = {
+              1: "Critical",
+              2: "High",
+              3: "Moderate",
+              4: "Low",
+              5: "Info",
+            };
+          for (let i = 1; i <= 5; i++) {
+            const count = counts[i] || 0;
+            document.getElementById(`sev${i}`).textContent = count;
+            const box = document.querySelector(`[data-severity="${i}"]`);
+            box &&
+              box.setAttribute(
+                "aria-label",
+                `Severity ${i}, ${severityNames[i]}: ${count} violations`,
+              );
+          }
+        }
+        updateBoxesAriaLabels(filteredData) {
+          const filteredCounts = filteredData.reduce(
+              (acc, v) => ((acc[v.severity] = (acc[v.severity] || 0) + 1), acc),
+              {},
+            ),
+            severityNames = {
+              1: "Critical",
+              2: "High",
+              3: "Moderate",
+              4: "Low",
+              5: "Info",
+            };
+          for (let i = 1; i <= 5; i++) {
+            const count = filteredCounts[i] || 0,
+              box = document.querySelector(`[data-severity="${i}"]`);
+            box &&
+              box.setAttribute(
+                "aria-label",
+                `Severity ${i}, ${severityNames[i]}: ${count} violations`,
+              );
+          }
         }
         toggleBoxes(severity) {
           document.querySelectorAll(".box").forEach((box) => {
@@ -308,6 +346,7 @@
         populateRow(violation) {
           const row = this.tableBody.insertRow();
           (row.dataset.index = this.model.violations.indexOf(violation)),
+            (row.tabIndex = 0),
             (row.innerHTML = `
       <td class="file">${this.model.getFile(violation.file)}</td>
       <td class="severity">
@@ -376,6 +415,7 @@
           (this.currentViolations = sortedViolations),
             this.populateTable(sortedViolations, groupBy),
             this.updateSummary(sortedViolations),
+            this.updateBoxesAriaLabels(sortedViolations),
             this.toggleBoxes(severityFilter),
             this.updateReset();
         }
@@ -390,14 +430,23 @@
         updateArrow() {
           document.querySelectorAll("#violationsTable th").forEach((th) => {
             th.classList.remove("asc", "desc"),
-              th.dataset.sort === this.defaultSort.column &&
-                th.classList.add(this.defaultSort.direction);
+              th.dataset.sort === this.defaultSort.column
+                ? (th.classList.add(this.defaultSort.direction),
+                  th.setAttribute(
+                    "aria-sort",
+                    "asc" === this.defaultSort.direction
+                      ? "ascending"
+                      : "descending",
+                  ))
+                : th.setAttribute("aria-sort", "none");
           });
         }
         updatePagination() {
           (this.panelPrev.disabled = this.currentViolationIndex <= 0),
             (this.panelNext.disabled =
               this.currentViolationIndex >= this.currentViolations.length - 1);
+          const contextText = `Violation ${this.currentViolationIndex + 1} of ${this.currentViolations.length}`;
+          document.getElementById("panel-title").textContent = contextText;
         }
         populatePanel(violation) {
           const panelFields = [
@@ -433,15 +482,35 @@
             (this.panelContent.innerHTML = ""),
             this.panelContent.appendChild(dl);
         }
-        showPanel(violation) {
+        getFocusableElements() {
+          return this.panel.querySelectorAll(
+            'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])',
+          );
+        }
+        trapFocus(event) {
+          const focusableElements = this.getFocusableElements(),
+            firstElement = focusableElements[0],
+            lastElement = focusableElements[focusableElements.length - 1];
+          "Tab" === event.key &&
+            (event.shiftKey
+              ? document.activeElement === firstElement &&
+                (event.preventDefault(), lastElement.focus())
+              : document.activeElement === lastElement &&
+                (event.preventDefault(), firstElement.focus()));
+        }
+        showPanel(violation, triggeringElement = null) {
           (this.currentViolationIndex = this.currentViolations.findIndex(
             (v) => v === violation,
           )),
+            (this.triggeringElement = triggeringElement),
             this.populatePanel(violation),
             this.overlay.classList.add("visible"),
             this.panel.classList.add("visible"),
             this.updatePagination(),
-            (document.body.style.overflow = "hidden");
+            (document.body.style.overflow = "hidden"),
+            setTimeout(() => {
+              this.panel.focus();
+            }, 100);
         }
         paginatePanel(direction) {
           const newIndex = this.currentViolationIndex + direction;
@@ -456,7 +525,10 @@
           this.overlay.classList.remove("visible"),
             this.panel.classList.remove("visible"),
             setTimeout(() => {
-              document.body.style.overflow = "";
+              (document.body.style.overflow = ""),
+                this.triggeringElement &&
+                  this.triggeringElement.focus &&
+                  this.triggeringElement.focus();
             }, 300);
         }
         populateVersions(versions) {
@@ -512,7 +584,7 @@
           if (row) {
             const violationIndex = row.dataset.index,
               violation = this.model.violations[violationIndex];
-            this.view.showPanel(violation);
+            this.view.showPanel(violation, row);
           }
         }
         handleGroupBy(value) {
@@ -520,7 +592,20 @@
             this.view.updateTable();
         }
         handleShortcuts(event) {
+          if (this.view.overlay.classList.contains("visible"))
+            return (
+              this.view.trapFocus(event),
+              "Escape" === event.key
+                ? (event.preventDefault(), void this.handleEscapeKey())
+                : "ArrowLeft" === event.key || "ArrowUp" === event.key
+                  ? (event.preventDefault(), void this.handleArrowKey(-1))
+                  : "ArrowRight" === event.key || "ArrowDown" === event.key
+                    ? (event.preventDefault(), void this.handleArrowKey(1))
+                    : void 0
+            );
           if ("INPUT" === document.activeElement.tagName) return;
+          if (event.metaKey || event.ctrlKey || event.altKey || event.shiftKey)
+            return;
           const action = {
             n: () => this.handleGroupBy("file"),
             e: () => this.handleGroupBy("engine"),
@@ -680,7 +765,7 @@
         font-size: 16px;
         font-weight: normal;
         margin: 0;
-        padding: 20px 20px 20px 36px;
+        padding: 20px 0 20px 36px;
         text-align: center;
       }
 
@@ -692,14 +777,15 @@
         font-size: 16px;
         font-weight: normal;
         margin: 0;
-        padding: 20px 20px 20px 36px;
+        padding: 20px 0 20px 36px;
         text-align: center;
       }
 
-      .header p.help {
+      .header a.help {
         font-size: 16px;
         margin: 0;
-        padding: 20px 0 20px 20px;
+        padding: 20px 0 20px 0;
+        display: inline-block;
       }
 
       .boxes {
@@ -798,13 +884,13 @@
         margin: 20px 20px;
       }
 
-      .toolbar h3 {
+      .toolbar h4 {
         color: var(--color-text);
         font-size: 14px;
       }
 
       @media screen and (max-width: 1200px) {
-        .toolbar h3 {
+        .toolbar h4 {
           display: none;
         }
       }
@@ -987,7 +1073,7 @@
         opacity: 1;
       }
 
-      table th.asc::after {
+      table th.desc::after {
         transform: rotate(180deg);
       }
 
@@ -1071,6 +1157,12 @@
         color: var(--color-shade-7);
         padding-bottom: 10px;
         font-size: 12px;
+      }
+
+      .footer code {
+        font-family: var(--font-mono);
+        font-size: 11px;
+        font-weight: normal;
       }
 
       .versions {
@@ -1518,68 +1610,115 @@
   <body>
     <div class="page">
       <div class="overlay">
-        <div class="panel" role="dialog">
+        <div
+          class="panel"
+          role="dialog"
+          tabindex="-1"
+          aria-labelledby="panel-title"
+          aria-modal="true"
+        >
           <div class="panel-header">
-            <h3>Details</h3>
-            <a href="#" id="panelClose" class="panel-close"></a>
+            <h3 id="panel-title">Details</h3>
+            <a
+              href="#"
+              id="panelClose"
+              class="panel-close"
+              aria-label="Close violation details"
+            ></a>
           </div>
-          <div class="panel-content"></div>
+          <div class="panel-content" aria-live="polite"></div>
           <div class="panel-footer">
-            <button id="prev">&larr; Prev</button>
-            <button id="next">Next &rarr;</button>
+            <button id="prev" aria-label="Previous violation">
+              &larr; Prev
+            </button>
+            <button id="next" aria-label="Next violation">Next &rarr;</button>
           </div>
         </div>
       </div>
 
-      <header class="header">
+      <header class="header" role="none">
         <h1 class="logo">Salesforce</h1>
         <h2 class="title">
           <strong class="text">Code Analyzer Report</strong> –
-
+          
 <!-- START OF TIMESTAMP -->
         <span class="timestamp">{{###TIMESTAMP###}}</span>
 <!-- END OF TIMESTAMP -->
-
+      
         </h2>
-        <p class="help" aria-label="documentation">
-          <a
-            href="https://developer.salesforce.com/docs/platform/salesforce-code-analyzer/overview"
-            >Developer Docs</a
-          >
-        </p>
+        <a
+          class="help"
+          href="https://developer.salesforce.com/docs/platform/salesforce-code-analyzer/overview"
+          aria-label="Developer Documentation"
+          >Developer Docs</a
+        >
       </header>
 
-      <div class="boxes">
-        <div class="box" data-severity="1">
-          <h4><span>Severity 1</span> <span>Critical</span></h4>
-          <p class="sev1" id="sev1">0</p>
+      <aside class="boxes" aria-label="Report summary">
+        <div
+          class="box"
+          data-severity="1"
+          aria-label="Severity 1, Critical: 0 violations"
+          role="button"
+          tabindex="0"
+        >
+          <h4 aria-hidden="true">
+            <span>Severity 1</span> <span>Critical</span>
+          </h4>
+          <p class="sev1" id="sev1" aria-hidden="true">0</p>
         </div>
-        <div class="box" data-severity="2">
-          <h4><span>Severity 2</span> <span>High</span></h4>
-          <p class="sev2" id="sev2">0</p>
+        <div
+          class="box"
+          data-severity="2"
+          aria-label="Severity 2, High: 0 violations"
+          role="button"
+          tabindex="0"
+        >
+          <h4 aria-hidden="true"><span>Severity 2</span> <span>High</span></h4>
+          <p class="sev2" id="sev2" aria-hidden="true">0</p>
         </div>
-        <div class="box" data-severity="3">
-          <h4><span>Severity 3</span> <span>Moderate</span></h4>
-          <p class="sev3" id="sev3">0</p>
+        <div
+          class="box"
+          data-severity="3"
+          aria-label="Severity 3, Moderate: 0 violations"
+          role="button"
+          tabindex="0"
+        >
+          <h4 aria-hidden="true">
+            <span>Severity 3</span> <span>Moderate</span>
+          </h4>
+          <p class="sev3" id="sev3" aria-hidden="true">0</p>
         </div>
-        <div class="box" data-severity="4">
-          <h4><span>Severity 4</span> <span>Low</span></h4>
-          <p class="sev4" id="sev4">0</p>
+        <div
+          class="box"
+          data-severity="4"
+          aria-label="Severity 4, Low: 0 violations"
+          role="button"
+          tabindex="0"
+        >
+          <h4 aria-hidden="true"><span>Severity 4</span> <span>Low</span></h4>
+          <p class="sev4" id="sev4" aria-hidden="true">0</p>
         </div>
-        <div class="box" data-severity="5">
-          <h4><span>Severity 5</span> <span>Info</span></h4>
-          <p class="sev5" id="sev5">0</p>
+        <div
+          class="box"
+          data-severity="5"
+          aria-label="Severity 5, Info: 0 violations"
+          role="button"
+          tabindex="0"
+        >
+          <h4 aria-hidden="true"><span>Severity 5</span> <span>Info</span></h4>
+          <p class="sev5" id="sev5" aria-hidden="true">0</p>
         </div>
-      </div>
+      </aside>
 
-      <main class="content" role="main">
-        <h3 id="summary">Found 0 violations</h3>
+      <main class="content" aria-label="Report table">
+        <h3 id="summary" aria-live="polite">Found 0 violations</h3>
 
         <div class="toolbar">
           <div class="filter">
-            <h3>Filter</h3>
+            <h4 aria-hidden="true">Filter</h4>
 
-            <form role="search" aria-label="Filter violations">
+            <form aria-label="Filter violations">
               <select id="severityFilter" aria-label="Filter by severity">
                 <option value="">All Severities</option>
                 <option disabled>───</option>
@@ -1608,30 +1747,40 @@
           </div>
 
           <div class="view">
-            <h3>Group</h3>
+            <h4 aria-hidden="true">Group</h4>
 
-            <select id="groupBy">
-              <option value="">Ungrouped</option>
-              <option disabled>───</option>
-              <option value="engine">Engine</option>
-              <option value="file">Filename</option>
-              <option value="rule">Rule</option>
-              <option value="severity">Severity</option>
-            </select>
+            <form>
+              <select id="groupBy" aria-label="Group by property">
+                <option value="">Ungrouped</option>
+                <option disabled>───</option>
+                <option value="engine">Engine</option>
+                <option value="file">Filename</option>
+                <option value="rule">Rule</option>
+                <option value="severity">Severity</option>
+              </select>
+            </form>
           </div>
         </div>
 
-        <table id="violationsTable">
+        <table id="violationsTable" aria-label="Sortable violations table">
           <thead>
             <tr>
-              <th data-sort="file" class="file">Filename</th>
-              <th data-sort="severity" class="severity">Severity</th>
-              <th data-sort="rule" class="rule">Rule</th>
-              <th data-sort="engine" class="engine">Engine</th>
-              <th data-sort="message" class="message">Message</th>
-              <th data-sort="tags" class="tags">Tags</th>
-              <th data-sort="startLine" class="startLine">Line</th>
-              <th data-sort="startColumn" class="startColumn">Column</th>
+              <th data-sort="file" class="file" aria-sort="none">Filename</th>
+              <th data-sort="severity" class="severity" aria-sort="none">
+                Severity
+              </th>
+              <th data-sort="rule" class="rule" aria-sort="none">Rule</th>
+              <th data-sort="engine" class="engine" aria-sort="none">Engine</th>
+              <th data-sort="message" class="message" aria-sort="none">
+                Message
+              </th>
+              <th data-sort="tags" class="tags" aria-sort="none">Tags</th>
+              <th data-sort="startLine" class="startLine" aria-sort="none">
+                Line
+              </th>
+              <th data-sort="startColumn" class="startColumn" aria-sort="none">
+                Column
+              </th>
             </tr>
           </thead>
 
