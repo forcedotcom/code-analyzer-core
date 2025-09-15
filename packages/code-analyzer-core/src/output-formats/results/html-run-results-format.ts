@@ -8,7 +8,7 @@ import {
     toJsonResultsOutput
 } from "./json-run-results-format";
 
-const HTML_TEMPLATE_VERSION: string = '0.0.12';
+const HTML_TEMPLATE_VERSION: string = '0.0.13';
 const HTML_TEMPLATE_FILE: string = path.resolve(__dirname, '..', '..', '..', 'output-templates', `html-template-${HTML_TEMPLATE_VERSION}.txt`);
 
 /**
