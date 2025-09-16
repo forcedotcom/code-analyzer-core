@@ -15,12 +15,12 @@
   "dependencies": {
     "@salesforce/code-analyzer-engine-api": "0.29.0-SNAPSHOT",
     "@types/node": "^20.0.0",
+    "@types/semver": "^7.7.1",
     "semver": "^7.7.2"
   },
   "devDependencies": {
     "@eslint/js": "^9.32.0",
     "@types/jest": "^30.0.0",
-    "@types/semver": "^7.7.0",
     "eslint": "^9.32.0",
     "jest": "^30.0.5",
     "rimraf": "^6.0.1",
