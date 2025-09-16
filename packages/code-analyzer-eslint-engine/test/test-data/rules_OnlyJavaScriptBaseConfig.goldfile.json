@@ -2399,6 +2399,19 @@
     ]
   },
   {
+    "description": "Disallow losing originally caught error when re-throwing custom errors",
+    "name": "preserve-caught-error",
+    "resourceUrls": [
+      "https://eslint.org/docs/latest/rules/preserve-caught-error"
+    ],
+    "severityLevel": 4,
+    "tags": [
+      "BestPractices",
+      "JavaScript",
+      "TypeScript"
+    ]
+  },
+  {
     "description": "Enforce the consistent use of the radix argument when using `parseInt()`",
     "name": "radix",
     "resourceUrls": [

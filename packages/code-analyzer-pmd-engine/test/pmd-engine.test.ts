@@ -19,7 +19,6 @@ import path from "node:path";
 import {Language, PMD_VERSION} from "../src/constants";
 import {DEFAULT_PMD_ENGINE_CONFIG, PMD_AVAILABLE_LANGUAGES, PmdEngineConfig} from "../src/config";
 import {PmdCpdEnginesPlugin} from "../src";
-import os from "node:os";
 
 changeWorkingDirectoryToPackageRoot();
 

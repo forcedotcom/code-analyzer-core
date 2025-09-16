@@ -16,6 +16,10 @@ export const RULE_MAPPINGS: Record<string, {severity: SeverityLevel, tags: strin
     // =================================================================================================================
     //   PMD-APEX RULES
     // =================================================================================================================
+    "AnnotationsNamingConventions": {
+        severity: SeverityLevel.Low,
+        tags: [COMMON_TAGS.RECOMMENDED, COMMON_TAGS.CATEGORIES.CODE_STYLE,     COMMON_TAGS.LANGUAGES.APEX]
+    },
     "ApexAssertionsShouldIncludeMessage": {
         severity: SeverityLevel.Moderate,
         tags: [/* NOT RECOMMENDED */    COMMON_TAGS.CATEGORIES.BEST_PRACTICES, COMMON_TAGS.LANGUAGES.APEX]
