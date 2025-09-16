@@ -1,5 +1,18 @@
 [
   {
+    "name": "AnnotationsNamingConventions",
+    "severityLevel": 4,
+    "tags": [
+      "Recommended",
+      "CodeStyle",
+      "Apex"
+    ],
+    "description": "Apex, while case-insensitive, benefits from a consistent code style to improve readability and maintainability. Enforcing PascalCase for annotations aligns with the established conventions and reduces ambiguity - promoting a unified coding standard.",
+    "resourceUrls": [
+      "https://docs.pmd-code.org/pmd-doc-{{PMD_VERSION}}/pmd_rules_apex_codestyle.html#annotationsnamingconventions"
+    ]
+  },
+  {
     "name": "ApexAssertionsShouldIncludeMessage",
     "severityLevel": 3,
     "tags": [
