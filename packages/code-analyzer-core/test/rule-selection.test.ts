@@ -13,36 +13,40 @@ import {
     SeverityLevel
 } from "../src";
 import * as engApi from "@salesforce/code-analyzer-engine-api"
-import {FixedClock} from "@salesforce/code-analyzer-engine-api/utils";
-import {RepeatedRuleNameEnginePlugin, StubEnginePlugin} from "./stubs";
+import {Clock, FixedClock} from "@salesforce/code-analyzer-engine-api/utils";
 import path from "node:path";
-import {changeWorkingDirectoryToPackageRoot, FixedUniqueIdGenerator, SimulatedTempFolder} from "./test-helpers";
+import {changeWorkingDirectoryToPackageRoot, FakeFileSystem, FixedUniqueIdGenerator} from "./test-helpers";
 import {getMessage} from "../src/messages";
 import * as stubs from "./stubs";
+import os from "node:os";
 
 changeWorkingDirectoryToPackageRoot();
 
 describe('Tests for selecting rules', () => {
+    let fileSystem: FakeFileSystem;
     let codeAnalyzer: CodeAnalyzer;
-    let plugin: StubEnginePlugin;
+    let plugin: stubs.StubEnginePlugin;
     let sampleTimestamp: Date;
-    let fixedClock: FixedClock;
-    let simulatedTempFolder: SimulatedTempFolder;
+    let clock: Clock;
 
-    async function setupCodeAnalyzer(codeAnalyzer: CodeAnalyzer) : Promise<void> {
-        plugin = new StubEnginePlugin();
-        await codeAnalyzer.addEnginePlugin(plugin);
+    function createCodeAnalyzer(config: CodeAnalyzerConfig = CodeAnalyzerConfig.withDefaults()): CodeAnalyzer {
+        fileSystem = new FakeFileSystem();
+        codeAnalyzer = new CodeAnalyzer(config, fileSystem);
+        sampleTimestamp = new Date();
+        clock = new FixedClock(sampleTimestamp);
+        codeAnalyzer._setClock(clock);
         codeAnalyzer._setUniqueIdGenerator(new FixedUniqueIdGenerator());
+        return codeAnalyzer;
+    }
+
+    async function setupCodeAnalyzerWithStubPlugin(config: CodeAnalyzerConfig = CodeAnalyzerConfig.withDefaults()): Promise<void> {
+        codeAnalyzer = createCodeAnalyzer(config);
+        plugin = new stubs.StubEnginePlugin();
+        await codeAnalyzer.addEnginePlugin(plugin);
     }
 
     beforeEach(async () => {
-        codeAnalyzer = new CodeAnalyzer(CodeAnalyzerConfig.withDefaults());
-        await setupCodeAnalyzer(codeAnalyzer);
-        sampleTimestamp = new Date();
-        fixedClock = new FixedClock(sampleTimestamp);
-        codeAnalyzer._setClock(fixedClock);
-        simulatedTempFolder = new SimulatedTempFolder();
-        codeAnalyzer._setTempFolder(simulatedTempFolder);
+        await setupCodeAnalyzerWithStubPlugin();
     })
 
     it('When no rule selectors are provided then the Recommended tag is used', async () => {
@@ -188,8 +192,7 @@ describe('Tests for selecting rules', () => {
     });
 
     it('When config contains rule overrides for the selected rules, then the rule selection contains these overrides', async () => {
-        codeAnalyzer = new CodeAnalyzer(CodeAnalyzerConfig.fromFile(path.resolve(__dirname, "test-data", "sample-config-01.yaml")));
-        await setupCodeAnalyzer(codeAnalyzer);
+        await setupCodeAnalyzerWithStubPlugin(CodeAnalyzerConfig.fromFile(path.resolve(__dirname, "test-data", "sample-config-01.yaml")));
 
         const selection: RuleSelection = await codeAnalyzer.selectRules([]);
 
@@ -212,8 +215,7 @@ describe('Tests for selecting rules', () => {
     });
 
     it('When config contains rule overrides, then we can select based on the new tags', async () => {
-        codeAnalyzer = new CodeAnalyzer(CodeAnalyzerConfig.fromFile(path.resolve(__dirname, "test-data", "sample-config-01.yaml")));
-        await setupCodeAnalyzer(codeAnalyzer);
+        await setupCodeAnalyzerWithStubPlugin(CodeAnalyzerConfig.fromFile(path.resolve(__dirname, "test-data", "sample-config-01.yaml")));
 
         const selection: RuleSelection = await codeAnalyzer.selectRules(['SomeNewTag']);
         expect(ruleNamesFor(selection, 'stubEngine1')).toEqual([]);
@@ -230,8 +232,7 @@ describe('Tests for selecting rules', () => {
     });
 
     it('When config contains severity overrides, then we can select based on the severity values', async () => {
-        codeAnalyzer = new CodeAnalyzer(CodeAnalyzerConfig.fromFile(path.resolve(__dirname, "test-data", "sample-config-01.yaml")));
-        await setupCodeAnalyzer(codeAnalyzer);
+        await setupCodeAnalyzerWithStubPlugin(CodeAnalyzerConfig.fromFile(path.resolve(__dirname, "test-data", "sample-config-01.yaml")));
 
         const selection: RuleSelection = await codeAnalyzer.selectRules(['5']);
         expect(ruleNamesFor(selection, 'stubEngine1')).toEqual(['stub1RuleD']);
@@ -240,7 +241,7 @@ describe('Tests for selecting rules', () => {
 
     it('When an engine fails to return its rules, an error is logged and empty results are returned', async () => {
         // ====== TEST SETUP ======
-        codeAnalyzer = new CodeAnalyzer(CodeAnalyzerConfig.withDefaults());
+        codeAnalyzer = createCodeAnalyzer();
         await codeAnalyzer.addEnginePlugin(new stubs.ThrowingEnginePlugin2());
         const logEvents: LogEvent[] = [];
         codeAnalyzer.onEvent(EventType.LogEvent, (event: LogEvent) => logEvents.push(event));
@@ -266,7 +267,7 @@ describe('Tests for selecting rules', () => {
     });
 
     it('When an engine returns multiple rules with the same name, then error', async () => {
-        await codeAnalyzer.addEnginePlugin(new RepeatedRuleNameEnginePlugin());
+        await codeAnalyzer.addEnginePlugin(new stubs.RepeatedRuleNameEnginePlugin());
         await expect(codeAnalyzer.selectRules([])).rejects.toThrow(
             getMessage('EngineReturnedMultipleRulesWithSameName', 'repeatedRuleNameEngine', 'repeatedRule'));
     });
@@ -274,27 +275,21 @@ describe('Tests for selecting rules', () => {
     it('When selectRules is not provided with SelectOptions, then workspace should be undefined for all engines', async () => {
         await codeAnalyzer.selectRules(['all']);
 
-        const tempSubfolders: Set<string> = simulatedTempFolder.getCreatedSubfolders();
-
-        const stubEngine1WorkingFolder: string|undefined = [...tempSubfolders.keys()].find(f => {
-            return f.includes('code-analyzer-describe') && f.includes('stubEngine1');
-        });
-        expect(stubEngine1WorkingFolder).toBeDefined();
+        const expectedWorkingFolder1: string = path.join(os.tmpdir(), 'code-analyzer-0',
+            'rules-' + clock.formatToDateTimeString(), 'stubEngine1');
         const expectedStub1DescribeOptions: engApi.DescribeOptions = {
             logFolder: codeAnalyzer.getConfig().getLogFolder(),
-            workingFolder: stubEngine1WorkingFolder!,
+            workingFolder: expectedWorkingFolder1,
             workspace: undefined
         };
         const stubEngine1: stubs.StubEngine1 = plugin.getCreatedEngine('stubEngine1') as stubs.StubEngine1;
         expect(stubEngine1.describeRulesCallHistory).toEqual([{describeOptions: expectedStub1DescribeOptions}]);
 
-        const stubEngine2WorkingFolder: string|undefined = [...tempSubfolders.keys()].find(f => {
-            return f.includes('code-analyzer-describe') && f.includes('stubEngine2');
-        });
-        expect(stubEngine2WorkingFolder).toBeDefined();
+        const expectedWorkingFolder2: string = path.join(os.tmpdir(), 'code-analyzer-0',
+            'rules-' + clock.formatToDateTimeString(), 'stubEngine2');
         const expectedStub2DescribeOptions: engApi.DescribeOptions = {
             logFolder: codeAnalyzer.getConfig().getLogFolder(),
-            workingFolder: stubEngine2WorkingFolder!,
+            workingFolder: expectedWorkingFolder2,
             workspace: undefined
         };
         const stubEngine2: stubs.StubEngine2 = plugin.getCreatedEngine('stubEngine2') as stubs.StubEngine2;
@@ -441,6 +436,99 @@ describe('Tests for selecting rules', () => {
                 someThirdProperty: false
             }
         });
+    });
+
+    it("When selecting rules, and one or more engines emit an error log, then their working folders are kept (and logged), but others are still removed", async () => {
+        const logEvents: LogEvent[] = [];
+        codeAnalyzer.onEvent(EventType.LogEvent, (event: LogEvent) => logEvents.push(event));
+
+        await codeAnalyzer.selectRules(['all']);
+
+        const expectedRulesWorkingFolderRoot: string = path.join(os.tmpdir(),'code-analyzer-0','rules-' + clock.formatToDateTimeString());
+        const expectedRulesWorkingFolderForStubEngine1: string = path.join(expectedRulesWorkingFolderRoot, 'stubEngine1');
+        const expectedRulesWorkingFolderForStubEngine2: string = path.join(expectedRulesWorkingFolderRoot, 'stubEngine2');
+        const expectedRulesWorkingFolderForStubEngine3: string = path.join(expectedRulesWorkingFolderRoot, 'stubEngine3');
+
+        // First confirm that the root folder and all 3 engine rule working folders were created
+        const createdFolders: string[] = fileSystem.mkdirCallHistory.map(args => args.absPath.toString());
+        expect(createdFolders).toContain(expectedRulesWorkingFolderRoot);
+        expect(createdFolders).toContain(expectedRulesWorkingFolderForStubEngine1);
+        expect(createdFolders).toContain(expectedRulesWorkingFolderForStubEngine2);
+        expect(createdFolders).toContain(expectedRulesWorkingFolderForStubEngine3);
+
+        // Next confirm that the root folder and 2 of the engine working folders were kept while 1 was removed (because all issued errors except for stubEngine1)
+        const removedFolders: string[] = fileSystem.rmCallHistory.map(args => args.absPath.toString());
+        expect(removedFolders).not.toContain(expectedRulesWorkingFolderRoot);
+        expect(removedFolders).toContain(expectedRulesWorkingFolderForStubEngine1);
+        expect(removedFolders).not.toContain(expectedRulesWorkingFolderForStubEngine2);
+        expect(removedFolders).not.toContain(expectedRulesWorkingFolderForStubEngine3);
+
+        // Verify end result
+        expect(fileSystem.files).toContain(expectedRulesWorkingFolderRoot);
+        expect(fileSystem.files).not.toContain(expectedRulesWorkingFolderForStubEngine1);
+        expect(fileSystem.files).toContain(expectedRulesWorkingFolderForStubEngine2);
+        expect(fileSystem.files).toContain(expectedRulesWorkingFolderForStubEngine3);
+
+        // Verify log lines
+        const relevantLogMsgs: string[] = logEvents.filter(e => e.logLevel === LogLevel.Debug &&
+            e.message.includes('the following temporary working folder will not be removed')).map(e => e.message);
+        expect(relevantLogMsgs.filter(m => m.endsWith(expectedRulesWorkingFolderForStubEngine1))).toHaveLength(0);
+        expect(relevantLogMsgs.filter(m => m.endsWith(expectedRulesWorkingFolderForStubEngine2))).toHaveLength(1);
+        expect(relevantLogMsgs.filter(m => m.endsWith(expectedRulesWorkingFolderForStubEngine2))).toHaveLength(1);
+    });
+
+    it("When selecting rules, if no engine errors, then we fully remove the rules working folder", async () => {
+        codeAnalyzer = createCodeAnalyzer();
+        await codeAnalyzer.addEnginePlugin(new stubs.EmptyTagEnginePlugin());
+
+        await codeAnalyzer.selectRules(['all']);
+
+        const expectedRulesWorkingFolderRoot: string = path.join(os.tmpdir(),'code-analyzer-0','rules-' + clock.formatToDateTimeString());
+        const expectedRulesWorkingFolderForEngine: string = path.join(expectedRulesWorkingFolderRoot, 'emptyTags');
+
+        // First confirm that the root folder and the engine folder were created
+        const createdFolders: string[] = fileSystem.mkdirCallHistory.map(args => args.absPath.toString());
+        expect(createdFolders).toContain(expectedRulesWorkingFolderRoot);
+        expect(createdFolders).toContain(expectedRulesWorkingFolderForEngine);
+
+        // Confirm folders were removed
+        const removedFolders: string[] = fileSystem.rmCallHistory.map(args => args.absPath.toString());
+        expect(removedFolders).toContain(expectedRulesWorkingFolderRoot);
+        expect(removedFolders).toContain(expectedRulesWorkingFolderForEngine);
+
+        // Verify end result
+        expect(fileSystem.files).not.toContain(expectedRulesWorkingFolderRoot);
+        expect(fileSystem.files).not.toContain(expectedRulesWorkingFolderForEngine);
+    });
+
+    it("When selecting rules, and an engine emit throws an exception, then we keep its rules working folder and log it", async () => {
+        codeAnalyzer = createCodeAnalyzer();
+        const logEvents: LogEvent[] = [];
+        codeAnalyzer.onEvent(EventType.LogEvent, (event: LogEvent) => logEvents.push(event));
+        await codeAnalyzer.addEnginePlugin(new stubs.ThrowingEnginePlugin2());
+
+        await codeAnalyzer.selectRules(['all']);
+
+        const expectedRulesWorkingFolderRoot: string = path.join(os.tmpdir(),'code-analyzer-0','rules-' + clock.formatToDateTimeString());
+        const expectedRulesWorkingFolderForEngine: string = path.join(expectedRulesWorkingFolderRoot, 'someEngine');
+
+        // First confirm that the root folder and the engine folder were created
+        const createdFolders: string[] = fileSystem.mkdirCallHistory.map(args => args.absPath.toString());
+        expect(createdFolders).toContain(expectedRulesWorkingFolderRoot);
+        expect(createdFolders).toContain(expectedRulesWorkingFolderForEngine);
+
+        // Confirm nothing was removed
+        const removedFolders: string[] = fileSystem.rmCallHistory.map(args => args.absPath.toString());
+        expect(removedFolders).toHaveLength(0);
+
+        // Verify end result
+        expect(fileSystem.files).toContain(expectedRulesWorkingFolderRoot);
+        expect(fileSystem.files).toContain(expectedRulesWorkingFolderForEngine);
+
+        // Verify log lines
+        const relevantLogMsgs: string[] = logEvents.filter(e => e.logLevel === LogLevel.Debug &&
+        e.message.includes('the following temporary working folder will not be removed')).map(e => e.message);
+        expect(relevantLogMsgs.filter(m => m.endsWith(expectedRulesWorkingFolderForEngine))).toHaveLength(1);
     });
 });
 

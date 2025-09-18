@@ -1,14 +1,10 @@
-import * as tmp from 'tmp';
-import * as path from "node:path";
-import crypto from "node:crypto";
+import * as crypto from "node:crypto";
 import * as fs from "node:fs";
-import {promisify} from "node:util";
+import * as os from "node:os";
+import * as path from "node:path";
 
 // THIS FILE CONTAINS UTILITIES WHICH ARE USED INTERNALLY ONLY.
 // None of the following exported interfaces and functions should be exported from the index file.
-
-tmp.setGracefulCleanup();
-const tmpDirAsync = promisify((options: tmp.DirOptions, cb: tmp.DirCallback) => tmp.dir(options, cb));
 
 
 export function toAbsolutePath(fileOrFolder: string): string {
@@ -34,25 +30,82 @@ export class RuntimeUniqueIdGenerator implements UniqueIdGenerator {
     }
 }
 
-export interface TempFolder {
-    getPath(): Promise<string>;
-    createSubfolder(...subfolderPathSegs: string[]): Promise<string>;
+export interface FileSystem {
+    mkdir(absPath: fs.PathLike, options?: fs.MakeDirectoryOptions): Promise<string|undefined>
+
+    mkdtemp(prefix: string): Promise<string>
+
+    rm(absPath: fs.PathLike, options?: fs.RmOptions): Promise<void>
+
+    rmSync(absPath: fs.PathLike, options?: fs.RmOptions): void
 }
 
-export class RuntimeTempFolder implements TempFolder {
-    private rootFolder?: string;
-
-    async getPath(): Promise<string> {
-        if (!this.rootFolder) {
-            this.rootFolder = await tmpDirAsync({keep: false, unsafeCleanup: true});
-        }
-        return this.rootFolder;
+export class RealFileSystem implements FileSystem {
+    mkdir(absPath: fs.PathLike, options?: fs.MakeDirectoryOptions): Promise<string|undefined> {
+        return fs.promises.mkdir(absPath, options);
     }
 
-    async createSubfolder(...subFolderPathSegs: string[]): Promise<string> {
-        const absPathToSubFolder: string = path.join(await this.getPath(), ...subFolderPathSegs);
-        await fs.promises.mkdir(absPathToSubFolder, {recursive: true});
-        return absPathToSubFolder;
+    mkdtemp(prefix: string): Promise<string> {
+        return fs.promises.mkdtemp(prefix);
+    }
+
+    rm(absPath: fs.PathLike, options?: fs.RmOptions): Promise<void> {
+        return fs.promises.rm(absPath, options);
+    }
+
+    rmSync(absPath: fs.PathLike, options?: fs.RmOptions): void {
+        return fs.rmSync(absPath, options);
+    }
+}
+
+export class TempFolder {
+    private readonly fileSystem: FileSystem;
+    private readonly rootFolderPrefix: string;
+    private rootFolder?: string;
+    private relPathsToKeep: Set<string> = new Set();
+
+    constructor(fileSystem: FileSystem = new RealFileSystem(), rootFolderPrefix: string = path.join(os.tmpdir(), 'code-analyzer-')) {
+        this.fileSystem = fileSystem;
+        this.rootFolderPrefix = rootFolderPrefix;
+    }
+
+    async getPath(...subfolderPathSegments: string[]): Promise<string> {
+        if (!this.rootFolder) {
+            this.rootFolder = await this.fileSystem.mkdtemp(this.rootFolderPrefix);
+        }
+        return path.join(this.rootFolder,...subfolderPathSegments);
+    }
+
+    async makeSubfolder(firstSubfolderPathSegment: string, ...otherSubfolderPathSegments: string[]): Promise<string> {
+        const absSubfolderPath: string = await this.getPath(firstSubfolderPathSegment, ...otherSubfolderPathSegments);
+        await this.fileSystem.mkdir(absSubfolderPath, {recursive: true});
+        return absSubfolderPath;
+    }
+
+    markToBeKept(...subfolderPathSegments: string[]): void {
+        this.relPathsToKeep.add(path.join(...subfolderPathSegments));
+        if (subfolderPathSegments.length !== 0) {
+            this.markToBeKept(...subfolderPathSegments.slice(0, -1));
+        }
+    }
+
+    isKept(...subfolderPathSegments: string[]): boolean {
+        return this.relPathsToKeep.has(path.join(...subfolderPathSegments));
+    }
+
+    async removeIfNotKept(...subfolderPathSegments: string[]): Promise<void> {
+        if (!this.isKept(...subfolderPathSegments)) {
+            const absPath: string = await this.getPath(...subfolderPathSegments);
+            await this.fileSystem.rm(absPath, {recursive: true, force: true});
+        }
+    }
+
+    // Note this sync version exists since, we must have a sync version for final removal of the temp folder if done
+    // with process.on('exit',...) because on exit there is no event loop.
+    removeSyncIfNotKept(): void {
+        if (!this.isKept() && this.rootFolder) {
+            this.fileSystem.rmSync(this.rootFolder, {recursive: true, force: true});
+        }
     }
 }
 

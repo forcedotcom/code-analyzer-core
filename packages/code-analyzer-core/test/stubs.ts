@@ -1,4 +1,5 @@
 import * as engApi from "@salesforce/code-analyzer-engine-api"
+import {LogLevel} from "@salesforce/code-analyzer-engine-api"
 import {Workspace} from "../src";
 import path from "node:path";
 
@@ -625,7 +626,7 @@ export class ThrowingEnginePlugin2 extends engApi.EnginePluginV1 {
 /**
  * ThrowingEngine - An engine that throws an error when ran
  */
-class ThrowingEngine extends StubEngine1 {
+export class ThrowingEngine extends StubEngine1 {
     constructor(config: engApi.ConfigObject) {
         super(config);
     }
@@ -712,4 +713,51 @@ class RepeatedRuleNameEngine extends engApi.Engine {
     async runRules(_ruleNames: string[], _runOptions: engApi.RunOptions): Promise<engApi.EngineRunResults> {
         return { violations: [] };
     }
+}
+
+
+export class FlexibleEnginePlugin extends engApi.EnginePluginV1 {
+    private readonly engines: engApi.Engine[];
+    constructor(engines: engApi.Engine[]) {
+        super();
+        this.engines = engines;
+    }
+
+    getAvailableEngineNames(): string[] {
+        return this.engines.map(e => e.getName());
+    }
+
+    createEngine(engineName: string, _resolvedConfig: engApi.ConfigObject): Promise<engApi.Engine> {
+        const engine: engApi.Engine | undefined = this.engines.find(e => e.getName() === engineName);
+        if (engine) {
+            return Promise.resolve(engine);
+        }
+        throw new Error(`No engine with name '${engineName}' found.`);
+    }
+}
+
+export class EngineWithRunMethodThatIssuesErrorLog extends engApi.Engine {
+    getName(): string {
+        return 'engineWithRunMethodThatIssuesErrorLog';
+    }
+
+    describeRules(_describeOptions: engApi.DescribeOptions): Promise<engApi.RuleDescription[]> {
+        return Promise.resolve([{
+            name: 'someRule',
+            severityLevel: 3,
+            tags: [],
+            description: 'someDescription',
+            resourceUrls: []
+        }]);
+    }
+
+    runRules(_ruleNames: string[], _runOptions: engApi.RunOptions): Promise<engApi.EngineRunResults> {
+        this.emitLogEvent(LogLevel.Error, 'Some Error Log');
+        return Promise.resolve({violations: []});
+    }
+
+    getEngineVersion(): Promise<string> {
+        return Promise.resolve('1.0.0');
+    }
+
 }

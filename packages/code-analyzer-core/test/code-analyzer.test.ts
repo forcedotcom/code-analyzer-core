@@ -19,13 +19,13 @@ import {
 } from "../src";
 import * as stubs from "./stubs";
 import {getMessage} from "../src/messages";
-import path from "node:path";
-import {changeWorkingDirectoryToPackageRoot, FixedUniqueIdGenerator, SimulatedTempFolder} from "./test-helpers";
+import * as os from "node:os";
+import * as path from "node:path";
+import {changeWorkingDirectoryToPackageRoot, FakeFileSystem, FixedUniqueIdGenerator} from "./test-helpers";
 import * as engApi from "@salesforce/code-analyzer-engine-api"
-import {FixedClock} from "@salesforce/code-analyzer-engine-api/utils"
+import {Clock, FixedClock} from "@salesforce/code-analyzer-engine-api/utils"
 import {UnexpectedEngineErrorRule} from "../src/rules";
 import {UndefinedCodeLocation} from "../src/results";
-import {StubWorkspace} from "./stubs";
 
 changeWorkingDirectoryToPackageRoot();
 
@@ -37,7 +37,7 @@ describe("Tests for CodeAnalyzer constructor", () => {
         {version: 'v4.0.0'} // 4 is less than 20, but 4 is greater than 2. This is a classic trap for SemVer comparisons.
     ])("When supplied with a Node Version prior to v20, construction fails. Case: $version", ({version}) => {
         // Expect the construction to fail with an error message that mentions v20, the minimum compatible version.
-        expect(() => new CodeAnalyzer(CodeAnalyzerConfig.withDefaults(), version)).toThrow('v20');
+        expect(() => new CodeAnalyzer(CodeAnalyzerConfig.withDefaults(), new FakeFileSystem(), version)).toThrow('v20');
     });
 
     it.each([
@@ -45,7 +45,7 @@ describe("Tests for CodeAnalyzer constructor", () => {
         {version: 'v21.0.0'},
         {version: 'v100.0.0'} // 100 is greater than 20, but 1 is less than 2. This is a classic trap for SemVer comparisons.
     ])('When supplied with a Node Version of v20 or later, construction succeeds. Case: $version"', ({version}) => {
-        expect(new CodeAnalyzer(CodeAnalyzerConfig.withDefaults(), version)).toBeInstanceOf(CodeAnalyzer);
+        expect(new CodeAnalyzer(CodeAnalyzerConfig.withDefaults(), new FakeFileSystem(), version)).toBeInstanceOf(CodeAnalyzer);
     });
 
     it("Constructor prepends the currently-running Node's parent folder to the PATH", () => {
@@ -54,7 +54,7 @@ describe("Tests for CodeAnalyzer constructor", () => {
         const nodeParentDir: string = path.dirname(process.execPath);
 
         // Instantiate a Code Analyzer.
-        new CodeAnalyzer(CodeAnalyzerConfig.withDefaults());
+        new CodeAnalyzer(CodeAnalyzerConfig.withDefaults(), new FakeFileSystem());
 
         // Verify that the PATH was changed.
         expect(process.env.PATH).toEqual(`${nodeParentDir}${path.delimiter}${initialPath}`);
@@ -66,13 +66,13 @@ describe("Tests for getConfig method", () => {
         CodeAnalyzerConfig.withDefaults(),
         CodeAnalyzerConfig.fromObject({log_folder: __dirname})
     ])("When getConfig is called, it returns the exact CodeAnalyzerConfig that was passed to the constructor", (config: CodeAnalyzerConfig) => {
-        const codeAnalyzer: CodeAnalyzer = new CodeAnalyzer(config);
+        const codeAnalyzer: CodeAnalyzer = new CodeAnalyzer(config, new FakeFileSystem());
         expect(codeAnalyzer.getConfig()).toEqual(config);
     });
 });
 
 describe("Tests for the createWorkspace method", () => {
-    const codeAnalyzer = new CodeAnalyzer(CodeAnalyzerConfig.withDefaults());
+    const codeAnalyzer = new CodeAnalyzer(CodeAnalyzerConfig.withDefaults(), new FakeFileSystem());
 
     it('When creating multiple workspaces, then they each get a unique id', async () => {
         const workspace1: Workspace = await codeAnalyzer.createWorkspace([SAMPLE_WORKSPACE_FOLDER]);
@@ -181,8 +181,9 @@ describe("Tests for the createWorkspace method", () => {
 
 describe("Tests for the run method of CodeAnalyzer", () => {
     let sampleRunOptions: RunOptions;
+    let fileSystem: FakeFileSystem;
     let sampleTimestamp: Date;
-    let simulatedTempFolder: SimulatedTempFolder;
+    let clock: Clock;
     let codeAnalyzer: CodeAnalyzer;
     let stubEngine1: stubs.StubEngine1;
     let stubEngine2: stubs.StubEngine2;
@@ -190,13 +191,18 @@ describe("Tests for the run method of CodeAnalyzer", () => {
     const expectedStubEngine1RuleNames: string[] = ['stub1RuleA', 'stub1RuleB', 'stub1RuleC'];
     const expectedStubEngine2RuleNames: string[] = ['stub2RuleA', 'stub2RuleC'];
 
-    beforeEach(async () => {
+    function createCodeAnalyzer(config: CodeAnalyzerConfig = CodeAnalyzerConfig.withDefaults()) : CodeAnalyzer {
+        fileSystem = new FakeFileSystem();
+        codeAnalyzer = new CodeAnalyzer(config, fileSystem);
         sampleTimestamp = new Date();
-        codeAnalyzer = new CodeAnalyzer(CodeAnalyzerConfig.withDefaults());
-        codeAnalyzer._setClock(new FixedClock(sampleTimestamp));
-        simulatedTempFolder = new SimulatedTempFolder();
-        codeAnalyzer._setTempFolder(simulatedTempFolder);
+        clock = new FixedClock(sampleTimestamp);
+        codeAnalyzer._setClock(clock);
         codeAnalyzer._setUniqueIdGenerator(new FixedUniqueIdGenerator());
+        return codeAnalyzer;
+    }
+
+    beforeEach(async () => {
+        codeAnalyzer = createCodeAnalyzer();
         sampleRunOptions = {workspace: await codeAnalyzer.createWorkspace([__dirname])};
         const stubPlugin: stubs.StubEnginePlugin = new stubs.StubEnginePlugin();
         await codeAnalyzer.addEnginePlugin(stubPlugin);
@@ -211,16 +217,11 @@ describe("Tests for the run method of CodeAnalyzer", () => {
                 path.join(SAMPLE_WORKSPACE_FOLDER, 'someFile.cls')
             ]),
         });
-
-        const tempSubfolders: Set<string> = simulatedTempFolder.getCreatedSubfolders();
-
-        const stubEngine1WorkingFolder: string|undefined = [...tempSubfolders.keys()].find(f => {
-            return f.includes('code-analyzer-run') && f.includes('stubEngine1');
-        });
-        expect(stubEngine1WorkingFolder).toBeDefined();
+        const expectedWorkingFolder1: string = path.join(os.tmpdir(), 'code-analyzer-0',
+            'run-' + clock.formatToDateTimeString(), 'stubEngine1');
         const expectedStub1EngineRunOptions: engApi.RunOptions = {
             logFolder: codeAnalyzer.getConfig().getLogFolder(),
-            workingFolder: stubEngine1WorkingFolder!,
+            workingFolder: expectedWorkingFolder1,
             workspace: new engApi.Workspace("FixedId", [SAMPLE_WORKSPACE_FOLDER], [
                 path.join(SAMPLE_WORKSPACE_FOLDER, 'someFile.cls')])
         };
@@ -228,13 +229,11 @@ describe("Tests for the run method of CodeAnalyzer", () => {
         expect(stubEngine1.runRulesCallHistory[0].ruleNames).toEqual(expectedStubEngine1RuleNames);
         expectEquivalentRunOptions(stubEngine1.runRulesCallHistory[0].runOptions, expectedStub1EngineRunOptions);
 
-        const stubEngine2WorkingFolder: string|undefined = [...tempSubfolders.keys()].find(f => {
-            return f.includes('code-analyzer-run') && f.includes('stubEngine2');
-        });
-        expect(stubEngine2WorkingFolder).toBeDefined();
+        const expectedWorkingFolder2: string = path.join(os.tmpdir(), 'code-analyzer-0',
+            'run-' + clock.formatToDateTimeString(), 'stubEngine2');
         const expectedStub2EngineRunOptions: engApi.RunOptions = {
             logFolder: codeAnalyzer.getConfig().getLogFolder(),
-            workingFolder: stubEngine2WorkingFolder!,
+            workingFolder: expectedWorkingFolder2,
             workspace: new engApi.Workspace("FixedId", [SAMPLE_WORKSPACE_FOLDER], [
                 path.join(SAMPLE_WORKSPACE_FOLDER, 'someFile.cls')])
         };
@@ -244,22 +243,19 @@ describe("Tests for the run method of CodeAnalyzer", () => {
     });
 
     it("When the workspace provided is one that is not constructed from CodeAnalyzer's createWorkspace method, then it should still work", async () => {
-        const dummyWorkspace: Workspace = new StubWorkspace();
+        const dummyWorkspace: Workspace = new stubs.StubWorkspace();
         await codeAnalyzer.run(selection, {
             workspace: dummyWorkspace
         });
 
 
-        const tempSubfolders: Set<string> = simulatedTempFolder.getCreatedSubfolders();
-        const stubEngine1WorkingFolder: string|undefined = [...tempSubfolders.keys()].find(f => {
-            return f.includes('code-analyzer-run') && f.includes('stubEngine1');
-        });
-        expect(stubEngine1WorkingFolder).toBeDefined();
+        const expectedWorkingFolder: string = path.join(os.tmpdir(), 'code-analyzer-0',
+            'run-' + clock.formatToDateTimeString(), 'stubEngine1');
         expect(stubEngine1.runRulesCallHistory).toEqual([{
             ruleNames: expectedStubEngine1RuleNames,
             runOptions: {
                 logFolder: codeAnalyzer.getConfig().getLogFolder(),
-                workingFolder: stubEngine1WorkingFolder,
+                workingFolder: expectedWorkingFolder,
                 workspace: new engApi.Workspace(dummyWorkspace.getWorkspaceId(), dummyWorkspace.getRawFilesAndFolders(),
                     dummyWorkspace.getRawTargets())
             }
@@ -270,14 +266,11 @@ describe("Tests for the run method of CodeAnalyzer", () => {
         selection = await codeAnalyzer.selectRules(['stubEngine1:Recommended']);
         await codeAnalyzer.run(selection, sampleRunOptions);
 
-        const tempSubfolders: Set<string> = simulatedTempFolder.getCreatedSubfolders();
-        const stubEngine1WorkingFolder: string|undefined = [...tempSubfolders.keys()].find(f => {
-            return f.includes('code-analyzer-run') && f.includes('stubEngine1');
-        });
-        expect(stubEngine1WorkingFolder).toBeDefined();
+        const expectedWorkingFolder: string = path.join(os.tmpdir(), 'code-analyzer-0',
+            'run-' + clock.formatToDateTimeString(), 'stubEngine1');
         const expectedEngineRunOptions: engApi.RunOptions = {
             logFolder: codeAnalyzer.getConfig().getLogFolder(),
-            workingFolder: stubEngine1WorkingFolder!,
+            workingFolder: expectedWorkingFolder,
             workspace: new engApi.Workspace("FixedId", [__dirname])
         };
         expect(stubEngine1.runRulesCallHistory).toHaveLength(1);
@@ -566,7 +559,7 @@ describe("Tests for the run method of CodeAnalyzer", () => {
     });
 
     it("When an engine throws an exception when running, then a result is returned with a Critical violation of type UnexpectedError", async () => {
-        codeAnalyzer = new CodeAnalyzer(CodeAnalyzerConfig.withDefaults());
+        codeAnalyzer = createCodeAnalyzer();
         await codeAnalyzer.addEnginePlugin(new stubs.ThrowingEnginePlugin());
         selection = await codeAnalyzer.selectRules([]);
         const overallResults: RunResults = await codeAnalyzer.run(selection, sampleRunOptions);
@@ -600,7 +593,7 @@ describe("Tests for the run method of CodeAnalyzer", () => {
         {plugin: new stubs.ThrowingPlugin4() as engApi.EnginePluginV1, msg: 'SomeErrorFromCreateEngine', case: 'error in #createEngine'},
         {plugin: new stubs.ThrowingEnginePlugin2() as engApi.EnginePluginV1, msg: 'SomeErrorFromDescribeRules', case: 'error in #describeRules'}
     ])(`When an engine could not be instantiated, running rules produces a Critical violation of type UninstantiableEngineError. Case: $case`, async ({plugin, msg}) => {
-        codeAnalyzer = new CodeAnalyzer(CodeAnalyzerConfig.withDefaults());
+        codeAnalyzer = createCodeAnalyzer();
         await codeAnalyzer.addEnginePlugin(plugin);
         selection = await codeAnalyzer.selectRules([]);
         const overallResults: RunResults = await codeAnalyzer.run(selection, sampleRunOptions);
@@ -660,7 +653,7 @@ describe("Tests for the run method of CodeAnalyzer", () => {
     });
 
     it('When running, any core level events that are greater than the user defined level should not be emitted', async () => {
-        codeAnalyzer = new CodeAnalyzer(CodeAnalyzerConfig.fromObject({
+        codeAnalyzer = createCodeAnalyzer(CodeAnalyzerConfig.fromObject({
             log_level: LogLevel.Warn
         }));
         const stubPlugin: stubs.StubEnginePlugin = new stubs.StubEnginePlugin();
@@ -759,11 +752,9 @@ describe("Tests for the run method of CodeAnalyzer", () => {
 
 
     it("When running engines, then engine-specific log events are wired up and emitted fully from the engines when using fine level debugging", async () => {
-        codeAnalyzer = new CodeAnalyzer(CodeAnalyzerConfig.fromObject({
+        codeAnalyzer = createCodeAnalyzer(CodeAnalyzerConfig.fromObject({
             log_level: LogLevel.Fine
         }));
-        codeAnalyzer._setClock(new FixedClock(sampleTimestamp));
-        codeAnalyzer._setUniqueIdGenerator(new FixedUniqueIdGenerator());
         const stubPlugin: stubs.StubEnginePlugin = new stubs.StubEnginePlugin();
         await codeAnalyzer.addEnginePlugin(stubPlugin);
 
@@ -796,7 +787,7 @@ describe("Tests for the run method of CodeAnalyzer", () => {
     });
 
     it("When running engines, then engine-specific log events do not get emitted if they are greater than the user defined log level", async () => {
-        codeAnalyzer = new CodeAnalyzer(CodeAnalyzerConfig.fromObject({
+        codeAnalyzer = createCodeAnalyzer(CodeAnalyzerConfig.fromObject({
             log_level: LogLevel.Error
         }));
         const stubPlugin: stubs.StubEnginePlugin = new stubs.StubEnginePlugin();
@@ -839,6 +830,107 @@ describe("Tests for the run method of CodeAnalyzer", () => {
                 someThirdProperty: false
             }
         });
+    });
+
+    it("When running rules, if no engine errors, then we fully remove the run working folder and its associated engine run folders", async () => {
+        await codeAnalyzer.run(selection, sampleRunOptions);
+
+        const expectedRunWorkingFolderRoot: string = path.join(os.tmpdir(),'code-analyzer-0','run-' + clock.formatToDateTimeString());
+        const expectedRunWorkingFolderForStubEngine1: string = path.join(expectedRunWorkingFolderRoot, 'stubEngine1');
+        const expectedRunWorkingFolderForStubEngine2: string = path.join(expectedRunWorkingFolderRoot, 'stubEngine2');
+        const expectedRunWorkingFolderForStubEngine3: string = path.join(expectedRunWorkingFolderRoot, 'stubEngine3');
+
+        // First confirm that the root folder and all 3 engines run working folders were created
+        const createdFolders: string[] = fileSystem.mkdirCallHistory.map(args => args.absPath.toString());
+        expect(createdFolders).toContain(expectedRunWorkingFolderRoot);
+        expect(createdFolders).toContain(expectedRunWorkingFolderForStubEngine1);
+        expect(createdFolders).toContain(expectedRunWorkingFolderForStubEngine2);
+        expect(createdFolders).toContain(expectedRunWorkingFolderForStubEngine3);
+
+        // Confirm that the root folder and all 3 engines run working folders were removed (because none of them errored during run)
+        const removedFolders: string[] = fileSystem.rmCallHistory.map(args => args.absPath.toString());
+        expect(removedFolders).toContain(expectedRunWorkingFolderRoot);
+        expect(removedFolders).toContain(expectedRunWorkingFolderForStubEngine1);
+        expect(removedFolders).toContain(expectedRunWorkingFolderForStubEngine2);
+        expect(removedFolders).toContain(expectedRunWorkingFolderForStubEngine3);
+
+        // Verify end result
+        expect(fileSystem.files).not.toContain(expectedRunWorkingFolderRoot);
+        expect(fileSystem.files).not.toContain(expectedRunWorkingFolderForStubEngine1);
+        expect(fileSystem.files).not.toContain(expectedRunWorkingFolderForStubEngine2);
+        expect(fileSystem.files).not.toContain(expectedRunWorkingFolderForStubEngine3);
+    });
+
+    it("When running rules, if an engine issues an error, then we preserve that run working folder and issue a log pointing to it", async () => {
+        codeAnalyzer = createCodeAnalyzer();
+        const logEvents: LogEvent[] = [];
+        codeAnalyzer.onEvent(EventType.LogEvent, (event: LogEvent) => logEvents.push(event));
+        await codeAnalyzer.addEnginePlugin(new stubs.FlexibleEnginePlugin([new stubs.EngineWithRunMethodThatIssuesErrorLog()]));
+        selection = await codeAnalyzer.selectRules(['all']);
+
+        await codeAnalyzer.run(selection, sampleRunOptions);
+
+        const expectedRunWorkingFolderRoot: string = path.join(os.tmpdir(),'code-analyzer-0','run-' + clock.formatToDateTimeString());
+        const expectedRunWorkingFolderForEngine: string = path.join(expectedRunWorkingFolderRoot, 'engineWithRunMethodThatIssuesErrorLog');
+
+        // First confirm that the root folder and the engine working folder were created
+        const createdFolders: string[] = fileSystem.mkdirCallHistory.map(args => args.absPath.toString());
+        expect(createdFolders).toContain(expectedRunWorkingFolderRoot);
+        expect(createdFolders).toContain(expectedRunWorkingFolderForEngine);
+
+        // Confirm that the root folder and the engine working folder was kept
+        const removedFolders: string[] = fileSystem.rmCallHistory.map(args => args.absPath.toString());
+        expect(removedFolders).not.toContain(expectedRunWorkingFolderRoot);
+        expect(removedFolders).not.toContain(expectedRunWorkingFolderForEngine);
+
+        // Verify end result
+        expect(fileSystem.files).toContain(expectedRunWorkingFolderRoot);
+        expect(fileSystem.files).toContain(expectedRunWorkingFolderForEngine);
+
+        // Verify log lines
+        const relevantLogMsgs: string[] = logEvents.filter(e => e.logLevel === LogLevel.Debug &&
+            e.message.includes('the following temporary working folder will not be removed')).map(e => e.message);
+        expect(relevantLogMsgs.filter(m => m.endsWith(expectedRunWorkingFolderForEngine))).toHaveLength(1);
+    });
+
+    it("When running rules, if an engine throws an exception, then we preserve that run working folder and issue a log pointing to it", async () => {
+        codeAnalyzer = createCodeAnalyzer();
+        const logEvents: LogEvent[] = [];
+        codeAnalyzer.onEvent(EventType.LogEvent, (event: LogEvent) => logEvents.push(event));
+        await codeAnalyzer.addEnginePlugin(new stubs.FlexibleEnginePlugin([
+            new stubs.ThrowingEngine({}),
+            new stubs.StubEngine2({})
+        ]));
+        selection = await codeAnalyzer.selectRules(['all']);
+
+        await codeAnalyzer.run(selection, sampleRunOptions);
+
+        const expectedRunWorkingFolderRoot: string = path.join(os.tmpdir(),'code-analyzer-0','run-' + clock.formatToDateTimeString());
+        const expectedRunWorkingFolderForThrowingEngine: string = path.join(expectedRunWorkingFolderRoot, 'throwingEngine');
+        const expectedRunWorkingFolderForStubEngine2: string = path.join(expectedRunWorkingFolderRoot, 'stubEngine2');
+
+        // First confirm that the root folder and both engine working folders were created
+        const createdFolders: string[] = fileSystem.mkdirCallHistory.map(args => args.absPath.toString());
+        expect(createdFolders).toContain(expectedRunWorkingFolderRoot);
+        expect(createdFolders).toContain(expectedRunWorkingFolderForThrowingEngine);
+        expect(createdFolders).toContain(expectedRunWorkingFolderForStubEngine2);
+
+        // Confirm that the root folder and the throwing working folder were kept but the sub2 engine working folder was removed
+        const removedFolders: string[] = fileSystem.rmCallHistory.map(args => args.absPath.toString());
+        expect(removedFolders).not.toContain(expectedRunWorkingFolderRoot);
+        expect(removedFolders).not.toContain(expectedRunWorkingFolderForThrowingEngine);
+        expect(removedFolders).toContain(expectedRunWorkingFolderForStubEngine2);
+
+        // Verify end result
+        expect(fileSystem.files).toContain(expectedRunWorkingFolderRoot);
+        expect(fileSystem.files).toContain(expectedRunWorkingFolderForThrowingEngine);
+        expect(fileSystem.files).not.toContain(expectedRunWorkingFolderForStubEngine2);
+
+        // Verify log lines
+        const relevantLogMsgs: string[] = logEvents.filter(e => e.logLevel === LogLevel.Debug &&
+            e.message.includes('the following temporary working folder will not be removed')).map(e => e.message);
+        expect(relevantLogMsgs.filter(m => m.endsWith(expectedRunWorkingFolderForThrowingEngine))).toHaveLength(1);
+        expect(relevantLogMsgs.filter(m => m.endsWith(expectedRunWorkingFolderForStubEngine2))).toHaveLength(0);
     });
 });
 
