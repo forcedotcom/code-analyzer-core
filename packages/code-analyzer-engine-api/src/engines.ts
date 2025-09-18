@@ -80,6 +80,15 @@ export abstract class EngineEventEmitter {
     }
 
     /**
+     * Remove a listener callback from one of the events that the engine may directly emit
+     * @param eventType The {@link EventType} that you would like to add a callback for
+     * @param callback The callback function that should be invoked when an associated event is emitted
+     */
+    public removeEventListener<T extends Event>(eventType: T["type"], callback: (event: T) => void): void {
+        this.eventEmitter.off(eventType, callback);
+    }
+
+    /**
      * Method that subclasses can use to emit any {@link Event}.
      * @param event the {@link Event} instance
      * @protected

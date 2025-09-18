@@ -111,6 +111,32 @@ describe('Tests for v1', () => {
             percentComplete: 100.0
         });
     });
+
+    it('Engine removeEventListener should properly remove an event listener that was previously added by onEvent', async () => {
+        const dummyPlugin: EnginePluginV1 = new DummyEnginePluginV1();
+        const dummyEngine: Engine = await dummyPlugin.createEngine('dummy', {});
+        const workspace: Workspace = new Workspace('id', []);
+
+        const sampleEventListener = (event: LogEvent): void => {
+            logEvents.push(event);
+        };
+
+        const logEvents: LogEvent[] = [];
+        dummyEngine.onEvent(EventType.LogEvent, sampleEventListener);
+
+        // First confirm that each call to describeRules emits an event
+        await dummyEngine.describeRules(createDescribeOptions(workspace));
+        expect(logEvents).toHaveLength(1);
+        await dummyEngine.describeRules(createDescribeOptions(workspace));
+        expect(logEvents).toHaveLength(2);
+
+        // Now confirm that after we remove the listener, the event no longer is listened to
+        dummyEngine.removeEventListener(EventType.LogEvent, sampleEventListener);
+        await dummyEngine.describeRules(createDescribeOptions(workspace));
+        expect(logEvents).toHaveLength(2); // Should still be at 2
+        await dummyEngine.describeRules(createDescribeOptions(workspace));
+        expect(logEvents).toHaveLength(2); // Sanity check, and yet it is still at 2
+    });
 });
 
 
