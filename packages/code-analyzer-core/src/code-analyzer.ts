@@ -25,7 +25,9 @@ import {Clock, RealClock} from '@salesforce/code-analyzer-engine-api/utils';
 import {EventEmitter} from "node:events";
 import {CodeAnalyzerConfig, ConfigDescription, EngineOverrides, FIELDS, RuleOverride} from "./config";
 import {
-    EngineProgressAggregator, RuntimeTempFolder,
+    EngineProgressAggregator,
+    FileSystem,
+    RealFileSystem,
     RuntimeUniqueIdGenerator,
     TempFolder,
     toAbsolutePath,
@@ -99,8 +101,8 @@ const MINIMUM_SUPPORTED_NODE = 20;
  */
 export class CodeAnalyzer {
     private readonly config: CodeAnalyzerConfig;
+    private readonly tempFolder: TempFolder;
     private clock: Clock = new RealClock();
-    private tempFolder: TempFolder = new RuntimeTempFolder();
     private uniqueIdGenerator: UniqueIdGenerator = new RuntimeUniqueIdGenerator();
     private readonly eventEmitter: EventEmitter = new EventEmitter();
     private readonly engines: Map<string, engApi.Engine> = new Map();
@@ -110,9 +112,15 @@ export class CodeAnalyzer {
     private readonly rulesCache: Map<string, RuleImpl[]> = new Map();
     private readonly engineRuleDiscoveryProgressAggregator: EngineProgressAggregator = new EngineProgressAggregator();
 
-    constructor(config: CodeAnalyzerConfig, version: string = process.version) {
-        this.validateEnvironment(version);
+    constructor(config: CodeAnalyzerConfig, fileSystem: FileSystem = new RealFileSystem(), nodeVersion: string = process.version) {
+        this.validateEnvironment(nodeVersion);
         this.config = config;
+        this.tempFolder = new TempFolder(fileSystem);
+        /* istanbul ignore next */
+        process.addListener('exit', async () => {
+            // Note that on node exit there is no more event loop, so removal must take place synchronously
+            this.tempFolder.removeSyncIfNotKept();
+        });
     }
 
     private validateEnvironment(version: string): void {
@@ -130,9 +138,6 @@ export class CodeAnalyzer {
     }
     _setUniqueIdGenerator(uniqueIdGenerator: UniqueIdGenerator): void {
         this.uniqueIdGenerator = uniqueIdGenerator;
-    }
-    _setTempFolder(tempFolder: TempFolder): void {
-        this.tempFolder = tempFolder;
     }
 
     /**
@@ -306,20 +311,36 @@ export class CodeAnalyzer {
         //  called a second time before the first call to run hasn't finished. This can occur if someone builds
         //  up a bunch of RunResults promises and then does a Promise.all on them. Otherwise, the progress events may
         //  override each other.
-        const runWorkingFolderName: string = `code-analyzer-run-${this.clock.formatToDateTimeString()}`;
 
         this.emitLogEvent(LogLevel.Debug, getMessage('RunningWithWorkspace', JSON.stringify({
             filesAndFolders: runOptions.workspace.getRawFilesAndFolders(),
             targets: runOptions.workspace.getRawTargets()
         })));
 
-        const runPromises: Promise<EngineRunResults>[] = ruleSelection.getEngineNames().map(
-            async (engineName) => this.runEngineAndValidateResults(engineName, ruleSelection, {
+        const engApiWorkspace: engApi.Workspace = toEngApiWorkspace(runOptions.workspace);
+        const runWorkingFolderName: string = `run-${this.clock.formatToDateTimeString()}`;
+        await this.tempFolder.makeSubfolder(runWorkingFolderName);
+
+        const runPromises: Promise<EngineRunResults>[] = ruleSelection.getEngineNames().map(async (engineName) => {
+            const workingFolder: string = await this.tempFolder.makeSubfolder(runWorkingFolderName, engineName);
+            const engineRunOptions: engApi.RunOptions = {
                 logFolder: this.config.getLogFolder(),
-                workingFolder: await this.tempFolder.createSubfolder(runWorkingFolderName, engineName),
-                workspace: toEngApiWorkspace(runOptions.workspace)
-            }));
+                workingFolder: workingFolder,
+                workspace: engApiWorkspace
+            };
+            const errorCallback: () => void = () => {
+                if (!this.tempFolder.isKept(runWorkingFolderName, engineName)) {
+                    this.emitLogEvent(LogLevel.Debug, getMessage('EngineWorkingFolderKept', engineName, workingFolder));
+                    this.tempFolder.markToBeKept(runWorkingFolderName, engineName);
+                }
+            };
+            const results: EngineRunResults = await this.runEngineAndValidateResults(engineName, ruleSelection, engineRunOptions, errorCallback);
+            await this.tempFolder.removeIfNotKept(runWorkingFolderName, engineName);
+            return results;
+        });
         const engineRunResultsList: EngineRunResults[] = await Promise.all(runPromises);
+
+        await this.tempFolder.removeIfNotKept(runWorkingFolderName);
 
         const runResults: RunResultsImpl = new RunResultsImpl(this.clock);
         for (const engineRunResults of engineRunResultsList) {
@@ -344,32 +365,62 @@ export class CodeAnalyzer {
 
     private async getAllRules(workspace?: Workspace): Promise<RuleImpl[]> {
         const cacheKey: string = workspace ? workspace.getWorkspaceId() : process.cwd();
-        const describeWorkingFolderName: string = `code-analyzer-describe-${this.clock.formatToDateTimeString()}`;
         if (!this.rulesCache.has(cacheKey)) {
             this.engineRuleDiscoveryProgressAggregator.reset(this.getEngineNames());
             const engApiWorkspace: engApi.Workspace | undefined = workspace ? toEngApiWorkspace(workspace) : undefined;
-            const rulePromises: Promise<RuleImpl[]>[] = this.getEngineNames().map(async (engineName) =>
-                this.getAllRulesFor(engineName, {
+            const rulesWorkingFolderName: string = `rules-${this.clock.formatToDateTimeString()}`;
+
+            await this.tempFolder.makeSubfolder(rulesWorkingFolderName);
+
+            const rulePromises: Promise<RuleImpl[]>[] = this.getEngineNames().map(async (engineName) => {
+                const workingFolder: string = await this.tempFolder.makeSubfolder(rulesWorkingFolderName, engineName);
+                const describeOptions: engApi.DescribeOptions = {
                     workspace: engApiWorkspace,
-                    workingFolder: await this.tempFolder.createSubfolder(describeWorkingFolderName, engineName),
+                    workingFolder: workingFolder,
                     logFolder: this.config.getLogFolder()
-                }));
+                };
+                const errorCallback: () => void = () => {
+                    if (!this.tempFolder.isKept(rulesWorkingFolderName, engineName)) {
+                        this.emitLogEvent(LogLevel.Debug, getMessage('EngineWorkingFolderKept', engineName, workingFolder));
+                        this.tempFolder.markToBeKept(rulesWorkingFolderName, engineName);
+                    }
+                };
+                const rules: RuleImpl[] = await this.getAllRulesFor(engineName, describeOptions, errorCallback);
+                await this.tempFolder.removeIfNotKept(rulesWorkingFolderName, engineName);
+                return rules;
+            });
+
             this.rulesCache.set(cacheKey, (await Promise.all(rulePromises)).flat());
+
+            await this.tempFolder.removeIfNotKept(rulesWorkingFolderName);
         }
         return this.rulesCache.get(cacheKey)!;
     }
 
-    private async getAllRulesFor(engineName: string, describeOptions: engApi.DescribeOptions): Promise<RuleImpl[]> {
+    private async getAllRulesFor(engineName: string, describeOptions: engApi.DescribeOptions, errorCallback: () => void): Promise<RuleImpl[]> {
         this.emitLogEvent(LogLevel.Debug, getMessage('GatheringRulesFromEngine', engineName));
+        const invokeErrorCallbackIfErrorIsLoggedFcn = (event: engApi.LogEvent) => {
+            if (event.logLevel === engApi.LogLevel.Error) {
+                errorCallback();
+            }
+        };
+
+        const engine: engApi.Engine = this.getEngine(engineName);
+        engine.onEvent(engApi.EventType.LogEvent, invokeErrorCallbackIfErrorIsLoggedFcn);
+
         let ruleDescriptions: engApi.RuleDescription[] = [];
         try {
-            ruleDescriptions = await this.getEngine(engineName).describeRules(describeOptions);
+            ruleDescriptions = await engine.describeRules(describeOptions);
         } catch (err) {
+            errorCallback();
             this.uninstantiableEnginesMap.set(engineName, err as Error);
             this.emitLogEvent(LogLevel.Error, getMessage('PluginErrorWhenGettingRules', engineName, (err as Error).message + '\n\n' +
                 getMessage('InstructionsToIgnoreErrorAndDisableEngine', engineName)));
             return [];
+        } finally {
+            engine.removeEventListener(engApi.EventType.LogEvent, invokeErrorCallbackIfErrorIsLoggedFcn);
         }
+
         this.emitLogEvent(LogLevel.Debug, getMessage('FinishedGatheringRulesFromEngine', ruleDescriptions.length, engineName));
 
         validateRuleDescriptions(ruleDescriptions, engineName);
@@ -385,20 +436,29 @@ export class CodeAnalyzer {
         this.emitEvent({type: EventType.RuleSelectionProgressEvent, timestamp: this.clock.now(), percentComplete: aggregatedPerc});
     }
 
-    private async runEngineAndValidateResults(engineName: string, ruleSelection: RuleSelection, engineRunOptions: engApi.RunOptions): Promise<EngineRunResults> {
+    private async runEngineAndValidateResults(engineName: string, ruleSelection: RuleSelection, engineRunOptions: engApi.RunOptions, errorCallback: () => void): Promise<EngineRunResults> {
         this.emitEvent<EngineRunProgressEvent>({
             type: EventType.EngineRunProgressEvent, timestamp: this.clock.now(), engineName: engineName, percentComplete: 0
         });
-
         const rulesToRun: string[] = ruleSelection.getRulesFor(engineName).map(r => r.getName());
+
         this.emitLogEvent(LogLevel.Debug, getMessage('RunningEngineWithRules', engineName, JSON.stringify(rulesToRun)));
+        const invokeErrorCallbackIfErrorIsLoggedFcn = (event: engApi.LogEvent) => {
+            if (event.logLevel === engApi.LogLevel.Error) {
+                errorCallback();
+            }
+        };
         const engine: engApi.Engine = this.getEngine(engineName);
+        engine.onEvent(engApi.EventType.LogEvent, invokeErrorCallbackIfErrorIsLoggedFcn);
 
         let apiEngineRunResults: engApi.EngineRunResults;
         try {
             apiEngineRunResults = await engine.runRules(rulesToRun, engineRunOptions);
         } catch (error) {
+            errorCallback();
             return new UnexpectedErrorEngineRunResults(engineName, await engine.getEngineVersion(), error as Error);
+        } finally {
+            engine.removeEventListener(engApi.EventType.LogEvent, invokeErrorCallbackIfErrorIsLoggedFcn);
         }
 
         validateEngineRunResults(engineName, apiEngineRunResults, ruleSelection);

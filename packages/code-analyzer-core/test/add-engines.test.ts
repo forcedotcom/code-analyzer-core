@@ -1,7 +1,7 @@
 import {CodeAnalyzer, CodeAnalyzerConfig, ConfigDescription, ConfigFieldDescription, EventType, LogEvent, LogLevel} from "../src";
 import * as stubs from "./stubs";
 import {getMessage} from "../src/messages";
-import {changeWorkingDirectoryToPackageRoot} from "./test-helpers";
+import {changeWorkingDirectoryToPackageRoot, FakeFileSystem, FixedUniqueIdGenerator} from "./test-helpers";
 import path from "node:path";
 import {StubEngine1, StubEngine2, StubEngine3, ThrowingPlugin2} from "./stubs";
 import * as engApi from "@salesforce/code-analyzer-engine-api";
@@ -13,11 +13,20 @@ const DEFAULT_CONFIG_ROOT: string = process.cwd();
 const TEST_DATA_DIR: string= path.resolve(__dirname, 'test-data');
 
 describe("Tests for adding engines to Code Analyzer", () => {
+    let fileSystem: FakeFileSystem;
     let codeAnalyzer: CodeAnalyzer;
     let logEvents: LogEvent[];
 
+    function createCodeAnalyzer(config: CodeAnalyzerConfig = CodeAnalyzerConfig.withDefaults()): CodeAnalyzer {
+        fileSystem = new FakeFileSystem();
+        codeAnalyzer = new CodeAnalyzer(config, fileSystem);
+        codeAnalyzer._setUniqueIdGenerator(new FixedUniqueIdGenerator());
+        return codeAnalyzer;
+    }
+
     beforeEach(() => {
-        codeAnalyzer = new CodeAnalyzer(CodeAnalyzerConfig.withDefaults());
+        fileSystem = new FakeFileSystem();
+        codeAnalyzer = createCodeAnalyzer();
         logEvents = [];
         codeAnalyzer.onEvent(EventType.LogEvent, (event: LogEvent) => logEvents.push(event));
     });
@@ -51,7 +60,7 @@ describe("Tests for adding engines to Code Analyzer", () => {
     });
 
     it('When adding engine plugin using non-default config then engines are correctly added with engine specific configurations', async () => {
-        codeAnalyzer = new CodeAnalyzer(CodeAnalyzerConfig.fromFile(path.join(TEST_DATA_DIR, 'sample-config-02.Yml')));
+        codeAnalyzer = createCodeAnalyzer(CodeAnalyzerConfig.fromFile(path.join(TEST_DATA_DIR, 'sample-config-02.Yml')));
 
         const stubEnginePlugin: stubs.StubEnginePlugin = new stubs.StubEnginePlugin();
         await codeAnalyzer.addEnginePlugin(stubEnginePlugin);
@@ -136,7 +145,7 @@ describe("Tests for adding engines to Code Analyzer", () => {
         expect(codeAnalyzer.getEngineNames().sort()).toEqual([]);
     })
 
-    it('When calling dynamicallyAddEnginePlugin on a module that has a createEnginePlugin function, then it is used to add create the plugin and then added', async () => {
+    it('When calling dynamicallyAddEnginePlugin on a module that has a createEnginePlugin function, then it is used to create the plugin and then add it', async () => {
         const pluginModulePath: string = require.resolve('./stubs');
         await codeAnalyzer.dynamicallyAddEnginePlugin(pluginModulePath);
         expect(codeAnalyzer.getEngineNames().sort()).toEqual(["stubEngine1", "stubEngine2", "stubEngine3"]);
@@ -160,7 +169,7 @@ describe("Tests for adding engines to Code Analyzer", () => {
     });
 
     it('When an engine is disabled, then addEnginePlugin does not add that particular engine and gives debug log', async () => {
-        codeAnalyzer = new CodeAnalyzer(CodeAnalyzerConfig.fromFile(path.join(TEST_DATA_DIR, 'sample-config-04.yml')));
+        codeAnalyzer = createCodeAnalyzer(CodeAnalyzerConfig.fromFile(path.join(TEST_DATA_DIR, 'sample-config-04.yml')));
         codeAnalyzer.onEvent(EventType.LogEvent, (event: LogEvent) => logEvents.push(event));
         const sampleTimestamp: Date = new Date(2024, 7, 30, 11, 14, 34, 567);
         codeAnalyzer._setClock(new FixedClock(sampleTimestamp));
@@ -210,7 +219,7 @@ describe("Tests for adding engines to Code Analyzer", () => {
     });
 
     it('If an engine configuration value is overridden with a null value, then getEngineConfigDescription should be treated as if it has not been overridden', async () => {
-        codeAnalyzer = new CodeAnalyzer(CodeAnalyzerConfig.fromObject({
+        codeAnalyzer = createCodeAnalyzer(CodeAnalyzerConfig.fromObject({
             engines: {
                 stubEngine1: {
                     misc_value: null
@@ -240,7 +249,7 @@ describe("Tests for adding engines to Code Analyzer", () => {
     });
 
     it('When engine is disabled, we can still access its unresolved user provided properties', async () => {
-        codeAnalyzer = new CodeAnalyzer(CodeAnalyzerConfig.fromFile(path.join(TEST_DATA_DIR, 'sample-config-04.yml')));
+        codeAnalyzer = createCodeAnalyzer(CodeAnalyzerConfig.fromFile(path.join(TEST_DATA_DIR, 'sample-config-04.yml')));
         await codeAnalyzer.addEnginePlugin(new stubs.StubEnginePlugin());
         expect(codeAnalyzer.getEngineConfig('stubEngine1')).toEqual({
             disable_enginE: true,
@@ -249,7 +258,7 @@ describe("Tests for adding engines to Code Analyzer", () => {
     });
 
     it('When engine is disabled, we can still access its config description', async () => {
-        codeAnalyzer = new CodeAnalyzer(CodeAnalyzerConfig.fromFile(path.join(TEST_DATA_DIR, 'sample-config-04.yml')));
+        codeAnalyzer = createCodeAnalyzer(CodeAnalyzerConfig.fromFile(path.join(TEST_DATA_DIR, 'sample-config-04.yml')));
         await codeAnalyzer.addEnginePlugin(new stubs.StubEnginePlugin());
         expect(codeAnalyzer.getEngineConfigDescription('stubEngine1')).toEqual({
             overview: "OverviewForStub1",

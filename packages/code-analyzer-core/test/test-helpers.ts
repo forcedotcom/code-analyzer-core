@@ -1,6 +1,7 @@
 import process from "node:process";
 import path from "node:path";
-import {UniqueIdGenerator, TempFolder} from "../src/utils";
+import {UniqueIdGenerator, FileSystem} from "../src/utils";
+import * as fs from "fs";
 
 export function changeWorkingDirectoryToPackageRoot() {
     let original_working_directory: string;
@@ -11,7 +12,7 @@ export function changeWorkingDirectoryToPackageRoot() {
         // package root directory is instead of the test directory since some IDEs (like IntelliJ) fail to collect
         // code coverage correctly unless this package root directory is used.
         original_working_directory = process.cwd();
-        process.chdir(path.resolve(__dirname,'..'));
+        process.chdir(path.resolve(__dirname, '..'));
     });
     afterAll(() => {
         process.chdir(original_working_directory);
@@ -28,24 +29,45 @@ export class FixedUniqueIdGenerator implements UniqueIdGenerator {
     }
 }
 
-export class SimulatedTempFolder implements TempFolder {
-    private readonly simulatedRoot: string = 'simulatedRoot';
-    private subfolderSet: Set<string> = new Set();
+export class FakeFileSystem implements FileSystem {
+    private counter: number = 0;
+    files: Set<string> = new Set();
 
-    getPath(): Promise<string> {
-        return Promise.resolve(this.simulatedRoot);
+    mkdirCallHistory: {absPath: fs.PathLike, options?: fs.MakeDirectoryOptions}[] = [];
+    mkdir(absPath: fs.PathLike, options?: fs.MakeDirectoryOptions): Promise<string | undefined> {
+        this.mkdirCallHistory.push({absPath, options});
+        this.files.add(absPath.toString());
+        return Promise.resolve(absPath.toString());
     }
 
-    createSubfolder(...subFolderPathSegs: string[]): Promise<string> {
-        const joinedPath: string = path.join(this.simulatedRoot, ...subFolderPathSegs);
-        if (this.subfolderSet.has(joinedPath)) {
-            throw new Error(`Attempted to create path ${joinedPath} twice`);
+    mkdtempCallHistory: {prefix: string}[] = [];
+    mkdtemp(prefix: string): Promise<string> {
+        this.mkdtempCallHistory.push({prefix});
+        const tempDirPath: string = `${prefix}${this.counter++}`;
+        this.files.add(tempDirPath);
+        return Promise.resolve(tempDirPath);
+    }
+
+    rmCallHistory: {absPath: fs.PathLike, options?: fs.RmOptions}[] = [];
+    rm(absPath: fs.PathLike, options?: fs.RmOptions): Promise<void> {
+        this.rmCallHistory.push({absPath, options});
+        this.rmImpl(absPath, options);
+        return Promise.resolve();
+    }
+
+    rmSyncCallHistory: {absPath: fs.PathLike, options?: fs.RmOptions}[] = [];
+    rmSync(absPath: fs.PathLike, options?: fs.RmOptions): void {
+        this.rmSyncCallHistory.push({absPath, options});
+        this.rmImpl(absPath, options);
+    }
+
+    // Implementation shared with both rm and rmSync
+    private rmImpl(absPath: fs.PathLike, options?: fs.RmOptions): void {
+        this.files.delete(absPath.toString());
+        for (const entry of this.files) {
+            if (options?.recursive && entry.startsWith(absPath + path.sep)) {
+                this.files.delete(entry);
+            }
         }
-        this.subfolderSet.add(joinedPath);
-        return Promise.resolve(joinedPath);
-    }
-
-    getCreatedSubfolders(): Set<string> {
-        return this.subfolderSet;
     }
 }

@@ -193,6 +193,8 @@ const MESSAGE_CATALOG : MessageCatalog = {
     EngineReturnedViolationWithCodeLocationWithEndColumnBeforeStartColumnOnSameLine:
         `Engine failure. The engine '%s' returned a violation for rule '%s' that contains a code location with the endLine equal to the startLine and the endColumn %d before the startColumn %d.`,
 
+    EngineWorkingFolderKept:
+        `Since the engine '%s' emitted an error, the following temporary working folder will not be removed: %s`
 }
 
 /**
