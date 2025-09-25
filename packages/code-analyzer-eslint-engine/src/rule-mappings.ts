@@ -1603,18 +1603,70 @@ export const RULE_MAPPINGS: Record<string, {severity: SeverityLevel, tags: strin
     },
     
     // =================================================================================================================
-    //   SLDS/HTML BASE RULES - @salesforce-ux/eslint-plugin-slds
+    //   SLDS - HTML BASE RULES - @salesforce-ux/eslint-plugin-slds
     // =================================================================================================================
     "@salesforce-ux/slds/enforce-bem-usage": {
-        severity: SeverityLevel.Moderate,
+        severity: SeverityLevel.Low,
         tags: [COMMON_TAGS.RECOMMENDED, SLDS, COMMON_TAGS.CATEGORIES.BEST_PRACTICES, COMMON_TAGS.LANGUAGES.HTML]
     },
     "@salesforce-ux/slds/modal-close-button-issue": {
-        severity: SeverityLevel.High,
+        severity: SeverityLevel.Moderate,
         tags: [COMMON_TAGS.RECOMMENDED, SLDS, COMMON_TAGS.CATEGORIES.ERROR_PRONE, COMMON_TAGS.LANGUAGES.HTML]
     },
     "@salesforce-ux/slds/no-deprecated-classes-slds2": {
-        severity: SeverityLevel.High,
+        severity: SeverityLevel.Moderate,
         tags: [COMMON_TAGS.RECOMMENDED, SLDS, COMMON_TAGS.CATEGORIES.ERROR_PRONE, COMMON_TAGS.LANGUAGES.HTML]
-    }
+    },
+
+    // =================================================================================================================
+    //   SLDS - CSS BASE RULES - @salesforce-ux/eslint-plugin-slds
+    // =================================================================================================================
+    "@salesforce-ux/slds/enforce-component-hook-naming-convention": {
+        severity: SeverityLevel.Low,
+        tags: [COMMON_TAGS.RECOMMENDED, SLDS, COMMON_TAGS.CATEGORIES.CODE_STYLE, COMMON_TAGS.LANGUAGES.CSS]
+    },
+    "@salesforce-ux/slds/enforce-sds-to-slds-hooks": {
+        severity: SeverityLevel.Low,
+        tags: [COMMON_TAGS.RECOMMENDED, SLDS, COMMON_TAGS.CATEGORIES.DESIGN, COMMON_TAGS.LANGUAGES.CSS]
+    },
+    "@salesforce-ux/slds/lwc-token-to-slds-hook": {
+        severity: SeverityLevel.Moderate,
+        tags: [COMMON_TAGS.RECOMMENDED, SLDS, COMMON_TAGS.CATEGORIES.ERROR_PRONE, COMMON_TAGS.LANGUAGES.CSS]
+    },
+    "@salesforce-ux/slds/no-deprecated-slds-classes": {
+        severity: SeverityLevel.Moderate,
+        tags: [COMMON_TAGS.RECOMMENDED, SLDS, COMMON_TAGS.CATEGORIES.ERROR_PRONE, COMMON_TAGS.LANGUAGES.CSS]
+    },
+    "@salesforce-ux/slds/no-hardcoded-values-slds2": {
+        severity: SeverityLevel.Low,
+        tags: [COMMON_TAGS.RECOMMENDED, SLDS, COMMON_TAGS.CATEGORIES.DESIGN, COMMON_TAGS.LANGUAGES.CSS]
+    },
+    "@salesforce-ux/slds/no-slds-class-overrides": {
+        severity: SeverityLevel.Low,
+        tags: [COMMON_TAGS.RECOMMENDED, SLDS, COMMON_TAGS.CATEGORIES.BEST_PRACTICES, COMMON_TAGS.LANGUAGES.CSS]
+    },
+    "@salesforce-ux/slds/no-slds-namespace-for-custom-hooks": {
+        severity: SeverityLevel.Low,
+        tags: [COMMON_TAGS.RECOMMENDED, SLDS, COMMON_TAGS.CATEGORIES.BEST_PRACTICES, COMMON_TAGS.LANGUAGES.CSS]
+    },
+    "@salesforce-ux/slds/no-slds-private-var": {
+        severity: SeverityLevel.Moderate,
+        tags: [COMMON_TAGS.RECOMMENDED, SLDS, COMMON_TAGS.CATEGORIES.ERROR_PRONE, COMMON_TAGS.LANGUAGES.CSS]
+    },
+    "@salesforce-ux/slds/no-slds-var-without-fallback": {
+        severity: SeverityLevel.Moderate,
+        tags: [COMMON_TAGS.RECOMMENDED, SLDS, COMMON_TAGS.CATEGORIES.ERROR_PRONE, COMMON_TAGS.LANGUAGES.CSS]
+    },
+    "@salesforce-ux/slds/no-sldshook-fallback-for-lwctoken": {
+        severity: SeverityLevel.Low,
+        tags: [COMMON_TAGS.RECOMMENDED, SLDS, COMMON_TAGS.CATEGORIES.BEST_PRACTICES, COMMON_TAGS.LANGUAGES.CSS]
+    },
+    "@salesforce-ux/slds/no-unsupported-hooks-slds2": {
+        severity: SeverityLevel.Moderate,
+        tags: [COMMON_TAGS.RECOMMENDED, SLDS, COMMON_TAGS.CATEGORIES.ERROR_PRONE, COMMON_TAGS.LANGUAGES.CSS]
+    },
+    "@salesforce-ux/slds/reduce-annotations": {
+        severity: SeverityLevel.Low,
+        tags: [COMMON_TAGS.RECOMMENDED, SLDS, COMMON_TAGS.CATEGORIES.BEST_PRACTICES, COMMON_TAGS.LANGUAGES.CSS]
+    },
 }

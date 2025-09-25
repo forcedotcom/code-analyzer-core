@@ -203,7 +203,7 @@ describe('Tests for the ESLintEnginePlugin', () => {
         };
         await expect(callCreateEngineConfig(plugin, userProvidedOverrides)).rejects.toThrow(
             getMessageFromCatalog(SHARED_MESSAGE_CATALOG, 'ConfigObjectContainsInvalidKey', 'engines.eslint.file_extensions',
-                'oops', '["html","javascript","other","typescript"]'));
+                'oops', '["css","html","javascript","other","typescript"]'));
     });
 
     it('When a valid file_extensions.javascript value is passed to createEngineConfig, then it is set on the config', async () => {
@@ -251,6 +251,30 @@ describe('Tests for the ESLintEnginePlugin', () => {
         await expect(callCreateEngineConfig(plugin, userProvidedOverrides)).rejects.toThrow(
             getMessageFromCatalog(SHARED_MESSAGE_CATALOG, 'ConfigValueMustBeOfType',
                 'engines.eslint.file_extensions.html[0]', 'string', 'boolean'));
+    });
+
+    it('When a valid file_extensions.css value is passed to createEngineConfig, then it is set on the config', async () => {
+        const userProvidedOverrides: ConfigObject = {
+            file_extensions: {
+                css: ['.css', '.scss']
+            }
+        };
+        const resolvedConfig: ConfigObject = await callCreateEngineConfig(plugin, userProvidedOverrides);
+        expect(resolvedConfig['file_extensions']).toEqual({
+            ...DEFAULT_CONFIG.file_extensions,
+            css: ['.css', '.scss']
+        });
+    });
+
+    it('When file_extensions.css is invalid, then createEngineConfig errors', async () => {
+        const userProvidedOverrides: ConfigObject = {
+            file_extensions: {
+                css: [false]
+            }
+        };
+        await expect(callCreateEngineConfig(plugin, userProvidedOverrides)).rejects.toThrow(
+            getMessageFromCatalog(SHARED_MESSAGE_CATALOG, 'ConfigValueMustBeOfType',
+                'engines.eslint.file_extensions.css[0]', 'string', 'boolean'));
     });
 
     it('When a valid file_extensions.typescript value is passed to createEngineConfig, then it is set on the config', async () => {
