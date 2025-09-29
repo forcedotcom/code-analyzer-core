@@ -51,7 +51,7 @@ const MESSAGE_CATALOG : { [key: string]: string } = {
         `rules, add them under the 'javascript' language. To associate file extensions to the standard TypeScript\n` +
         `rules or custom TypeScript-based rules, add them under the 'typescript' language.\n` +
         `To associate file extensions to standard LWC HTML rules, Component (CMP) rules, or custom HTML rules, add them\n` +
-        `under the 'html' language. To associate file extensions to CSS or SCSS rules, add them under the 'css' language.\n `+
+        `under the 'html' language. To associate file extensions to CSS or SCSS rules, add them under the 'css' language.\n`+
         `To allow for the discovery of custom rules that are associated with any other language,\n` +
         `then add the associated file extensions under the 'other' language.`,
 
