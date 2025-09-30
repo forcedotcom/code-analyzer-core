@@ -1,5 +1,6 @@
 import * as engApi from "@salesforce/code-analyzer-engine-api";
 import { getMessage } from "./messages";
+import { Selector } from "./selectors";
 import { OutputFormat, RuleSelectionFormatter } from "./output-format";
 
 /**
@@ -104,7 +105,7 @@ export class RuleImpl implements Rule {
         return this.ruleDesc.tags;
     }
 
-    matchesRuleSelector(ruleSelector: string): boolean {
+    matchesRuleSelector(ruleSelector: Selector): boolean {
         const sevNumber: number = this.getSeverityLevel().valueOf();
         const sevName: string = SeverityLevel[sevNumber];
         const selectables: string[] = [
@@ -115,11 +116,7 @@ export class RuleImpl implements Rule {
             String(sevNumber),
             ...this.getTags().map(t => t.toLowerCase())
         ]
-        for (const selectorPart of ruleSelector.toLowerCase().split(':')) {
-            const partMatched: boolean = selectables.some(s => s == selectorPart);
-            if (!partMatched) return false;
-        }
-        return true;
+        return ruleSelector.matchesSelectables(selectables);
     }
 }
 
