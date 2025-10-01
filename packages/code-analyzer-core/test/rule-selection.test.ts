@@ -181,7 +181,7 @@ describe('Tests for selecting rules', () => {
             stubEngine2Rules: ['stub2RuleC']
         },
         {
-            selector: 'Recommended,3:Performance', // Equivalent to "(Recommended,4):Performance", or "(Recommended:Performance),(4:Performance)"
+            selector: 'Recommended,3:Performance', // Equivalent to "(Recommended,3):Performance", or "(Recommended:Performance),(3:Performance)"
             engines: ['stubEngine1'],
             stubEngine1Rules: ['stub1RuleC', 'stub1RuleE'],
             stubEngine2Rules: []
