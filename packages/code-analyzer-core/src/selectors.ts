@@ -26,7 +26,7 @@ export function toSelector(selectorString: string): Selector {
                 throw new Error(getMessage('SelectorLooksIncorrect', selectorString));
             }
             return new SimpleSelector(selectorString);
-        } else if (lastComma > lastColon) {
+        } else if (lastComma !== -1) {
             const left: string = selectorString.slice(0, lastComma);
             const right: string = selectorString.slice(lastComma + 1);
             return toComplexSelector(left, right, ',');

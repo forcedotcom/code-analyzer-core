@@ -175,23 +175,40 @@ describe('Tests for selecting rules', () => {
 
     it.each([
         {
-            selector: 'Recommended:Performance,2', // Equivalent to "(Recommended:Performance),2", or "(Recommended,2):(Performance,2)"
+            selector: 'Recommended:Performance,2', // Equivalent to "(Recommended:Performance),2"
             engines: ['stubEngine1', 'stubEngine2'],
             stubEngine1Rules: ['stub1RuleB', 'stub1RuleC'],
-            stubEngine2Rules: ['stub2RuleC']
+            stubEngine2Rules: ['stub2RuleC'],
+            stubEngine3Rules: []
         },
         {
-            selector: 'Recommended,3:Performance', // Equivalent to "(Recommended,3):Performance", or "(Recommended:Performance),(3:Performance)"
-            engines: ['stubEngine1'],
-            stubEngine1Rules: ['stub1RuleC', 'stub1RuleE'],
-            stubEngine2Rules: []
+            selector: '2,Recommended:Performance', // Equivalent to "2,(Recommended:Performance),2"
+            engines: ['stubEngine1', 'stubEngine2'],
+            stubEngine1Rules: ['stub1RuleB', 'stub1RuleC'],
+            stubEngine2Rules: ['stub2RuleC'],
+            stubEngine3Rules: []
+        },
+        {
+            selector: 'Recommended,3:Performance', // Equivalent to "Recommended,(3:Performance)"
+            engines: ['stubEngine1', 'stubEngine2', 'stubEngine3'],
+            stubEngine1Rules: ['stub1RuleA', 'stub1RuleB', 'stub1RuleC', 'stub1RuleE'],
+            stubEngine2Rules: ['stub2RuleA', 'stub2RuleC'],
+            stubEngine3Rules: ['stub3RuleA']
+        },
+        {
+            selector: '3:Performance,Recommended', // Equivalent to "(3:Performance),Recommended"
+            engines: ['stubEngine1', 'stubEngine2', 'stubEngine3'],
+            stubEngine1Rules: ['stub1RuleA', 'stub1RuleB', 'stub1RuleC', 'stub1RuleE'],
+            stubEngine2Rules: ['stub2RuleA', 'stub2RuleC'],
+            stubEngine3Rules: ['stub3RuleA']
         }
-    ])('In the absence of parentheses, colons and commas are resolved from left to right. Case: $selector', async ({selector, engines, stubEngine1Rules, stubEngine2Rules}) => {
+    ])('In the absence of parenthesis-defined ordering, commas are applied after colons. Case: $selector', async ({selector, engines, stubEngine1Rules, stubEngine2Rules, stubEngine3Rules}) => {
         const selection: RuleSelection = await codeAnalyzer.selectRules([selector]);
 
         expect(selection.getEngineNames()).toEqual(engines);
         expect(ruleNamesFor(selection, 'stubEngine1')).toEqual(stubEngine1Rules);
         expect(ruleNamesFor(selection, 'stubEngine2')).toEqual(stubEngine2Rules);
+        expect(ruleNamesFor(selection, 'stubEngine3')).toEqual(stubEngine3Rules);
     });
 
     it.each([
