@@ -5,13 +5,19 @@ export interface Selector {
 }
 
 export function toSelector(selectorString: string): Selector {
+    // We parse the selector back-to-front, so that the front-most selectors end up at the bottom of the tree we create
+    // and therefore get resolved first.
     if (selectorString === '') {
+        // ERROR CASE: The selector is empty. Possible if you do something like "()" or "a:()".
         throw new Error(getMessage("SelectorCannotBeEmpty"));
     } else if (selectorString.endsWith(')')) {
+        // If the selector ends in close-paren, then we need to find the open-paren that matches it.
         const correspondingOpenParen: number = identifyCorrespondingOpenParen(selectorString);
         if (correspondingOpenParen === 0) {
+            // RECURSIVE CASE: The entire selector is wrapped in parens. Pop them off and call recursively.
             return toSelector(selectorString.slice(1, -1))
         } else {
+            // RECURSIVE CASE: The open-paren is somewhere in the middle of the selector and accompanied by an operator.
             const left: string = selectorString.slice(0, correspondingOpenParen - 1);
             const right: string = selectorString.slice(correspondingOpenParen);
             const op: string = selectorString[correspondingOpenParen - 1];
@@ -21,12 +27,16 @@ export function toSelector(selectorString: string): Selector {
         const lastComma: number = selectorString.lastIndexOf(',');
         const lastColon: number = selectorString.lastIndexOf(':');
 
+        // BASE CASE: The selector contains no commas or colons.
         if (lastComma === -1 && lastColon === -1) {
+            // Parens only make sense in conjunction with operators, so if we find any, the selector is malformed.
             if (selectorString.includes(')') || selectorString.includes('(')) {
                 throw new Error(getMessage('SelectorLooksIncorrect', selectorString));
             }
             return new SimpleSelector(selectorString);
         } else if (lastComma !== -1) {
+            // Commas resolve before colons, so that "x,a:b" and "a:b,x" both resolve equivalently the combination of
+            // "x" and "a:b".
             const left: string = selectorString.slice(0, lastComma);
             const right: string = selectorString.slice(lastComma + 1);
             return toComplexSelector(left, right, ',');
