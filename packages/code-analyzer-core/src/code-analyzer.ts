@@ -22,6 +22,7 @@ import {
 import {getMessage} from "./messages";
 import * as engApi from "@salesforce/code-analyzer-engine-api"
 import {Clock, RealClock} from '@salesforce/code-analyzer-engine-api/utils';
+import {Selector, toSelector} from "./selectors";
 import {EventEmitter} from "node:events";
 import {CodeAnalyzerConfig, ConfigDescription, EngineOverrides, FIELDS, RuleOverride} from "./config";
 import {
@@ -288,11 +289,13 @@ export class CodeAnalyzer {
         this.emitEvent({type: EventType.RuleSelectionProgressEvent, timestamp: this.clock.now(), percentComplete: 0});
 
         selectors = selectors.length > 0 ? selectors : [engApi.COMMON_TAGS.RECOMMENDED];
+        const selectorObjects: Selector[] = selectors.map(toSelector);
+
         const allRules: RuleImpl[] = await this.getAllRules(selectOptions?.workspace);
 
         const ruleSelection: RuleSelectionImpl = new RuleSelectionImpl();
         for (const rule of allRules) {
-            if (selectors.some(s => rule.matchesRuleSelector(s))) {
+            if (selectorObjects.some(o => rule.matchesRuleSelector(o))) {
                 ruleSelection.addRule(rule);
             }
         }

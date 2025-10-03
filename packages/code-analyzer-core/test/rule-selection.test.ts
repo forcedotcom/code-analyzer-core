@@ -149,12 +149,21 @@ describe('Tests for selecting rules', () => {
         expect(ruleNamesFor(selection7,'stubEngine2')).toEqual([])
     });
 
-    it('When multiple selectors are provided, then they act as a union', async () => {
-        const selection: RuleSelection = await codeAnalyzer.selectRules([
-            'Security', // a tag
-            'stubEngine2', // an engine name
-            'stub1RuleD' // a rule name
-        ]);
+    it.each([
+        {
+            case: 'multiple selectors are provided',
+            selectors: [
+                'Security', // a tag
+                'stubEngine2', // an engine name
+                'stub1RuleD' // a rule name
+            ]
+        },
+        {
+            case: 'using a comma to join two rule selectors',
+            selectors: ['Security,stubEngine2,stub1RuleD']
+        }
+    ])('When $case, then it acts like a union', async ({selectors}) => {
+        const selection: RuleSelection = await codeAnalyzer.selectRules(selectors);
 
         expect(selection.getEngineNames()).toEqual(['stubEngine1', 'stubEngine2']);
         expect(ruleNamesFor(selection, 'stubEngine1')).toEqual(['stub1RuleB', 'stub1RuleD']);
@@ -164,13 +173,92 @@ describe('Tests for selecting rules', () => {
         expect(await codeAnalyzer.selectRules(['all', 'Performance', 'DoesNotExist'])).toEqual(await codeAnalyzer.selectRules(['all']));
     });
 
-    it('When colons are used and multiple selectors are provided then we get correct union and intersection behavior', async () => {
-        const selection: RuleSelection = await codeAnalyzer.selectRules(['Recommended:Performance', 'stubEngine2:2', 'stubEngine2:DoesNotExist']);
+    it.each([
+        {
+            selector: 'Recommended:Performance,2', // Equivalent to "(Recommended:Performance),2"
+            engines: ['stubEngine1', 'stubEngine2'],
+            stubEngine1Rules: ['stub1RuleB', 'stub1RuleC'],
+            stubEngine2Rules: ['stub2RuleC'],
+            stubEngine3Rules: []
+        },
+        {
+            selector: '2,Recommended:Performance', // Equivalent to "2,(Recommended:Performance),2"
+            engines: ['stubEngine1', 'stubEngine2'],
+            stubEngine1Rules: ['stub1RuleB', 'stub1RuleC'],
+            stubEngine2Rules: ['stub2RuleC'],
+            stubEngine3Rules: []
+        },
+        {
+            selector: 'Recommended,3:Performance', // Equivalent to "Recommended,(3:Performance)"
+            engines: ['stubEngine1', 'stubEngine2', 'stubEngine3'],
+            stubEngine1Rules: ['stub1RuleA', 'stub1RuleB', 'stub1RuleC', 'stub1RuleE'],
+            stubEngine2Rules: ['stub2RuleA', 'stub2RuleC'],
+            stubEngine3Rules: ['stub3RuleA']
+        },
+        {
+            selector: '3:Performance,Recommended', // Equivalent to "(3:Performance),Recommended"
+            engines: ['stubEngine1', 'stubEngine2', 'stubEngine3'],
+            stubEngine1Rules: ['stub1RuleA', 'stub1RuleB', 'stub1RuleC', 'stub1RuleE'],
+            stubEngine2Rules: ['stub2RuleA', 'stub2RuleC'],
+            stubEngine3Rules: ['stub3RuleA']
+        }
+    ])('In the absence of parenthesis-defined ordering, commas are applied after colons. Case: $selector', async ({selector, engines, stubEngine1Rules, stubEngine2Rules, stubEngine3Rules}) => {
+        const selection: RuleSelection = await codeAnalyzer.selectRules([selector]);
+
+        expect(selection.getEngineNames()).toEqual(engines);
+        expect(ruleNamesFor(selection, 'stubEngine1')).toEqual(stubEngine1Rules);
+        expect(ruleNamesFor(selection, 'stubEngine2')).toEqual(stubEngine2Rules);
+        expect(ruleNamesFor(selection, 'stubEngine3')).toEqual(stubEngine3Rules);
+    });
+
+    it.each([
+        {
+            case: 'colons are used and multiple selectors are provided',
+            selectors: ['Recommended:Performance', 'stubEngine2:2', 'stubEngine2:DoesNotExist']
+        },
+        {
+            case: 'colons and commas are nested via parentheses',
+            selectors: ['(Recommended:Performance),(stubEngine2:2),(stubEngine2:DoesNotExist)']
+        }
+    ])('When $case, then we get correct union and intersection behavior', async ({selectors}) => {
+        const selection: RuleSelection = await codeAnalyzer.selectRules(selectors);
 
         expect(selection.getEngineNames()).toEqual(['stubEngine1', 'stubEngine2']);
         expect(ruleNamesFor(selection, 'stubEngine1')).toEqual(['stub1RuleC']);
         expect(ruleNamesFor(selection, 'stubEngine2')).toEqual(['stub2RuleC']);
     });
+
+    it('Parentheses cannot be empty', async () => {
+        await expect(codeAnalyzer.selectRules(['()'])).rejects.toThrow('empty');
+    });
+
+    it('Redundant parentheses are accepted', async () => {
+        const selection: RuleSelection = await codeAnalyzer.selectRules(['((((((((stub1RuleC))))))))']);
+
+        expect(selection.getEngineNames()).toEqual(['stubEngine1']);
+        expect(ruleNamesFor(selection, 'stubEngine1')).toEqual(['stub1RuleC']);
+    })
+
+    it.each([
+        {selector: 'a,b)'},
+        {selector: '(a,b'},
+        {selector: '((a,b)'},
+        {selector: '(a),b)'},
+        {selector: ')a,b)'},
+        {selector: 'a,b('}
+    ])('When parentheses are unbalanced, an error is thrown. Case: $selector', async ({selector}) => {
+        await expect(codeAnalyzer.selectRules([selector])).rejects.toThrow('looks incorrect');
+    });
+
+    it.each([
+        {selector: '2(a,b)'},
+        {selector: '(a,b)2'},
+        {selector: '2(a:b)'},
+        {selector: '(a:b)2'}
+    ])('When parentheses are not accompanied by valid joiners, an error is thrown. Case: $selector', async ({selector}) => {
+        await expect(codeAnalyzer.selectRules([selector])).rejects.toThrow('looks incorrect');
+    });
+
 
     it('When selecting rules based on severity names instead of severity number, then we correctly return the rules', async () => {
         const selection: RuleSelection = await codeAnalyzer.selectRules(['High', 'Recommended:Low']);

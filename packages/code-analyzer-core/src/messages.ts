@@ -163,8 +163,14 @@ const MESSAGE_CATALOG : MessageCatalog = {
     RuleDoesNotExistInSelection:
         `No rule with name '%s' and engine '%s' exists among the selected rules.`,
 
+    SelectorCannotBeEmpty:
+        `Rule selectors can't be empty strings.`,
+
+    SelectorLooksIncorrect:
+        `Rule selector '%s' looks incorrect. Make sure that parentheses are balanced and that all subselectors are joined by a colon (:) or comma (,).`,
+
     EngineRunResultsMissing:
-        `Could to get results for engine '%s' since they are missing from the overall run results. Most likely the engine did not run.`,
+        `Couldn't get results for engine '%s' since they're missing from the overall run results. Most likely the engine didn't run.`,
 
     EngineReturnedMultipleRulesWithSameName:
         `Engine failure. The engine '%s' returned more than one rule with the name '%s'.`,
