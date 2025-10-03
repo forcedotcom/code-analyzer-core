@@ -213,6 +213,44 @@ describe('Tests for selecting rules', () => {
 
     it.each([
         {
+            selector: '(2,3):stubEngine1',
+            engines: ['stubEngine1'],
+            stubEngine1Rules: ['stub1RuleB', 'stub1RuleC', 'stub1RuleE'],
+            stubEngine2Rules: [],
+            stubEngine3Rules: []
+        },
+        {
+            selector: 'stubEngine1:(2,3)',
+            engines: ['stubEngine1'],
+            stubEngine1Rules: ['stub1RuleB', 'stub1RuleC', 'stub1RuleE'],
+            stubEngine2Rules: [],
+            stubEngine3Rules: []
+        },
+        {
+            selector: '(stubEngine1:2),3',
+            engines: ['stubEngine1', 'stubEngine2', 'stubEngine3'],
+            stubEngine1Rules: ['stub1RuleB', 'stub1RuleC', 'stub1RuleE'],
+            stubEngine2Rules: ['stub2RuleA'],
+            stubEngine3Rules: ['stub3RuleA']
+        },
+        {
+            selector: '3,(stubEngine1:2)',
+            engines: ['stubEngine1', 'stubEngine2', 'stubEngine3'],
+            stubEngine1Rules: ['stub1RuleB', 'stub1RuleC', 'stub1RuleE'],
+            stubEngine2Rules: ['stub2RuleA'],
+            stubEngine3Rules: ['stub3RuleA']
+        }
+    ])('Operations within parentheses resolve before operations outside them. Case: $selector', async ({selector, engines, stubEngine1Rules, stubEngine2Rules, stubEngine3Rules}) => {
+        const selection: RuleSelection = await codeAnalyzer.selectRules([selector]);
+
+        expect(selection.getEngineNames()).toEqual(engines);
+        expect(ruleNamesFor(selection, 'stubEngine1')).toEqual(stubEngine1Rules);
+        expect(ruleNamesFor(selection, 'stubEngine2')).toEqual(stubEngine2Rules);
+        expect(ruleNamesFor(selection, 'stubEngine3')).toEqual(stubEngine3Rules);
+    })
+
+    it.each([
+        {
             case: 'colons are used and multiple selectors are provided',
             selectors: ['Recommended:Performance', 'stubEngine2:2', 'stubEngine2:DoesNotExist']
         },
