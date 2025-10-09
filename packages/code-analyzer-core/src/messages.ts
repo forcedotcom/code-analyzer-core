@@ -167,7 +167,10 @@ const MESSAGE_CATALOG : MessageCatalog = {
         `Rule selectors can't be empty strings.`,
 
     SelectorLooksIncorrect:
-        `Rule selector '%s' looks incorrect. Make sure that parentheses are balanced and that all subselectors are joined by a colon (:) or comma (,).`,
+        `Rule selector '%s' looks incorrect. Make sure that the expression contains no whitespace, the parentheses are balanced, and that all subselectors are joined by a colon (:) or comma (,).`,
+
+    SelectorStartsOrEndsWithOperator:
+        `Rule selectors should not start or end with an operator. Selector: '%s'`,
 
     EngineRunResultsMissing:
         `Couldn't get results for engine '%s' since they're missing from the overall run results. Most likely the engine didn't run.`,

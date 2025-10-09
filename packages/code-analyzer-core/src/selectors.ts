@@ -5,22 +5,29 @@ export interface Selector {
 }
 
 export function toSelector(selectorString: string): Selector {
-    const trimmedSelector: string = selectorString.trim();
-
-    if (trimmedSelector === '') {
+    if (selectorString.includes(' ')) {
+        // ERROR CASE: The selector contains whitespace.
+        throw new Error(getMessage("SelectorLooksIncorrect", selectorString));
+    } else if (selectorString === '') {
         // ERROR CASE: The selector is empty. Possible if you do something like "()" or "a:()".
         throw new Error(getMessage("SelectorCannotBeEmpty"));
+    } else if (new RegExp('^[,:]').test(selectorString) || new RegExp('[,:]$').test(selectorString)) {
+        // ERROR CASE: The selector cannot start with a binary operator, because that's nonsense.
+        throw new Error(getMessage("SelectorStartsOrEndsWithOperator", selectorString));
     }
 
     let commaIdx: number|null = null;
     let colonIdx: number|null = null;
     let parenBalance: number = 0;
-    for (let i = 0; i < trimmedSelector.length; i++) {
-        const char: string = trimmedSelector[i];
+    let hasParens: boolean = false;
+    for (let i = 0; i < selectorString.length; i++) {
+        const char: string = selectorString[i];
         if (char === '(') {
             parenBalance += 1;
+            hasParens = true;
         } else if (char === ')') {
             parenBalance -= 1;
+            hasParens = true;
             // If our parenthesis balance is negative, it means there are more close-parens than open-parens, which is a problem.
             if (parenBalance < 0) {
                 throw new Error(getMessage("SelectorLooksIncorrect", selectorString));
@@ -45,23 +52,23 @@ export function toSelector(selectorString: string): Selector {
 
     // Commas trump colons, so if we have a comma, split along that.
     if (commaIdx != null) {
-        const left: string = trimmedSelector.slice(0, commaIdx);
-        const right: string = trimmedSelector.slice(commaIdx + 1);
+        const left: string = selectorString.slice(0, commaIdx);
+        const right: string = selectorString.slice(commaIdx + 1);
         return new OrSelector(toSelector(left), toSelector(right));
     } else if (colonIdx != null) {
         // If there are colons but no commas, split along the first colon.
-        const left: string = trimmedSelector.slice(0, colonIdx);
-        const right: string = trimmedSelector.slice(colonIdx + 1);
+        const left: string = selectorString.slice(0, colonIdx);
+        const right: string = selectorString.slice(colonIdx + 1);
         return new AndSelector(toSelector(left), toSelector(right));
-    } else if (trimmedSelector[0] === '(' && trimmedSelector[trimmedSelector.length - 1] === ')') {
+    } else if (selectorString[0] === '(' && selectorString[selectorString.length - 1] === ')') {
         // If the first and last character are parentheses, then pop those off and run again.
-        return toSelector(trimmedSelector.slice(1, trimmedSelector.length - 1));
-    } else if (trimmedSelector.includes('(') || trimmedSelector.includes(')')) {
+        return toSelector(selectorString.slice(1, selectorString.length - 1));
+    } else if (hasParens) {
         // There shouldn't be parentheses in the middle of a selector that has no operators.
         throw new Error(getMessage('SelectorLooksIncorrect', selectorString));
     } else {
         // A string with no operators or problems is just a simple string-selector.
-        return new SimpleSelector(trimmedSelector);
+        return new SimpleSelector(selectorString);
     }
 }
 
