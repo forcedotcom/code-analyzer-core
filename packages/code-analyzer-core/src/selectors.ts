@@ -5,81 +5,63 @@ export interface Selector {
 }
 
 export function toSelector(selectorString: string): Selector {
-    // We parse the selector back-to-front, so that the front-most selectors end up at the bottom of the tree we create
-    // and therefore get resolved first.
-    if (selectorString === '') {
+    const trimmedSelector: string = selectorString.trim();
+
+    if (trimmedSelector === '') {
         // ERROR CASE: The selector is empty. Possible if you do something like "()" or "a:()".
         throw new Error(getMessage("SelectorCannotBeEmpty"));
-    } else if (selectorString.endsWith(')')) {
-        // If the selector ends in close-paren, then we need to find the open-paren that matches it.
-        const correspondingOpenParen: number = identifyCorrespondingOpenParen(selectorString);
-        if (correspondingOpenParen === 0) {
-            // RECURSIVE CASE: The entire selector is wrapped in parens. Pop them off and call recursively.
-            return toSelector(selectorString.slice(1, -1))
-        } else {
-            // RECURSIVE CASE: The open-paren is somewhere in the middle of the selector and accompanied by an operator.
-            const left: string = selectorString.slice(0, correspondingOpenParen - 1);
-            const right: string = selectorString.slice(correspondingOpenParen);
-            const op: string = selectorString[correspondingOpenParen - 1];
-            return toComplexSelector(left, right, op);
-        }
-    } else {
-        // If there's a close-paren in the string, only look for operators after it.
-        const lastCloseParen: number = Math.max(selectorString.lastIndexOf(')'), 0);
-        const lastComma: number = selectorString.slice(lastCloseParen).lastIndexOf(',');
-        const lastColon: number = selectorString.slice(lastCloseParen).lastIndexOf(':');
-
-        // BASE CASE: The selector contains no commas or colons.
-        if (lastComma === -1 && lastColon === -1) {
-            // Parens only make sense in conjunction with operators, so if we find any, the selector is malformed.
-            if (selectorString.includes(')') || selectorString.includes('(')) {
-                throw new Error(getMessage('SelectorLooksIncorrect', selectorString));
-            }
-            return new SimpleSelector(selectorString);
-        } else if (lastComma !== -1) {
-            // Commas resolve before colons, so that "x,a:b" and "a:b,x" both resolve equivalently the combination of
-            // "x" and "a:b".
-            const left: string = selectorString.slice(0, lastComma + lastCloseParen);
-            const right: string = selectorString.slice(lastComma + lastCloseParen + 1);
-            return toComplexSelector(left, right, ',');
-        } else {
-            const left: string = selectorString.slice(0, lastColon + lastCloseParen);
-            const right: string = selectorString.slice(lastColon + lastCloseParen + 1);
-            return toComplexSelector(left, right, ':');
-        }
     }
-}
 
-function identifyCorrespondingOpenParen(selectorString: string): number {
-    const reversedLetters: string[] = selectorString.split('').reverse();
+    let commaIdx: number|null = null;
+    let colonIdx: number|null = null;
     let parenBalance: number = 0;
-    let idx = 0;
-    for (const letter of reversedLetters) {
-        if (letter === ')') {
+    for (let i = 0; i < trimmedSelector.length; i++) {
+        const char: string = trimmedSelector[i];
+        if (char === '(') {
             parenBalance += 1;
-        } else if (letter === '(') {
+        } else if (char === ')') {
             parenBalance -= 1;
+            // If our parenthesis balance is negative, it means there are more close-parens than open-parens, which is a problem.
+            if (parenBalance < 0) {
+                throw new Error(getMessage("SelectorLooksIncorrect", selectorString));
+            }
+        } else if (char === ',') {
+            // If we're not inside of parentheses, and we haven't already found a comma, note the location of this one.
+            if (parenBalance === 0 && commaIdx === null) {
+                commaIdx = i;
+            }
+        } else if (char === ':') {
+            // If we're not inside of parentheses, and we haven't already found a colon, note the location of this one.
+            if (parenBalance === 0 && colonIdx === null) {
+                colonIdx = i;
+            }
         }
-        if (parenBalance === 0) {
-            break;
-        }
-        idx += 1;
     }
 
+    // If our final parenthesis balance is negative, it means there are more open-parens than close-parens, which is a problem.
     if (parenBalance > 0) {
         throw new Error(getMessage("SelectorLooksIncorrect", selectorString));
     }
 
-    return selectorString.length - idx - 1;
-}
-
-function toComplexSelector(left: string, right: string, op: string): Selector {
-    if (op === ',') {
+    // Commas trump colons, so if we have a comma, split along that.
+    if (commaIdx != null) {
+        const left: string = trimmedSelector.slice(0, commaIdx);
+        const right: string = trimmedSelector.slice(commaIdx + 1);
         return new OrSelector(toSelector(left), toSelector(right));
-    } else if (op === ':') {
+    } else if (colonIdx != null) {
+        // If there are colons but no commas, split along the first colon.
+        const left: string = trimmedSelector.slice(0, colonIdx);
+        const right: string = trimmedSelector.slice(colonIdx + 1);
         return new AndSelector(toSelector(left), toSelector(right));
+    } else if (trimmedSelector[0] === '(' && trimmedSelector[trimmedSelector.length - 1] === ')') {
+        // If the first and last character are parentheses, then pop those off and run again.
+        return toSelector(trimmedSelector.slice(1, trimmedSelector.length - 1));
+    } else if (trimmedSelector.includes('(') || trimmedSelector.includes(')')) {
+        // There shouldn't be parentheses in the middle of a selector that has no operators.
+        throw new Error(getMessage('SelectorLooksIncorrect', selectorString));
     } else {
-        throw new Error(getMessage("SelectorLooksIncorrect", `${left}${op}${right}`));
+        // A string with no operators or problems is just a simple string-selector.
+        return new SimpleSelector(trimmedSelector);
     }
 }
 

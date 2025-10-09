@@ -249,6 +249,21 @@ describe('Tests for selecting rules', () => {
         expect(ruleNamesFor(selection, 'stubEngine3')).toEqual(stubEngine3Rules);
     })
 
+    it('Operations with nested parentheses are properly resolved', async () => {
+        const selection: RuleSelection = await codeAnalyzer.selectRules(['stubEngine1:(2,Performance:(3,4))'])
+
+        expect(selection.getEngineNames()).toEqual(['stubEngine1']);
+        expect(ruleNamesFor(selection, 'stubEngine1')).toEqual(['stub1RuleB', 'stub1RuleC', 'stub1RuleE'])
+    });
+
+    it('Whitespace does not interfere with selection', async () => {
+        const selection: RuleSelection = await codeAnalyzer.selectRules(['  (  stubEngine1 ) , ( stubEngine2   )   ']);
+
+        expect(selection.getEngineNames()).toEqual(['stubEngine1', 'stubEngine2']);
+        expect(ruleNamesFor(selection, 'stubEngine1')).toEqual(['stub1RuleA', 'stub1RuleB', 'stub1RuleC', 'stub1RuleD', 'stub1RuleE']);
+        expect(ruleNamesFor(selection, 'stubEngine2')).toEqual(['stub2RuleA', 'stub2RuleB', 'stub2RuleC']);
+    })
+
     it.each([
         {
             case: 'colons are used and multiple selectors are provided',
@@ -266,9 +281,31 @@ describe('Tests for selecting rules', () => {
         expect(ruleNamesFor(selection, 'stubEngine2')).toEqual(['stub2RuleC']);
     });
 
-    it('Parentheses cannot be empty', async () => {
-        await expect(codeAnalyzer.selectRules(['()'])).rejects.toThrow('empty');
-    });
+    it.each([
+        {
+            case: 'empty string',
+            selector: ''
+        },
+        {
+            case: 'empty parentheses',
+            selector: '()'
+        },
+        {
+            case: 'leading comma',
+            selector: ',asdfasdf'
+        },{
+            case: 'leading colon',
+            selector: ':asdfasdf'
+        },{
+            case: 'trailing comma',
+            selector: 'asdfasdf,'
+        },{
+            case: 'trailing colon',
+            selector: 'asdfasdf:'
+        }
+    ])('Empty selectors are rejected. Case: $case', async ({selector}) => {
+        await expect(codeAnalyzer.selectRules([selector])).rejects.toThrow('empty');
+    })
 
     it('Redundant parentheses are accepted', async () => {
         const selection: RuleSelection = await codeAnalyzer.selectRules(['((((((((stub1RuleC))))))))']);
