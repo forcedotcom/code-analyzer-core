@@ -5,15 +5,9 @@ export interface Selector {
 }
 
 export function toSelector(selectorString: string): Selector {
-    if (selectorString.includes(' ')) {
-        // ERROR CASE: The selector contains whitespace.
-        throw new Error(getMessage("SelectorLooksIncorrect", selectorString));
-    } else if (selectorString === '') {
+    if (selectorString === '') {
         // ERROR CASE: The selector is empty. Possible if you do something like "()" or "a:()".
         throw new Error(getMessage("SelectorCannotBeEmpty"));
-    } else if (new RegExp('^[,:]').test(selectorString) || new RegExp('[,:]$').test(selectorString)) {
-        // ERROR CASE: The selector cannot start with a binary operator, because that's nonsense.
-        throw new Error(getMessage("SelectorStartsOrEndsWithOperator", selectorString));
     }
 
     let commaIdx: number|null = null;
@@ -22,7 +16,13 @@ export function toSelector(selectorString: string): Selector {
     let hasParens: boolean = false;
     for (let i = 0; i < selectorString.length; i++) {
         const char: string = selectorString[i];
-        if (char === '(') {
+        if ((i === 0 || i === selectorString.length - 1) && (char === ',' || char === ':')) {
+            // ERROR CASE: The selector cannot start or end with a binary operator, because that's nonsense.
+            throw new Error(getMessage("SelectorStartsOrEndsWithOperator", selectorString));
+        } else if (char === ' ') {
+            // ERROR CASE: The selector contains whitespace.
+            throw new Error(getMessage("SelectorLooksIncorrect", selectorString));
+        } else if (char === '(') {
             parenBalance += 1;
             hasParens = true;
         } else if (char === ')') {
