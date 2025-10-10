@@ -34,8 +34,10 @@ export function toSelector(selectorString: string): Selector {
             }
         } else if (char === ',') {
             // If we're not inside of parentheses, and we haven't already found a comma, note the location of this one.
-            if (parenBalance === 0 && commaIdx === null) {
+            if (parenBalance === 0) {
                 commaIdx = i;
+                // Commas trump everything else, so we can just break.
+                break;
             }
         } else if (char === ':') {
             // If we're not inside of parentheses, and we haven't already found a colon, note the location of this one.
