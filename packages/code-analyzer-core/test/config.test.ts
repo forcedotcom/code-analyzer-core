@@ -19,6 +19,7 @@ describe("Tests for creating and accessing configuration values", () => {
         expect(conf.getLogFolder()).toEqual(os.tmpdir());
         expect(conf.getLogLevel()).toEqual(LogLevel.Debug);
         expect(conf.getCustomEnginePluginModules()).toEqual([]);
+        expect(conf.getPreserveAllWorkingDirectories()).toEqual(false);
         expect(conf.getRuleOverridesFor("stubEngine1")).toEqual({});
         expect(conf.getEngineOverridesFor("stubEngine1")).toEqual({});
         expect(conf.getRuleOverridesFor("stubEngine2")).toEqual({});
@@ -81,6 +82,7 @@ describe("Tests for creating and accessing configuration values", () => {
         const conf: CodeAnalyzerConfig = CodeAnalyzerConfig.fromFile(path.join(TEST_DATA_DIR, 'sample-config-02.Yml'));
         expect(conf.getLogFolder()).toEqual(os.tmpdir());
         expect(conf.getCustomEnginePluginModules()).toEqual(['dummy_plugin_module_path']);
+        expect(conf.getPreserveAllWorkingDirectories()).toEqual(true);
         expect(conf.getRuleOverridesFor('stubEngine1')).toEqual({});
         expect(conf.getRuleOverridesFor('stubEngine2')).toEqual({
             stub2RuleC: {
@@ -103,6 +105,7 @@ describe("Tests for creating and accessing configuration values", () => {
         const conf: CodeAnalyzerConfig = CodeAnalyzerConfig.fromFile(path.join(TEST_DATA_DIR, 'sample-config-03.json'));
         expect(conf.getLogFolder()).toEqual(path.join(TEST_DATA_DIR, 'sampleLogFolder'));
         expect(conf.getCustomEnginePluginModules()).toEqual([]);
+        expect(conf.getPreserveAllWorkingDirectories()).toEqual(false);
         expect(conf.getRuleOverridesFor('stubEngine1')).toEqual({});
         expect(conf.getRuleOverridesFor('stubEngine2')).toEqual({});
         expect(conf.getEngineOverridesFor('stubEngine1')).toEqual({});
@@ -291,6 +294,17 @@ describe("Tests for creating and accessing configuration values", () => {
         expect(() => CodeAnalyzerConfig.fromObject({custom_engine_plugin_modules: 'oops'})).toThrow(
             getMessageFromCatalog(SHARED_MESSAGE_CATALOG, 'ConfigValueMustBeOfType','custom_engine_plugin_modules', 'array', 'string'));
     });
+
+    it("When preserve_all_working_directories is not a boolean, then throw an error", () => {
+        expect(() => CodeAnalyzerConfig.fromObject({preserve_all_working_directories: 3})).toThrow(
+            getMessageFromCatalog(SHARED_MESSAGE_CATALOG, 'ConfigValueMustBeOfType','preserve_all_working_directories', 'boolean', 'number'));
+
+        expect(() => CodeAnalyzerConfig.fromObject({preserve_all_working_directories: 'abcd'})).toThrow(
+            getMessageFromCatalog(SHARED_MESSAGE_CATALOG, 'ConfigValueMustBeOfType','preserve_all_working_directories', 'boolean', 'string'));
+
+        expect(() => CodeAnalyzerConfig.fromObject({preserve_all_working_directories: 'true'})).toThrow(
+            getMessageFromCatalog(SHARED_MESSAGE_CATALOG, 'ConfigValueMustBeOfType','preserve_all_working_directories', 'boolean', 'string'));
+    })
 
     it("When supplied config_root path is a valid absolute path, then we use it", () => {
         const configRootValue: string = path.join(TEST_DATA_DIR, 'sampleWorkspace');

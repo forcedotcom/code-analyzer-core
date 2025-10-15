@@ -14,6 +14,7 @@ export const FIELDS = {
     LOG_FOLDER: 'log_folder',
     LOG_LEVEL: 'log_level',
     CUSTOM_ENGINE_PLUGIN_MODULES: 'custom_engine_plugin_modules', // Hidden
+    PRESERVE_ALL_WORKING_DIRECTORIES: 'preserve_all_working_directories', // Hidden
     RULES: 'rules',
     ENGINES: 'engines',
     SEVERITY: 'severity',
@@ -41,6 +42,7 @@ type TopLevelConfig = {
     log_level: LogLevel
     rules: Record<string, RuleOverrides>
     engines: Record<string, EngineOverrides>
+    preserve_all_working_directories: boolean // INTERNAL USE ONLY
     custom_engine_plugin_modules: string[] // INTERNAL USE ONLY
 }
 
@@ -51,6 +53,7 @@ export const DEFAULT_CONFIG: TopLevelConfig = {
     log_level: LogLevel.Debug,
     rules: {},
     engines: {},
+    preserve_all_working_directories: false, // INTERNAL USE ONLY
     custom_engine_plugin_modules: [], // INTERNAL USE ONLY
 };
 
@@ -136,7 +139,7 @@ export class CodeAnalyzerConfig {
         configRoot = !rawConfig.config_root ? (configRoot ?? process.cwd()) :
             validateAbsoluteFolder(rawConfig.config_root, FIELDS.CONFIG_ROOT);
         const configExtractor: engApi.ConfigValueExtractor = new engApi.ConfigValueExtractor(rawConfig, '', configRoot);
-        configExtractor.addKeysThatBypassValidation([FIELDS.CUSTOM_ENGINE_PLUGIN_MODULES]); // Because custom_engine_plugin_modules is currently hidden
+        configExtractor.addKeysThatBypassValidation([FIELDS.CUSTOM_ENGINE_PLUGIN_MODULES, FIELDS.PRESERVE_ALL_WORKING_DIRECTORIES]); // Hidden fields bypass validation
         configExtractor.validateContainsOnlySpecifiedKeys([FIELDS.CONFIG_ROOT, FIELDS.LOG_FOLDER, FIELDS.LOG_LEVEL ,FIELDS.RULES, FIELDS.ENGINES]);
         const config: TopLevelConfig = {
             config_root: configRoot,
@@ -145,6 +148,7 @@ export class CodeAnalyzerConfig {
             custom_engine_plugin_modules: configExtractor.extractArray(FIELDS.CUSTOM_ENGINE_PLUGIN_MODULES,
                 engApi.ValueValidator.validateString,
                 DEFAULT_CONFIG.custom_engine_plugin_modules)!,
+            preserve_all_working_directories: configExtractor.extractBoolean(FIELDS.PRESERVE_ALL_WORKING_DIRECTORIES, DEFAULT_CONFIG.preserve_all_working_directories)!,
             rules: extractRulesValue(configExtractor),
             engines: extractEnginesValue(configExtractor)
         }
@@ -224,6 +228,14 @@ export class CodeAnalyzerConfig {
      */
     public getCustomEnginePluginModules(): string[] {
         return this.config.custom_engine_plugin_modules;
+    }
+
+    /**
+     * Returns a boolean indicating whether working directories should be preserved even if their engine succeeds, as opposed
+     * to being kept only for failed engines.
+     */
+    public getPreserveAllWorkingDirectories(): boolean {
+        return this.config.preserve_all_working_directories;
     }
 
     /**

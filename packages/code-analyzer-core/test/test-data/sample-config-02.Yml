@@ -1,5 +1,5 @@
 custom_engine_plugin_modules: ["dummy_plugin_module_path"]
-
+preserve_all_working_directories: true
 rules:
   stubEngine2:
     stub2RuleC:

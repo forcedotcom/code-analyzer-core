@@ -201,14 +201,18 @@ describe("Tests for the run method of CodeAnalyzer", () => {
         return codeAnalyzer;
     }
 
-    beforeEach(async () => {
-        codeAnalyzer = createCodeAnalyzer();
+    async function setupCodeAnalyzerWithStubs(config: CodeAnalyzerConfig = CodeAnalyzerConfig.withDefaults()): Promise<void> {
+        codeAnalyzer = createCodeAnalyzer(config);
         sampleRunOptions = {workspace: await codeAnalyzer.createWorkspace([__dirname])};
         const stubPlugin: stubs.StubEnginePlugin = new stubs.StubEnginePlugin();
         await codeAnalyzer.addEnginePlugin(stubPlugin);
         stubEngine1 = stubPlugin.getCreatedEngine('stubEngine1') as stubs.StubEngine1;
         stubEngine2 = stubPlugin.getCreatedEngine('stubEngine2') as stubs.StubEngine2;
         selection = await codeAnalyzer.selectRules([]);
+    }
+
+    beforeEach(async () => {
+        await setupCodeAnalyzerWithStubs();
     });
 
     it("When run options contains workspace with targets, then they are passed to each engine successfully", async () => {
@@ -860,6 +864,49 @@ describe("Tests for the run method of CodeAnalyzer", () => {
         expect(fileSystem.files).not.toContain(expectedRunWorkingFolderForStubEngine2);
         expect(fileSystem.files).not.toContain(expectedRunWorkingFolderForStubEngine3);
     });
+
+
+    it("When running rules, if the top-level preserve_all_working_directories flag is true, all run working folders are preserved and a log is issued", async () => {
+        await setupCodeAnalyzerWithStubs(CodeAnalyzerConfig.fromObject({
+            preserve_all_working_directories: true
+        }));
+
+        const logEvents: LogEvent[] = [];
+        codeAnalyzer.onEvent(EventType.LogEvent, (event: LogEvent) => logEvents.push(event));
+
+        await codeAnalyzer.run(selection, sampleRunOptions);
+
+        const expectedRunWorkingFolderRoot: string = path.join(os.tmpdir(),'code-analyzer-0','run-' + clock.formatToDateTimeString());
+        const expectedRunWorkingFolderForStubEngine1: string = path.join(expectedRunWorkingFolderRoot, 'stubEngine1');
+        const expectedRunWorkingFolderForStubEngine2: string = path.join(expectedRunWorkingFolderRoot, 'stubEngine2');
+        const expectedRunWorkingFolderForStubEngine3: string = path.join(expectedRunWorkingFolderRoot, 'stubEngine3');
+
+        // First confirm that the root folder and all 3 engines run working folders were created
+        const createdFolders: string[] = fileSystem.mkdirCallHistory.map(args => args.absPath.toString());
+        expect(createdFolders).toContain(expectedRunWorkingFolderRoot);
+        expect(createdFolders).toContain(expectedRunWorkingFolderForStubEngine1);
+        expect(createdFolders).toContain(expectedRunWorkingFolderForStubEngine2);
+        expect(createdFolders).toContain(expectedRunWorkingFolderForStubEngine3);
+
+        // Confirm that the root folder and all 3 engines run working folders were removed (because none of them errored during run)
+        const removedFolders: string[] = fileSystem.rmCallHistory.map(args => args.absPath.toString());
+        expect(removedFolders).not.toContain(expectedRunWorkingFolderRoot);
+        expect(removedFolders).not.toContain(expectedRunWorkingFolderForStubEngine1);
+        expect(removedFolders).not.toContain(expectedRunWorkingFolderForStubEngine2);
+        expect(removedFolders).not.toContain(expectedRunWorkingFolderForStubEngine3);
+
+        // Verify end result
+        expect(fileSystem.files).toContain(expectedRunWorkingFolderRoot);
+        expect(fileSystem.files).toContain(expectedRunWorkingFolderForStubEngine1);
+        expect(fileSystem.files).toContain(expectedRunWorkingFolderForStubEngine2);
+        expect(fileSystem.files).toContain(expectedRunWorkingFolderForStubEngine3);
+
+        // Verify log lines
+        const relevantLogMsgs: string[] = logEvents.filter(e => e.logLevel === LogLevel.Debug &&
+            e.message.includes('All temporary working folders have been kept')).map(e => e.message);
+
+        expect(relevantLogMsgs.filter(m => m.endsWith(expectedRunWorkingFolderRoot))).toHaveLength(1);
+    })
 
     it("When running rules, if an engine issues an error, then we preserve that run working folder and issue a log pointing to it", async () => {
         codeAnalyzer = createCodeAnalyzer();
