@@ -64,9 +64,9 @@ export class TempFolder {
     private rootFolder?: string;
     private relPathsToKeep: Set<string> = new Set();
 
-    constructor(fileSystem: FileSystem = new RealFileSystem(), rootFolderPrefix: string = path.join(os.tmpdir(), 'code-analyzer-')) {
+    constructor(fileSystem: FileSystem = new RealFileSystem(), rootFolderPath: string = os.tmpdir()) {
         this.fileSystem = fileSystem;
-        this.rootFolderPrefix = rootFolderPrefix;
+        this.rootFolderPrefix = path.join(rootFolderPath, 'code-analyzer-');
     }
 
     async getPath(...subfolderPathSegments: string[]): Promise<string> {

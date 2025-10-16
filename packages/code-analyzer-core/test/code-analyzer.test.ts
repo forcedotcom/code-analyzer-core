@@ -865,6 +865,38 @@ describe("Tests for the run method of CodeAnalyzer", () => {
         expect(fileSystem.files).not.toContain(expectedRunWorkingFolderForStubEngine3);
     });
 
+    it("When running rules, the root_working_folder config property designates where working folders are created", async () => {
+        await setupCodeAnalyzerWithStubs(CodeAnalyzerConfig.fromObject({
+            root_working_folder: path.resolve(__dirname, 'test-data')
+        }));
+        await codeAnalyzer.run(selection, sampleRunOptions);
+
+        const expectedRunWorkingFolderRoot: string = path.resolve(__dirname, 'test-data','code-analyzer-0','run-' + clock.formatToDateTimeString());
+        const expectedRunWorkingFolderForStubEngine1: string = path.join(expectedRunWorkingFolderRoot, 'stubEngine1');
+        const expectedRunWorkingFolderForStubEngine2: string = path.join(expectedRunWorkingFolderRoot, 'stubEngine2');
+        const expectedRunWorkingFolderForStubEngine3: string = path.join(expectedRunWorkingFolderRoot, 'stubEngine3');
+
+        // First confirm that the root folder and all 3 engines run working folders were created
+        const createdFolders: string[] = fileSystem.mkdirCallHistory.map(args => args.absPath.toString());
+        expect(createdFolders).toContain(expectedRunWorkingFolderRoot);
+        expect(createdFolders).toContain(expectedRunWorkingFolderForStubEngine1);
+        expect(createdFolders).toContain(expectedRunWorkingFolderForStubEngine2);
+        expect(createdFolders).toContain(expectedRunWorkingFolderForStubEngine3);
+
+        // Confirm that the root folder and all 3 engines run working folders were removed (because none of them errored during run)
+        const removedFolders: string[] = fileSystem.rmCallHistory.map(args => args.absPath.toString());
+        expect(removedFolders).toContain(expectedRunWorkingFolderRoot);
+        expect(removedFolders).toContain(expectedRunWorkingFolderForStubEngine1);
+        expect(removedFolders).toContain(expectedRunWorkingFolderForStubEngine2);
+        expect(removedFolders).toContain(expectedRunWorkingFolderForStubEngine3);
+
+        // Verify end result
+        expect(fileSystem.files).not.toContain(expectedRunWorkingFolderRoot);
+        expect(fileSystem.files).not.toContain(expectedRunWorkingFolderForStubEngine1);
+        expect(fileSystem.files).not.toContain(expectedRunWorkingFolderForStubEngine2);
+        expect(fileSystem.files).not.toContain(expectedRunWorkingFolderForStubEngine3);
+    });
+
 
     it("When running rules, if the top-level preserve_all_working_folders flag is true, all run working folders are preserved and a log is issued", async () => {
         await setupCodeAnalyzerWithStubs(CodeAnalyzerConfig.fromObject({
