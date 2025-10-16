@@ -641,6 +641,49 @@ describe('Tests for selecting rules', () => {
         expect(relevantLogMsgs.filter(m => m.endsWith(expectedRulesWorkingFolderForStubEngine2))).toHaveLength(1);
     });
 
+    it("When selecting rules, the working_folders_root config property designates where the working folders are created", async () => {
+        await setupCodeAnalyzerWithStubPlugin(CodeAnalyzerConfig.fromObject({
+            working_folders_root: path.resolve(__dirname, 'test-data')
+        }));
+
+        const logEvents: LogEvent[] = [];
+        codeAnalyzer.onEvent(EventType.LogEvent, (event: LogEvent) => logEvents.push(event));
+
+        await codeAnalyzer.selectRules(['all']);
+
+        const expectedRulesWorkingFolderRoot: string = path.resolve(__dirname, 'test-data', 'code-analyzer-0', 'rules-' + clock.formatToDateTimeString());
+        const expectedRulesWorkingFolderForStubEngine1: string = path.join(expectedRulesWorkingFolderRoot, 'stubEngine1');
+        const expectedRulesWorkingFolderForStubEngine2: string = path.join(expectedRulesWorkingFolderRoot, 'stubEngine2');
+        const expectedRulesWorkingFolderForStubEngine3: string = path.join(expectedRulesWorkingFolderRoot, 'stubEngine3');
+
+        // First confirm that the root folder and all 3 engine rule working folders were created
+        const createdFolders: string[] = fileSystem.mkdirCallHistory.map(args => args.absPath.toString());
+        expect(createdFolders).toContain(expectedRulesWorkingFolderRoot);
+        expect(createdFolders).toContain(expectedRulesWorkingFolderForStubEngine1);
+        expect(createdFolders).toContain(expectedRulesWorkingFolderForStubEngine2);
+        expect(createdFolders).toContain(expectedRulesWorkingFolderForStubEngine3);
+
+        // Next confirm that the root folder and 2 of the engine working folders were kept while 1 was removed (because all issued errors except for stubEngine1)
+        const removedFolders: string[] = fileSystem.rmCallHistory.map(args => args.absPath.toString());
+        expect(removedFolders).not.toContain(expectedRulesWorkingFolderRoot);
+        expect(removedFolders).toContain(expectedRulesWorkingFolderForStubEngine1);
+        expect(removedFolders).not.toContain(expectedRulesWorkingFolderForStubEngine2);
+        expect(removedFolders).not.toContain(expectedRulesWorkingFolderForStubEngine3);
+
+        // Verify end result
+        expect(fileSystem.files).toContain(expectedRulesWorkingFolderRoot);
+        expect(fileSystem.files).not.toContain(expectedRulesWorkingFolderForStubEngine1);
+        expect(fileSystem.files).toContain(expectedRulesWorkingFolderForStubEngine2);
+        expect(fileSystem.files).toContain(expectedRulesWorkingFolderForStubEngine3);
+
+        // Verify log lines
+        const relevantLogMsgs: string[] = logEvents.filter(e => e.logLevel === LogLevel.Debug &&
+            e.message.includes('the following temporary working folder will not be removed')).map(e => e.message);
+        expect(relevantLogMsgs.filter(m => m.endsWith(expectedRulesWorkingFolderForStubEngine1))).toHaveLength(0);
+        expect(relevantLogMsgs.filter(m => m.endsWith(expectedRulesWorkingFolderForStubEngine2))).toHaveLength(1);
+        expect(relevantLogMsgs.filter(m => m.endsWith(expectedRulesWorkingFolderForStubEngine2))).toHaveLength(1);
+    });
+
     it("When selecting rules, if preserve_all_working_folders is true, then all working folders are kept regardless of failures and the root is logged", async () => {
         await setupCodeAnalyzerWithStubPlugin(CodeAnalyzerConfig.fromObject({
             preserve_all_working_folders: true

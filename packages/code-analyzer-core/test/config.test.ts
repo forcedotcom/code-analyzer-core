@@ -20,6 +20,7 @@ describe("Tests for creating and accessing configuration values", () => {
         expect(conf.getLogLevel()).toEqual(LogLevel.Debug);
         expect(conf.getCustomEnginePluginModules()).toEqual([]);
         expect(conf.getPreserveAllWorkingFolders()).toEqual(false);
+        expect(conf.getWorkingFoldersRoot()).toEqual(os.tmpdir());
         expect(conf.getRuleOverridesFor("stubEngine1")).toEqual({});
         expect(conf.getEngineOverridesFor("stubEngine1")).toEqual({});
         expect(conf.getRuleOverridesFor("stubEngine2")).toEqual({});
@@ -83,6 +84,7 @@ describe("Tests for creating and accessing configuration values", () => {
         expect(conf.getLogFolder()).toEqual(os.tmpdir());
         expect(conf.getCustomEnginePluginModules()).toEqual(['dummy_plugin_module_path']);
         expect(conf.getPreserveAllWorkingFolders()).toEqual(true);
+        expect(conf.getWorkingFoldersRoot()).toEqual(os.tmpdir());
         expect(conf.getRuleOverridesFor('stubEngine1')).toEqual({});
         expect(conf.getRuleOverridesFor('stubEngine2')).toEqual({
             stub2RuleC: {
@@ -305,6 +307,27 @@ describe("Tests for creating and accessing configuration values", () => {
         expect(() => CodeAnalyzerConfig.fromObject({preserve_all_working_folders: 'true'})).toThrow(
             getMessageFromCatalog(SHARED_MESSAGE_CATALOG, 'ConfigValueMustBeOfType','preserve_all_working_folders', 'boolean', 'string'));
     })
+
+    it("When supplied working_folders_root is a valid absolute path, then we use it", () => {
+        const workingFoldersRootValue: string = path.join(TEST_DATA_DIR, 'sampleWorkspace');
+        const conf: CodeAnalyzerConfig = CodeAnalyzerConfig.fromObject({working_folders_root: workingFoldersRootValue});
+        expect(conf.getWorkingFoldersRoot()).toEqual(workingFoldersRootValue);
+    });
+
+    it("When supplied working_folders_root does not exist, then we error", () => {
+        expect(() => CodeAnalyzerConfig.fromObject({working_folders_root: path.resolve('doesNotExist')})).toThrow(
+            getMessageFromCatalog(SHARED_MESSAGE_CATALOG, 'ConfigPathValueDoesNotExist', 'working_folders_root', path.resolve('doesNotExist')));
+    });
+
+    it("When supplied working_folders_root is a file instead of a folder, then we error", () => {
+        expect(() => CodeAnalyzerConfig.fromObject({working_folders_root: path.resolve('package.json')})).toThrow(
+            getMessageFromCatalog(SHARED_MESSAGE_CATALOG, 'ConfigFolderValueMustNotBeFile', 'working_folders_root', path.resolve('package.json')));
+    });
+
+    it("When supplied working_folders_root is a relative folder, then we error", () => {
+        expect(() => CodeAnalyzerConfig.fromObject({working_folders_root: 'test/test-data'})).toThrow(
+            getMessage('ConfigPathValueMustBeAbsolute', 'working_folders_root', 'test/test-data', path.resolve('test', 'test-data')));
+    });
 
     it("When supplied config_root path is a valid absolute path, then we use it", () => {
         const configRootValue: string = path.join(TEST_DATA_DIR, 'sampleWorkspace');
