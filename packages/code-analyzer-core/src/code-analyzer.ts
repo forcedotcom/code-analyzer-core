@@ -326,14 +326,18 @@ export class CodeAnalyzer {
 
         const runPromises: Promise<EngineRunResults>[] = ruleSelection.getEngineNames().map(async (engineName) => {
             const workingFolder: string = await this.tempFolder.makeSubfolder(runWorkingFolderName, engineName);
+            if (this.config.getPreserveAllWorkingFolders()) {
+                this.tempFolder.markToBeKept(runWorkingFolderName, engineName);
+            }
             const engineRunOptions: engApi.RunOptions = {
                 logFolder: this.config.getLogFolder(),
                 workingFolder: workingFolder,
                 workspace: engApiWorkspace
             };
             const errorCallback: () => void = () => {
+                // istanbul ignore else
                 if (!this.tempFolder.isKept(runWorkingFolderName, engineName)) {
-                    this.emitLogEvent(LogLevel.Debug, getMessage('EngineWorkingFolderKept', engineName, workingFolder));
+                    this.emitLogEvent(LogLevel.Debug, getMessage('EngineWorkingFolderKeptDueToError', engineName, workingFolder));
                     this.tempFolder.markToBeKept(runWorkingFolderName, engineName);
                 }
             };
@@ -341,6 +345,9 @@ export class CodeAnalyzer {
             await this.tempFolder.removeIfNotKept(runWorkingFolderName, engineName);
             return results;
         });
+        if (this.config.getPreserveAllWorkingFolders()) {
+            this.emitLogEvent(LogLevel.Debug, getMessage('AllWorkingFoldersKept', await this.tempFolder.getPath(runWorkingFolderName)));
+        }
         const engineRunResultsList: EngineRunResults[] = await Promise.all(runPromises);
 
         await this.tempFolder.removeIfNotKept(runWorkingFolderName);
@@ -377,6 +384,11 @@ export class CodeAnalyzer {
 
             const rulePromises: Promise<RuleImpl[]>[] = this.getEngineNames().map(async (engineName) => {
                 const workingFolder: string = await this.tempFolder.makeSubfolder(rulesWorkingFolderName, engineName);
+
+                if (this.config.getPreserveAllWorkingFolders()) {
+                    this.tempFolder.markToBeKept(rulesWorkingFolderName, engineName)
+                }
+
                 const describeOptions: engApi.DescribeOptions = {
                     workspace: engApiWorkspace,
                     workingFolder: workingFolder,
@@ -384,7 +396,7 @@ export class CodeAnalyzer {
                 };
                 const errorCallback: () => void = () => {
                     if (!this.tempFolder.isKept(rulesWorkingFolderName, engineName)) {
-                        this.emitLogEvent(LogLevel.Debug, getMessage('EngineWorkingFolderKept', engineName, workingFolder));
+                        this.emitLogEvent(LogLevel.Debug, getMessage('EngineWorkingFolderKeptDueToError', engineName, workingFolder));
                         this.tempFolder.markToBeKept(rulesWorkingFolderName, engineName);
                     }
                 };
@@ -392,6 +404,10 @@ export class CodeAnalyzer {
                 await this.tempFolder.removeIfNotKept(rulesWorkingFolderName, engineName);
                 return rules;
             });
+
+            if (this.config.getPreserveAllWorkingFolders()) {
+                this.emitLogEvent(LogLevel.Debug, getMessage('AllWorkingFoldersKept', await this.tempFolder.getPath(rulesWorkingFolderName)));
+            }
 
             this.rulesCache.set(cacheKey, (await Promise.all(rulePromises)).flat());
 
