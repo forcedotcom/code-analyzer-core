@@ -641,9 +641,9 @@ describe('Tests for selecting rules', () => {
         expect(relevantLogMsgs.filter(m => m.endsWith(expectedRulesWorkingFolderForStubEngine2))).toHaveLength(1);
     });
 
-    it("When selecting rules, if preserve_all_working_directories is true, then all working folders are kept regardless of failures and the root is logged", async () => {
+    it("When selecting rules, if preserve_all_working_folders is true, then all working folders are kept regardless of failures and the root is logged", async () => {
         await setupCodeAnalyzerWithStubPlugin(CodeAnalyzerConfig.fromObject({
-            preserve_all_working_directories: true
+            preserve_all_working_folders: true
         }));
 
         const logEvents: LogEvent[] = [];
@@ -678,8 +678,8 @@ describe('Tests for selecting rules', () => {
 
         // Verify log lines
         const relevantLogMsgs: string[] = logEvents.filter(e => e.logLevel === LogLevel.Debug &&
-            e.message.includes('All temporary working folders have been kept')).map(e => e.message);
-        expect(relevantLogMsgs.filter(m => m.endsWith(expectedRulesWorkingFolderRoot))).toHaveLength(1);
+            e.message.includes('all temporary working folders in')).map(e => e.message);
+        expect(relevantLogMsgs.filter(m => m.includes(expectedRulesWorkingFolderRoot))).toHaveLength(1);
     });
 
     it("When selecting rules, if no engine errors, then we fully remove the rules working folder", async () => {

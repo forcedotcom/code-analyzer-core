@@ -326,7 +326,7 @@ export class CodeAnalyzer {
 
         const runPromises: Promise<EngineRunResults>[] = ruleSelection.getEngineNames().map(async (engineName) => {
             const workingFolder: string = await this.tempFolder.makeSubfolder(runWorkingFolderName, engineName);
-            if (this.config.getPreserveAllWorkingDirectories()) {
+            if (this.config.getPreserveAllWorkingFolders()) {
                 this.tempFolder.markToBeKept(runWorkingFolderName, engineName);
             }
             const engineRunOptions: engApi.RunOptions = {
@@ -345,8 +345,7 @@ export class CodeAnalyzer {
             await this.tempFolder.removeIfNotKept(runWorkingFolderName, engineName);
             return results;
         });
-        if (this.config.getPreserveAllWorkingDirectories()) {
-            this.tempFolder.markToBeKept(runWorkingFolderName);
+        if (this.config.getPreserveAllWorkingFolders()) {
             this.emitLogEvent(LogLevel.Debug, getMessage('AllWorkingFoldersKept', await this.tempFolder.getPath(runWorkingFolderName)));
         }
         const engineRunResultsList: EngineRunResults[] = await Promise.all(runPromises);
@@ -386,7 +385,7 @@ export class CodeAnalyzer {
             const rulePromises: Promise<RuleImpl[]>[] = this.getEngineNames().map(async (engineName) => {
                 const workingFolder: string = await this.tempFolder.makeSubfolder(rulesWorkingFolderName, engineName);
 
-                if (this.config.getPreserveAllWorkingDirectories()) {
+                if (this.config.getPreserveAllWorkingFolders()) {
                     this.tempFolder.markToBeKept(rulesWorkingFolderName, engineName)
                 }
 
@@ -406,8 +405,7 @@ export class CodeAnalyzer {
                 return rules;
             });
 
-            if (this.config.getPreserveAllWorkingDirectories()) {
-                this.tempFolder.markToBeKept(rulesWorkingFolderName);
+            if (this.config.getPreserveAllWorkingFolders()) {
                 this.emitLogEvent(LogLevel.Debug, getMessage('AllWorkingFoldersKept', await this.tempFolder.getPath(rulesWorkingFolderName)));
             }
 

@@ -866,9 +866,9 @@ describe("Tests for the run method of CodeAnalyzer", () => {
     });
 
 
-    it("When running rules, if the top-level preserve_all_working_directories flag is true, all run working folders are preserved and a log is issued", async () => {
+    it("When running rules, if the top-level preserve_all_working_folders flag is true, all run working folders are preserved and a log is issued", async () => {
         await setupCodeAnalyzerWithStubs(CodeAnalyzerConfig.fromObject({
-            preserve_all_working_directories: true
+            preserve_all_working_folders: true
         }));
 
         const logEvents: LogEvent[] = [];
@@ -903,9 +903,9 @@ describe("Tests for the run method of CodeAnalyzer", () => {
 
         // Verify log lines
         const relevantLogMsgs: string[] = logEvents.filter(e => e.logLevel === LogLevel.Debug &&
-            e.message.includes('All temporary working folders have been kept')).map(e => e.message);
+            e.message.includes('all temporary working folders in')).map(e => e.message);
 
-        expect(relevantLogMsgs.filter(m => m.endsWith(expectedRunWorkingFolderRoot))).toHaveLength(1);
+        expect(relevantLogMsgs.filter(m => m.includes(expectedRunWorkingFolderRoot))).toHaveLength(1);
     })
 
     it("When running rules, if an engine issues an error, then we preserve that run working folder and issue a log pointing to it", async () => {

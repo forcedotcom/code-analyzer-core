@@ -203,7 +203,7 @@ const MESSAGE_CATALOG : MessageCatalog = {
         `Engine failure. The engine '%s' returned a violation for rule '%s' that contains a code location with the endLine equal to the startLine and the endColumn %d before the startColumn %d.`,
 
     AllWorkingFoldersKept:
-        `All temporary working folders have been kept, and are located in: %s`,
+        `Since preserve_all_working_folders config setting is true, all temporary working folders in %s have been kept.`,
 
     EngineWorkingFolderKeptDueToError:
         `Since the engine '%s' emitted an error, the following temporary working folder will not be removed: %s`
