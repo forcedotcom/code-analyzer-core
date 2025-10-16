@@ -641,9 +641,9 @@ describe('Tests for selecting rules', () => {
         expect(relevantLogMsgs.filter(m => m.endsWith(expectedRulesWorkingFolderForStubEngine2))).toHaveLength(1);
     });
 
-    it("When selecting rules, the working_folders_root config property designates where the working folders are created", async () => {
+    it("When selecting rules, the root_working_folder config property designates where the working folders are created", async () => {
         await setupCodeAnalyzerWithStubPlugin(CodeAnalyzerConfig.fromObject({
-            working_folders_root: path.resolve(__dirname, 'test-data')
+            root_working_folder: path.resolve(__dirname, 'test-data')
         }));
 
         const logEvents: LogEvent[] = [];

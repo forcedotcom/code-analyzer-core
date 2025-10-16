@@ -13,7 +13,7 @@ export const FIELDS = {
     CONFIG_ROOT: 'config_root',
     LOG_FOLDER: 'log_folder',
     LOG_LEVEL: 'log_level',
-    WORKING_FOLDERS_ROOT: 'working_folders_root', // Hidden
+    ROOT_WORKING_FOLDER: 'root_working_folder', // Hidden
     CUSTOM_ENGINE_PLUGIN_MODULES: 'custom_engine_plugin_modules', // Hidden
     PRESERVE_ALL_WORKING_FOLDERS: 'preserve_all_working_folders', // Hidden
     RULES: 'rules',
@@ -43,7 +43,7 @@ type TopLevelConfig = {
     log_level: LogLevel
     rules: Record<string, RuleOverrides>
     engines: Record<string, EngineOverrides>
-    working_folders_root: string, // INTERNAL USE ONLY
+    root_working_folder: string, // INTERNAL USE ONLY
     preserve_all_working_folders: boolean // INTERNAL USE ONLY
     custom_engine_plugin_modules: string[] // INTERNAL USE ONLY
 }
@@ -55,7 +55,7 @@ export const DEFAULT_CONFIG: TopLevelConfig = {
     log_level: LogLevel.Debug,
     rules: {},
     engines: {},
-    working_folders_root: os.tmpdir(), // INTERNAL USE ONLY
+    root_working_folder: os.tmpdir(), // INTERNAL USE ONLY
     preserve_all_working_folders: false, // INTERNAL USE ONLY
     custom_engine_plugin_modules: [], // INTERNAL USE ONLY
 };
@@ -142,7 +142,7 @@ export class CodeAnalyzerConfig {
         configRoot = !rawConfig.config_root ? (configRoot ?? process.cwd()) :
             validateAbsoluteFolder(rawConfig.config_root, FIELDS.CONFIG_ROOT);
         const configExtractor: engApi.ConfigValueExtractor = new engApi.ConfigValueExtractor(rawConfig, '', configRoot);
-        configExtractor.addKeysThatBypassValidation([FIELDS.CUSTOM_ENGINE_PLUGIN_MODULES, FIELDS.PRESERVE_ALL_WORKING_FOLDERS, FIELDS.WORKING_FOLDERS_ROOT]); // Hidden fields bypass validation
+        configExtractor.addKeysThatBypassValidation([FIELDS.CUSTOM_ENGINE_PLUGIN_MODULES, FIELDS.PRESERVE_ALL_WORKING_FOLDERS, FIELDS.ROOT_WORKING_FOLDER]); // Hidden fields bypass validation
         configExtractor.validateContainsOnlySpecifiedKeys([FIELDS.CONFIG_ROOT, FIELDS.LOG_FOLDER, FIELDS.LOG_LEVEL ,FIELDS.RULES, FIELDS.ENGINES]);
         const config: TopLevelConfig = {
             config_root: configRoot,
@@ -151,7 +151,7 @@ export class CodeAnalyzerConfig {
             custom_engine_plugin_modules: configExtractor.extractArray(FIELDS.CUSTOM_ENGINE_PLUGIN_MODULES,
                 engApi.ValueValidator.validateString,
                 DEFAULT_CONFIG.custom_engine_plugin_modules)!,
-            working_folders_root: !rawConfig.working_folders_root ? os.tmpdir() : validateAbsoluteFolder(rawConfig.working_folders_root, FIELDS.WORKING_FOLDERS_ROOT),
+            root_working_folder: !rawConfig.root_working_folder ? os.tmpdir() : validateAbsoluteFolder(rawConfig.root_working_folder, FIELDS.ROOT_WORKING_FOLDER),
             preserve_all_working_folders: configExtractor.extractBoolean(FIELDS.PRESERVE_ALL_WORKING_FOLDERS, DEFAULT_CONFIG.preserve_all_working_folders)!,
             rules: extractRulesValue(configExtractor),
             engines: extractEnginesValue(configExtractor)
@@ -248,8 +248,8 @@ export class CodeAnalyzerConfig {
      * Returns the absolute path to a folder that will serve as the root for all temporary working folders associated with
      * this execution.
      */
-    public getWorkingFoldersRoot(): string {
-        return this.config.working_folders_root;
+    public getRootWorkingFolder(): string {
+        return this.config.root_working_folder;
     }
 
     /**

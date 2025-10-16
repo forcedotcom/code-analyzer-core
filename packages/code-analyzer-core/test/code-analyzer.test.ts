@@ -865,9 +865,9 @@ describe("Tests for the run method of CodeAnalyzer", () => {
         expect(fileSystem.files).not.toContain(expectedRunWorkingFolderForStubEngine3);
     });
 
-    it("When running rules, the working_folders_root config property designates where working folders are created", async () => {
+    it("When running rules, the root_working_folder config property designates where working folders are created", async () => {
         await setupCodeAnalyzerWithStubs(CodeAnalyzerConfig.fromObject({
-            working_folders_root: path.resolve(__dirname, 'test-data')
+            root_working_folder: path.resolve(__dirname, 'test-data')
         }));
         await codeAnalyzer.run(selection, sampleRunOptions);
 

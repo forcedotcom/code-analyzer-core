@@ -116,7 +116,7 @@ export class CodeAnalyzer {
     constructor(config: CodeAnalyzerConfig, fileSystem: FileSystem = new RealFileSystem(), nodeVersion: string = process.version) {
         this.validateEnvironment(nodeVersion);
         this.config = config;
-        this.tempFolder = new TempFolder(fileSystem, this.config.getWorkingFoldersRoot());
+        this.tempFolder = new TempFolder(fileSystem, this.config.getRootWorkingFolder());
         /* istanbul ignore next */
         process.addListener('exit', async () => {
             // Note that on node exit there is no more event loop, so removal must take place synchronously
