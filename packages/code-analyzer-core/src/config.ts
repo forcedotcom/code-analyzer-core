@@ -151,7 +151,7 @@ export class CodeAnalyzerConfig {
             custom_engine_plugin_modules: configExtractor.extractArray(FIELDS.CUSTOM_ENGINE_PLUGIN_MODULES,
                 engApi.ValueValidator.validateString,
                 DEFAULT_CONFIG.custom_engine_plugin_modules)!,
-            root_working_folder: !rawConfig.root_working_folder ? os.tmpdir() : validateAbsoluteFolder(rawConfig.root_working_folder, FIELDS.ROOT_WORKING_FOLDER),
+            root_working_folder: configExtractor.extractFolder(FIELDS.ROOT_WORKING_FOLDER, DEFAULT_CONFIG.root_working_folder)!,
             preserve_all_working_folders: configExtractor.extractBoolean(FIELDS.PRESERVE_ALL_WORKING_FOLDERS, DEFAULT_CONFIG.preserve_all_working_folders)!,
             rules: extractRulesValue(configExtractor),
             engines: extractEnginesValue(configExtractor)
