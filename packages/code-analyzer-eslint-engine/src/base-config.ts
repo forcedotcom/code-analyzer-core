@@ -71,6 +71,13 @@ export class BaseConfigFactory {
         // Swap out eslintJs.configs.recommended with eslintJs.configs.all
         configs[1] = eslintJs.configs.all;
         
+        // This one rule makes eslint throw an exception if the user doesn't have jest installed (which should be 
+        // optional), so we turn it off for now. See https://github.com/salesforce/eslint-config-lwc/issues/161
+        configs[3].rules = {
+            ...configs[3].rules,
+            'jest/no-deprecated-functions': 'off'
+        }
+
         // This one rule is broken and thus, we need to turn it off for now.
         // See https://git.soma.salesforce.com/lwc/eslint-plugin-lwc-platform/issues/152
         configs[5].rules = {
