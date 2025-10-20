@@ -9,11 +9,11 @@ import globals from "globals";
 
 export class BaseConfigFactory {
     private readonly engineConfig: ESLintEngineConfig;
-    
+
     constructor(engineConfig: ESLintEngineConfig) {
         this.engineConfig = engineConfig;
     }
-    
+
     createBaseConfigArray(): Linter.Config[] {
         const configArray: Linter.Config[] = [{
             linterOptions: {
@@ -28,7 +28,7 @@ export class BaseConfigFactory {
                     "$Label": "readonly",        // ^
                     "$Locale": "readonly",       // ^
                     "$Resource": "readonly",     // ^
-                    
+
                     // ESLint doesn't natively know about various browser and node globals. So we add them here to
                     // remove false positives for our users.
                     ... globals.node,
@@ -37,7 +37,7 @@ export class BaseConfigFactory {
                 }
             }
         }];
-        
+
         if (this.useJsBaseConfig() && this.useLwcBaseConfig()) {
             configArray.push(...this.createJavascriptPlusLwcConfigArray());
         } else if (this.useJsBaseConfig()) {
@@ -56,22 +56,22 @@ export class BaseConfigFactory {
         }
         return configArray;
     }
-    
+
     private createJavascriptPlusLwcConfigArray(): Linter.Config[] {
         let configs: Linter.Config[] = validateAndGetRawLwcConfigArray();
-        
+
         // TODO: Remove the For the following 2 updates when https://github.com/salesforce/eslint-config-lwc/issues/158 is fixed
         // 1) Turn off the babel parser's configFile option from the lwc base plugin
-        configs[0].languageOptions!.parserOptions!.babelOptions.configFile = false;
+        (configs[0].languageOptions!.parserOptions as Linter.ParserOptions).babelOptions.configFile = false;
         // 2) For some reason babel doesn't like .cjs files unless we explicitly set this to undefined because I think
         // ESLint 9 is setting it to "commonjs" automatically when the field doesn't exist in the parserOptions (and for
         // babel "commonjs" isn't a valid option)
-        configs[0].languageOptions!.parserOptions!.sourceType = undefined;
-        
+        (configs[0].languageOptions!.parserOptions as Linter.ParserOptions).sourceType = undefined;
+
         // Swap out eslintJs.configs.recommended with eslintJs.configs.all
         configs[1] = eslintJs.configs.all;
-        
-        // This one rule makes eslint throw an exception if the user doesn't have jest installed (which should be 
+
+        // This one rule makes eslint throw an exception if the user doesn't have jest installed (which should be
         // optional), so we turn it off for now. See https://github.com/salesforce/eslint-config-lwc/issues/161
         configs[3].rules = {
             ...configs[3].rules,
@@ -84,7 +84,7 @@ export class BaseConfigFactory {
             ...configs[5].rules,
             '@lwc/lwc-platform/valid-offline-wire': 'off'
         }
-        
+
         // Restrict these configs to just javascript files
         configs = configs.map(config => {
             return {
@@ -92,33 +92,33 @@ export class BaseConfigFactory {
                 files: this.engineConfig.file_extensions.javascript.map(ext => `**/*${ext}`)
             }
         });
-        
+
         return configs;
     }
-    
+
     private createLwcConfigArray(): Linter.Config[] {
         const configs: Linter.Config[] = this.createJavascriptPlusLwcConfigArray();
-        
+
         // Remove any explicitly listed rule that is a base javascript rule from the recommended LWC/Lightning rules.
         // Note the modified base rules don't have namespace like jest/*, @lwc/*, etc (and thus has no '/').
         configs[4].rules = Object.fromEntries(
             Object.entries(configs[4].rules as Linter.RulesRecord).filter(([key]) => key.includes('/'))
         );
-        
+
         // Remove the eslintJs.configs.all (at element 1). Note that this delete is after the configs[4] update above so
         // we can work with the original index [4] instead of [3] to avoid confusion.
         configs.splice(1, 1);
-        
+
         return configs;
     }
-    
+
     private createJavascriptConfigArray(): Linter.Config[] {
         return [{
             ... eslintJs.configs.all,
             files: this.engineConfig.file_extensions.javascript.map(ext => `**/*${ext}`)
         }];
     }
-    
+
     private createSldsHTMLConfigArray(): Linter.Config[] {
         return sldsEslintPlugin.configs['flat/recommended-html'].map((htmlConfig: Linter.Config) => {
             return {
@@ -127,8 +127,8 @@ export class BaseConfigFactory {
             };
         });
     }
-    
-    private createSldsCSSConfigArray(): Linter.Config[] {        
+
+    private createSldsCSSConfigArray(): Linter.Config[] {
         return sldsEslintPlugin.configs['flat/recommended-css'].map((cssConfig: Linter.Config) => {
             return {
                 ...cssConfig,
@@ -136,7 +136,7 @@ export class BaseConfigFactory {
             };
         });
     }
-    
+
     private createTypescriptConfigArray(): Linter.Config[] {
         const configs: Linter.Config[] = [];
         for (const conf of ([eslintJs.configs.all, ...eslintTs.configs.all] as Linter.Config[])) {
@@ -147,7 +147,7 @@ export class BaseConfigFactory {
                     ... (conf.languageOptions ?? {}),
                     parserOptions: {
                         ... (conf.languageOptions?.parserOptions ?? {}),
-                        
+
                         // Finds the tsconfig.json file nearest to each source file. This should work for most users.
                         // If not, then we may consider letting user specify this via config or alternatively users can
                         // just set disable_typescript_base_config=true and configure typescript in their own eslint
@@ -159,23 +159,23 @@ export class BaseConfigFactory {
         }
         return configs;
     }
-    
+
     private useJsBaseConfig(): boolean {
         return !this.engineConfig.disable_javascript_base_config && this.engineConfig.file_extensions.javascript.length > 0;
     }
-    
+
     private useLwcBaseConfig(): boolean {
         return !this.engineConfig.disable_lwc_base_config && this.engineConfig.file_extensions.javascript.length > 0;
     }
-    
+
     private useSldsCSSBaseConfig(): boolean {
         return !this.engineConfig.disable_slds_base_config && this.engineConfig.file_extensions.css.length > 0;
     }
-    
+
     private useSldsHTMLBaseConfig(): boolean {
         return !this.engineConfig.disable_slds_base_config && this.engineConfig.file_extensions.html.length > 0;
     }
-    
+
     private useTsBaseConfig(): boolean {
         return !this.engineConfig.disable_typescript_base_config && this.engineConfig.file_extensions.typescript.length > 0;
     }
@@ -206,13 +206,13 @@ function validateAndGetRawLwcConfigArray(): Linter.Config[] {
         //   - and lib/configs/recommended.js of https://www.npmjs.com/package/@lwc/eslint-plugin-lwc-platform?activeTab=code
         throw new Error("INTERNAL ERROR: The recommended config for @salesforce/eslint-config-lwc or @lwc/eslint-plugin-lwc-platform must have changed.");
     }
-    
+
     // Return a shallow copy since we will be making modifications
     return rawLwcConfigs.map(config => { return {... config}});
 }
 
 function containsBabelOptions(config: Linter.Config): boolean {
-    return config.languageOptions?.parserOptions?.babelOptions !== undefined;
+    return (config.languageOptions?.parserOptions as Linter.ParserOptions)?.babelOptions !== undefined;
 }
 
 function hasRule(config: Linter.Config, ruleName: string): boolean {
