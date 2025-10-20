@@ -1040,10 +1040,13 @@ export const RULE_MAPPINGS: Record<string, {severity: SeverityLevel, tags: strin
         severity: SeverityLevel.High,
         tags: [COMMON_TAGS.RECOMMENDED, LWC, COMMON_TAGS.CATEGORIES.ERROR_PRONE,    COMMON_TAGS.LANGUAGES.JAVASCRIPT]
     },
-    "jest/no-deprecated-functions": {
-        severity: SeverityLevel.Moderate,
-        tags: [COMMON_TAGS.RECOMMENDED, LWC, COMMON_TAGS.CATEGORIES.BEST_PRACTICES, COMMON_TAGS.LANGUAGES.JAVASCRIPT]
-    },
+
+    // This one rule makes eslint throw an exception if the user doesn't have jest installed (which should be 
+    // optional), so we turn it off for now. See https://github.com/salesforce/eslint-config-lwc/issues/161
+    // "jest/no-deprecated-functions": {
+    //     severity: SeverityLevel.Moderate,
+    //     tags: [COMMON_TAGS.RECOMMENDED, LWC, COMMON_TAGS.CATEGORIES.BEST_PRACTICES, COMMON_TAGS.LANGUAGES.JAVASCRIPT]
+    // },
     "jest/no-disabled-tests": {
         severity: SeverityLevel.Info,
         tags: [COMMON_TAGS.RECOMMENDED, LWC, COMMON_TAGS.CATEGORIES.BEST_PRACTICES, COMMON_TAGS.LANGUAGES.JAVASCRIPT]

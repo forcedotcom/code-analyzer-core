@@ -686,20 +686,6 @@
     ]
   },
   {
-    "description": "Disallow use of deprecated functions",
-    "name": "jest/no-deprecated-functions",
-    "resourceUrls": [
-      "https://github.com/jest-community/eslint-plugin-jest/blob/v29.0.1/docs/rules/no-deprecated-functions.md"
-    ],
-    "severityLevel": 3,
-    "tags": [
-      "Recommended",
-      "LWC",
-      "BestPractices",
-      "JavaScript"
-    ]
-  },
-  {
     "description": "Disallow disabled tests",
     "name": "jest/no-disabled-tests",
     "resourceUrls": [
