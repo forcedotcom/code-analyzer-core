@@ -132,6 +132,18 @@
     ]
   },
   {
+    "description": "disallow import of \"executeControllerWithClientSideActionDef\" from \"aura\"",
+    "name": "@lwc/lwc-platform/no-interop-execute-controller-with-client-def",
+    "resourceUrls": [],
+    "severityLevel": 3,
+    "tags": [
+      "Recommended",
+      "LWC",
+      "BestPractices",
+      "JavaScript"
+    ]
+  },
+  {
     "description": "disallow import of \"unstable_executeGlobalControllerPrivileged\" from \"aura\"",
     "name": "@lwc/lwc-platform/no-interop-execute-privileged",
     "resourceUrls": [],
@@ -266,6 +278,18 @@
   {
     "description": "disallow import of \"sanitizeDOM\" from \"aura\"",
     "name": "@lwc/lwc-platform/no-interop-sanitize",
+    "resourceUrls": [],
+    "severityLevel": 3,
+    "tags": [
+      "Recommended",
+      "LWC",
+      "BestPractices",
+      "JavaScript"
+    ]
+  },
+  {
+    "description": "disallow import of \"UnstableAuraControllerMethod\" from \"force/ldsAuraControllerMethod\"",
+    "name": "@lwc/lwc-platform/no-lds-aura-controller-method",
     "resourceUrls": [],
     "severityLevel": 3,
     "tags": [

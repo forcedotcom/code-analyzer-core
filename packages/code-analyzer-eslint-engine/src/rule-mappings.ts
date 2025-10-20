@@ -863,6 +863,10 @@ export const RULE_MAPPINGS: Record<string, {severity: SeverityLevel, tags: strin
         severity: SeverityLevel.Moderate,
         tags: [COMMON_TAGS.RECOMMENDED, LWC, COMMON_TAGS.CATEGORIES.BEST_PRACTICES, COMMON_TAGS.LANGUAGES.JAVASCRIPT]
     },
+    "@lwc/lwc-platform/no-interop-execute-controller-with-client-def": {
+        severity: SeverityLevel.Moderate,
+        tags: [COMMON_TAGS.RECOMMENDED, LWC, COMMON_TAGS.CATEGORIES.BEST_PRACTICES, COMMON_TAGS.LANGUAGES.JAVASCRIPT]
+    },
     "@lwc/lwc-platform/no-interop-execute-with-callback": {
         severity: SeverityLevel.Moderate,
         tags: [COMMON_TAGS.RECOMMENDED, LWC, COMMON_TAGS.CATEGORIES.BEST_PRACTICES, COMMON_TAGS.LANGUAGES.JAVASCRIPT]
@@ -908,6 +912,10 @@ export const RULE_MAPPINGS: Record<string, {severity: SeverityLevel, tags: strin
         tags: [COMMON_TAGS.RECOMMENDED, LWC, COMMON_TAGS.CATEGORIES.BEST_PRACTICES, COMMON_TAGS.LANGUAGES.JAVASCRIPT]
     },
     "@lwc/lwc-platform/no-interop-sanitize": {
+        severity: SeverityLevel.Moderate,
+        tags: [COMMON_TAGS.RECOMMENDED, LWC, COMMON_TAGS.CATEGORIES.BEST_PRACTICES, COMMON_TAGS.LANGUAGES.JAVASCRIPT]
+    },
+    "@lwc/lwc-platform/no-lds-aura-controller-method": {
         severity: SeverityLevel.Moderate,
         tags: [COMMON_TAGS.RECOMMENDED, LWC, COMMON_TAGS.CATEGORIES.BEST_PRACTICES, COMMON_TAGS.LANGUAGES.JAVASCRIPT]
     },
@@ -1041,7 +1049,7 @@ export const RULE_MAPPINGS: Record<string, {severity: SeverityLevel, tags: strin
         tags: [COMMON_TAGS.RECOMMENDED, LWC, COMMON_TAGS.CATEGORIES.ERROR_PRONE,    COMMON_TAGS.LANGUAGES.JAVASCRIPT]
     },
 
-    // This one rule makes eslint throw an exception if the user doesn't have jest installed (which should be 
+    // This one rule makes eslint throw an exception if the user doesn't have jest installed (which should be
     // optional), so we turn it off for now. See https://github.com/salesforce/eslint-config-lwc/issues/161
     // "jest/no-deprecated-functions": {
     //     severity: SeverityLevel.Moderate,
@@ -1604,7 +1612,7 @@ export const RULE_MAPPINGS: Record<string, {severity: SeverityLevel, tags: strin
         severity: SeverityLevel.Moderate,
         tags: [/* NOT RECOMMENDED */    COMMON_TAGS.CATEGORIES.BEST_PRACTICES, COMMON_TAGS.LANGUAGES.TYPESCRIPT]
     },
-    
+
     // =================================================================================================================
     //   SLDS - HTML BASE RULES - @salesforce-ux/eslint-plugin-slds
     // =================================================================================================================

@@ -1,7 +1,7 @@
 {
   "name": "@salesforce/code-analyzer-engine-api",
   "description": "Engine API Package for the Salesforce Code Analyzer",
-  "version": "0.30.0",
+  "version": "0.31.0-SNAPSHOT",
   "author": "The Salesforce Code Analyzer Team",
   "license": "BSD-3-Clause",
   "homepage": "https://developer.salesforce.com/docs/platform/salesforce-code-analyzer/overview",
@@ -16,17 +16,17 @@
   },
   "types": "dist/index.d.ts",
   "dependencies": {
-    "@types/node": "^20.0.0"
+    "@types/node": "^24.9.0"
   },
   "devDependencies": {
-    "@eslint/js": "^9.35.0",
+    "@eslint/js": "^9.38.0",
     "@types/jest": "^30.0.0",
-    "eslint": "^9.35.0",
-    "jest": "^30.1.3",
+    "eslint": "^9.38.0",
+    "jest": "^30.2.0",
     "rimraf": "^6.0.1",
-    "ts-jest": "^29.4.2",
-    "typescript": "^5.9.2",
-    "typescript-eslint": "^8.44.0"
+    "ts-jest": "^29.4.5",
+    "typescript": "^5.9.3",
+    "typescript-eslint": "^8.46.2"
   },
   "engines": {
     "node": ">=20.0.0"
