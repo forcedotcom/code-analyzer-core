@@ -21,7 +21,7 @@
     "@salesforce/code-analyzer-eslint8-engine": "0.8.0-SNAPSHOT",
     "@salesforce/eslint-config-lwc": "^4.0.0",
     "@salesforce/eslint-plugin-lightning": "^2.0.0",
-    "@types/node": "^24.9.0",
+    "@types/node": "^20.0.0",
     "@typescript-eslint/eslint-plugin": "^8.44.0",
     "@typescript-eslint/parser": "^8.44.0",
     "eslint": "^9.38.0",
