@@ -2,7 +2,7 @@
 """
 
 
-def html_encode(msg: str) -> str:
+def html_encode(msg: str) -> str | int | None:
     """Performs html encoding
     Args:
         msg: unicode message to encode
@@ -10,6 +10,9 @@ def html_encode(msg: str) -> str:
     Returns:
         html encoded message
     """
+    if msg is None:
+        return msg
+
     if isinstance(msg, int):
         return msg
 

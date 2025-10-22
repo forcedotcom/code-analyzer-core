@@ -59,7 +59,7 @@ export class RunTimeFlowScannerCommandWrapper implements FlowScannerCommandWrapp
         await fs.promises.writeFile(targetedFlowsFile, targetedFlowFiles.join('\n'), 'utf-8');
 
         const flowScannerResultsFile: string = path.join(workingFolder, 'flowScannerResultsFile.json')
-        const commandName = 'flowtest'; //pythonModuleName set by internal team
+        const commandName = 'flow_scanner'; //pythonModuleName set by internal team
 
         const pythonArgs: string[] = [
             '-m',
@@ -137,9 +137,6 @@ export class RunTimeFlowScannerCommandWrapper implements FlowScannerCommandWrapp
             return false;
         }
         if (!('description' in ruleResult) || typeof ruleResult.description !== 'string') {
-            return false;
-        }
-        if (!('elem' in ruleResult) || typeof ruleResult.elem !== 'string') {
             return false;
         }
         if (!('elem_name' in ruleResult) || typeof ruleResult.elem_name !== 'string') {

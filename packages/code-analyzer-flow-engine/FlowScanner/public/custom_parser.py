@@ -11,6 +11,12 @@ import xml.etree.ElementTree as ET
 def get_root(path: str) -> ET.Element:
     return ET.parse(path, parser=LineNumberingParser()).getroot()
 
+def get_parent_map(root: ET.Element) -> dict[ET.Element, ET.Element]:
+    parent = {}
+    for elem in root.iter():
+        for child in elem:
+            parent[child] = elem
+    return parent
 
 def get_root_from_string(byte_str) -> ET.Element:
     return ET.fromstring(byte_str, parser=LineNumberingParser())

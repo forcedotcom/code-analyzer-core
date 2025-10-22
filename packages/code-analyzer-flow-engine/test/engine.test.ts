@@ -67,7 +67,7 @@ describe('Tests for the FlowScannerEngine', () => {
             const ruleDescriptors: RuleDescription[] = await engine.describeRules(createDescribeOptions(workspace));
             // No need to do in-depth examination of the rules, since other tests already do that. Just make sure we got
             // the right number of rules.
-            expect(ruleDescriptors).toHaveLength(2);
+            expect(ruleDescriptors).toHaveLength(17);
             expect(describeProgressEvents.map(e => e.percentComplete)).toEqual([0, 75, 100]);
 
             // Part 2: Running production rules.
@@ -101,7 +101,7 @@ describe('Tests for the FlowScannerEngine', () => {
 
                     const ruleDescriptors: RuleDescription[] = await engine.describeRules(createDescribeOptions());
 
-                    expect(ruleDescriptors).toHaveLength(2);
+                    expect(ruleDescriptors).toHaveLength(17);
                     expect(ruleDescriptors[0]).toEqual({
                         name: 'PreventPassingUserDataIntoElementWithoutSharing',
                         severityLevel: SeverityLevel.High,
@@ -139,7 +139,7 @@ describe('Tests for the FlowScannerEngine', () => {
 
                     const ruleDescriptors: RuleDescription[] = await engine.describeRules(createDescribeOptions(workspace));
 
-                    expect(ruleDescriptors).toHaveLength(2);
+                    expect(ruleDescriptors).toHaveLength(17);
                 });
 
                 it.each([

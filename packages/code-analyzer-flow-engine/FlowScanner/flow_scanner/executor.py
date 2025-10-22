@@ -12,38 +12,59 @@ import json
 import logging
 import os
 import traceback
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any, TypeAlias
 
-import flowtest.control_flow as crawl_spec
 import flow_parser.parse as parse
+import flow_scanner.control_flow as crawl_spec
 import public.parse_utils
-from flowtest.control_flow import Crawler, ControlFlowGraph
-from flowtest.branch_state import BranchState
-from flowtest.query_manager import QueryManager, QueryAction
+from flow_scanner.branch_state import BranchState
+from flow_scanner.control_flow import Crawler, ControlFlowGraph
+from flow_scanner.flows import FlowVector
+from flow_scanner.query_manager import QueryManager, QueryAction
+from flow_scanner.util import Resolver
 from public import parse_utils
-from flowtest.util import resolve_name
+from public.flow_scanner_exceptions import InvalidFlowException
 
 if TYPE_CHECKING:
     from public.parse_utils import ET
 
 from datetime import datetime
 
-import flowtest.flows as flows
+import flow_scanner.flows as flows
 
-from flowtest import wire
-from flowtest.flow_result import ResultsProcessor as Results
+from flow_scanner import wire
+from flow_scanner.flow_result import ResultsProcessor as Results
 
-#: for debugging the flow being analyzed
+#: Controls whether subflows are followed or not, useful for debugging.
 FOLLOW_SUBFLOWS: bool = True
 
-#: whether we should rely on stored outputs instead of re-running the subflow
+#: When calling subflows, we store the input variables that go into the subflow.
+#: If subflows are pure functions, then calling them repeatedly with the same inputs
+#: should result in the same output. This is the Carnac prediction.
+#: When trust carnac is set to true, we skip running subflows if there is a cached
+#: invocation with the same dataflow inputs for the same subflow.
+#:
+#: To disable this behavior, set to False.
 TRUST_CARNAC: bool = True
 
-#: store outputs when re-running subflows and compare with predicted
+#: For testing purposes, we store outputs when re-running subflows and compare with
+#: the carnac prediction to see if there is a match. We have run carnac extensively on
+#: on the flow corpus in the try only mode before deciding to trust carnac in production.
 TRY_CARNAC: bool = True
 
 #: logger for current module
 logger: logging.Logger = logging.getLogger(__name__)
+
+# variables are identified by a tuple (flow_path, var name)
+# as two flows can have the same variable.
+var_g: TypeAlias = tuple[str, str]
+
+# At each variable there is a vectorized data structure called
+# 'FlowVector' that contains all dataflows influencing that variable
+# at any point in program execution.
+# Therefore, the global list of all dataflows at any point in program
+# execution is dict[tuple[str,str], FlowVector]
+flow_vec_g: TypeAlias = dict[var_g, FlowVector]
 
 
 class Stack(object):
@@ -52,13 +73,13 @@ class Stack(object):
     When we pass to a subflow a new frame is pushed on the stack and when we
     return it is popped."""
 
-    def __init__(self, root_flow_path: str, all_flow_paths: {str: str},
+    def __init__(self, root_flow_path: str, resolver: Resolver,
                  query_manager: QueryManager):
         """Constructor (can be used)
 
         Args:
             root_flow_path: current filename of flow being processed
-            all_flow_paths: map[flow_name] -> flow_path of all files in scope
+            resolver: map[flow_name] -> flow_path of all files in scope
             query_manager: invokes queries and stores results
 
         Results:
@@ -67,24 +88,26 @@ class Stack(object):
         """
 
         #: tracks list of frames that need to be processed *after* current frame
-        self.__frame_stack: [Frame] = []
+        self.__frame_stack: list[Frame] = []
 
         #: stores frames that have been fully processed
-        self.__collected_frames: [Frame] = []
+        self.__collected_frames: list[Frame] = []
 
         #: subflows that have already been processed
-        #: subflow name --> Flow Vectors
-        #: {(str, str): flows.FlowVector}:
-        self.resolved_subflows: {str: {(str, str): flows.FlowVector}} = {}
+        #: subflow name --> global Flow Vectors at program exit
+        self.resolved_subflows: dict[str, flow_vec_g] = {}
 
         #: map from flow name to flow filepath (for subflow path lookup)
-        self.all_flow_paths: {str: str} = all_flow_paths
+        self.resolver: Resolver = resolver
 
         #: current frame being processed
+
         self.current_frame: Frame = Frame.build(current_flow_path=root_flow_path,
-                                                all_flow_paths=all_flow_paths,
+                                                resolver=resolver,
                                                 resolved_subflows=self.resolved_subflows,
                                                 query_manager=query_manager)
+
+
 
         #: pointer to query manager so that it can be returned on exit
         self.query_manager: QueryManager = query_manager
@@ -123,6 +146,7 @@ class Stack(object):
         """
         while True:
             next_frame = self.current_frame.execute()
+
             if next_frame is not None and not self.is_circular_reference(next_frame):
                 # we have a function call and need to store the current frame on the stack
                 self.push(self.current_frame)
@@ -176,31 +200,38 @@ class Stack(object):
             return False
         flow_path = next_frame.flow_path
         seen = False
+        matching_frame = None
         # don't allow reference to something on the current stack
-        if flow_path in [f.flow_path for f in self.__frame_stack]:
-            seen = True
-        elif flow_path in [f.flow_path for f in self.__collected_frames]:
-            seen = True
+        # all_frames = self.__frame_stack + self.__collected_frames
+        for f in self.__frame_stack:
+            if flow_path == f.flow_path:
+                seen = True
+                matching_frame = f
+                break
 
-        if seen is True:
+        if seen:
             logger.critical(f"found circular reference in {next_frame.flow_path}")
-
+            self.query_manager.lexical_accept("CyclicSubflow",
+                                              next_flow_path=flow_path,
+                                              current_frame=self.current_frame,
+                                              matching_frame=matching_frame,
+                                              all_frames=self.__frame_stack)
         return seen
 
 
-def add_inputs_to_call_cache(cache: {str: [[{(str, str): flows.FlowVector}]]},
+def add_inputs_to_call_cache(cache: dict[str, list[list[flow_vec_g]]],
                              sub_path: str,
-                             val: {(str, str): flows.FlowVector}
-                             ) -> {str: [[{(str, str): flows.FlowVector}]]}:
+                             val: flow_vec_g,
+                             ) -> dict[str, list[list[flow_vec_g]]]:
     """Store input values to subflow in cache
 
     Args:
-        cache: cache of subflow calls
+        cache: cached return values (subflow name -> flow_vec_g)
         sub_path: path of subflow
         val: input values to store
 
     Returns:
-        cache
+        updated cache
 
     """
     if cache is None:
@@ -210,18 +241,22 @@ def add_inputs_to_call_cache(cache: {str: [[{(str, str): flows.FlowVector}]]},
         cache[sub_path] = [[val]]
 
     elif call_carnac(cache, val, subflow_path=sub_path, outputs=None) is None:
+        # we've checked that the inputs are not already in the cache
         cache[sub_path].append([val])
 
     return cache
 
 
-def add_outputs_to_call_cache(cache, inputs, added, flow_path) -> [[{(str, str): flows.FlowVector}]]:
+def add_outputs_to_call_cache(cache: dict[str, list[list[flow_vec_g]]],
+                              inputs: flow_vec_g,
+                              added: flow_vec_g,
+                              flow_path: str) -> dict[str,list[list[flow_vec_g]]]:
     """Store return values of subflow in call cache
 
     Args:
         cache: cached subflow inputs and outputs
-        inputs: inputs whose outputs are being added
-        added: vars to flow vectors to add
+        inputs: inputs whose outputs are being added to cache
+        added: vars to flow vectors to add to cache
         flow_path: filename of flow
 
     Returns:
@@ -235,15 +270,16 @@ def add_outputs_to_call_cache(cache, inputs, added, flow_path) -> [[{(str, str):
     return cache
 
 
-def call_carnac(input_cache: {str: [[{(str, str): flows.FlowVector}]]} or None,
-                vector_map: {(str, str): flows.FlowVector},
+def call_carnac(input_cache: dict[str, list[list[flow_vec_g]]] | None,
+                vector_map: flow_vec_g,
                 subflow_path: str,
-                outputs: {(str, str): flows.FlowVector} = None) -> {(str, str): flows.FlowVector} or None:
+                outputs: flow_vec_g = None) -> flow_vec_g | None:
     """Predicts what the subflow will return
 
     Args:
         input_cache: cache of previous flow inputs
-        vector_map: subflow inputs
+                     subflow_path ->[[input1, output1], [input2, output2], ]
+        vector_map: subflow inputs being called now
         subflow_path: filepath of subflow to be called
         outputs: outputs to add
 
@@ -252,20 +288,25 @@ def call_carnac(input_cache: {str: [[{(str, str): flows.FlowVector}]]} or None,
 
     """
     if input_cache is None or subflow_path not in input_cache:
-        # Carnac not ready
+        # Carnac not ready as cache is not populated yet
         return None
 
-    to_match = input_cache[subflow_path]
+    cached_flows = input_cache[subflow_path] # a list of flow_vec_g
 
-    for inputs in to_match:
-        if vector_map == inputs[0]:
+    for in_out_list in cached_flows:
+
+        if vector_map == in_out_list[0]:
+            # we are calling the flow with input variables that
+            # are already in the cache
             if outputs is not None:
-                assert len(inputs) == 1
-                inputs.append(outputs)
+                assert len(in_out_list) == 1
+
+                # add to input cache
+                in_out_list.append(outputs)
                 return outputs
 
-            elif len(inputs) > 1:
-                return inputs[1]
+            elif len(in_out_list) > 1:
+                return in_out_list[1]
 
     return None
 
@@ -296,14 +337,14 @@ class Frame(object):
 
     """
 
-    def __init__(self, current_flow_path: str | None = None, all_flow_paths: {str: str} = None):
+    def __init__(self, current_flow_path: str | None = None, resolver: Resolver = None):
 
         #: this is a map : `(local flow_name, namespaced flow_name)` -> `flow_path` so
         #: that when we encounter a subflow we can load the file
-        self.all_flow_paths: {(str, str): str} = all_flow_paths
+        self.resolver: Resolver = resolver
 
         #: placeholder for fast-forward scans (not currently used)
-        self.resolved_subflows: {} = {}
+        self.resolved_subflows: dict[Any, Any] = {}
 
         #: path of flow we are working on, needed when labelling inputs/outputs
         self.flow_path: str = current_flow_path
@@ -329,17 +370,25 @@ class Frame(object):
         #: current state being processed
         self.state: BranchState | None = None
 
-        #: cache of input values of subflows called from this frame.
-        #: These are the input variables to each subflow, mapping
-        #: subflow_path -> [[input flow map, output flow map]]
-        #: where the flow map is the map from tuples to flow vectors - `{(str, str): FlowVector}`
-        #: corresponding to inputs and outputs each time the subflow is called
-        #: (hence a list of lists)
-        self.subflow_input_cache: {str: [[{(str, str): flows.FlowVector}]]} or None = None
+        #: Caches the results of calling a subflow:
+        #: subflow_path -> [input flow map, output flow map].
+        #:
+        #: Ideally a cache would be represented as a dict: key -> stored value
+        #: in this case (flow input dataflows -> flow output dataflows) but python
+        #: doesn't support dicts of dicts, and we are not certain of the carnac
+        #: assumption, e.g. that subflows are pure functions for purpose of our flow analysis
+        #: so in theory we may have (input vars -> output vars1, output vars2, ...)
+        #: Therefore we use a list, where the first entry is the input and all subsequent
+        #: entries are output.
+        #:
+        #: Thus, a list of lists [[input1, outpu1], [input2, output2], ...]
+        #:
+        #: Ideally, there will be only one or two entries in each list entry.
+        self.subflow_call_cache: dict[str, list[list[flow_vec_g]]] | None = None
 
-        #: cache of output variables in the subflow
+        #: cache of output *variables* in the subflow
         #: subflow path -> [(path, var name)]
-        self.subflow_output_variable_cache = {str: [(str, str)]}
+        self.subflow_output_variable_cache: dict[str, list[tuple[str, str]]] | None = None
 
         #: store prediction of subflow outputs in child frame (for testing only)
         self.prediction = None
@@ -347,18 +396,20 @@ class Frame(object):
         #: store inputs of subflow in child frame (testing only)
         self.inputs = None
 
+        #: whether execution is async or no
+        self.is_async: bool = False
+
     @classmethod
     def build(cls, current_flow_path: str | None = None,
-              all_flow_paths: {str: str} = None,
-              resolved_subflows: {} = None,
+              resolver: Resolver = None,
+              resolved_subflows: dict[Any, Any] = None,
               parent_subflow: ET.Element = None,
               query_manager: QueryManager = None) -> Frame:
         """Call this whenever program analysis starts or a subflow is reached
 
         Args:
             current_flow_path: current path of flow
-            all_flow_paths: map[(global flow_name, local flow_name): flow_path] for all flows in
-                scope to be scanned
+            resolver: Resolves subflows to be scanned
             resolved_subflows: subflows that have been already processed
             parent_subflow: current subflow element that spawned this
                 frame
@@ -372,7 +423,7 @@ class Frame(object):
         if current_flow_path is None:
             raise ValueError("called with null argument")
 
-        frame = Frame(current_flow_path=current_flow_path, all_flow_paths=all_flow_paths)
+        frame = Frame(current_flow_path=current_flow_path, resolver=resolver)
 
         # store subflow resolutions
         frame.resolved_subflows = resolved_subflows
@@ -419,12 +470,12 @@ class Frame(object):
         # update query_manager so it has the correct parser
         self.query_manager.parser = parent_frame.parser
 
-        subflow_output_vars = self.parser.output_variables
+        subflow_output_vars = list(self.parser.output_variables) # convert frozenset to list
         if parent_frame.subflow_output_variable_cache is None:
-            parent_frame.subflow_output_variable_cache = {self.flow_path: subflow_output_vars}
+            parent_frame.subflow_output_variable_cache = {self.flow_path: list(subflow_output_vars)}
 
         elif self.flow_path not in parent_frame.subflow_output_variable_cache:
-            parent_frame.subflow_output_variable_cache[self.flow_path] = subflow_output_vars
+            parent_frame.subflow_output_variable_cache[self.flow_path] = list(subflow_output_vars)
 
         output_variable_map = get_output_variable_map(subflow_elem=self.parent_subflow,
                                                       subflow_output_vars=subflow_output_vars)
@@ -440,10 +491,10 @@ class Frame(object):
             prediction = self.prediction
             if prediction is None:
                 logger.info("Have not seen these inputs before. Adding to cache.")
-                parent_frame.subflow_input_cache = add_outputs_to_call_cache(parent_frame.subflow_input_cache,
-                                                                             self.inputs,
-                                                                             output_vector_map,
-                                                                             self.flow_path)
+                parent_frame.subflow_call_cache = add_outputs_to_call_cache(parent_frame.subflow_call_cache,
+                                                                            self.inputs,
+                                                                            output_vector_map,
+                                                                            self.flow_path)
             elif prediction is not None and prediction == output_vector_map:
                 logger.info("Carnac is right!")
             else:
@@ -458,7 +509,7 @@ class Frame(object):
            are propagated to the parent.
     """
 
-    def get_consolidated_output_vars(self) -> {(str, str): flows.FlowVector}:
+    def get_consolidated_output_vars(self) -> dict[tuple[str, str], flows.FlowVector]:
         """get all output variable vectors from all terminal BranchStates.
 
         Call this method after flow processing has completed for a subflow
@@ -496,8 +547,8 @@ class Frame(object):
 
     def spawn_child_frame(self, subflow: ET.Element,
                           sub_path: str,
-                          input_map: {str: str},
-                          vector_map: {(str, str): flows.FlowVector}
+                          input_map: dict[str, str],
+                          vector_map: dict[tuple[str, str], flows.FlowVector]
                           ) -> Frame:
         """Spawn a child frame when entering subflow.
 
@@ -526,7 +577,7 @@ class Frame(object):
 
         Args:
             sub_path: filepath of subflow being called
-            input_map: map of output variables in child to input variables of subflow
+            input_map: map of output variables in child to input variables of subflow elem in parent
             vector_map: map from tuple to the flow vectors that will be pushed into the child
             subflow: subflow xml element
 
@@ -541,7 +592,7 @@ class Frame(object):
         self.query_manager.parser = new_parser
 
         new_frame = Frame.build(current_flow_path=sub_path,
-                                all_flow_paths=self.all_flow_paths,
+                                resolver=self.resolver,
                                 parent_subflow=subflow,
                                 query_manager=self.query_manager
                                 )
@@ -550,6 +601,16 @@ class Frame(object):
                                                     output_vector_map=vector_map,
                                                     src2tgt_variable_map=input_map,
                                                     transition_elem=subflow)
+        # propagate crawl history to child
+        history = self.crawler.get_crawler_history_unsafe()
+        last_index = self.crawler.get_current_step_index()-1 # index always points to *next* step
+
+        if history is None:
+            new_history = [(self.crawler, last_index)]
+        else:
+            new_history = history.insert(0, (self.crawler, last_index))
+
+        new_frame.crawler.crawler_history = new_history
 
         self.child_spawned = True
         return new_frame
@@ -568,11 +629,11 @@ class Frame(object):
 
         """
 
-        if FOLLOW_SUBFLOWS is False:
+        if not FOLLOW_SUBFLOWS:
             # For testing/debugging, turn off FOLLOW_SUBFLOWS
             return None
 
-        if self.child_spawned is True:
+        if self.child_spawned:
             # we are re-entering from a function call so update info and return:
 
             self.child_spawned = False
@@ -593,7 +654,8 @@ class Frame(object):
         """
 
         # once, we run queries at flow start:
-        self.query_manager.query(action=QueryAction.flow_enter, state=self.state)
+        self.query_manager.lexical_query(parser=self.parser, crawler=self.crawler)
+        self.query_manager.query(action=QueryAction.flow_enter, state=self.state, crawler=self.crawler)
 
         while True:
 
@@ -602,12 +664,6 @@ class Frame(object):
             if crawl_step is None:
                 # we are done processing this flow
                 return None
-
-            child_frame = self.handle_subflows(self.state.current_elem)
-
-            if child_frame is not None:
-                # child frame only returned if handling a subflow element
-                return child_frame
 
             # Now we have an element loaded and can proceed
             report(self.state, self.crawler.current_step, self.crawler.total_steps)
@@ -618,6 +674,14 @@ class Frame(object):
             # must be done *after* wiring.
             self.query_manager.query(action=QueryAction.process_elem, state=self.state)
 
+            # follow subflows if necessary
+            child_frame = self.handle_subflows(self.state.current_elem)
+
+            if child_frame is not None:
+                # child frame only returned if handling a subflow element
+                return child_frame
+
+
     def process_subflow(self, current_elem):
 
         # If there is a problem, we return None and the parent
@@ -625,14 +689,14 @@ class Frame(object):
 
         try:
             sub_name = parse_utils.get_subflow_name(current_elem)
-            sub_path = resolve_name(self.all_flow_paths, sub_name=sub_name)
-            if sub_path == self.flow_path:
-                # Don't follow subflows that point to the same flow
-                return None
+            sub_path = self.resolver.get_subflow_path(sub_name=sub_name, flow_path=self.flow_path)
+
+            assert sub_path != self.flow_path
 
             if sub_path is None:
                 # We can't find the path of the sub flow, so don't process
-                # A log was already filed.
+                logger.critical(f"No subflow path found for subflow {sub_name} "
+                                f"called in flow {self.flow_path}")
                 return None
 
             # parent variable name --> child input variable name
@@ -641,16 +705,16 @@ class Frame(object):
             # this is the vector map we want to push into the child:
             vector_map = {(self.flow_path, x): self.state.get_or_make_vector(x) for x in input_map}
 
-            prediction = call_carnac(input_cache=self.subflow_input_cache,
+            prediction = call_carnac(input_cache=self.subflow_call_cache,
                                      vector_map=vector_map,
                                      subflow_path=sub_path,
                                      outputs=None)
 
-            if TRY_CARNAC is True:
+            if TRY_CARNAC:
                 # add inputs to cache:
-                self.subflow_input_cache = add_inputs_to_call_cache(self.subflow_input_cache,
-                                                                    sub_path,
-                                                                    vector_map)
+                self.subflow_call_cache = add_inputs_to_call_cache(self.subflow_call_cache,
+                                                                   sub_path,
+                                                                   vector_map)
             if TRUST_CARNAC is True and prediction is not None:
                 output_variable_map = get_output_variable_map(
                     subflow_elem=current_elem,
@@ -681,7 +745,7 @@ class Frame(object):
 
                 return child_frame
 
-        except Exception as e:
+        except Exception:
             logger.critical("Error processing subflow:\n" + traceback.format_exc())
             return None
 
@@ -695,9 +759,11 @@ def parse_flow(flow_path: str,
                query_module_path: str = None,
                query_class_name: str = None,
                query_preset: str = None,
+               optional_queries: list[str] | None = None,
                query_manager: QueryManager | None = None,
                crawl_dir: str = None,
-               all_flows: {str: str} = None) -> QueryManager:
+               resolver: Resolver = None,
+               debug_query: str | None = None) -> QueryManager:
     """Main loop that performs control and dataflow analysis
 
     Args:
@@ -710,10 +776,12 @@ def parse_flow(flow_path: str,
         query_module_path: path of module where custom queries are stored
         query_class_name: name of query class to instantiate
         query_preset: name of preset to run
+        optional_queries: list of optional queries to run
         query_manager: existing instance that invokes queries across entire run. Start with None
                        and one will be created.
         crawl_dir: directory of where to store crawl specifications
-        all_flows: map flow name -> path of flow (used for looking up flow paths of subflows)
+        resolver: used for looking up flow paths of subflows
+        debug_query (str): pass this string to the query_manager constructor
 
     Returns:
         instance of ger_report.Result class that can be used to generate reports
@@ -725,7 +793,7 @@ def parse_flow(flow_path: str,
 
     if crawl_dir is not None:
         cfg = ControlFlowGraph.from_parser(parser)
-        schedule = crawl_spec.get_crawl_schedule(cfg)
+        schedule = crawl_spec.get_crawl_data(cfg)
         cleaned_path = flow_path.replace(os.sep, "_")
 
         with open(os.path.join(crawl_dir, f"{cleaned_path}__crawl_schedule.json"),
@@ -749,16 +817,22 @@ def parse_flow(flow_path: str,
         query_manager = QueryManager.build(results=results,
                                            parser=parser,
                                            requested_preset=query_preset,
+                                           additional_queries=optional_queries,
                                            module_path=query_module_path,
-                                           class_name=query_class_name)
+                                           class_name=query_class_name,
+                                           debug_query=debug_query)
     else:
         # we are continuing a run, so update parser to work on new file
         query_manager.parser = parser
 
     # build stack
-    stack = Stack(root_flow_path=flow_path,
-                  all_flow_paths=all_flows,
-                  query_manager=query_manager)
+    try:
+        stack = Stack(root_flow_path=flow_path,
+                      resolver=resolver,
+                      query_manager=query_manager)
+    except InvalidFlowException:
+        logger.error(f"Error parsing flow {flow_path}, skipping")
+        return query_manager
 
     # run program
     query_manager = stack.run()
@@ -780,10 +854,10 @@ def report(state: BranchState, current_step: int, total_steps: int) -> None:
     logger.debug(msg)
 
 
-def get_output_variable_map(subflow_elem: ET.Element, subflow_output_vars: [(str, str)]) -> {str: str}:
+def get_output_variable_map(subflow_elem: ET.Element, subflow_output_vars: list[var_g]) -> dict[str, str]:
     # output_variable_map: child name --> parent name the child influences
     auto, output_variable_map = public.parse_utils.get_subflow_output_map(subflow_elem)
-    if auto is True:
+    if auto:
         # the output variable map will not be populated if auto is True,
         # so populate it now with output_var_name (in source) -> subflow_name.name (in parent)
         subflow_name = parse_utils.get_name(subflow_elem)
@@ -793,7 +867,7 @@ def get_output_variable_map(subflow_elem: ET.Element, subflow_output_vars: [(str
     return output_variable_map
 
 
-def _consolidate_collected_frames(old_frames: [Frame]) -> (BranchState,):
+def _consolidate_collected_frames(old_frames: list[Frame]) -> tuple[BranchState,]:
     to_return = []
     for frame in old_frames:
         to_keep = list(frame.crawler.terminal_steps)
@@ -802,5 +876,5 @@ def _consolidate_collected_frames(old_frames: [Frame]) -> (BranchState,):
     return tuple(to_return)
 
 
-def report_map(vec_map: {(str, str): flows.FlowVector}) -> str:
+def report_map(vec_map: flow_vec_g) -> str:
     return '\n'.join([x.short_report() for x in vec_map.values()])

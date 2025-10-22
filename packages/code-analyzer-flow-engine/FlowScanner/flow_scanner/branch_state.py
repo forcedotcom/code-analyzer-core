@@ -12,17 +12,71 @@ from __future__ import annotations
 import copy
 import logging
 import traceback
-from operator import ifloordiv
 
+from typing import TypeAlias
 from flow_parser import parse
-import public.custom_parser as CP
-from public.custom_parser import ET
-from flowtest.control_flow import Crawler
-from flowtest.flows import FlowVector
-from flowtest.util import propagate
+from flow_scanner.control_flow import Crawler
+from flow_scanner.flows import FlowVector
+from flow_scanner.util import propagate
 from public.contracts import State
-from public.data_obj import DataInfluencePath, DataInfluenceStatement, CrawlStep
+from public.custom_parser import ET
+from public.data_obj import InfluencePath, InfluenceStatement, CrawlStep
 from public.parse_utils import get_name, get_elem_string, get_line_no
+
+"""
+ * * Important Type Aliases * * 
+"""
+
+"""
+A unique flow vector exists for each variable, and variables are globally 
+define by a tuple (flow path, variable name) to support dataflow 
+analysis across subflows. Therefore the full state of the system at any
+stage of execution can be defined by a "flow_map" which is a map
+from (str, str) -> FlowVector
+
+"""
+flow_map_t: TypeAlias = dict[tuple[str, str], FlowVector]
+
+
+"""
+An influence path is also defined only for each variable. Moreover,
+each variable can have a set of influence paths, due to different
+execution flow histories. The difference between an influence map
+and a flow map is that the influence map is never vectorized, e.g. 
+it applies only to scalars or the common case, and so is suitable 
+for things like formulas, not vectors. 
+
+The flow map is built from influence maps by having a general case
+and then property overrides. See the flows module for how this is done.
+"""
+infl_map_t: TypeAlias = dict[tuple[str, str], set[InfluencePath]]
+
+
+"""
+A local influence map drops the flow path and only considers lists,
+
+variable name --> list of influence paths influencing this variable.
+
+this is when there is no need for looking at cross flow dataflows. This
+is only used as a building block for flow maps and influence maps.
+"""
+
+local_infl_map_t: TypeAlias = dict[str, list[InfluenceStatement]]
+
+"""
+Flow variables are a set of tuples (flow path, variable name) as two flows
+can have variables of the same name.
+"""
+
+flow_vars_t: TypeAlias = set[tuple[str, str]]
+
+"""
+a variable in a flow is tracked by a tuple (flow path, variable name) as two flows
+can have variables of the same name.
+"""
+
+var_t: TypeAlias = tuple[str, str]
+
 
 #: string to use in :class:`public.DataInfluenceStatement` comments
 SUBFLOW_WIRE_COMMENT = "output via subflow assignment"
@@ -45,9 +99,8 @@ class BranchState(State):
     All interaction with influence flows must be done via public APIs
     exposed by BranchState. Instantiate only with a builder method.
 
-    A clone of the state should be made whenever there is a branch within
-    a flow, so that when we exit the branch, we recover the state
-    before branching.
+    A shallow copy of the influence map is made at each crawl
+    step (the influence map contains only immutable elements).
 
     Prior to exiting a subflow, all branches must be consolidated so that
     all execution paths are available as return values.
@@ -64,20 +117,20 @@ class BranchState(State):
         self.current_crawl_step: CrawlStep | None = None
 
         #: CrawlStep -> map[(flow_path, variable_name)--> FlowVectors]
-        self.__influence_map: {CrawlStep: {(str, str): FlowVector}} = {}
+        self.__influence_map: dict[CrawlStep, flow_map_t] = {}
 
         #: default map populated with globals available to the flow
-        self.__default_map: {(str, str): FlowVector} = {}
+        self.__default_map: flow_map_t = {}
 
         #: Name of Element being currently processed (for convenience)
         #: (The first element in a flow is start and has no name.)
         self.current_elem_name: str = '*'
 
         #: current Flow element (xml)
-        self.current_elem: ET.Element = None
+        self.current_elem: ET.Element | None = None
 
         #: resolves formulas and templates (late binding indirect references)
-        self.formula_map: {(str, str): {DataInfluencePath}} = {}
+        self.formula_map: infl_map_t = {}
 
         #: flow label (unique within a given package)
         self.flow_name: str | None = None
@@ -133,7 +186,7 @@ class BranchState(State):
         """
         return self.current_elem_name
 
-    def filter_maps(self, steps: [CrawlStep]):
+    def filter_maps(self, steps: list[CrawlStep]):
         """Removes all influence maps except those in `steps`
 
         .. WARNING:: Destructive operation, only call after flow
@@ -151,7 +204,7 @@ class BranchState(State):
         for step in to_delete:
             del self.__influence_map[step]
 
-    def get_all_output_vectors(self) -> [((str, str), FlowVector)]:
+    def get_all_output_vectors(self) -> list[tuple[var_t, FlowVector]]:
         """Return output variable FlowVectors
 
         Returns:
@@ -165,7 +218,7 @@ class BranchState(State):
             return [(var_tuple, self.get_or_make_vector(name=var_tuple[1], flow_path=var_tuple[0]))
                     for var_tuple in self.parser.output_variables]
 
-    def propagate_flows(self, statement: DataInfluenceStatement,
+    def propagate_flows(self, statement: InfluenceStatement,
                         assign: bool = True,
                         store: bool = True,
                         **type_replacements
@@ -228,7 +281,7 @@ class BranchState(State):
         if accum is None:
             accum = self.get_or_make_vector(statement_flow.influenced_name, store=False)
 
-        if store is True:
+        if store:
             # add to influence map
             self._get_influence_map()[(self.flow_path, statement_flow.influenced_name)] = accum
 
@@ -246,39 +299,57 @@ class BranchState(State):
 
         """
         if crawl_step is None:
-            cs = crawler.get_crawl_step()
+            next_cs = crawler.load_crawl_step()
         else:
-            cs = crawl_step
+            next_cs = crawl_step
 
-        if cs is None:
+        if next_cs is None:
             # nothing left to crawl
             return None
 
         # find the appropriate parent map to clone:
         if self.current_crawl_step is None:
+            # we are just starting the crawl
             old_map = self.__default_map
-        elif cs.visitor == self.current_crawl_step.visitor:
-            old_map = self.__influence_map[self.current_crawl_step]
-        else:
-            old_cs = crawler.get_last_ancestor(cs)
-            if old_cs is None:
-                # no predecessor, so we use default
-                old_map = self.__default_map
-            else:
-                old_map = self.__influence_map[old_cs]
 
-        # make shallow copy
-        self.__influence_map[cs] = copy.copy(old_map)
+        elif next_cs.visitor == self.current_crawl_step.visitor:
+            # the next element is on the same branch as current elem
+            old_map = self.__influence_map[self.current_crawl_step]
+
+        else:
+            old_history = self.current_crawl_step.visitor.history
+            new_history = next_cs.visitor.history
+
+            if old_history == ():
+                # we are on the first branch, so no backtracking
+                old_map = self.__influence_map[self.current_crawl_step]
+
+            elif len(new_history) >= len(old_history) and new_history[0:len(old_history)] == old_history:
+                # the new branch is a continuation of old branch so no backtracking
+                old_map = self.__influence_map[self.current_crawl_step]
+
+            else:
+                # the new history is a different branch, and we need to backtrack
+                old_cs = crawler.get_last_ancestor(next_cs)
+                if old_cs is None:
+                    # no predecessor, so we use default
+                    old_map = self.__default_map
+                else:
+                    old_map = self.__influence_map[old_cs]
+
+        # make shallow copy because flow vectors are immutable
+        self.__influence_map[next_cs] = copy.copy(old_map)
 
         # load current element and step info
-        self.current_crawl_step = cs
-        self.current_elem = self.parser.get_by_name(cs.element_name)
-        self.current_elem_name = cs.element_name
+        self.current_crawl_step = next_cs
+        self.current_elem = self.parser.get_by_name(next_cs.element_name)
+        self.current_elem_name = next_cs.element_name
 
-        return cs
+        return next_cs
 
     def get_flows_from_sources(self, influenced_var: str,
-                               source_vars: {(str, str)}, all_steps=False) -> set[DataInfluencePath] | None:
+                               source_vars: set[var_t],
+                               all_steps=False, restrict: str | None=None) -> set[InfluencePath] | None:
         """Finds which flows originate in the source variables.
 
         returns all flows into influencer_var that originate in the
@@ -292,7 +363,8 @@ class BranchState(State):
                          but with a path tuple.
             all_steps: whether flows should be loaded from
                        all crawl steps or just the current step
-
+            restrict: only consider flows that originate with the variable restricted to the
+                      specified property of the source vars.
         Notes:
             * Only queries for names in the current flow-path
               (This should be handled automatically as sources
@@ -306,14 +378,17 @@ class BranchState(State):
             entire flow is provided to assist in type analysis if
             needed.
 
+
         """
         if source_vars is None or len(source_vars) == 0:
             return None
         if influenced_var is None:
             return None
 
+        # we assume this is being called in the same flow as the influenced variable
+        path = self.flow_path
         (parent, member, type_info) = self.parser.resolve_by_name(influenced_var)
-        var_tuple = (self.flow_path, parent)
+        var_tuple = (path, parent)
 
         if var_tuple in self.formula_map:
             # (The issue is that influencer_var may be a formula field,
@@ -322,15 +397,15 @@ class BranchState(State):
         else:
             formula_flows = None
 
-        if all_steps is False:
+        if not all_steps:
             steps_to_check = [None]
         else:
             steps_to_check = [self.__influence_map.keys()]
 
         to_return = set()
         for step in steps_to_check:
-            tgt_vec = self._get_or_make_from_type(parent, member, type_info,
-                                                  store=False, step=step)
+            tgt_vec = self._get_or_make_FlowVector(parent=parent, type_info=type_info, path=path,
+                                                   store=False, step=step)
             if formula_flows is not None:
                 vec_influencers = self._propagate_flows_to_vec(flows=formula_flows,
                                                                vec=tgt_vec, assign=True,
@@ -346,7 +421,11 @@ class BranchState(State):
 
                 for path in candidate_flows:
                     if (path.history[0].flow_path, path.history[0].influencer_var) in source_vars:
-                        to_return.add(path)
+                        # now filter if requested
+                        if restrict is not None and path.influencer_property != restrict:
+                            continue
+                        else:
+                            to_return.add(path)
 
         # end of for-loop return all results
         if len(to_return) == 0:
@@ -393,7 +472,7 @@ class BranchState(State):
             return res
         else:
             # TODO: this is ugly, we need to rework this
-            return self._get_or_make_from_type(parent=parent, type_info=type_info, store=store, step=step)
+            return self._get_or_make_FlowVector(parent=parent, type_info=type_info, store=store, step=step)
 
     def is_in_map(self, var_name: str) -> bool:
         """checks if the name is in map
@@ -411,10 +490,10 @@ class BranchState(State):
         else:
             return (self.flow_path, var_name) in influence_map
 
-    def add_vectors_from_other_flow(self, src_flow_path: str, output_vector_map: {(str, str): FlowVector},
-                                    src2tgt_variable_map: {str: str}, transition_elem: ET.Element,
+    def add_vectors_from_other_flow(self, src_flow_path: str, output_vector_map: flow_map_t,
+                                    src2tgt_variable_map: dict[str, str], transition_elem: ET.Element,
                                     is_return=False
-                                    ) -> {(str, str): FlowVector} or None:
+                                    ) -> flow_map_t | None:
         """Pushes vectors in the source to vectors in the target, by wiring a flow across flow boundaries::
 
                 old path: src A (=terminal in src)
@@ -458,6 +537,7 @@ class BranchState(State):
         added = {}
         subflow_name = get_name(transition_elem)
         subflow_src = get_elem_string(transition_elem)
+        # noinspection PyUnresolvedReferences
         subflow_line_no = transition_elem.sourceline
         out_path = self.flow_path
 
@@ -480,8 +560,8 @@ class BranchState(State):
             target_var = src2tgt_variable_map[src_name]
             (tgt_parent, tgt_member, tgt_type) = self.parser.resolve_by_name(target_var)
 
-            connect_path = DataInfluencePath(
-                history=(DataInfluenceStatement(
+            connect_path = InfluencePath(
+                history=(InfluenceStatement(
                     influenced_var=target_var,
                     influencer_var=src_name,
                     element_name=subflow_name,
@@ -501,7 +581,7 @@ class BranchState(State):
             )
 
             # grab a reference to the target vector:
-            tgt_vec = self._get_or_make_from_type(parent=target_var, type_info=tgt_type, path=out_path)
+            tgt_vec = self._get_or_make_FlowVector(parent=target_var, type_info=tgt_type, path=out_path)
 
             # now push the src vector into the target via the connecting flow:
             tgt_vec_new = src_vec.push_via_flow(extension_path=connect_path,
@@ -517,88 +597,8 @@ class BranchState(State):
 
         return added
 
-    #
-    #           End of BranchState Public API
-    #
-    #
 
-    def _get_or_make_from_type(self, parent: str, type_info: parse.VariableType, path: str = None,
-                               store=False, step: CrawlStep = None):
-        """Retrieve or make vector based on Variable Type
-
-        Args:
-            parent: parent object name
-            type_info: Variable Type info for vector
-            path: flow path
-            store: True if the vector should be added to the influence map
-            step: Crawl Step whose map the vector should be added to (If None, use
-                  the current crawl step)
-
-        Returns:
-            Flow Vector
-
-        """
-        infl_map = self._get_influence_map(crawl_step=step)
-        if path is None:
-            path = self.flow_path
-
-        var_t = (path, parent)
-
-        if var_t in infl_map:
-            return infl_map[var_t]
-
-        # try to get the element for better reporting:
-        var_elem = self.parser.get_by_name(parent)
-
-        if var_elem is not None:
-            line_no = var_elem.sourceline
-            source_text = get_elem_string(var_elem)
-        else:
-            line_no = 0
-            source_text = "[builtin]"
-
-        dfr = DataInfluenceStatement(
-            influenced_var=parent,
-            influencer_var=parent,
-            element_name=parent,
-            source_text=source_text,
-            line_no=line_no,
-            flow_path=path,
-            source_path=path,
-            comment=INITIALIZATION_COMMENT
-        )
-
-        flow_path = DataInfluencePath(history=(dfr,), influenced_name=parent, influenced_filepath=path,
-                                      influencer_name=parent, influencer_filepath=path, influencer_property=None,
-                                      influenced_property=None, influenced_type_info=type_info
-                                      )
-        flow_vector = FlowVector.from_flows(default={flow_path})
-        if store is True:
-            # add to influence map
-            infl_map[var_t] = flow_vector
-        return flow_vector
-
-    def _get_influence_map(self, crawl_step: CrawlStep = None) -> {(str, str): FlowVector} or None:
-        """retrieves current influence map instance for the given crawl step
-
-        Args:
-            crawl_step: key to influence map. If None, the map corresponding to the
-                        current map is returned.
-
-        Returns:
-            map (str, str) -> FlowVector
-
-        """
-        if crawl_step is None:
-            cs = self.current_crawl_step
-        else:
-            cs = crawl_step
-        if cs is None:
-            return self.__default_map
-        else:
-            return dict.get(self.__influence_map, cs, None)
-
-    def _initialize_variables_from_elems(self, elems: set[ET.Element] | None) -> None:
+    def initialize_variables_from_elems(self, elems: list[ET.Element] | None) -> None:
         """Adds variables to the influence map (if not already present)
 
             .. WARNING:: Expert use. Only to initialize from named elements that are actually
@@ -619,7 +619,95 @@ class BranchState(State):
         [self._init_vec_from_elem(x, store=True) for x in elems]
         return None
 
-    def _propagate_flows_to_vec(self, flows: {DataInfluencePath},
+    #
+    #           End of BranchState Public API
+    #
+    #
+
+    def _get_or_make_FlowVector(self, parent: str, type_info: parse.VariableType, path: str = None,
+                                store=False, step: CrawlStep = None)-> FlowVector:
+        """Retrieve or make vector based on Variable Type
+
+        Args:
+            parent: parent object name
+            type_info: Variable Type info for vector
+            path: flow path
+            store: True if the vector should be added to the influence map
+            step: Crawl Step whose map the vector should be added to (If None, use
+                  the current crawl step)
+
+        Returns:
+            Flow Vector
+
+        """
+        if path is None:
+            path = self.flow_path
+
+        infl_map = self._get_influence_map(crawl_step=step)
+
+
+        var_ = (path, parent)
+
+        if var_ in infl_map:
+            return infl_map[var_]
+
+        logger.info(f"variable {var_} not found in influence map at step {step} in flow {path}, "
+                    f"creating new flow vector for it.")
+        # try to get the element for better reporting:
+        var_elem = self.parser.get_by_name(parent)
+
+        if var_elem is not None:
+            # noinspection PyUnresolvedReferences
+            line_no = var_elem.sourceline
+            source_text = get_elem_string(var_elem)
+        else:
+            line_no = 0
+            source_text = "[builtin]"
+
+        dfr = InfluenceStatement(
+            influenced_var=parent,
+            influencer_var=parent,
+            element_name=parent,
+            source_text=source_text,
+            line_no=line_no,
+            flow_path=path,
+            source_path=path,
+            comment=INITIALIZATION_COMMENT
+        )
+
+        flow_path = InfluencePath(history=(dfr,), influenced_name=parent, influenced_filepath=path,
+                                  influencer_name=parent, influencer_filepath=path, influencer_property=None,
+                                  influenced_property=None, influenced_type_info=type_info
+                                  )
+        flow_vector = FlowVector.from_flows(default={flow_path})
+        if store:
+            # add to influence map
+            infl_map[var_] = flow_vector
+            logger.info(f"Added {var_} to influence map at step {step} in flow {path}")
+        return flow_vector
+
+    def _get_influence_map(self, crawl_step: CrawlStep = None) -> flow_map_t | None:
+        """retrieves current influence map instance for the given crawl step
+
+        Args:
+            crawl_step: key to influence map. If None, the map corresponding to the
+                        current map is returned.
+
+        Returns:
+            map (str, str) -> FlowVector
+
+        """
+        if crawl_step is None:
+            cs = self.current_crawl_step
+        else:
+            cs = crawl_step
+        if cs is None:
+            return self.__default_map
+        else:
+            return dict.get(self.__influence_map, cs, None)
+
+
+    def _propagate_flows_to_vec(self, flows: set[InfluencePath],
                                 vec: FlowVector, assign: bool = True,
                                 step: CrawlStep = None) -> FlowVector:
         """Pushes influencers into vec
@@ -644,8 +732,8 @@ class BranchState(State):
                 logger.warning(f"variable used in assignment {end_parent} is not initialized.")
 
             # Initialization happens here, as the tail must be in the map
-            tail_vec = self._get_or_make_from_type(parent=end_parent,
-                                                   type_info=head_flow.influenced_type_info, store=True, step=step)
+            tail_vec = self._get_or_make_FlowVector(parent=end_parent,
+                                                    type_info=head_flow.influenced_type_info, store=True, step=step)
 
             # Push all flows to the head of the statement for each element of head-flows
             new_vec = tail_vec.push_via_flow(influenced_vec=vec, extension_path=head_flow, assign=assign,
@@ -715,7 +803,7 @@ class BranchState(State):
         if el_tuple in influence_map:
             return influence_map[el_tuple]
 
-        dfr = DataInfluenceStatement(
+        dfr = InfluenceStatement(
             influenced_var=parent,
             influencer_var=parent,
             element_name=parent,
@@ -728,7 +816,7 @@ class BranchState(State):
 
         flow_path = _build_path_from_history(history=(dfr,), parser=self.parser)
         flow_vector = FlowVector.from_flows(default={flow_path})
-        if store is True:
+        if store:
             # add to influence map
             influence_map[el_tuple] = flow_vector
         return flow_vector
@@ -737,7 +825,7 @@ class BranchState(State):
         Utility methods for unit tests
     """
 
-    def _test_only_set_influence_map(self, another_map: {CrawlStep: {(str, str): FlowVector}}) -> None:
+    def _test_only_set_influence_map(self, another_map: dict[CrawlStep, flow_map_t]) -> None:
         """set influence map for state
 
         .. DANGER:: Test only
@@ -750,7 +838,7 @@ class BranchState(State):
         """
         self.__influence_map = another_map
 
-    def _test_only_get_influence_map(self) -> {CrawlStep: {(str, str): FlowVector}}:
+    def _test_only_get_influence_map(self) -> dict[CrawlStep, flow_map_t]:
         """get influence map
 
         .. DANGER:: Test only function
@@ -761,7 +849,7 @@ class BranchState(State):
         # only for testing
         return self.__influence_map
 
-    def filter_input_variables(self, output_vars: {(str, str): FlowVector}) -> {(str, str): FlowVector}:
+    def filter_input_variables(self, output_vars: flow_map_t) -> flow_map_t | None:
         """filters vectors to remove flows starting in input variables in the current flow
 
         Args:
@@ -795,6 +883,7 @@ class BranchState(State):
                         continue
 
                     if default.influencer_filepath == flow_path:
+
                         if overrides is None:
                             if (flow_path, default.influencer_name) not in self.parser.input_variables:
                                 # keep these
@@ -811,15 +900,17 @@ class BranchState(State):
                                             filtered = True
                                             continue
 
-                                        if filtered is True:
+                                        if filtered:
                                             # we skipped some properties, so we need to create a new
                                             # flow vector with the purged properties and add to the return accum
+                                            if default not in new_maps:
+                                                new_maps[default] = dict()
                                             if prop in new_maps[default]:
                                                 new_maps[default][prop].add(influence_path)
                                             else:
                                                 new_maps[default][prop] = {influence_path}
 
-                if filtered is True:
+                if filtered:
                     to_return[var_tuple] = FlowVector(property_maps=new_maps)
 
                 else:
@@ -829,8 +920,8 @@ class BranchState(State):
         return to_return
 
 
-def _build_path_from_history(parser: parse.Parser, history: tuple[DataInfluenceStatement, ...],
-                             strict=False, **type_replacements) -> DataInfluencePath:
+def _build_path_from_history(parser: parse.Parser, history: tuple[InfluenceStatement, ...],
+                             strict=False, **type_replacements) -> InfluencePath:
     """Creates a Dataflow Influence Path from the tuple of influence statements
 
         Args:
@@ -860,19 +951,19 @@ def _build_path_from_history(parser: parse.Parser, history: tuple[DataInfluenceS
 
     my_type = propagate(src_type=first_type, dest_type=last_type, **type_replacements)
 
-    return DataInfluencePath(history=history,
-                             influenced_name=last_parent,
-                             influencer_name=first_parent,
-                             influencer_filepath=first.flow_path,
-                             influenced_filepath=last.flow_path,
-                             # this is critical or else it will go in the wrong slot
-                             influenced_property=last_member,
-                             influencer_property=first_member,
-                             influenced_type_info=my_type
-                             )
+    return InfluencePath(history=history,
+                         influenced_name=last_parent,
+                         influencer_name=first_parent,
+                         influencer_filepath=first.flow_path,
+                         influenced_filepath=last.flow_path,
+                         # this is critical or else it will go in the wrong slot
+                         influenced_property=last_member,
+                         influencer_property=first_member,
+                         influenced_type_info=my_type
+                         )
 
 
-def _build_formula_map(parser: parse.Parser, flow_path: str) -> dict[(str, str):set[DataInfluencePath]]:
+def _build_formula_map(parser: parse.Parser, flow_path: str) -> infl_map_t:
     """Formulas and Templates need to be resolved at each invocation, so this map
     returns a ready-made set of dataflows to wire in case a formula appears in a
     data influence statement.
@@ -893,7 +984,7 @@ def _build_formula_map(parser: parse.Parser, flow_path: str) -> dict[(str, str):
     return to_return
 
 
-def _get_raw_formula_map(parser: parse.Parser, flow_path: str) -> dict[str:list[DataInfluenceStatement]]:
+def _get_raw_formula_map(parser: parse.Parser, flow_path: str) -> local_infl_map_t:
     """
     Args:
         parser: parser instance
@@ -909,7 +1000,7 @@ def _get_raw_formula_map(parser: parse.Parser, flow_path: str) -> dict[str:list[
     for (var_name, elem) in tuples:
         formula_name = parse.get_name(elem)
         short_tag = elem.tag[ns_len:]
-        stmt = DataInfluenceStatement(
+        stmt = InfluenceStatement(
             influenced_var=formula_name,
             influencer_var=var_name,
             element_name=formula_name,
@@ -927,9 +1018,9 @@ def _get_raw_formula_map(parser: parse.Parser, flow_path: str) -> dict[str:list[
     return accum
 
 
-def _extend_formula_map_by_flows(start_flows: set[DataInfluencePath],
-                                 formula_map: {(str, str): {DataInfluencePath}},
-                                 add_missing: bool = True) -> {DataInfluencePath}:
+def _extend_formula_map_by_flows(start_flows: set[InfluencePath],
+                                 formula_map: infl_map_t,
+                                 add_missing: bool = True) -> set[InfluencePath]:
     """Resolves a flow if the influencer is a formula in terms of real variables.
 
         .. WARNING:: This function does not perform any vectorization!
@@ -965,18 +1056,18 @@ def _extend_formula_map_by_flows(start_flows: set[DataInfluencePath],
         flow_influencer = (flow.influencer_filepath, flow.influencer_name)
         if flow_influencer in formula_map:
             map_influencing = formula_map[flow_influencer]
-            [accum.add(DataInfluencePath.combine(x, flow)) for x in map_influencing]
+            [accum.add(InfluencePath.combine(x, flow)) for x in map_influencing]
 
-        elif add_missing is True:
+        elif add_missing:
             #  a match was not found, so we add the original flow:
             accum.add(flow)
 
     return accum
 
 
-def _resolve_influencers(elem_ref_name: ET.Element,
-                         raw_formula_map: {str: [DataInfluenceStatement]},
-                         parser: parse.Parser) -> {DataInfluencePath}:
+def _resolve_influencers(elem_ref_name: str,
+                         raw_formula_map: local_infl_map_t,
+                         parser: parse.Parser) -> set[InfluencePath]:
     """Resolves indirect references
 
     This function exists to handle recursion in formulas/templates::
@@ -1027,7 +1118,7 @@ def _resolve_influencers(elem_ref_name: ET.Element,
 
             seen_resolvers.add(curr_flow.influencer_name)
 
-            to_resolve = to_resolve + [DataInfluencePath.combine(
+            to_resolve = to_resolve + [InfluencePath.combine(
                 _build_path_from_history(history=(x,), parser=parser), curr_flow
             ) for x in raw_formula_map[curr_flow.influencer_name]
             ]
@@ -1097,5 +1188,5 @@ def _populate_defaults(state: BranchState, parser: parse.Parser) -> None:
     all_formulas = parser.get_formulas()
     all_choices = parser.get_choices()
     all_constants = parser.get_constants()
-    state._initialize_variables_from_elems(all_vars + all_templates + all_formulas
-                                           + all_choices + all_constants)
+    state.initialize_variables_from_elems(all_vars + all_templates + all_formulas
+                                          + all_choices + all_constants)
