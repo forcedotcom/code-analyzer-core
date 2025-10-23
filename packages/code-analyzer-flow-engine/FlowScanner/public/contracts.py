@@ -6,21 +6,24 @@
 """
 
 from __future__ import annotations
-from typing import TYPE_CHECKING, Optional
 
 from abc import ABC, abstractmethod
+from typing import TYPE_CHECKING, Optional
 
 import public.enums
 
 if TYPE_CHECKING:
-    from public.data_obj import DataInfluencePath, VariableType
+    from public.data_obj import InfluencePath, VariableType, CrawlStep, Jump
     import xml.etree.ElementTree as ET
 
-from public.enums import RunMode
+from public.enums import RunMode, QueryAction
 
 # and import other types as needed to process queries
-from public.data_obj import QueryResult, Preset
+from public.data_obj import QueryResult, Preset, QueryDescription, InfluencePath
 
+from typing import TypeAlias
+
+var_t: TypeAlias = tuple[str, str]
 """
 To generate custom queries, implement the QueryPresets class
 and for each query listed in the preset, implement
@@ -29,6 +32,139 @@ the import path of the custom queries when invoking the script,
 or programmatically import if invoking as a module.
 """
 
+class AbstractCrawler(ABC):
+
+    @abstractmethod
+    def get_control_influence_from_source(self, influenced_var: str,
+                                                source_var: var_t) ->tuple[var_t, ...] | None:
+        """Get control influence chain from source to influenced var
+
+        Args:
+            influenced_var (str): top level (traversable) flow element name in the flow crawled by this current crawler.
+            source_var (str, str): flow_path, element name in either the current flow or in another flow that may or
+                                   may not be an ancestor in the call chain.
+
+        Returns:
+            None if there is no influence, or a set of crawl steps linking the source to the influenced.
+            Only a single chain of crawl_steps is returned, there may be other control influence chains.
+
+        """
+        pass
+
+    @abstractmethod
+    def get_crawl_schedule(self) -> tuple[CrawlStep]:
+        pass
+
+    @abstractmethod
+    def get_flow_path(self) -> str | None:
+        pass
+
+    @abstractmethod
+    def get_crawler_history_unsafe(self) -> list[tuple[AbstractCrawler, int]]:
+        """READ ONLY. Do not perform any crawlstep loads with these crawlers!
+
+        Returns:
+            history of crawlers encountered during crawl, together with the current step (int)
+            when they entered a child flow.
+        """
+        pass
+
+    @abstractmethod
+    def get_cfg(self) -> AbstractControlFlowGraph:
+        pass
+
+    @abstractmethod
+    def get_current_step_index(self)->int:
+        pass
+
+
+    @abstractmethod
+    def load_crawl_step(self) -> CrawlStep | None:
+        pass
+
+    @abstractmethod
+    def get_last_ancestor(self, crawl_step) -> CrawlStep | None:
+        """Get latest ancestor branch that was last visited at :obj:`CrawlStep`
+
+        Useful for knowing which influence map to clone
+
+        Args:
+            crawl_step: step whose history is sought
+
+        Returns:
+            CrawlStep instance or None
+
+        """
+        pass
+
+    @abstractmethod
+    def get_elem_to_crawl_step(self, elem_name: str) -> list[CrawlStep]:
+        """returns a list of all :obj:`CrawlStep` in which this element has been visited
+         during the crawl of this flow. If not visited, the empty list is returned.
+
+        Args:
+            elem_name (str): element name (use '*' for the start element)
+
+        Returns:
+            list of :obj:`CrawlStep` instances that visit this element
+
+        """
+        pass
+
+class AbstractControlFlowGraph(ABC):
+    # where to start
+    @property
+    @abstractmethod
+    def start_label(self) -> str:
+        pass
+
+    # map from segment label -> inbound jumps
+    @property
+    @abstractmethod
+    def inbound(self) -> dict[str, list[Jump]]:
+        pass
+
+    @property
+    @abstractmethod
+    def segment_map(self) -> dict[str, AbstractSegment]:
+        pass
+
+
+class AbstractSegment(ABC):
+    # name of element at the start of the segment (jump target)
+    @property
+    @abstractmethod
+    def label(self) -> str:
+        pass
+
+    # list of (element names, element tags) (including label) in this segment (in order)
+    @property
+    @abstractmethod
+    def traversed(self) -> list[tuple[str, str]]:
+        pass
+
+    # list of traversal indexes that are subflow elements
+    @property
+    @abstractmethod
+    def subflows(self) -> list[int]:
+        pass
+
+    @property
+    @abstractmethod
+    def jumps(self) -> list[Jump]:
+        pass
+
+    # whether this segment may end execution
+    @property
+    @abstractmethod
+    def is_terminal(self) -> bool:
+        pass
+
+    # for tracking whether it has been visited
+    @property
+    @abstractmethod
+    def seen_tokens(self) -> list[tuple[tuple[str, str]]]:
+        pass
 
 class QueryProcessor(ABC):
     """Queries must implement this class.
@@ -94,7 +230,7 @@ class QueryProcessor(ABC):
     # should be run, and this preset returned.
     #
     @abstractmethod
-    def set_preset_name(self, preset_name: str | None) -> Preset | None:
+    def set_preset(self, preset_name: str | None) -> Preset | None:
         """
 
         Args:
@@ -110,14 +246,16 @@ class QueryProcessor(ABC):
     @abstractmethod
     def handle_crawl_element(self,
                              state: State,
+                             crawler: AbstractCrawler,
                              ) -> list[QueryResult] | None:
         """
 
         Args:
             state:
+            crawler: cfg and crawl schedule
 
         Returns:
-
+            list of query results
         """
         pass
 
@@ -125,21 +263,23 @@ class QueryProcessor(ABC):
     @abstractmethod
     def handle_flow_enter(self,
                           state: State,  # the state has the flow_path variable
+                          crawler: AbstractCrawler,
                           ) -> list[QueryResult] | None:
         """Invoked when a flow or subflow is first entered.
 
         Args:
-            state:
+            state: state instance
+            crawler: crawl schedule and cfg
 
         Returns:
-
+            list of QueryResults
         """
         pass
 
     # Called when crawling is complete
     @abstractmethod
     def handle_final(self,
-                     all_states: ([State],),
+                     all_states: tuple[State],
                      ) -> list[QueryResult] | None:
         """Invoked when crawl is complete for the flow and all subflows.
 
@@ -149,6 +289,116 @@ class QueryProcessor(ABC):
         Returns:
 
         """
+        pass
+
+class AbstractQuery(ABC):
+    """
+    Class representing a standalone query.
+
+    Standalone queries are stateless, so there is no need to reload
+    after passing to a new flow.
+
+    Standalone queries can only be invoked on a single query action
+    """
+
+    @classmethod
+    def accept(cls, **kwargs) -> list[QueryResult] | None:
+        """
+        The accept method is designed for directly reporting issues discovered
+        in-line during regular flow processing and not run as the result of running
+        a query.
+
+        For example, the executor needs to check if a subflow creates a circular reference
+        in order to ensure that symbolic execution terminates, but the user may also be
+        looking for this information as a query result.
+
+        Therefore, we ensure that every query has an accept method that takes no
+        action and in case there is a query (e.g. that checks for subflow circular references)
+        then this query can override the accept method to handle it.
+
+        The query manager ensures that only instantiated queries can have their
+        accept method called.
+
+        """
+        return None
+
+    @abstractmethod
+    def get_query_description(self) -> QueryDescription:
+        pass
+
+    @abstractmethod
+    def when_to_run(self) -> QueryAction:
+        pass
+
+    @abstractmethod
+    def execute(self) -> list[QueryResult] | None:
+        pass
+
+
+class Query(AbstractQuery, ABC):
+
+    @abstractmethod
+    def get_query_description(self) -> QueryDescription:
+        pass
+
+    @abstractmethod
+    def when_to_run(self) -> QueryAction:
+        pass
+
+    @abstractmethod
+    def execute(self,
+                state: State=None, # the state has the flow_path variable
+                crawler: AbstractCrawler = None,
+                all_states = None) -> list[QueryResult] | None:
+        pass
+
+
+
+class LexicalQuery(AbstractQuery, ABC):
+
+    @abstractmethod
+    def get_query_description(self) -> QueryDescription:
+        pass
+
+    @abstractmethod
+    def when_to_run(self) -> QueryAction:
+        pass
+
+    @abstractmethod
+    def execute(self,
+                parser: FlowParser = None,
+                **kwargs
+                ) -> list[QueryResult] | None:
+        pass
+
+
+
+
+class AbstractFlowVector(ABC):
+
+    @property
+    @abstractmethod
+    def property_maps(self) -> dict[InfluencePath, dict[str, set[InfluencePath]]]:
+        pass
+
+    @classmethod
+    @abstractmethod
+    def from_flows(cls, default: set[InfluencePath] = None) -> AbstractFlowVector:
+        pass
+
+    @abstractmethod
+    def get_flows_by_prop(self, member_name: str | None = None) -> set[InfluencePath]:
+        pass
+
+    @abstractmethod
+    def add_vector(self, vector: AbstractFlowVector) -> AbstractFlowVector:
+        pass
+
+
+    @abstractmethod
+    def push_via_flow(self, extension_path: InfluencePath, influenced_vec: AbstractFlowVector,
+                      assign: bool = True,
+                      cross_flow: bool = False) -> AbstractFlowVector:
         pass
 
 
@@ -169,7 +419,9 @@ class State(ABC):
         pass
 
     @abstractmethod
-    def get_flows_from_sources(self, influenced_var: str, source_vars: {(str, str)}) -> set[DataInfluencePath] | None:
+    def get_flows_from_sources(self, influenced_var: str,
+                               source_vars: set[tuple[str, str]],
+                               restrict: str | None = None) -> set[InfluencePath] | None:
         pass
 
     @abstractmethod
@@ -181,6 +433,16 @@ class FlowParser(ABC):
     """Exposes global information about the current flow
     """
 
+
+    @abstractmethod
+    def get_all_named_elems(self) -> frozenset[ET.Element] | None:
+        pass
+
+
+    @abstractmethod
+    def get_all_names(self) -> tuple[str,] | None:
+        pass
+
     @abstractmethod
     def get_effective_run_mode(self) -> RunMode:
         pass
@@ -191,6 +453,24 @@ class FlowParser(ABC):
 
     @abstractmethod
     def get_api_version(self) -> str:
+        pass
+
+    @abstractmethod
+    def get_all_traversable_flow_elements(self) -> list[ET.Element]:
+        pass
+
+    @abstractmethod
+    def get_all_variable_elems(self) -> list[ET.Element] | None:
+        pass
+
+    @abstractmethod
+    def get_start_elem(self) -> ET.Element:
+        pass
+
+    @abstractmethod
+    def get_traversable_descendents_of_elem(self, elem_name: str) -> list[str]:
+        """Gets elements that are called (connected to) from elem_name.
+         Includes the original elem_name"""
         pass
 
     @abstractmethod
@@ -206,6 +486,14 @@ class FlowParser(ABC):
         pass
 
     @abstractmethod
+    def get_trigger_object(self) -> str | None:
+        pass
+
+    @abstractmethod
+    def get_trigger_type(self)-> public.enums.TriggerType:
+        pass
+
+    @abstractmethod
     def get_root(self) -> ET.Element:
         pass
 
@@ -214,15 +502,26 @@ class FlowParser(ABC):
         pass
 
     @abstractmethod
+    def get_action_call_map(self) -> dict[str, list[tuple[str, str]]] | None:
+        """Gets all actionCalls in the flow element
+        Returns: actionCall type -> (element name, action name)
+        """
+        pass
+
+    @abstractmethod
+    def get_async_scheduled_paths(self) -> list[str]:
+        pass
+
+    @abstractmethod
     def resolve_by_name(self, name: str, path: str | None = None) -> Optional[(str, str, VariableType)]:
         pass
 
     @abstractmethod
-    def get_output_variables(self, path: str | None = None) -> {(str, str)}:
+    def get_output_variables(self, path: str | None = None) -> set[tuple[str, str]]:
         pass
 
     @abstractmethod
-    def get_input_variables(self, path: str | None = None) -> {(str, str)}:
+    def get_input_variables(self, path: str | None = None) -> set[tuple[str, str]]:
         """Get Flow variables available for input
 
         Returns: (filename, element_name) corresponding to all variables available for input

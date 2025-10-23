@@ -8,17 +8,17 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 import logging
 
-from flowtest.flow_result import DEFAULT_HELP_URL
+from flow_scanner.flow_result import DEFAULT_HELP_URL
 
 if TYPE_CHECKING:
     import xml.etree.ElementTree as ET
 
 from public import parse_utils
-from public.data_obj import DataInfluenceStatement, QueryResult
+from public.data_obj import InfluenceStatement, QueryResult
 
 from public.data_obj import QueryDescription, Preset
-from public.enums import Severity
-from public.contracts import QueryProcessor, FlowParser, State
+from public.enums import Severity, FlowType
+from public.contracts import QueryProcessor, FlowParser, State, AbstractCrawler
 
 logger = logging.getLogger(__name__)
 
@@ -62,6 +62,7 @@ FlowSecurity.DefaultMode.recordLookups.selector"""
 QUERY_IDS = []
 
 
+
 def build_preset(preset_name: str = DEFAULT_PRESET):
     if preset_name is None:
         preset_name = DEFAULT_PRESET
@@ -90,29 +91,31 @@ class DefaultQueryProcessor(QueryProcessor):
     """
 
     def __init__(self) -> None:
-        #: preset selected by user
-        self.preset: Preset | None = None
-
-        #: taint sources are populated on flow enter
-        self.sources: {(str, str)} = set()
-
-        #: flow parser
-        self.parser: FlowParser | None = None
 
         #: flow (xml) root
         self.root: ET.Element
 
-        #: path of flow
-        self.flow_paths: [str] = None
+        #: preset selected by user
+        self.preset: Preset | None = None
 
-    def set_preset_name(self, preset_name: str | None) -> Preset | None:
+        #: taint sources are populated on flow enter
+        self.sources: set[tuple[str, str]] = set()
+
+        #: flow parser
+        self.parser: FlowParser | None = None
+
+        #: path of flow
+        self.flow_paths: list[str] | None = None
+
+
+    def set_preset(self, preset_name: str | None) -> Preset | None:
         self.preset = build_preset(preset_name)
         return self.preset
 
-    def handle_crawl_element(self, state: State) -> list[QueryResult] | None:
+    def handle_crawl_element(self, state: State, crawler: AbstractCrawler=None) -> list[QueryResult] | None:
         return self.process_element(state.get_current_elem(), state)
 
-    def handle_flow_enter(self, state: State) -> list[QueryResult] | None:
+    def handle_flow_enter(self, state: State, crawler: AbstractCrawler=None) -> list[QueryResult] | None:
         # set current parser
         parser = state.get_parser()
         flow_path = parser.get_filename()
@@ -131,7 +134,7 @@ class DefaultQueryProcessor(QueryProcessor):
         # in which case we may want to return a result
         return None
 
-    def handle_final(self, all_states: (State,)) -> list[QueryResult] | None:
+    def handle_final(self, all_states: tuple[State]) -> list[QueryResult] | None:
         """Entry point for running queries after all scans are complete
 
         Args:
@@ -168,14 +171,10 @@ class DefaultQueryProcessor(QueryProcessor):
         if elem_type in ["recordUpdates", "recordLookups", "recordCreates", "recordDeletes"]:
 
             # Look for filter selection criteria (influences *which records* are returned)
-            filter_elems = parse_utils.get_filters(elem)
-            if filter_elems is not None and len(filter_elems) > 0:
-                filter_influencers = parse_utils.get_sinks_from_field_values(filter_elems)
+            filter_influencers = parse_utils.get_field_op_values_from_elem(elem, 'filters')
 
             # Look for input assignment which influences *what values* are updated or created
-            input_assignment_elems = parse_utils.get_input_assignments(elem)
-            if input_assignment_elems is not None and len(input_assignment_elems) > 0:
-                input_influencers = parse_utils.get_sinks_from_field_values(input_assignment_elems)
+            input_influencers = parse_utils.get_field_op_values_from_elem(elem, 'inputAssignments')
 
             # Look for bulk operators:
             bulk_ref = parse_utils.get_by_tag(elem, 'inputReference')
@@ -188,9 +187,9 @@ class DefaultQueryProcessor(QueryProcessor):
                 elem_name = state.get_current_elem_name()
 
                 if elem_type in ['recordLookups', 'recordDeletes']:
-                    filter_influencers.append((elem_name, bulk_var))
+                    filter_influencers.append((elem_name, None, bulk_var))
                 else:
-                    input_influencers.append((elem_name, bulk_var))
+                    input_influencers.append((elem_name, None, bulk_var))
 
             res = self.process_influencers(state, elem, filter_influencers,
                                            input_influencers, elem_type, parser)
@@ -201,10 +200,14 @@ class DefaultQueryProcessor(QueryProcessor):
                 assert x.paths is not None
             return res
 
+        # fall through
+        return None
+
     def process_influencers(self, state: State, current_elem: ET.Element,
-                            filter_influencers: [str], input_influencers: [str],
+                            filter_influencers: list[tuple[str, str | None, str]],
+                            input_influencers: list[tuple[str, str | None, str]],
                             elem_type: str,
-                            parser: FlowParser) -> [QueryResult]:
+                            parser: FlowParser) -> list[QueryResult] | None:
         """Given a list of variables that flow into sinks, search if these are tainted,
         and if so, add the tainted flow to the result object.
 
@@ -227,6 +230,7 @@ class DefaultQueryProcessor(QueryProcessor):
         to_return = []
         flow_path = parser.get_filename()
         run_mode = parser.get_effective_run_mode()
+        flow_type = parser.get_flow_type()
 
         for x in filter_influencers + input_influencers:
             if x in filter_influencers:
@@ -240,7 +244,7 @@ class DefaultQueryProcessor(QueryProcessor):
             if query_id is None:
                 continue
 
-            a_field, influencer_var = x
+            a_field, op, influencer_var = x
             # surgery that deals with string or dataInfluencePaths happens in get_tainted_flows()
             tainted_flows = state.get_flows_from_sources(influenced_var=influencer_var,
                                                          source_vars=self.sources)
@@ -255,17 +259,18 @@ class DefaultQueryProcessor(QueryProcessor):
                 curr_name = parse_utils.get_name(current_elem)
 
                 # SystemModeWithoutSharing User Influenced Record Update
-                sink_stmt = DataInfluenceStatement(a_field, influencer_var, curr_name,
-                                                   comment=f"flow into {elem_type} via influence over {a_field}"
+                sink_stmt = InfluenceStatement(a_field, influencer_var, curr_name,
+                                               comment=f"flow into {elem_type} via influence over {a_field}"
                                                            f" in run mode {run_mode.name}",
-                                                   line_no=current_elem.sourceline,
-                                                   source_text=parse_utils.ET.tostring(current_elem, encoding='unicode'),
-                                                   flow_path=flow_path,
-                                                   source_path=flow_path
-                                                   )
+                                               line_no=current_elem.sourceline,
+                                               source_text=parse_utils.get_elem_string(current_elem),
+                                               flow_path=flow_path,
+                                               source_path=flow_path
+                                               )
                 to_return.append(QueryResult(query_id=query_id,
+                                             flow_type=flow_type,
                                              influence_statement=sink_stmt,
-                                             paths=tainted_flows))
+                                             paths=frozenset(tainted_flows)))
 
                 msg = ("***Security Finding**"
                        f"in Flow Element {curr_name} of type {elem_type}"

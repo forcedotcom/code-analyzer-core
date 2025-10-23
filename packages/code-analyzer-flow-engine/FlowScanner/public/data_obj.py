@@ -5,34 +5,57 @@
 from __future__ import annotations
 
 import json
+from abc import ABC
 from dataclasses import dataclass, field
 from typing import TYPE_CHECKING
 
+import public.enums
 from public.custom_parser import clean_string
 
 if TYPE_CHECKING:
-    from public.enums import DataType, ReferenceType, Severity
+    from public.enums import DataType, ReferenceType, Severity, ConnType
+
+@dataclass(frozen=True)
+class JSONSerializable(ABC):
+
+    def to_dict(self):
+        return {s: getattr(self, s) for s in self.__slots__}
 
 
 @dataclass(frozen=True, eq=True, slots=True)
-class DataInfluenceStatement:
+class InfluenceStatement:
     """Represents a statement in which one variable influences
     another, usually as the result of an assignment,
     formula or template field, or builtin function.
     These statement are the basic building blocks of dataflows.
     """
 
-    # Variable being influenced. This is not assumed to be resolved,
+    # Variable being influenced.
+    #
+    # If a variable, then
+    # this is not assumed to be resolved,
     # e.g. can be 'foo.bar', so we use "_var" to emphasize this
     # in the code. Queries and influence maps are performed against
     # the *name*, which would just be 'foo'.
+    # If an element (for control influence)
+    # then this is the element name (not type).
     influenced_var: str
 
-    # Variable doing the influencing. Not assumed to be resolved.
+    # Variable or element doing the influencing. Not assumed to be resolved.
     # If this is a lexical query, you can omit the influencer
+    # If this is a control influence, use the element name or variable name
+    # being controlled.
     influencer_var: str | None
 
     # (Top Level) Flow element containing the influence.
+    # For control influence of one element influencing another,
+    # this would be the element containing
+    # the connector that points to the controlled element.
+    #
+    # For control influence of one variable control influencing the
+    # value of another, then this would be the element in which the control
+    # is defined.
+    #
     # Note this may be a huge element, so we want
     # more specific information later
     element_name: str
@@ -122,7 +145,7 @@ class Preset:
     # specify which dataflow queries are run on each Flow Element
     # with enough information for users to understand the significance of not finding any issues
     # for that query
-    queries: {QueryDescription}
+    queries: set[QueryDescription]
 
     def to_dict(self):
         return {s: str(getattr(self, s)) for s in self.__slots__}
@@ -161,7 +184,7 @@ class QueryDescription:
         return {s: str(getattr(self, s)) for s in self.__slots__}
 
 
-@dataclass(frozen=True, eq=True)
+@dataclass(frozen=True)
 class QueryResult:
     """The QueryProcessor performs only local analysis, for example searching
        for whether variables *within* a given Flow Element are assigned to a
@@ -181,20 +204,118 @@ class QueryResult:
        passed is a pair of objects: a data influence statement and a list of flows.
 
        """
-    # which query from the preset this is a result for
+    # which query this is a result for
     query_id: str
 
-    # Created by the QueryProcessor as a result of parsing the Flow Element
-    influence_statement: DataInfluenceStatement
+    # Type of flow (screen, trigger, etc) this result applies to.
+    # Flow type is carried from parent to child, so if a screen flow
+    # calls an auto-launched flow, issues found in the subflow will still
+    # inherit a flow_type of screen flow. This simplifies auditing and interpretation
+    # of results.
+    flow_type: public.enums.FlowType
+
+    # Created by the QueryProcessor as a result of parsing the Flow Element.
+    # Is intended to be the final passage into the sink.
+    # the destination is the sink, and the sink's source code
+    # is presented.
+    influence_statement: InfluenceStatement | None = None
 
     # Provided by State
     # Only provide no paths if this is a lexical query or if the sink
     # and source are in the same (local) element
-    paths: frozenset[DataInfluencePath] or None
+    paths: frozenset[InfluencePath] | None = None
+
+    #
+    #
+    # The following fields are only needed when there is no
+    # influence statement
+    elem_code: str | None = None
+
+    elem_line_no: int | None = None
+
+    # name of element (top level)
+    elem_name: str | None = None
+
+    # name of field, within element (optional)
+    field: str | None = None
+
+    # filename (required only for lexical)
+    filename: str | None = None
+
+    def __hash__(self):
+        """Prior python 3.12, hash of None was volatile, and we need to support these
+        versions.
+        """
+        if self.influence_statement is None:
+            infl = '#'
+        else:
+            infl = self.influence_statement
+
+        if self.paths is None:
+            paths ='#'
+        else:
+            paths = self.paths
+
+        if self.elem_code is None:
+            elem_code = '#'
+        else:
+            elem_code = self.elem_code
+
+        if self.elem_line_no is None:
+            elem_line_no = '#'
+        else:
+            elem_line_no = self.elem_line_no
+
+        if self.elem_name is None:
+            elem_name = '#'
+        else:
+            elem_name = self.elem_name
+
+        if self.field is None:
+            field = '#'
+        else:
+            field = self.field
+
+        if self.filename is None:
+            filename = '#'
+        else:
+            filename = self.filename
+
+        return hash((infl, elem_code, elem_line_no, elem_name, field, filename,paths, self.query_id))
+
+    def __eq__(self, other):
+        if not isinstance(other, QueryResult):
+            return NotImplemented
+
+        if self.query_id != other.query_id:
+            return False
+
+        if self.influence_statement != other.influence_statement:
+            return False
+
+        if self.paths != other.paths:
+            return False
+
+        if self.elem_code != other.elem_code:
+            return False
+
+        if self.elem_line_no != other.elem_line_no:
+            return False
+
+        if self.elem_name != other.elem_name:
+            return False
+
+        if self.field != other.field:
+            return False
+
+        if self.filename != other.filename:
+            return False
+
+        return True
 
 
 @dataclass(frozen=True, eq=True, slots=True)
-class DataInfluencePath:
+class InfluencePath:
     """Represents a data influence between two *named* elements,
     with a history of influence statements explaining the influence.
 
@@ -226,12 +347,16 @@ class DataInfluencePath:
     builders to ensure data consistency.
     TODO: add support for labels.
     """
-    # tuple of DataInfluenceStatements. This is what is sent to the
+    # tuple of InfluenceStatements. This is what is sent to the
     # results processor and displayed to end users.
-    history: (DataInfluenceStatement,)
+    history: tuple[InfluenceStatement, ...]
 
     # influenced name. (see 'property'). This is not the same
-    # as the variable name in the DataInfluenceStatement
+    # as the variable name in the InfluenceStatement.
+    #
+    # This could be the name of an element (for control)
+    # or the name of a variable (for data or control). In the case
+    # of a variable, do not include the property
     influenced_name: str
 
     # If the influence path influences a specific property
@@ -264,9 +389,9 @@ class DataInfluencePath:
     influencer_filepath: str
 
     # type info about the influenced element
-    influenced_type_info: VariableType
+    influenced_type_info: VariableType | None
 
-    def report_influence_tuples(self) -> list[(str, str)]:
+    def report_influence_tuples(self) -> list[tuple[str, str]]:
         """Returns simple chain of variables for high level analysis
 
         Returns:
@@ -301,21 +426,21 @@ class DataInfluencePath:
         Returns:
             string containing summary report.
         """
-        if arrows is True:
+        if arrows:
             joiner = "->"
         else:
             joiner = ","
 
-        if filenames is False:
+        if not filenames:
             s = joiner.join([s[1] for s in self.report_influence_tuples()])
         else:
             s = joiner.join(f"{s[1]}(path:{s[0]})" for s in self.report_influence_tuples())
         return s
 
     @classmethod
-    def combine(cls, start_flow: DataInfluencePath, end_flow: DataInfluencePath,
+    def combine(cls, start_flow: InfluencePath, end_flow: InfluencePath,
                 cross_flow: bool = False,
-                type_override: VariableType | None = None) -> DataInfluencePath:
+                type_override: VariableType | None = None) -> InfluencePath:
         """Combine two paths
 
         Args:
@@ -334,7 +459,7 @@ class DataInfluencePath:
             dataflows will have different names and filenames.
         """
 
-        if cross_flow is False:
+        if not cross_flow:
             if start_flow.influenced_name != end_flow.influencer_name:
                 raise ValueError("Attempting to append an incompatible dataflow."
                                  f"statement influencer: {end_flow.influencer_name} "
@@ -347,41 +472,77 @@ class DataInfluencePath:
             pass
 
         new_history = start_flow.history + end_flow.history
-        return DataInfluencePath(history=new_history,
-                                 influencer_name=start_flow.influencer_name,
-                                 influenced_name=end_flow.influenced_name,
-                                 influencer_filepath=start_flow.influencer_filepath,
-                                 influenced_filepath=end_flow.influenced_filepath,
-                                 influenced_type_info=type_override or end_flow.influenced_type_info,
-                                 influenced_property=end_flow.influenced_property,
-                                 influencer_property=start_flow.influencer_property
-                                 )
+        return InfluencePath(history=new_history,
+                             influencer_name=start_flow.influencer_name,
+                             influenced_name=end_flow.influenced_name,
+                             influencer_filepath=start_flow.influencer_filepath,
+                             influenced_filepath=end_flow.influenced_filepath,
+                             influenced_type_info=type_override or end_flow.influenced_type_info,
+                             influenced_property=end_flow.influenced_property,
+                             influencer_property=start_flow.influencer_property
+                             )
 
 
 @dataclass(frozen=True, eq=True, slots=True)
 class BranchVisitor:
     current_label: str
     previous_label: str | None
-    token: str | None = None
-    history: ((str, str),) = field(default_factory=tuple)
+    loop_context: tuple[tuple[str, ConnType],...] = field(default_factory=tuple)
+
+    #: tuple of jumps between segments: ( (src, target), (src, target), ... )
+    history: tuple[tuple[str,str], ...] = field(default_factory=tuple)
+
+    #: list of (jmp src, jpm target) when visitor was spawned
+    token: tuple[tuple[str,str], ...] | None = None
 
     def to_dict(self):
         return {s: str(getattr(self, s)) for s in self.__slots__}
-
 
 @dataclass(frozen=True, eq=True, slots=True)
 class CrawlStep:
     step: int
     visitor: BranchVisitor
     element_name: str
+    element_tag: str
+    local_index: int = 0  # position within segment
 
     def to_dict(self):
         return {s: getattr(self, s) for s in self.__slots__}
 
+@dataclass(frozen=True, eq=True, slots=True)
+class Jump(JSONSerializable):
+    """Class representing a connector
+
+    """
+    # name of element where jump is located
+    src_name: str
+
+    # where connector points to
+    target: str
+
+    # true if goto connector
+    is_goto: bool
+
+    # true if next-value
+    is_loop: bool
+
+    # true if no more values connector
+    is_no_more_values: bool
+
+    # true if fault connector
+    is_fault: bool
+
+    def priority(self) -> int:
+        # lower is higher priority
+        if self.is_loop:
+            return 0
+        else:
+            return 1
+
 
 class InfluenceStatementEncoder(json.JSONEncoder):
     def default(self, obj):
-        if isinstance(obj, DataInfluenceStatement):
+        if isinstance(obj, InfluenceStatement):
             raw_dict = obj.to_dict()
             # For public display, we replace flow_path with source_path
             # to correctly display transmission elements
@@ -402,12 +563,12 @@ class PresetEncoder(json.JSONEncoder):
             return json.JSONEncoder.default(self, obj)
 
 
-def _get_end_vars(df: DataInfluencePath) -> (str, str):
+def _get_end_vars(df: InfluencePath) -> tuple[str, str]:
     return (_recover_var(df.influencer_name, df.influencer_property),
             _recover_var(df.influenced_name, df.influenced_property))
 
 
-def _recover_var(name, prop) -> (str, str):
+def _recover_var(name: str, prop: str) -> str:
     if prop is None:
         return name
     else:

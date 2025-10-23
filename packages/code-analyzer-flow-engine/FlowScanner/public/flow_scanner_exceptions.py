@@ -1,11 +1,11 @@
 
-class FlowtestException(Exception):
+class FlowScannerException(Exception):
     """base class for all exceptions raised by Flowtest"""
     def __init__(self, *args):
         super().__init__(*args)
 
 
-class InvalidFlowException(FlowtestException):
+class InvalidFlowException(FlowScannerException):
     """Raised when there is something wrong with the flow file,
     such as invalid xml, invalid filename, missing structure, etc."""
     def __init__(self, *args, **kwargs):

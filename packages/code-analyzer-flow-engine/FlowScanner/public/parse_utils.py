@@ -15,13 +15,16 @@
 """
 from __future__ import annotations
 
+import json
 import logging
+import os
 import re
+import traceback
+from typing import Callable
 
 import public.custom_parser as CP
 from public.custom_parser import ET
-from public.enums import DataType, ConnType
-from public.flowtest_exceptions import InvalidFlowException
+from public.enums import DataType, ConnType, TransformType, ComplexValueType
 
 #: sfdc namespace
 ns = '{http://soap.sforce.com/2006/04/metadata}'
@@ -53,32 +56,127 @@ TIMEOUT_CONNECTOR = 'timeoutConnector'
 #: list of all known connector tags
 CONN_LIST = [CONNECTOR, DEFAULT_CONN, NEXT_VALUE_CONNECTOR, FAULT_CONNECTOR, NO_MORE_CONN, TIMEOUT_CONNECTOR]
 
+#: List of global namespaces that correspond to a single record or variable,
+#: such as $Record or $User
+GLOBALS_RECORD = ["$Record", "$Record__Prior", "$User", "$Event"]
+
+#: List of global namespaces that correspond to a set of records
+#: such as $Input, $Output, $Setup. These must be accessed as $Input.myobj.field or $Input.my_var
+GLOBALS_RECORD_GROUP = ["$Input", "$Output", "$Setup", "$CustomMetadata"]
+
+
+#: List of all global namespaces that contain unrelated values that have no object/member relationship with each other.
+GLOBALS_SINGLETON = ["$Api", "$Client", "$Flow", "$Label", "$Permission",
+                     "$Organization", "$Profile", "$System", "$UserRole"]
+
+ALL_GLOBALS = GLOBALS_RECORD + GLOBALS_SINGLETON + GLOBALS_RECORD_GROUP
+
 #: list of all (supported) elements that have a connector except start.
 #: These are relevant for control flow.
-
-CTRL_FLOW_ELEM = ["screens",
-                  "assignments",
-                  "customErrors"
-                  "recordLookups",
-                  "subflows",
-                  "recordUpdates",
-                  "recordDeletes",
-                  "recordCreates",
-                  "loops",
-                  "decisions",
-                  "collectionProcessors",
-                  "actionCalls",
-                  "orchestratedStages",
-                  "waits",
+CTRL_FLOW_ELEM = ["actionCalls",
                   "apexPluginCalls",
+                  "assignments",
+                  "collectionProcessors",
+                  "customErrors",
+                  "decisions",
+                  "loops",
+                  "orchestratedStages",
+                  "recordLookups",
+                  "recordCreates",
+                  "recordDeletes",
+                  "recordLookups",
+                  "recordRollbacks",
+                  "recordUpdates",
+                  "screens",
+                  "subflows",
                   "transforms",
-                  "recordRollbacks"]
+                  "waits"
+                  ]
 
 #: list of supported start elements
 START_ELEMS = ['start', 'startElementReference']
+START_ELEMS_TAGGED = ['<start>', '<startElementReference>']
 
 #: list of banned elements (we may add support later, but now skip these flows)
-BANNED_ELEMS = ['startElement', 'connectors', 'allocators', 'questions', 'experiments', 'statements']
+#: these correspond workflows and older flow grammars
+BANNED_ELEMS = ['startElement',
+                'connectors',
+                'allocators',
+                'questions',
+                'experiments',
+                'source',
+                'target',
+                'statements']
+
+BANNED_ELEMS_TAGGED = ['<startElement>',
+                '<connectors>',
+                '<allocators>',
+                '<questions>',
+                '<experiments>',
+                '<source>',
+                '<target>',
+                '<statements>']
+
+
+#: List of all resource tags
+RESOURCE_TAGS = [
+            'dynamicChoiceSets',
+            'choices',
+            'variables',
+            'constants',
+            'formulas',
+            'textTemplates'
+        ]
+
+#: list of all tags that might hold a reference to a resource as text content
+DIRECT_REF_HOLDERS = [
+        "assignNextValueToReference",
+        "assignToReference",
+        "assignRecordIdToReference",
+        "choiceReferences",
+        "collectionReference",
+        "defaultSelectedChoiceReference",
+        "elementReference",
+        "eventSource",
+        "field",
+        "inputReference",
+        "leftValueReference"
+        "objectFieldReference",
+        "outputFieldApiName",
+        "outputReference",
+        ]
+
+EXPRESSION_REF_HOLDERS = [
+    # values here can be in expressions or templates
+    # but will appear as merge-fields and must be extracted
+    "text", # in text template
+    "fieldText",
+    "choiceText",
+    "stringValue"
+    "expression", # in formula
+    "formulaExpression" # has no name and so cannot be referenced
+]
+
+SCREEN_FIELD_TYPES = [
+    'ComponentChoice',
+    'ComponentInput',
+    'ComponentInstance',
+    'ComponentMultiChoice'
+    'DisplayText',
+    'DropdownBox',
+    'InputField',
+    'LargeTextArea',
+    'MultiSelectCheckboxes',
+    'MultiSelectPicklist',
+    'ObjectProvided', # --> objectFieldReference (e.g. Foo.my_field) assigns contents to var
+    'PasswordField',
+    'RadioButtons',
+    'Region',
+    'RegionContainer',
+    'Repeater'
+    ]
+
+# Then need to also check `value`, `rightValue` tags
 
 #: module logger
 logger = logging.getLogger(__name__)
@@ -110,6 +208,18 @@ def get_tag(elem: ET.Element) -> str:
     else:
         return ''
 
+def get_text_of_tag(elem: ET.Element, tagname: str) -> str | None:
+    """look for a single child elem (does not recurse) with the specified tagname and return the text.
+       returns None if there is not exactly one child elem with the specified tagname or if it has no text."""
+    res = get_by_tag(elem, tagname)
+    if len(res) == 1 and res[0] is not None:
+        r = res[0].text
+        if r is None or r == '':
+            return None
+        else:
+            return r
+    return None
+
 
 def is_subflow(elem: ET.Element) -> bool:
     if elem is None:
@@ -131,20 +241,22 @@ def is_loop(elem: ET.Element) -> bool:
     return elem.tag.endswith("loops")
 
 
-def is_goto_connector(elem: ET.Element) -> bool:
+def is_goto_connector(elem: ET.Element) -> bool | None:
     """Is this element a goto?
 
     Args:
         elem: connector element
 
     Returns:
-        whether this is a goto element
+        whether this is a goto element,
+        None if child has no tag or no children
     """
     for child in elem:
         if get_tag(child) == 'isGoTo':
             return child.text == 'true'
         else:
             return False
+    return None
 
 
 def is_decision(elem: ET.Element) -> bool:
@@ -172,7 +284,7 @@ def get_by_tag(elem: ET.Element, tagname: str) -> list[ET.Element]:
             XML Elements else [] if no matches
 
     """
-    return elem.findall(f'{ns}{tagname}')
+    return elem.findall(f'./{ns}{tagname}')
 
 
 def get_named_elems(elem: ET.Element) -> list[ET.Element]:
@@ -210,7 +322,18 @@ def get_elem_string(elem: ET.Element) -> str | None:
 
 
 def get_line_no(elem: ET.Element) -> int:
+    # noinspection PyUnresolvedReferences
     return elem.sourceline
+
+
+def get_start_element(root: ET.Element) -> ET.Element | None:
+    start_elements = START_ELEMS
+    start_res = {x: get_by_tag(root, x) for x in start_elements}
+
+    for key in start_res:
+        if len(start_res[key]) == 1:
+            return start_res[key][0]
+    return None
 
 
 def get_subflow_name(subflow):
@@ -224,8 +347,7 @@ def get_subflow_name(subflow):
         return sub_name_el[0].text
 
 
-
-def get_assignment_statement_dicts(elem: ET.Element) -> list[(str, {str: str})] | None:
+def get_assignment_statement_dicts(elem: ET.Element) -> list[tuple[str, dict[str, str]]] | None:
     """Returns assignment statement keywords in 'assignments' elems
     Args:
         elem: elem to parse, should have a tag of "assignments"
@@ -249,7 +371,7 @@ def get_assignment_statement_dicts(elem: ET.Element) -> list[(str, {str: str})] 
     return None
 
 
-def get_filters(elem: ET.Element) -> [ET.Element]:
+def get_filters(elem: ET.Element) -> list[ET.Element]:
     """Find all filter elements
 
     Searches recursively to find all <filters> elements that are children
@@ -264,8 +386,291 @@ def get_filters(elem: ET.Element) -> [ET.Element]:
     """
     return elem.findall(f'.//{ns}filters')
 
+def get_transform_influencers(transform_elem: ET.Element) -> list[tuple[TransformType,str|None,tuple[str, ...]]] | None:
+    """Converts transform elem to a list of tuples [(transform_type, outputAPI field (or None), tuple(influencer_names)]
+    Args:
+        transform_elem: top level elem to process
 
-def get_input_assignments(elem: ET.Element) -> [ET.Element]:
+    Returns:
+        [(transform_type, influenced_name, tuple(influencer_names, ...))]
+
+    """
+    if transform_elem is None:
+        logger.error("called get_transform_influencers will null element")
+        return None
+    values = get_by_tag(transform_elem,'transformValues')
+    if len(values) == 0:
+        return None
+
+    output = []
+    join_name = None
+    join_def = None
+    try:
+        # first look for meta
+        for t_value in values:
+            # first look for meta
+            value_ref = get_text_of_tag(t_value, 'transformValueName')
+
+            if value_ref is not None:
+                join_name = value_ref
+                # this is a join definition, so grab it
+                val_actions = get_by_tag(t_value, 'transformValueActions')
+                assert len(val_actions) == 1
+                assert get_text_of_tag(val_actions[0], 'transformType') == 'InnerJoin'
+                val_elem = val_actions[0].find(f'./{ns}inputParameters/{ns}value')
+                join_def = get_vars_from_value(val_elem)
+                break
+
+        # Now look for other tags
+        for t_value in values:
+            val_actions = get_by_tag(t_value, 'transformValueActions')
+
+            for val_action in val_actions:
+                output_api = get_text_of_tag(val_action, 'outputFieldApiName')  # could be None
+                action_type = get_text_of_tag(val_action, 'transformType')
+
+                if action_type == 'InnerJoin':
+                    # already processed this
+                    continue
+
+                elif action_type == 'Map':
+                    value_el = get_by_tag(val_action, 'value')[0]
+                    res = get_vars_from_value(value_el)
+                    if res is not None:
+                        t_value = dict.get(res, 'transformValueReference', None)
+
+                    if res is not None and t_value is not None:
+                        assert join_name is not None and join_def is not None
+
+                        # noinspection PyUnresolvedReferences
+                        left_table = join_def['complexValueType.JoinDefinition.leftElementReference'][0]
+                        # noinspection PyUnresolvedReferences
+                        right_table = join_def['complexValueType.JoinDefinition.rightElementReference'][0]
+
+                        # noinspection PyTypeChecker
+                        fixed = t_value[0].replace(f"{join_name}.LeftTable",
+                                                   left_table).replace(f"{join_name}.RightTable",
+                                                                       right_table)
+                        output.append(('Map', output_api, (fixed,)))
+
+                    elif res is not None:
+                            accum = ()
+                            for val in res.values():
+                                accum += tuple(val)
+                            output.append(('Map', output_api, accum))
+
+                elif action_type == 'Sum' or action_type == 'Count':
+                    elem_top = None
+                    field = None
+                    action_to_return = []
+
+                    for input_ in get_by_tag(val_action, 'inputParameters'):
+                        input_name = get_text_of_tag(input_, 'name')
+
+                        if input_name == 'aggregationField':
+                            field = input_.find(f'./{ns}value/{ns}stringValue').text
+
+                        elif input_name == 'aggregationValues':
+                            elem_top = input_.find(f'./{ns}value/{ns}elementReference').text
+
+                        elif input_name == 'aggregationFieldReference':
+                            res = get_vars_from_value(input_.find(f'./{ns}value'))
+                            to_return = (action_type, output_api, tuple(res['complexValue.FieldReference']))
+                            action_to_return.append(to_return)
+                            break
+
+                    if not action_to_return:
+                        assert elem_top is not None
+
+                        if field is None:
+                            action_to_return.append(
+                                (action_type, output_api, (elem_top,))
+                            )
+                        else:
+                            action_to_return.append(
+                                (action_type, output_api, (f"{elem_top}.{field}",))
+                            )
+
+                    output += action_to_return
+
+        return output
+
+    except:
+        logger.critical(f"could not parse transform {get_elem_string(transform_elem)}\n"
+                        f"{traceback.format_exc()}")
+        return None
+
+def get_vars_from_value(elem: ET.Element,
+                        expr_parser :Callable[[str], list[str]]=parse_expression) -> dict[str, list[str]] | None:
+    """accepts <value>, <defaultValue>, or <rightValue> element and returns a list
+       of variables that influence this element.
+         * The variables are not normalized, e.g. "foo.Name" will appear.
+         * In the case of inner join complex values, further processing
+           is needed to resolve the join tables
+
+    Args:
+        expr_parser (callable): method to parse expressions (default regexp is provided)
+        elem: (ET.Element): <complexValue> element
+
+    Returns:
+        a dict tagname: list[variable names]
+        where tagname is the tag of the child element of value holding the reference unless
+        this is a complexValue, in which case the tagname contains refined information:
+            'ComplexValueType.FieldReference': ['var1', 'var2']
+            'ComplexValueType.FieldReference': ['var1', 'var2']
+            'ComplexValueType.JoinDefinition.leftJoinKeys: ['var1', 'var2']
+            'ComplexValueType.JoinDefinition.rightJoinKeys: ['var1', 'var2']
+            'ComplexValueType.JoinDefinition.leftElementReference': ['var1']
+            'ComplexValueType.JoinDefinition.rightElementReference': ['var1']
+            'ComplexValueType.JoinDefinition.leftSelectedFields': ['var1']
+            'ComplexValueType.JoinDefinition.rightSelectedFields': ['var1']
+
+        If there are no variable influencers, the None is returned.
+    """
+    if elem is None:
+        logger.error("called 'get_vars_from_value' with null input")
+        return None
+
+    for child_el in elem:
+        child_tag = get_tag(child_el)
+
+        if child_tag == 'collectionElements':
+            for el in child_el:
+                el_tag = get_tag(el)
+                res =  _process_val_child(el, el_tag=el_tag, parent_el=child_el, expr_parser=expr_parser)
+                if res is not None:
+                    return res
+            return None
+
+        res = _process_val_child(child_el, el_tag=child_tag,parent_el=elem, expr_parser=expr_parser)
+        if res is not None:
+            return res
+
+    # fall through
+    return None
+
+def _process_val_child(elem: ET.Element, el_tag: str, parent_el: ET.Element,
+                       expr_parser :Callable[[str], list[str]]=parse_expression) -> dict[str, list[str]] | None:
+
+    raw_data = elem.text
+    if raw_data is None or len(raw_data) == 0:
+        return None
+
+    data = rid_item(raw_data)
+    if data is None or len(data) == 0:
+        return None
+
+    if el_tag == 'elementReference':
+        return {el_tag:[data]}
+
+    elif el_tag == 'stringValue' or el_tag == 'formulaExpression':
+        # this may be a formula
+        vars_ = expr_parser(data)
+        if len(vars_) > 0:
+            return {el_tag: vars_}
+        else:
+            return None
+
+    elif el_tag == 'complexValue':
+        # get the complex value type
+        t_type = get_text_of_tag(parent_el, 'complexValueType')
+        if t_type is None or len(t_type) == 0 or t_type not in ComplexValueType:
+            return None
+        try:
+            type_dict = json.loads(data)
+        except:
+            logger.error(f"could not de-serialize complex value type {data}")
+            return None
+
+        try:
+            """
+            if t_type == ComplexValueType.ComplexObjectFieldDetails.name:
+                # these are used to specify labels in datatables flow extension
+                # in screen flows but do not correspond to actual flow variables.
+                pass
+            """
+            if t_type == ComplexValueType.FieldReference.name:
+                # used in aggregation transforms such as sum and count transforms
+                field_refs = dict.get(type_dict, "fieldReferences", None)
+                elem_ref = dict.get(type_dict, "elementReference", None)
+                if (field_refs is None or len(field_refs) == 0) and (
+                        elem_ref is None or len(elem_ref) == 0):
+                    return None
+
+                elif field_refs is None or len(field_refs)==0:
+                    to_add = [elem_ref]
+                else:
+                    to_add = [f"{elem_ref}.{f}" for f in field_refs]
+
+                return {'complexValue.FieldReference': to_add}
+
+            elif t_type == ComplexValueType.JoinDefinition.name:
+                left_el_ref = dict.get(type_dict, "leftElementReference", None)
+                left_join_keys = dict.get(type_dict, "leftJoinKeys", None)
+                left_selected_fields = dict.get(type_dict, "leftSelectedFields", [])
+                right_el_ref = dict.get(type_dict, "rightElementReference", None)
+                right_join_keys = dict.get(type_dict,"rightJoinKeys", None)
+                right_selected_keys = dict.get(type_dict,"rightSelectedFields", [])
+
+                to_return = {
+                    "complexValueType.JoinDefinition.leftJoinKeys": [
+                        f"{left_el_ref}.{x}" for x in left_join_keys],
+                    "complexValueType.JoinDefinition.rightJoinKeys": [
+                        f"{right_el_ref}.{x}" for x in right_join_keys],
+                    "complexValueType.JoinDefinition.leftSelectedFields": [
+                        f"{left_el_ref}.{x}" for x in left_selected_fields],
+                    "complexValueType.JoinDefinition.rightSelectedFields": [
+                        f"{right_el_ref}.{x}" for x in right_selected_keys],
+                    "complexValueType.JoinDefinition.leftElementReference": [
+                        left_el_ref
+                    ],
+                    "complexValueType.JoinDefinition.rightElementReference": [
+                        right_el_ref
+                    ]
+                }
+                return to_return
+
+            elif t_type == ComplexValueType.ResourceDescriptor.name:
+                var_str = dict.get(type_dict, "resourceTemplate", '')
+                vars_ = expr_parser(var_str)
+                if len(vars_) > 0:
+                    return {'complexValue.ResourceDescriptor': vars_}
+                else:
+                    return None
+
+            elif t_type == ComplexValueType.ResourceAnnotationMap.name:
+                var_str = dict.get(type_dict, "name", '')
+                vars_ = expr_parser(var_str)
+                if len(vars_) > 0:
+                    return {'complexValue.ResourceAnnotationMap': vars_}
+                else:
+                    return None
+
+        except:
+            logger.error(f"could not process complex value type {data}")
+            return None
+
+    elif el_tag == 'transformValueReference':
+        return {'transformValueReference': [data]}
+
+    elif el_tag in ['apexValue', 'sobjectValue']:
+        try:
+            parsed = json.loads(data)
+            to_return = []
+            recursive_parse(parsed, parse_callable=expr_parser, accum=to_return)
+            if len(to_return) == 0:
+                return None
+            else:
+                return {el_tag: to_return}
+
+        except:
+            logger.error(f"could not json parse data {data} in tag {el_tag}")
+
+    # fall through
+    return None
+
+
+def get_input_assignments(elem: ET.Element) -> list[ET.Element]:
     """Find all input assignments
 
     Searches recursively to find all <inputAssignments> elements that are children
@@ -281,7 +686,7 @@ def get_input_assignments(elem: ET.Element) -> [ET.Element]:
     return elem.findall(f'.//{ns}inputAssignments')
 
 
-def get_sinks_from_field_values(elems: ET.Element) -> list[(str, str)]:
+def get_sinks_from_field_values(elems: list[ET.Element]) -> list[tuple[str, str | None, str]]:
     """Find variables that flow into field/value pairs
 
     E.g.if a recordLookup field has a filter::
@@ -294,7 +699,7 @@ def get_sinks_from_field_values(elems: ET.Element) -> list[(str, str)]:
             </value>
         </filters>
 
-    then this would return [('Name', 'var3')]
+    then this would return [('Name', 'Contains', 'var3')]
 
     This strategy also works for inputAssignments::
 
@@ -305,25 +710,34 @@ def get_sinks_from_field_values(elems: ET.Element) -> list[(str, str)]:
             </value>
         </inputAssignments>
 
+    then this would return [('Company', None, 'Company')]
+
     Notes:
-          TODO: we are cheating a bit by not checking for op code in the case of filters.
           This should be added later.
     Args:
         elems: inputAssignment or field selection criteria xml elements.
 
     Returns:
-        ``list[(field_name, influencer_name)]``  (an empty list if no sinks are found)
+        ``list[(field_name, op, influencer_name)]``  (an empty list if no sinks are found)
 
     """
     accum = []
     for a_filter in elems:
         field_name = None
         influencer = None
+        operator = None
 
         for child in a_filter:
+
             child_tag = get_tag(child)
             if child_tag == 'field':
                 field_name = child.text
+
+            if child_tag == 'operator':
+                if child.text is None or len(child.text) == 0:
+                    operator = None
+                else:
+                    operator = child.text
 
             if child_tag == 'value':
                 for e_ref in child:
@@ -331,12 +745,61 @@ def get_sinks_from_field_values(elems: ET.Element) -> list[(str, str)]:
                         influencer = e_ref.text
 
         if influencer is not None and field_name is not None:
-            accum.append((field_name, influencer))
+            accum.append((field_name, operator, influencer))
 
     return accum
 
+def process_output_assignments(elem: ET.Element) -> list[tuple[str, str]]:
+    """Searches elem recursively and pulls out doubles of the form:
+        <outputAssignments>
+            <assignToReference>WorkItemID</assignToReference>
+            <field>Id</field>
+        </outputAssignments>
 
-def get_conn_target_map(elem: ET.Element) -> {ET.Element: (str, ConnType, bool)} or None:
+    returning a list of doubles [('Id', 'WorkItemID')]
+
+    if none found, it returns the empty list []
+
+    :param elem: to search (recursively)
+    :return: list of triples (influencer field, (influenced) assignTo field)
+
+    """
+    elems = elem.findall(f'.//{ns}outputAssignments')
+    accum = []
+    for elem in elems:
+        influencer = None
+        influenced = None
+        for child in elem:
+            if child.tag == f'{ns}assignToReference' and child.text is not None:
+                influenced = child.text
+            if child.tag == f'{ns}field' and child.text is not None:
+                influencer = child.text
+        if influencer is not None and influenced is not None:
+            accum.append((influencer, influenced))
+    return accum
+
+def get_field_op_values_from_elem(elem: ET.Element, tag: str) -> list[tuple[str, str | None, str]]:
+    """
+    Searches elem recursively for tag, and the pull-out triples of the form:
+    <tag>
+      <field>foo</field>
+      <operator>Contains</operator>
+      <value>
+        <elementReference>bar</elementReference>
+
+    returning a list of triples [('foo', 'Contains', 'bar')]
+
+    if none found, it returns the empty list
+
+    :param elem: to search (recursively)
+    :param tag: tag that must be a descendent of elem
+    :return: list of triples (field_name, operator, influencer_name)
+    """
+
+    elems = elem.findall(f'.//{ns}{tag}')
+    return get_sinks_from_field_values(elems)
+
+def get_conn_target_map(elem: ET.Element) -> dict[ET.Element, tuple[str, ConnType, bool]] | None:
     """Get a connector map that also works for all possible start elements
 
     Args:
@@ -361,6 +824,8 @@ def get_conn_target_map(elem: ET.Element) -> {ET.Element: (str, ConnType, bool)}
 
     elif tag == 'start':
         standard_connectors = _get_conn_target_map(elem)
+
+        # Now look for scheduled paths
         scheduled_paths = elem.findall(f'.//{ns}scheduledPaths/{ns}connector')
         if scheduled_paths is None or len(scheduled_paths) == 0:
             return standard_connectors
@@ -369,6 +834,7 @@ def get_conn_target_map(elem: ET.Element) -> {ET.Element: (str, ConnType, bool)}
                 try:
                     conn_name = x.find('.//{ns}targetReference').text
                     standard_connectors[x] = (conn_name, ConnType.Other, False)
+                # noinspection PyBroadException
                 except:
                     continue
             return standard_connectors
@@ -376,7 +842,7 @@ def get_conn_target_map(elem: ET.Element) -> {ET.Element: (str, ConnType, bool)}
         return _get_conn_target_map(elem)
 
 
-def _get_conn_target_map(elem: ET.Element) -> {ET.Element: (str, ConnType, bool)}:
+def _get_conn_target_map(elem: ET.Element) -> dict[ET.Element, tuple[str, ConnType, bool]]:
     """returns map from connectors at elem to where they point
 
     Args:
@@ -389,32 +855,38 @@ def _get_conn_target_map(elem: ET.Element) -> {ET.Element: (str, ConnType, bool)
         return {}
     to_return = {}
     el_tag = get_tag(elem)
-
+    is_optional = False  # start with this and then override
+    missing_connector = False
     if el_tag == 'decisions':
-        is_decision_ = True
-    else:
-        is_decision_ = False
+
+        rules_els = get_by_tag(elem, 'rules')
+        for rule in rules_els:
+            conn = get_by_tag(rule, 'connector')
+            if not conn:
+                # if there is a condition with no connector
+                # then this element can terminate execution
+                # when the condition is met
+                missing_connector = True
+                break
 
     for conn_type in CONN_LIST:
         cons = elem.findall(f'.//{ns}{conn_type}')
         if cons is not None and len(cons) > 0:
             for x in cons:
-                if is_decision_ is True:
-                    # in a decision, only default connectors are not optional
-                    if conn_type == DEFAULT_CONN:
-                        is_optional = False
-                    else:
-                        is_optional = True
-                else:
-                    if conn_type in [FAULT_CONNECTOR, TIMEOUT_CONNECTOR]:
-                        is_optional = True
-                    else:
-                        is_optional = False
+                if conn_type in [FAULT_CONNECTOR, TIMEOUT_CONNECTOR, NEXT_VALUE_CONNECTOR]:
+                    is_optional = True
+                if conn_type == NO_MORE_CONN:
+                    is_optional = False
+                if (el_tag == 'decisions' and (missing_connector is True or
+                    conn_type != DEFAULT_CONN)):
+                    # connectors are optional if they are not default
+                    # or if they are default and a rule is missing a connector
+                    is_optional = True
 
                 res = get_by_tag(elem=x, tagname='targetReference')
                 if res is None or len(res) == 0:
                     logger.error(f"ERROR: found a connector without a target reference! "
-                                 f"{ET.tostring(elem, encoding='unicode')}")
+                                 f"{get_elem_string(elem)}")
                     continue
                 else:
                     # don't overwrite existing value -- each connector should have a single target reference
@@ -424,11 +896,13 @@ def _get_conn_target_map(elem: ET.Element) -> {ET.Element: (str, ConnType, bool)
                     # classify connector
                     if is_goto_connector(x):
                         # this takes priority
-
                         to_return[x] = (target_name, ConnType.Goto, is_optional)
 
                     elif conn_type == NEXT_VALUE_CONNECTOR:
                         to_return[x] = (res[0].text, ConnType.Loop, is_optional)
+
+                    elif conn_type == FAULT_CONNECTOR or conn_type == TIMEOUT_CONNECTOR:
+                        to_return[x] = (res[0].text, ConnType.Exception, is_optional)
 
                     else:
                         to_return[x] = (res[0].text, ConnType.Other, is_optional)
@@ -440,7 +914,6 @@ def _get_conn_target_map(elem: ET.Element) -> {ET.Element: (str, ConnType, bool)
 #
 #  Utilities for parsing variables
 #
-
 
 def is_assign_null(elem: ET.Element) -> bool | None:
     res = elem.find(f'{ns}assignNullValuesIfNoRecordsFound')
@@ -537,7 +1010,7 @@ def is_output(elem: ET.Element) -> bool:
 """
 
 
-def _process_assignment_item(elem: ET.Element) -> (str, {str: str}):
+def _process_assignment_item(elem: CP.ET.Element) -> tuple[str, dict[str, str]] | None:
     """Returns assignment item dict from assignment element
 
     Args:
@@ -564,6 +1037,7 @@ def _process_assignment_item(elem: ET.Element) -> (str, {str: str}):
     for child in elem:
         if child.tag == f'{ns}assignToReference':
             entry['influenced_var'] = child.text
+            # noinspection PyUnresolvedReferences
             entry['line_no'] = child.sourceline
 
         if child.tag == f'{ns}operator':
@@ -582,7 +1056,7 @@ def _process_assignment_item(elem: ET.Element) -> (str, {str: str}):
         return None
 
 
-def _get_value(el: ET.Element) -> str:
+def _get_value(el: ET.Element) -> str | None:
     for child in el:
         if get_tag(child) == 'elementReference':
             return child.text
@@ -591,7 +1065,7 @@ def _get_value(el: ET.Element) -> str:
     return None
 
 
-def get_subflow_output_map(subflow: ET.Element):
+def get_subflow_output_map(subflow: ET.Element) -> tuple[bool, dict[str,str]]:
     """returns a tuple (bool:, map: child name --> parent name)
        where the first return value is true if outputs are automatically assigned
        in which case they are flow_name.flow_var
@@ -614,7 +1088,7 @@ def get_subflow_output_map(subflow: ET.Element):
     return auto, mappings
 
 
-def get_subflow_input_map(subflow: ET.Element) -> {str: str}:
+def get_subflow_input_map(subflow: ET.Element) -> dict[str, str]:
     """Returns a map from caller variable to variable in called flow
 
         E.g. in this example::
@@ -640,10 +1114,126 @@ def get_subflow_input_map(subflow: ET.Element) -> {str: str}:
     accum = dict()
     inputs = get_by_tag(subflow, "inputAssignments")
     for assignment in inputs:
-        val = get_by_tag(assignment, 'name')[0].text
+        val_els = get_by_tag(assignment, 'name')
+        if len(val_els) != 1:
+            continue
+        else:
+            val = val_els[0].text
         key_refs = assignment.findall(f'{ns}value[1]/{ns}elementReference[1]')
         if key_refs is None or len(key_refs) == 0:
             continue
         key = key_refs[0].text
         accum[key] = val
     return accum
+
+def _get_tags(root: ET.Element, tags: list[str]) -> list[str]:
+    accum = []
+    for tag in tags:
+        res = root.findall(f'.//{ns}{tag}')
+        for res in res:
+            if res.text is not None and res.text.strip() != '':
+                accum.append(res.text.strip())
+    return accum
+
+def get_all_flow_refs(root: ET.Element) -> list[str]:
+    accum = _get_tags(root, tags=DIRECT_REF_HOLDERS)
+    expressions = _get_tags(root, tags=EXPRESSION_REF_HOLDERS)
+    for expr in expressions:
+        accum += parse_expression(expr)
+
+    return list(set(accum))
+
+
+def rid_item(msg: str) -> str:
+    return msg.replace('[$EachItem]', '')
+
+def recursive_parse(my_obj, parse_callable=parse_expression, accum=None) -> None:
+    """walks through json objs and applies the parse_callable to values
+
+    Args:
+        my_obj (obj): JSON object
+        parse_callable (Callable): callable to parse strings
+        accum (list[str]): list of strings that values are added to
+
+    Returns:
+        None (accum is changed in place)
+
+    """
+    if accum is None:
+        my_accum = []
+    else:
+        my_accum = accum
+
+    if isinstance(my_obj, dict):
+        for key, value in my_obj.items():
+            recursive_parse(value, parse_callable=parse_callable, accum=my_accum)  # Recurse into nested dictionaries
+
+    elif isinstance(my_obj, list):
+        for item in my_obj:
+            recursive_parse(item, parse_callable=parse_callable, accum=my_accum)  # Recurse into list elements
+
+    elif isinstance(my_obj, str):
+        to_append = parse_callable(my_obj)
+        if to_append is not None and len(to_append) > 0:
+            [my_accum.append(x) for x in to_append]
+
+    return None
+
+def quick_validate(flow_path: str) -> bool:
+    has_start = False
+    has_banned = False
+    try:
+        with open(flow_path, 'r') as fp:
+            flow_data = fp.read()
+            for start_tag in START_ELEMS_TAGGED:
+                if start_tag in flow_data:
+                    has_start = True
+                    break
+
+            for banned_tag in BANNED_ELEMS_TAGGED:
+                if banned_tag in flow_data:
+                    has_banned = True
+                    break
+
+            return has_start and not has_banned
+
+    except:
+        logger.critical(f"exception when attempting to quick_validate flow {flow_path}"
+                        f"{traceback.format_exc()}")
+        return False
+
+def validate_flow(flow_path: str) -> bool:
+    """There are many legacy versions of flows that contain grammars we cannot parse.
+       This tool only processes modern flows that can be built in flow builder.
+
+    Args:
+        flow_path (str): path of flow
+
+    Returns:
+        True if the flow is valid, False otherwise
+
+    """
+    # 1. Flows must be parseable
+    # 2. Flows must have a start element
+    # 3. Flows must not contain unsupported legacy tags corresponding to older grammars
+    try:
+        root = CP.get_root(flow_path)
+        starts = get_by_tag(root, 'start')
+
+        if len(starts) != 1:
+            start_ref = get_by_tag(root, 'startElementReference')
+            if len(start_ref) != 1:
+                print(f"flow {flow_path} has no start element. Skipping..")
+                return False
+
+        for x in BANNED_ELEMS:
+            if len(get_by_tag(root, x)) > 0:
+                print(f"flow {flow_path} contains the legacy {x} element which is unsupported. Skipping..")
+                return False
+        return True
+
+    except Exception:
+        print(f"Could not parse flow {flow_path}. Skipping..")
+        return False
+
+

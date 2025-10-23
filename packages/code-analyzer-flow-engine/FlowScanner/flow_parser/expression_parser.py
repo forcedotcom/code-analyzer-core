@@ -11,7 +11,7 @@ import re
 import traceback
 from dataclasses import dataclass
 import logging
-import flowtest.util as util
+import flow_scanner.util as util
 
 logger: logging.Logger = logging.getLogger(__name__)
 
