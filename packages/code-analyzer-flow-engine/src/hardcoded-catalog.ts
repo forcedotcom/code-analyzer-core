@@ -12,7 +12,7 @@ enum RuleName {
     MissingNextValueConnector = 'MissingNextValueConnector',
     PreventPassingUserDataIntoElementWithoutSharing = 'PreventPassingUserDataIntoElementWithoutSharing',
     PreventPassingUserDataIntoElementWithSharing = 'PreventPassingUserDataIntoElementWithSharing',
-    SameRecordUpdate = 'SameRecorUpdate',
+    SameRecordUpdate = 'SameRecordUpdate',
     TriggerCallout = 'TriggerCallout',
     TriggerEntryCriteria = 'TriggerEntryCriteria',
     TriggerWaitEvent = 'TriggerWaitEvent',

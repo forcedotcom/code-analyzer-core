@@ -100,7 +100,7 @@
     ]
   },
   {
-    "name": "SameRecorUpdate",
+    "name": "SameRecordUpdate",
     "description": "This rule detects when an AfterSave record trigger modifies the same record. Record modifications should be done in BeforeSave triggers, not AfterSave triggers. This rule follows subflows, so it will detect if the RecordId is passed to a child flow which then modifies a record with that id.",
     "severityLevel": 3,
     "tags": [
