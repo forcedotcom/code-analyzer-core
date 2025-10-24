@@ -4,6 +4,7 @@
     "description": "This rule detects when a subflow calls a parent flow, creating a cyclic flow. The rule will detect cycles of any depth.",
     "severityLevel": 1,
     "tags": [
+      "Recommended",
       "Performance",
       "XML"
     ],

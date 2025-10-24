@@ -25,7 +25,7 @@ const RULE_DESCRIPTIONS: RuleDescription[] = [
         name: RuleName.CyclicSubflow,
         description: getMessage('CyclicSubflowRuleDescription'),
         severityLevel: SeverityLevel.Critical,
-        tags: [/* NOT RECOMMENDED */    COMMON_TAGS.CATEGORIES.PERFORMANCE,   COMMON_TAGS.LANGUAGES.XML],
+        tags: [COMMON_TAGS.RECOMMENDED, COMMON_TAGS.CATEGORIES.PERFORMANCE,   COMMON_TAGS.LANGUAGES.XML],
         resourceUrls: []
     },
     {
