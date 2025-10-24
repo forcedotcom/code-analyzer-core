@@ -8,25 +8,22 @@
 
 from __future__ import annotations
 
+import configparser
+import datetime
 import io
+import logging
+import os
 import pathlib
-
 import pkgutil
-
+import shutil
+import traceback
 from typing import TYPE_CHECKING
 
 # noinspection PyUnresolvedReferences
 import public.custom_parser as CP
-import logging
-import traceback
+from flow_scanner import version
 from . import ESAPI
-import os
-import shutil
-import codecs
-import datetime
-import configparser
 
-from flowtest import version
 if TYPE_CHECKING:
     from public.data_obj import QueryDescription
 # Compatability:
@@ -44,11 +41,11 @@ PARSE_ERROR = 'XML Parse Error: '
 QUERY_FAILED = 'Query Failed to Complete'
 QUERY_TRUNCATED = 'Query Results Truncated'
 DEFAULT_PRIORITY = -1
-FLOWTEST_HOME = pathlib.Path(__file__).parent.resolve()
+FLOW_SCANNER_HOME = pathlib.Path(__file__).parent.resolve()
 MAX_RESULTS = 500
 
 QUERY_DESC = configparser.ConfigParser()
-DEFAULT_DESC_CONFIG_PATH = "flowtest_query_data.txt"
+DEFAULT_DESC_CONFIG_PATH = "flow_scanner_query_data.txt"
 SOFTWARE_PRESETS = {}
 
 # Query Sort dictionary
@@ -67,7 +64,7 @@ QUERY_GROUP_PRIORITY = {
 }
 
 
-def add_to_query_config(list_of_desc: [QueryDescription]) -> None:
+def add_to_query_config(list_of_desc: list[QueryDescription]) -> None:
     """Adds query descriptions to module-level config file if not present
 
     Call after loading any queries from disk. Must pass
@@ -127,13 +124,13 @@ def load_query_desc_from_config(path: str | None):
         )
 
 
-def add_to_presets(presets: [str], preset_name: str) -> None:
+def add_to_presets(presets: list[str], preset_name: str) -> None:
     global SOFTWARE_PRESETS
     SOFTWARE_PRESETS[preset_name] = presets
     pass
 
 
-def get_software_presets(preset_name: str) -> [str]:
+def get_software_presets(preset_name: str) -> list[str]:
     """Returns empty list if no software presets found with this name
 
     Args:
@@ -298,8 +295,8 @@ def _safe_prepend(filepath, data):
     # TODO: email exception?
     try:
         temp_file = filepath + "_tmp"
-        with codecs.open(filepath, mode='r', encoding='utf-8') as fp:
-            with codecs.open(temp_file, mode='w', encoding='utf-8') as tmp_fp:
+        with open(filepath, mode='r', encoding='utf-8') as fp:
+            with open(temp_file, mode='w', encoding='utf-8') as tmp_fp:
                 tmp_fp.write('%s\n' % data)
                 for line in fp:
                     tmp_fp.write(line)
@@ -425,7 +422,7 @@ class JobInfo(object):
                 '  <div class = "row">'
                 '    <div class = "col-xs-10 col-xs-offset-1">'  # panel contains cols and rows 
                 '      <div class = "panel panel-primary">'
-                '        <div class = "panel-heading" id="results_table"><h3>Flowtest Results</h3></div>'
+                '        <div class = "panel-heading" id="results_table"><h3>Flow Scanner Results</h3></div>'
                 '        <div class = "panel-body">'
                 '          <div class="row">'
                 '            <div class = "col-xs-4 col-xs-offset-1"><strong>Job Type:</strong> '
@@ -547,6 +544,7 @@ def _report_append(element, report_fp, source_dir='None', tallies=None):
             source = snippet.find('Line').find('Code').text.strip()
 
         filename = element.find('FileName').text
+        flow_type = element.find('FlowType').text
         node_id = str(element.find('NodeId').text)
         name = element.find('Name').text
         column = str(element.find('Column').text)
@@ -565,9 +563,9 @@ def _report_append(element, report_fp, source_dir='None', tallies=None):
 
         else:
             data = ('<div class = "row"><div class = "col-xs-9 col-xs-offset-2">'
-                    '<div class = "help-block">Object: <code>'
+                    + '<div class = "help-block">Object: <code>'
                     + ESAPI.html_encode(truncate(name)) + '</code>'
-                                                          ' in file: <code>' + ESAPI.html_encode(filename) +
+                    +' in <code>' + flow_type + '</code> flow at: <code>' + ESAPI.html_encode(filename) +
                     '</code></div><div><pre>' + ESAPI.html_encode(source) + '</pre></div></div></div>\n')
 
     _safe_append(report_fp, data)
@@ -611,7 +609,7 @@ def _add_source(source_dir, filename, target_line_no, obj_name):
 
         curr_source = prev_source = None
 
-        with codecs.open(normalized_path, mode='r', encoding="utf-8") as source_fp:
+        with open(normalized_path, mode='r', encoding="utf-8") as source_fp:
             for line_no, source_line in enumerate(source_fp):
                 if line_no == (target_line_no - 1):
                     prev_source = source_line
@@ -666,7 +664,7 @@ def _update_results(scan_results, failed_scans, preset):
 
     # Get all queries
     all_d = []
-    # with codecs.open(os.path.join(FLOWTEST_HOME, 'data', preset + '_preset.txt'), encoding='utf-8') as fp:
+    # with codecs.open(os.path.join(FLOW_SCANNER_HOME, 'data', preset + '_preset.txt'), encoding='utf-8') as fp:
     #    all_d = [query_path.strip() for query_path in fp]
     disk_preset = os.path.join('data', preset + "_preset.txt")
     if os.path.exists(disk_preset):
@@ -719,7 +717,7 @@ def _make_query_desc(query_path):
 def _make_header(scan_results, jobinfo):
     """TODO: change to file builder"""
     logger.debug("_make_header invoked with scan_results of length:" + str(len(scan_results)))
-    # with open(os.path.join(FLOWTEST_HOME, 'data', 'header.out'), mode='r', encoding="utf-8") as fp:
+    # with open(os.path.join(FLOW_SCANNER_HOME, 'data', 'header.out'), mode='r', encoding="utf-8") as fp:
     #    data = fp.read()
     data = pkgutil.get_data(__name__, os.path.join('data', 'header.out')).decode()
     data += jobinfo.make_html(scan_results)
@@ -772,7 +770,7 @@ def _present_query_results(scan_results):
 
 
 def _make_footer(report_fp):
-    report_path = os.path.join(FLOWTEST_HOME, 'data', 'footer.out')
+    report_path = os.path.join(FLOW_SCANNER_HOME, 'data', 'footer.out')
     # with codecs.open(report_path, 'r') as fp:
     #    data = fp.read()
     data = pkgutil.get_data(__name__, os.path.join('data', 'footer.out')).decode()
@@ -883,7 +881,7 @@ def parse_results(xml_file=None,
         scan_end = normalize_time(scan_end)
 
     if report_path is not None:
-        report_fp = codecs.open(report_path, mode='a', encoding='utf-8')
+        report_fp = open(report_path, mode='a', encoding='utf-8')
         logger.info("opening " + report_path)
 
     if xml_file is None and xml_report_str is not None:
@@ -970,150 +968,6 @@ def parse_results(xml_file=None,
         del context
 
     return jobinfo, scan_results
-
-
-def _pre_parse(xml_file,
-               out_path,
-               throttle=True,
-               code_dir=None,
-               min_api_version=40.0
-               ):
-    """Parses Cx xml results and generates new result file with pruned paths.
-
-    Purging policy (performed in order)
-    ===================================
-    1. collapse multiple paths with same similarity id
-    2. remove consecutively repeated nodes within a path
-    3. remove portion of path that revisits start point
-    4. (after above) collapse paths with same start and end point
-
-    Returns:
-        src_data
-        
-    """
-
-    context = None
-    root = None  # reference
-    purged_nodes = 0
-    purged_paths = 0
-    src_data = dict()
-
-    if os.path.exists(out_path):
-        os.remove(out_path)
-
-    out_fp = codecs.open(out_path, mode='a', encoding='utf-8')
-
-    context = CP.ET.iterparse(xml_file, events=('end', 'start'))
-
-    # for deduplication of consecutive pathnodes that are the same line in a given result
-    curr_pathnode_sig = None
-    prev_pathnode_sig = None
-
-    # for deduplication of any duplicate paths within a given query
-    curr_path_sig = None  # path sig = signature meant to identify path
-    known_path_sig = set()  # need to remember all results
-    skip_path = False  # to avoid processing path nodes if we know we wont process paths
-
-    # for deduplication of paths with same start and endpoint in a given query
-    curr_start_node = None
-    curr_end_node = None
-    known_path_ends = set()  # need to remember [start, end] for paths
-
-    out_fp.write('<?xml version="1.0" encoding="utf-8"?>\n')
-
-    event, root = next(context)
-    parent = root
-    # render root
-    out_fp.write(serialize('start', root))
-
-    for event, element in context:
-
-        if event == 'start':
-            element.getparent = lambda p=parent: p
-            parent = element
-
-            if element.tag == 'Query':
-                # we have a new query
-                #   reset path sig:
-                curr_path_sig = None
-                known_path_sig = set()  # Flush all known paths
-                skip_path = False
-
-                curr_start_node = None
-                curr_end_node = None
-                known_path_ends = set()
-
-                total = 0  # reset total results per query
-
-                out_fp.write(serialize('start', element))
-
-            elif element.tag == 'Path':
-                # We have a new path
-                #  reset pathnode sig
-                curr_pathnode_sig = None
-                prev_pathnode_sig = None
-
-                # careful, we are at start of elem, but can see attributes
-                curr_path_sig = _get_signature(element)
-
-                if curr_path_sig not in known_path_sig:
-                    skip_path = False  # display this path
-                else:
-                    skip_path = True
-
-        if event == 'end':
-            parent = element.getparent()
-
-            if element.tag == 'Query':
-                out_fp.write(serialize('end', element))
-
-            elif element.tag == 'Path':
-                """
-                    At the end of each path, we write the entire
-                    result to file, which means if there are two paths
-                    with the same result, the result is written twice
-                    
-                """
-                if skip_path or total >= MAX_RESULTS:
-                    # remove result from query
-                    purged_paths += 1
-
-                else:
-                    # calculate first and last
-                    curr_start_node = _get_signature(element.getchildren()[0])
-                    curr_end_node = _get_signature(element.getchildren()[-1])
-
-                    if (curr_start_node, curr_end_node) in known_path_ends:
-                        # remove result from query
-                        purged_paths += 1
-                    else:
-                        known_path_ends.add((curr_start_node, curr_end_node))
-                        known_path_sig.add(curr_path_sig)
-
-                        # print entire result (inc all paths) to file
-                        out_fp.write(serialize(None, parent))
-                        total += 1
-
-            elif element.tag == 'PathNode':
-                prev_pathnode_sig = curr_pathnode_sig
-                curr_pathnode_sig = _get_signature(element)
-
-                if curr_pathnode_sig == prev_pathnode_sig or curr_pathnode_sig == (None, None):
-                    element.getparent().remove(element)
-                    purged_nodes += 1
-
-            elif element.tag == RESULT_ROOT_TAG:
-                out_fp.write(serialize('end', root))
-
-    if out_fp is not None:
-        logger.info("closing report file pointer")
-        # close file handle since we will open at beginning
-        out_fp.close()
-
-    if context is not None:
-        del context
-
-    return src_data
 
 
 def get_issues_for_org(scan_results, vuln_map):

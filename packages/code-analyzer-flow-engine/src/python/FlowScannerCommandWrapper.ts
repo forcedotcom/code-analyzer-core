@@ -9,6 +9,7 @@ export interface FlowScannerCommandWrapper {
         workspaceFlowFiles: string[],
         targetedFlowFiles: string[],
         absLogFilePath: string,
+        optionalQueryIds: string[],
         completionPercentageHandler: (percentage: number) => void
     ): Promise<FlowScannerExecutionResult>;
 }
@@ -18,13 +19,20 @@ export type FlowScannerExecutionResult = {
 }
 
 export type FlowScannerRuleResult = {
-    flow: FlowNodeDescriptor[];
     query_name: string;
     severity: string;
     counter?: number;
     description: string;
     elem_name: string;
+    elem_code: string;
     field: string;
+
+    // This is defined if the violation is a flow based violation
+    flow?: FlowNodeDescriptor[];
+    
+    // These are filled in if the violation is a single element based violation
+    elem_line_no?: number;
+    filename?: string;
 }
 
 export type FlowNodeDescriptor = {
@@ -51,6 +59,7 @@ export class RunTimeFlowScannerCommandWrapper implements FlowScannerCommandWrapp
         workspaceFlowFiles: string[],
         targetedFlowFiles: string[],
         absLogFilePath: string,
+        optionalQueryIds: string[],
         completionPercentageHandler: (percentage: number) => void
     ): Promise<FlowScannerExecutionResult> {
         const workspaceFlowsFile: string = path.join(workingFolder, 'workspaceFiles.txt');
@@ -59,7 +68,7 @@ export class RunTimeFlowScannerCommandWrapper implements FlowScannerCommandWrapp
         await fs.promises.writeFile(targetedFlowsFile, targetedFlowFiles.join('\n'), 'utf-8');
 
         const flowScannerResultsFile: string = path.join(workingFolder, 'flowScannerResultsFile.json')
-        const commandName = 'flowtest'; //pythonModuleName set by internal team
+        const commandName = 'flow_scanner'; //pythonModuleName set by internal team
 
         const pythonArgs: string[] = [
             '-m',
@@ -71,6 +80,8 @@ export class RunTimeFlowScannerCommandWrapper implements FlowScannerCommandWrapp
             workspaceFlowsFile,
             '--target',
             targetedFlowsFile,
+            '--optional_queries',
+            optionalQueryIds.join(','),
             '--json',
             flowScannerResultsFile
         ];
@@ -130,6 +141,8 @@ export class RunTimeFlowScannerCommandWrapper implements FlowScannerCommandWrapp
 
     /* istanbul ignore next */
     private ruleResultIsValid(ruleResult: object): ruleResult is FlowScannerRuleResult {
+        // Only require the fields that we actually use
+
         if (!('query_name' in ruleResult) || typeof ruleResult.query_name !== 'string') {
             return false;
         }
@@ -139,7 +152,7 @@ export class RunTimeFlowScannerCommandWrapper implements FlowScannerCommandWrapp
         if (!('description' in ruleResult) || typeof ruleResult.description !== 'string') {
             return false;
         }
-        if (!('elem' in ruleResult) || typeof ruleResult.elem !== 'string') {
+        if (!('elem_code' in ruleResult) || typeof ruleResult.elem_code !== 'string') {
             return false;
         }
         if (!('elem_name' in ruleResult) || typeof ruleResult.elem_name !== 'string') {
@@ -149,7 +162,9 @@ export class RunTimeFlowScannerCommandWrapper implements FlowScannerCommandWrapp
             return false;
         }
         if (!('flow' in ruleResult) || !(Array.isArray(ruleResult.flow))) {
-            return false;
+            // If no flow array then it must be a single element violation
+            return ('elem_line_no' in ruleResult && typeof ruleResult['elem_line_no'] === 'number') &&
+                ('filename' in ruleResult && typeof ruleResult['filename'] === 'string');
         }
         const flowNodes: object[] = ruleResult.flow;
         for (const flowNode of flowNodes) {

@@ -33,7 +33,13 @@ describe('FlowScannerCommandWrapper implementations', () => {
                 };
 
                 beforeAll(async () => {
-                    results = await wrapper.runFlowScannerRules(workingFolder, [PATH_TO_EXAMPLE1, PATH_TO_EXAMPLE2], [PATH_TO_EXAMPLE1, PATH_TO_EXAMPLE2], tempLogFile, statusProcessorFunction);
+                    results = await wrapper.runFlowScannerRules(
+                        workingFolder,
+                        [PATH_TO_EXAMPLE1, PATH_TO_EXAMPLE2],
+                        [PATH_TO_EXAMPLE1, PATH_TO_EXAMPLE2],
+                        tempLogFile,
+                        ['MissingFaultHandler'], // adding in one optional query as well
+                        statusProcessorFunction);
                     // The `counter` property is irrelevant to us, and causes problems across platforms. So delete it.
                     for (const queryName of Object.keys(results.results)) {
                         for (const queryResults of results.results[queryName]) {
@@ -60,10 +66,10 @@ describe('FlowScannerCommandWrapper implementations', () => {
                         const expectedValue = expectedResults.results[key];
                         expect(key in results.results).toEqual(true);
                         expect(results.results[key]).toHaveLength(expectedValue.length);
-                        expect(results.results[key]).toEqual(expectedValue);
+                        for(const expectedElement of expectedValue) { // Need to do this because it seems that flow_scanner does not give results in a sorted or deterministic fashion
+                            expect(results.results[key]).toContainEqual(expectedElement);
+                        }
                     }
-
-
                 });
 
                 it('Correctly parses status updates from stdout', () => {
@@ -103,7 +109,7 @@ describe('FlowScannerCommandWrapper implementations', () => {
                     });
 
                     const wrapper: RunTimeFlowScannerCommandWrapper = new RunTimeFlowScannerCommandWrapper(PYTHON_COMMAND);
-                    await expect(wrapper.runFlowScannerRules(workingFolder, [PATH_TO_EXAMPLE1, PATH_TO_EXAMPLE2], [PATH_TO_EXAMPLE1, PATH_TO_EXAMPLE2], tempLogFile, (_num: number) => {}))
+                    await expect(wrapper.runFlowScannerRules(workingFolder, [PATH_TO_EXAMPLE1, PATH_TO_EXAMPLE2], [PATH_TO_EXAMPLE1, PATH_TO_EXAMPLE2], tempLogFile, [], (_num: number) => {}))
                         .rejects
                         .toThrow(expectedMessage);
                 });

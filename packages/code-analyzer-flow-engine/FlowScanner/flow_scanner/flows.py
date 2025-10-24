@@ -11,16 +11,17 @@ import typing
 from collections.abc import Callable
 from dataclasses import dataclass, replace
 
-import flowtest.util
-from flowtest.util import is_non_null, id_, match_all
-from public.data_obj import DataInfluencePath
+import flow_scanner.util
+from flow_scanner.util import is_non_null, id_, match_all
+from public.data_obj import InfluencePath
+from public.contracts import AbstractFlowVector
 
 #: module logger
 logger = logging.getLogger(__name__)
 
 
 @dataclass(frozen=True, eq=True, slots=True)
-class FlowVector:
+class FlowVector(AbstractFlowVector):
     """Common data structure for both vectors and scalars.
 
      FlowVector supports vectorization, so that we can accurately
@@ -35,13 +36,13 @@ class FlowVector:
     # For each default path, this list has the overrides.
     # An override is a map: "property name" --> {DataInfluencePaths} that
     # influence this property
-    property_maps: dict[DataInfluencePath: dict[str: set[DataInfluencePath]]]
+    property_maps: dict[InfluencePath, dict[str, set[InfluencePath]]]
 
     # TODO: revisit this later if a property spec is needed
     # property_spec: set[str] | None
 
     @classmethod
-    def from_flows(cls, default: {DataInfluencePath} = None) -> FlowVector:
+    def from_flows(cls, default: set[InfluencePath] = None) -> FlowVector:
         """Builds a vector from the provided flows.
 
         Flows must all have the same influencer_name and no flow can have a non-null influencer_property.
@@ -64,7 +65,7 @@ class FlowVector:
             ValueError if the flows have different influenced_name, or if default is empty.
         """
         # we make an exception:
-        if isinstance(default, DataInfluencePath):
+        if isinstance(default, InfluencePath):
             default_ = {default}
         elif not isinstance(default, set):
             raise ValueError("Please call with set argument")
@@ -120,7 +121,7 @@ class FlowVector:
 
         return json.dumps(str_prop_map, indent=indent, sort_keys=True)
 
-    def report_dict(self) -> {str: {str: {str}}}:
+    def report_dict(self) -> dict[str, dict[str, set[str]]]:
         """get brief object dict with stringified flows
 
         flows are replaced with arrow and star notation
@@ -145,7 +146,7 @@ class FlowVector:
 
         return loaded
 
-    def get_flows_by_prop(self, member_name: str | None = None) -> {DataInfluencePath}:
+    def get_flows_by_prop(self, member_name: str | None = None) -> set[InfluencePath]:
         """Returns this vector's flows with the requested influenced property name.
 
         Args:
@@ -160,7 +161,7 @@ class FlowVector:
         defaults = set(self.property_maps.keys())
 
         # match anything if None, or require an exact name match if one was requested
-        prop_match = flowtest.util.build_match_on_null(member_name)
+        prop_match = flow_scanner.util.build_match_on_null(member_name)
 
         # make sure everything matches as we need to know if there are no flows for this prop
         flow_match = match_all
@@ -218,7 +219,7 @@ class FlowVector:
         can create a doubling of flow paths) via set-addition.
 
         Care must be taken when the generic case is the same but overrides
-        differ. Imagine program execution along two branches, followed
+        differ: Imagine program execution along two branches, followed
         by combining the branches (say a function return). Then we
         know that in reality, only one branch can be taken in an execution
         run, but there is the possibility of cross-contamination. E.g.
@@ -235,10 +236,10 @@ class FlowVector:
         the state branch id in each path - and it is the examination of the overrides
         where fine-grained exclusion analysis should happen.
 
-        This choice forces us to create dummy (induced) overrides because
-        the nature of overrides is that they are always selected, so if `A.Name` has
-        an override, `foo` in path `A`, but not in path `B`, then we want to get both
-        `A.Name` and `foo` when requesting the override of the sum of path A and path B.
+        This choice forces us to create dummy (induced) overrides:  If `A.Name` has
+        an override, `foo` in path 1, but not in path 2, then we want to get both
+        `A.Name` and `foo` when requesting the override of the sum.
+        This is because the sum is the possibility of taking either path.
 
         """
 
@@ -265,7 +266,7 @@ class FlowVector:
 
         return FlowVector(property_maps=new_property_map)
 
-    def push_via_flow(self, extension_path: DataInfluencePath, influenced_vec: FlowVector,
+    def push_via_flow(self, extension_path: InfluencePath, influenced_vec: FlowVector,
                       assign: bool = True,
                       cross_flow: bool = False) -> FlowVector:
         """Build new FlowVector with all influence paths in self pushed into ``vec`` via the extension_path.
@@ -309,7 +310,7 @@ class FlowVector:
         if extension_path.influenced_property is None:
             # the entire vector is pushed
             pushed_vec = self._extend_by_path(flow=extension_path, cross_flow=cross_flow)
-            if assign is False:
+            if not assign:
                 # we add the pushed values to the present values
                 return influenced_vec.add_vector(pushed_vec)
 
@@ -329,7 +330,7 @@ class FlowVector:
                 accum = set()
                 for flow_ in to_extend:
                     accum.add(
-                        DataInfluencePath.combine(
+                        InfluencePath.combine(
                             start_flow=flow_,
                             end_flow=extension_path,
                             cross_flow=cross_flow
@@ -344,7 +345,7 @@ class FlowVector:
     #
     #
 
-    def _extend_by_path(self, flow: DataInfluencePath, cross_flow: bool = False) -> FlowVector:
+    def _extend_by_path(self, flow: InfluencePath, cross_flow: bool = False) -> FlowVector:
         """Creates a new flow vector by *pushing forward* this vector's flows.
 
         ===========================
@@ -422,7 +423,7 @@ class FlowVector:
             # structures are preserved. flow is A --> B
             # push default forward
             for curr_default in self.property_maps:
-                pushed_default = DataInfluencePath.combine(
+                pushed_default = InfluencePath.combine(
                     start_flow=curr_default, end_flow=flow, cross_flow=cross_flow)
 
                 # and push all property maps forward *if they exist*
@@ -436,7 +437,7 @@ class FlowVector:
                         if (self.property_maps[curr_default][prop] is not None and
                                 len(self.property_maps[curr_default][prop]) > 0):
                             new_property_maps[pushed_default][prop] = {
-                                DataInfluencePath.combine(
+                                InfluencePath.combine(
                                     start_flow=override,
                                     end_flow=_restrict(flow, prop),
                                     cross_flow=cross_flow
@@ -459,7 +460,7 @@ class FlowVector:
                     # map: C.x->D
                     #
                     # we restrict: A.x->B.x->C.x, and then combine C.x->D
-                    pushed_default = DataInfluencePath.combine(
+                    pushed_default = InfluencePath.combine(
                         start_flow=_restrict(curr_default, tgt_prop),
                         end_flow=flow,
                         cross_flow=cross_flow
@@ -469,7 +470,7 @@ class FlowVector:
 
                 else:
                     # There is an override for target prop, so push all its flows into the property_maps
-                    pushed_defaults = [DataInfluencePath.combine(
+                    pushed_defaults = [InfluencePath.combine(
                         start_flow=x,
                         end_flow=flow,
                         cross_flow=cross_flow
@@ -481,10 +482,10 @@ class FlowVector:
         # end of if-statement
         return FlowVector(property_maps=new_property_maps)
 
-    def _search_props(self, defaults_matcher: Callable[[DataInfluencePath], bool] = is_non_null,
+    def _search_props(self, defaults_matcher: Callable[[InfluencePath], bool] = is_non_null,
                       prop_matcher: Callable[[str | None], bool] = is_non_null,
-                      flow_matcher: Callable[[DataInfluencePath | None], bool] = is_non_null,
-                      action: Callable[[DataInfluencePath, str, DataInfluencePath], typing.Any] = id_
+                      flow_matcher: Callable[[InfluencePath | None], bool] = is_non_null,
+                      action: Callable[[InfluencePath, str, InfluencePath], typing.Any] = id_
                       ) -> typing.Any:
         """Searches through FlowVector based on match conditions.
 
@@ -590,7 +591,7 @@ class FlowVector:
         else:
             return accum
 
-    def _assign_or_add_property_flows(self, flows: {DataInfluencePath}, assign: bool = True
+    def _assign_or_add_property_flows(self, flows: set[InfluencePath], assign: bool = True
                                       ) -> FlowVector:
         """Injects DataInfluencePaths into vector.
 
@@ -637,7 +638,7 @@ class FlowVector:
                 if self.property_maps[default_] is None or prop not in self.property_maps[default_]:
                     _safe_add(new_property_maps, default_, flow, assign)
 
-                elif assign is True:
+                elif assign:
                     new_property_maps[default_][prop] = {flow}
 
                 else:
@@ -658,9 +659,9 @@ def _sort_key(x):
     return x.short_report(arrows=True)
 
 
-def _merge_override(default: DataInfluencePath,
-                    first: {str: {DataInfluencePath}},
-                    second: {str: {DataInfluencePath}}) -> {str: {DataInfluencePath}}:
+def _merge_override(default: InfluencePath,
+                    first: dict[str, set[InfluencePath]],
+                    second: dict[str, set[InfluencePath]]) -> dict[str, set[InfluencePath]] | None:
     """Take the property map for a specific default and combine it with another
     Args:
         default: default flow for this map
@@ -701,8 +702,8 @@ Callable builders
 
 
 def _build_action_restrict_if_no_prop(wanted_prop: str) -> Callable:
-    def action(default: DataInfluencePath, curr_prop: str | None,
-               flow: DataInfluencePath) -> (DataInfluencePath, DataInfluencePath):
+    def action(default: InfluencePath, curr_prop: str | None,
+               flow: InfluencePath) -> tuple[InfluencePath, InfluencePath] | None:
 
         # The matchers will ensure we have a prop-wanted prop match,
         # but we still need the wanted prop variable because a wanted prop
@@ -739,9 +740,9 @@ def _build_action_restrict_if_no_prop(wanted_prop: str) -> Callable:
 """
 
 
-def _safe_add(my_prop_map: {DataInfluencePath: {str: {DataInfluencePath}}},
-              my_default: DataInfluencePath,
-              flow: DataInfluencePath, assign: bool = True) -> None:
+def _safe_add(my_prop_map: dict[InfluencePath, dict[str, set[InfluencePath]]],
+              my_default: InfluencePath,
+              flow: InfluencePath, assign: bool = True) -> None:
     """add function that provides the induced flow if needed
 
     Need to add the induced flow from the default
@@ -759,7 +760,7 @@ def _safe_add(my_prop_map: {DataInfluencePath: {str: {DataInfluencePath}}},
     """
     prop = flow.influenced_property
 
-    if assign is True:
+    if assign:
         to_add = {flow}
     else:
         induced_flow = _restrict(my_default, prop)
@@ -776,7 +777,7 @@ def _safe_add(my_prop_map: {DataInfluencePath: {str: {DataInfluencePath}}},
         my_prop_map[my_default][prop].update({flow})
 
 
-def _safe_update(prop: str, x: set, old_map: {str: set}) -> None:
+def _safe_update(prop: str, x: set, old_map: dict[str, set]) -> None:
     """Merges a set into a map at the specified property
 
     Args:
@@ -796,7 +797,7 @@ def _safe_update(prop: str, x: set, old_map: {str: set}) -> None:
         old_map[prop].update(x)
 
 
-def _restrict(dataflow: DataInfluencePath, prop: str) -> DataInfluencePath:
+def _restrict(dataflow: InfluencePath, prop: str) -> InfluencePath:
     """Restricts path to a member property
 
     Args:

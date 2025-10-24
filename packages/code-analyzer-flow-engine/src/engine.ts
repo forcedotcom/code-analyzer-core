@@ -12,8 +12,8 @@ import {
 } from "@salesforce/code-analyzer-engine-api";
 import {Clock, RealClock} from '@salesforce/code-analyzer-engine-api/utils';
 import {getMessage} from './messages';
-import {FlowNodeDescriptor, FlowScannerCommandWrapper, FlowScannerExecutionResult} from "./python/FlowScannerCommandWrapper";
-import {getConsolidatedRuleByName, getConsolidatedRuleName, getConsolidatedRuleNames} from "./hardcoded-catalog";
+import {FlowNodeDescriptor, FlowScannerCommandWrapper, FlowScannerExecutionResult, FlowScannerRuleResult} from "./python/FlowScannerCommandWrapper";
+import {getDescriptionForRule, getRuleNameFromQueryName, getAllRuleNames, getOptionalQueryIdsForRule} from "./hardcoded-catalog";
 
 /**
  * An arbitrarily chosen value for how close the engine is to completion before the underlying Flow tool is invoked,
@@ -58,8 +58,7 @@ export class FlowScannerEngine extends Engine {
             return [];
         }
         this.emitDescribeRulesProgressEvent(75);
-        const consolidatedNames: string[] = getConsolidatedRuleNames();
-        const convertedRules: RuleDescription[] = consolidatedNames.map(getConsolidatedRuleByName);
+        const convertedRules: RuleDescription[] = getAllRuleNames().map(getDescriptionForRule);
         this.emitDescribeRulesProgressEvent(100);
         return convertedRules;
     }
@@ -81,11 +80,14 @@ export class FlowScannerEngine extends Engine {
             this.emitRunRulesProgressEvent(normalizeRelativeCompletionPercentage(percentage));
         }
 
+        const optionalQueryIds: string[] = ruleNames.flatMap(getOptionalQueryIdsForRule);
+
         const executionResults: FlowScannerExecutionResult = await this.commandWrapper.runFlowScannerRules(
             runOptions.workingFolder,
             workspaceFlows,
             targetedFlows,
             logFile,
+            optionalQueryIds,
             percentageUpdateHandler
         );
         const convertedResults: EngineRunResults = toEngineRunResults(executionResults, ruleNames);
@@ -139,22 +141,37 @@ function toEngineRunResults(flowScannerExecutionResult: FlowScannerExecutionResu
     };
 
     for (const queryName of Object.keys(flowScannerExecutionResult.results)) {
-        const flowScannerRuleResults = flowScannerExecutionResult.results[queryName];
+        const flowScannerRuleResults: FlowScannerRuleResult[] = flowScannerExecutionResult.results[queryName];
         for (const flowScannerRuleResult of flowScannerRuleResults) {
-            const ruleName = getConsolidatedRuleName(flowScannerRuleResult.query_name);
-            // Flow runs quickly, and its rule selection is fiddly. So it's easier to just run all the rules,
-            // and then throw away results for rules that the user didn't request.
+            const ruleName = getRuleNameFromQueryName(flowScannerRuleResult.query_name);
+            // Since the non-optional queries (designated by the default preset) always run, we need filter any of their
+            // results out if their corresponding rule was not selected.
             if (!requestedRulesSet.has(ruleName)) {
                 continue;
             }
-            const flowNodes: FlowNodeDescriptor[] = flowScannerRuleResult.flow;
-            results.violations.push({
-                ruleName,
-                message: flowScannerRuleResult.description,
-                codeLocations: toCodeLocationList(flowNodes),
-                primaryLocationIndex: flowScannerRuleResult.flow.length - 1,
-                resourceUrls: []
-            });
+
+            const flowNodes: FlowNodeDescriptor[] | undefined = flowScannerRuleResult.flow;
+            if (flowNodes) { // If flow based violation
+                results.violations.push({
+                    ruleName,
+                    message: flowScannerRuleResult.description,
+                    codeLocations: toCodeLocationList(flowNodes),
+                    primaryLocationIndex: flowNodes.length - 1,
+                    resourceUrls: []
+                });
+            } else { // else if single element based violation
+                results.violations.push({
+                    ruleName,
+                    message: flowScannerRuleResult.description,
+                    codeLocations: [{
+                        file: flowScannerRuleResult.filename!,
+                        startLine: flowScannerRuleResult.elem_line_no!,
+                        startColumn: 1
+                    }],
+                    primaryLocationIndex: 0,
+                    resourceUrls: []
+                })
+            }
         }
     }
     return results;
