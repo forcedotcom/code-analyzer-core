@@ -19,7 +19,7 @@
     "@salesforce/code-analyzer-engine-api": "0.31.0",
     "@types/node": "^20.0.0",
     "csv-stringify": "^6.6.0",
-    "js-yaml": "^4.1.0",
+    "js-yaml": "^4.1.1",
     "semver": "^7.7.3",
     "xmlbuilder": "^15.1.1"
   },
