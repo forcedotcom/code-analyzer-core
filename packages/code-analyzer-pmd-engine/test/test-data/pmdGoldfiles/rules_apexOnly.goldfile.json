@@ -84,7 +84,7 @@
       "Documentation",
       "Apex"
     ],
-    "description": "This rule validates that: * ApexDoc comments are present for classes, methods, and properties that are public or global, excluding overrides and test classes (as well as the contents of test classes). * ApexDoc comments are present for classes, methods, and properties that are protected or private, depending on the properties `reportPrivate` and `reportProtected`. * ApexDoc comments should contain... Learn more: https://docs.pmd-code.org/pmd-doc-{{PMD_VERSION}}/pmd_rules_apex_documentation.html#apexdoc",
+    "description": "This rule validates that: * ApexDoc comments are present for classes, methods, and properties that are public or global, excluding overrides and test classes (as well as the contents of test classes). * ApexDoc comments are present for classes, methods, and properties that are protected or private, depending on the properties `reportPrivate` and `reportProtected`. * ApexDoc comments should contain a... Learn more: https://docs.pmd-code.org/pmd-doc-{{PMD_VERSION}}/pmd_rules_apex_documentation.html#apexdoc",
     "resourceUrls": [
       "https://docs.pmd-code.org/pmd-doc-{{PMD_VERSION}}/pmd_rules_apex_documentation.html#apexdoc"
     ]
