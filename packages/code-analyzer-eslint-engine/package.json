@@ -13,10 +13,11 @@
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "dependencies": {
+    "@eslint/css": "^0.14.1",
     "@eslint/js": "^9.39.1",
     "@lwc/eslint-plugin-lwc": "^3.3.0",
     "@lwc/eslint-plugin-lwc-platform": "^6.3.0",
-    "@salesforce-ux/eslint-plugin-slds": "^1.0.2",
+    "@salesforce-ux/eslint-plugin-slds": "^1.0.6",
     "@salesforce/code-analyzer-engine-api": "0.32.0-SNAPSHOT",
     "@salesforce/code-analyzer-eslint8-engine": "0.9.0-SNAPSHOT",
     "@salesforce/eslint-config-lwc": "^4.1.1",

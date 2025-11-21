@@ -4,6 +4,7 @@ import eslintTs from "typescript-eslint";
 import lwcEslintPluginLwcPlatform from "@lwc/eslint-plugin-lwc-platform";
 import salesforceEslintConfigLwc from "@salesforce/eslint-config-lwc";
 import sldsEslintPlugin from "@salesforce-ux/eslint-plugin-slds";
+import eslintCss from "@eslint/css";
 import {ESLintEngineConfig} from "./config";
 import globals from "globals";
 
@@ -132,7 +133,11 @@ export class BaseConfigFactory {
         return sldsEslintPlugin.configs['flat/recommended-css'].map((cssConfig: Linter.Config) => {
             return {
                 ...cssConfig,
-                files: this.engineConfig.file_extensions.css.map(ext => `**/*${ext}`)
+                files: this.engineConfig.file_extensions.css.map(ext => `**/*${ext}`),
+                plugins: {
+                    ...cssConfig.plugins,
+                    css: eslintCss
+                }
             };
         });
     }
