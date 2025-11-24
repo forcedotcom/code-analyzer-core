@@ -134,6 +134,10 @@ export class BaseConfigFactory {
             return {
                 ...cssConfig,
                 files: this.engineConfig.file_extensions.css.map(ext => `**/*${ext}`),
+                // TODO: Remove this workaround once @salesforce-ux/eslint-plugin-slds v1.0.7+ is released.
+                // The SLDS plugin's CSS config references `language: "css/css"` but doesn't register the
+                // CSS language plugin in their plugins object. We must add it ourselves to avoid the error:
+                // "Could not find 'css' in plugin 'css'". See: https://github.com/salesforce-ux/slds-linter/issues/314
                 plugins: {
                     ...cssConfig.plugins,
                     css: eslintCss
