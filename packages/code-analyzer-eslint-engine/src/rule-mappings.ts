@@ -952,6 +952,10 @@ export const RULE_MAPPINGS: Record<string, {severity: SeverityLevel, tags: strin
         severity: SeverityLevel.Moderate,
         tags: [COMMON_TAGS.RECOMMENDED, LWC, COMMON_TAGS.CATEGORIES.BEST_PRACTICES, COMMON_TAGS.LANGUAGES.JAVASCRIPT]
     },
+    "@lwc/lwc/newer-version-available": {
+        severity: SeverityLevel.Moderate,
+        tags: [COMMON_TAGS.RECOMMENDED, LWC, COMMON_TAGS.CATEGORIES.BEST_PRACTICES, COMMON_TAGS.LANGUAGES.JAVASCRIPT]
+    },
     "@lwc/lwc/no-async-operation": {
         severity: SeverityLevel.Moderate,
         tags: [COMMON_TAGS.RECOMMENDED, LWC, COMMON_TAGS.CATEGORIES.BEST_PRACTICES, COMMON_TAGS.LANGUAGES.JAVASCRIPT]
@@ -1455,6 +1459,10 @@ export const RULE_MAPPINGS: Record<string, {severity: SeverityLevel, tags: strin
     "@typescript-eslint/no-unused-expressions": {
         severity: SeverityLevel.Moderate,
         tags: [COMMON_TAGS.RECOMMENDED, COMMON_TAGS.CATEGORIES.BEST_PRACTICES, COMMON_TAGS.LANGUAGES.TYPESCRIPT]
+    },
+    "@typescript-eslint/no-unused-private-class-members": {
+        severity: SeverityLevel.High,
+        tags: [COMMON_TAGS.CATEGORIES.ERROR_PRONE,    COMMON_TAGS.LANGUAGES.TYPESCRIPT]
     },
     "@typescript-eslint/no-unused-vars": {
         severity: SeverityLevel.High,

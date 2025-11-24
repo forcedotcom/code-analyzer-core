@@ -26,7 +26,11 @@ dependencies {
     // --- TEST ONLY DEPENDENCIES -----------------------------------------------
     testImplementation(libs.hamcrest)
     testImplementation(libs.junit.jupiter) // Maps to junit-jupiter
-    testImplementation(libs.pmd.test) // Maps to pmd-test
+    testImplementation(libs.pmd.test) { // Maps to pmd-test
+        // Exclude JUnit 6.0.0 from pmd-test since it requires Java 17+ and we're targeting Java 11
+        exclude(group = "org.junit.jupiter")
+        exclude(group = "org.junit")
+    }
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
 }
 

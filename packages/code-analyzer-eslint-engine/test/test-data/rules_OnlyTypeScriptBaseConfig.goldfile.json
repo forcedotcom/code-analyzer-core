@@ -1035,6 +1035,18 @@
     ]
   },
   {
+    "description": "Disallow unused private class members",
+    "name": "@typescript-eslint/no-unused-private-class-members",
+    "resourceUrls": [
+      "https://typescript-eslint.io/rules/no-unused-private-class-members"
+    ],
+    "severityLevel": 2,
+    "tags": [
+      "ErrorProne",
+      "TypeScript"
+    ]
+  },
+  {
     "description": "Disallow unused variables",
     "name": "@typescript-eslint/no-unused-vars",
     "resourceUrls": [
@@ -3058,19 +3070,6 @@
     "tags": [
       "Recommended",
       "BestPractices",
-      "JavaScript",
-      "TypeScript"
-    ]
-  },
-  {
-    "description": "Disallow unused private class members",
-    "name": "no-unused-private-class-members",
-    "resourceUrls": [
-      "https://eslint.org/docs/latest/rules/no-unused-private-class-members"
-    ],
-    "severityLevel": 2,
-    "tags": [
-      "ErrorProne",
       "JavaScript",
       "TypeScript"
     ]
