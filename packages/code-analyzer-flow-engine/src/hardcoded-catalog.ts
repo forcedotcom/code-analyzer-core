@@ -2,6 +2,8 @@ import {COMMON_TAGS, RuleDescription, SeverityLevel} from '@salesforce/code-anal
 import {getMessage} from './messages';
 
 // Code Analyzer rule names
+//   Good news: The python flow scanner query ids now happen to be the exact same names as our code analyzer rule names
+//   so we no longer need to keep a map between the two.
 enum RuleName {
     CyclicSubflow = 'CyclicSubflow',
     DbInLoop = 'DbInLoop',
@@ -130,186 +132,28 @@ const RULE_DESCRIPTIONS: RuleDescription[] = [
 
 const RULE_DESCRIPTIONS_BY_NAME: Map<string, RuleDescription> = new Map(RULE_DESCRIPTIONS.map(rd => [rd.name, rd]));
 
-type FlowScannerQueryAssociation = {
-    // The id of the flow scanner query. This is used when selecting which query to run (if it is an optional query).
-    queryId : string,
-
-    // The name of the flow scanner query. Unfortunately this is what shows up in the results instead of the id.
-    queryName: string,
-
-    // Should be true if the rule is queried by the --optional_queries flag and false if it is in the default preset
-    isOptional: boolean
-
-    // The name of the Code Analyzer rule that the query is associated with. Note that multiple queries can be under the same rule.
-    ruleName: RuleName
-}
-
-const QUERY_ASSOCIATIONS: FlowScannerQueryAssociation[]  = [
-    // ==== QUERIES FROM THE DEFAULT PRESET (which we can't turn off when running flow scanner) ====
-    {
-        queryId: "FlowSecurity.SystemModeWithSharing.recordCreates.data",
-        queryName: "Flow: SystemModeWithSharing recordCreates data",
-        isOptional: false,
-        ruleName: RuleName.PreventPassingUserDataIntoElementWithSharing
-    },
-    {
-        queryId: "FlowSecurity.SystemModeWithSharing.recordDeletes.selector",
-        queryName: "Flow: SystemModeWithSharing recordDeletes selector",
-        isOptional: false,
-        ruleName: RuleName.PreventPassingUserDataIntoElementWithSharing
-    },
-    {
-        queryId: "FlowSecurity.SystemModeWithSharing.recordLookups.selector",
-        queryName: "Flow: SystemModeWithSharing recordLookups selector",
-        isOptional: false,
-        ruleName: RuleName.PreventPassingUserDataIntoElementWithSharing
-    },
-    {
-        queryId: "FlowSecurity.SystemModeWithSharing.recordUpdates.data",
-        queryName: "Flow: SystemModeWithSharing recordUpdates data",
-        isOptional: false,
-        ruleName: RuleName.PreventPassingUserDataIntoElementWithSharing
-    },
-    {
-        queryId: "FlowSecurity.SystemModeWithSharing.recordUpdates.selector",
-        queryName: "Flow: SystemModeWithSharing recordUpdates selector",
-        isOptional: false,
-        ruleName: RuleName.PreventPassingUserDataIntoElementWithSharing
-    },
-    {
-        queryId: "FlowSecurity.SystemModeWithoutSharing.recordCreates.data",
-        queryName: "Flow: SystemModeWithoutSharing recordCreates data",
-        isOptional: false,
-        ruleName: RuleName.PreventPassingUserDataIntoElementWithoutSharing
-    },
-    {
-        queryId: "FlowSecurity.SystemModeWithoutSharing.recordDeletes.selector",
-        queryName: "Flow: SystemModeWithoutSharing recordDeletes selector",
-        isOptional: false,
-        ruleName: RuleName.PreventPassingUserDataIntoElementWithoutSharing
-    },
-    {
-        queryId: "FlowSecurity.SystemModeWithoutSharing.recordLookups.selector",
-        queryName: "Flow: SystemModeWithoutSharing recordLookups selector",
-        isOptional: false,
-        ruleName: RuleName.PreventPassingUserDataIntoElementWithoutSharing
-    },
-    {
-        queryId: "FlowSecurity.SystemModeWithoutSharing.recordUpdates.data",
-        queryName: "Flow: SystemModeWithoutSharing recordUpdates data",
-        isOptional: false,
-        ruleName: RuleName.PreventPassingUserDataIntoElementWithoutSharing
-    },
-    {
-        queryId: "FlowSecurity.SystemModeWithoutSharing.recordUpdates.selector",
-        queryName: "Flow: SystemModeWithoutSharing recordUpdates selector",
-        isOptional: false,
-        ruleName: RuleName.PreventPassingUserDataIntoElementWithoutSharing
-    },
-
-    // ==== OPTIONAL QUERIES (which we can choose to run) ====
-    {
-        queryId: "CyclicSubflow",
-        queryName: "Chain of subflow calls forms a cycle",
-        isOptional: true,
-        ruleName: RuleName.CyclicSubflow
-    },
-    {
-        queryId: "DbInLoop",
-        queryName: "Database Operation In Loop",
-        isOptional: true,
-        ruleName: RuleName.DbInLoop
-    },
-    {
-        queryId: "DefaultCopy",
-        queryName: "Default Copy Label",
-        isOptional: true,
-        ruleName: RuleName.DefaultCopy
-    },
-    {
-        queryId: "HardcodedId",
-        queryName: "Hardcoded Id",
-        isOptional: true,
-        ruleName: RuleName.HardcodedId
-    },
-    {
-        queryId: "MissingDescription",
-        queryName: "Missing Description",
-        isOptional: true,
-        ruleName: RuleName.MissingDescription
-    },
-    {
-        queryId: "MissingFaultHandler",
-        queryName: "Missing Fault Handler",
-        isOptional: true,
-        ruleName: RuleName.MissingFaultHandler
-    },
-    {
-        queryId: "MissingNextValueConnector",
-        queryName: "Loop Element Without nextValueConnector",
-        isOptional: true,
-        ruleName: RuleName.MissingNextValueConnector
-    },
-    {
-        queryId: "SameRecordUpdate",
-        queryName: "Same Record Update In Trigger",
-        isOptional: true,
-        ruleName: RuleName.SameRecordUpdate
-    },
-    {
-        queryId: "TriggerCallout",
-        queryName: "Trigger Flow Callout in Synchronous Path",
-        isOptional: true,
-        ruleName: RuleName.TriggerCallout
-    },
-    {
-        queryId: "TriggerEntryCriteria",
-        queryName: "Record Trigger With No Entry Criteria",
-        isOptional: true,
-        ruleName: RuleName.TriggerEntryCriteria
-    },
-    {
-        queryId: "TriggerWaitEvent",
-        queryName: "Wait Event in Trigger",
-        isOptional: true,
-        ruleName: RuleName.TriggerWaitEvent
-    },
-    {
-        queryId: "UnreachableElement",
-        queryName: "Element is Unreachable",
-        isOptional: true,
-        ruleName: RuleName.UnreachableElement
-    },
-    {
-        queryId: "UnusedResource",
-        queryName: "Unused Resource",
-        isOptional: true,
-        ruleName: RuleName.UnusedResource
-    }
-]
-
-const QUERY_ASSOCIATIONS_BY_NAME : Map<string, FlowScannerQueryAssociation> = new Map(QUERY_ASSOCIATIONS.map(qa => [qa.queryName, qa]));
-
 export function getAllRuleNames(): string[] {
     return Object.values(RuleName);
 }
 
-export function getRuleNameFromQueryName(queryName: string): string {
+export function getRuleNameFromQueryId(queryId: string): string {
+    // Good news: The python flow scanner query ids now happen to be the exact same names as our code analyzer rule names
+    //  so we no longer need to keep a map between the two. But leaving this helper just in case we need it again in the
+    //  future.
+
     // istanbul ignore else
-    if (QUERY_ASSOCIATIONS_BY_NAME.has(queryName)) {
-        return QUERY_ASSOCIATIONS_BY_NAME.get(queryName)!.ruleName;
+    if (Object.values(RuleName).includes(queryId as RuleName)) {
+        return queryId;
     } else {
-        throw new Error(`Developer error: invalid query name ${queryName}`);
+        throw new Error(`Developer error: invalid query id ${queryId}`);
     }
 }
 
-export function getOptionalQueryIdsForRule(ruleName: string): string[] {
-    const queryIds: string[] = [];
-    for (const queryAssociation of QUERY_ASSOCIATIONS) {
-        if (queryAssociation.isOptional && queryAssociation.ruleName === ruleName) {
-            queryIds.push(queryAssociation.queryId);
-        }
-    }
+export function getQueryIdsForRule(ruleName: string): string[] {
+    // It used to be that a single Code Analyzer rule could map to multiple flow scanner query ids. But now
+    // they are mapped 1-to-1 and happen to be the exact same names. But keeping the output as a string array
+    // just in case things change in the future.
+    const queryIds: string[] = [ruleName];
     return queryIds;
 }
 

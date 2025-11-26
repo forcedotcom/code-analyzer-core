@@ -13,7 +13,7 @@ from collections.abc import Callable
 from dataclasses import fields
 from pathlib import Path
 from typing import TYPE_CHECKING
-from typing import Any as Any
+from typing import Any, Sequence
 
 from public.data_obj import VariableType
 from public.enums import RunMode
@@ -442,4 +442,63 @@ def case_insensitive_match(list_a: list[str], to_match: str) -> str | None:
         if item.lower() == to_match.lower():
             return item
     return None
+
+
+def find_cycles(target, history: tuple) -> tuple[int, tuple | None]:
+    """Look for cycles in the history ending with target and return (# of cycles, cycle)
+
+    The idea is to detect cycles. Say the history is
+        history = [A B X Y Z X Y]
+        and we are thinking of adding the target Z.
+
+        But we don't want to add it if it will
+        create a repeating pattern, as this corresponds to looping needlessly.
+        So we look for the previous occurrence of Z in the history, and then look
+        at history[right_index(Z):] = [Z X Y]
+        Now we want to check whether the portion [X Y] also precedes Z. If so,
+        we found a cycle ending at target, and we don't jump to that target.
+
+    """
+    if not history:
+        return 0, None
+
+    l = len(history)
+    if history[-1] == target:
+        cycle = (target,)
+        index = l-1
+        cycle_len = 1
+    else:
+        prev = next(((i for i in range(1, l+1) if history[l-i] == target)), None)
+        if not prev:
+            return 0, None
+        else:
+            index = l-prev
+            cycle = history[index+1:] + (target,)
+            cycle_len = prev
+
+    counter = 1
+    position = index
+
+    if cycle_len == 1:
+        while position >= 0:
+            position -= 1
+            if history[position] == target:
+                counter += 1
+                continue
+            else:
+                break
+
+    else:
+        while position >= cycle_len - 1:
+            last_position = position
+            position = position - cycle_len
+
+            if history[position + 1: last_position + 1] == cycle:
+                counter += 1
+                continue
+            else:
+                break
+
+    return counter, cycle
+
 

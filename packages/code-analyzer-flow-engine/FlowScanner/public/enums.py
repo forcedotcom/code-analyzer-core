@@ -115,6 +115,7 @@ class ConnType(Enum):
     Other = 10  # everything else (including noMoreValue connectors)
 
 class QueryAction(Enum):
+
     lexical = 0  # can only access parser
     flow_enter = 20 # can access CFG, crawl schedule
     process_elem = 10 # called on each flow element

@@ -11,40 +11,85 @@ import logging
 import os
 import traceback
 import types
-from importlib import machinery
+from importlib import machinery, reload
 from typing import Any
 
 import queries.default_query
 import queries.optional_query
-import queries.debug_query
-
 
 from flow_parser.parse import Parser
 from flow_scanner.util import case_insensitive_match
 from flow_scanner.control_flow import Crawler
 from flow_scanner.flow_result import ResultsProcessor
-from public.contracts import QueryProcessor, State, AbstractQuery, AbstractCrawler, Query, LexicalQuery
-from public.data_obj import Preset, PresetEncoder
+from public.contracts import State, AbstractCrawler, Query, LexicalQuery, FlowParser
+from public.data_obj import Preset, PresetEncoder, QueryDescription
 from public.enums import QueryAction
+from queries import debug_query
+from queries.debug_query import Detect
+
 logger = logging.getLogger(__name__)
+
+PRESETS = {
+    'default': [(queries.default_query, 'PreventPassingUserDataIntoElementWithoutSharing'),
+                (queries.default_query,'PreventPassingUserDataIntoElementWithSharing'),
+                (queries.optional_query, 'DbInLoop'),
+                (queries.optional_query, 'HardcodedId'),
+                (queries.optional_query, 'SameRecordUpdate'),
+                (queries.optional_query, 'TriggerEntryCriteria'),
+                (queries.optional_query, 'UnusedResource'),
+                (queries.optional_query, 'UnreachableElement'),
+                (queries.optional_query, 'MissingNextValueConnector'),
+                (queries.optional_query, 'TriggerWaitEvent'),
+                (queries.optional_query, 'TriggerCallout'),
+                ],
+    'org':[(queries.default_query, 'PreventPassingUserDataIntoElementWithoutSharing'),
+           (queries.default_query, 'PreventPassingUserDataIntoElementWithSharing'),
+           (queries.optional_query, 'DbInLoop'),
+           (queries.optional_query, 'CyclicSubflow'),
+           (queries.optional_query, 'MissingFaultHandler'),
+           (queries.optional_query, 'HardcodedId'),
+           (queries.optional_query, 'SameRecordUpdate'),
+           (queries.optional_query, 'TriggerEntryCriteria'),
+           (queries.optional_query, 'UnusedResource'),
+           (queries.optional_query, 'UnreachableElement'),
+           (queries.optional_query, 'MissingNextValueConnector'),
+           (queries.optional_query, 'TriggerWaitEvent'),
+           (queries.optional_query, 'TriggerCallout'),
+           ]
+}
 
 
 # In the future, if other files are added, need to add here
-ADDITIONAL_QUERY_MODULES = [
+QUERY_MODULES = [
+    (queries.default_query, queries.default_query.QUERIES),
     (queries.optional_query, queries.optional_query.QUERIES),
-    (queries.debug_query, queries.debug_query.QUERIES)
 ]
 
-
 class QueryManager:
-    # instance that performs queries and produces results
-    query_processor: QueryProcessor = None
+    """
+        Lifecycle: QueryManager is instantiated once per invocation of flow_scanner.
+        That means that if an argument is set to None due to error, it will not be
+        attempted again in the next flow.
 
-    # stand-alone query_map action -> additional query instance
-    queries: dict[QueryAction, list[Query | LexicalQuery]] = None
+        At the end of a full flow parse (including subflows), the queries are reloaded, e.g.
+        re-instantiated. But query instances persist across subflows. They persist until reload
+        is called.
+    """
+    # which built-in queries were requested, combining preset and any optional
+    requested_query_ids: list[str] | None = None
 
-    # stand-alone query map -> query_id -> query instance
-    flattened_queries: dict[str, Query | LexicalQuery] | None = None
+    # built-in query_id -> query instance. Includes debug query but not custom queries
+    queries: dict[str, Query | LexicalQuery] | None = None
+
+    # custom query_id -> query instance. None if no custom queries were requested.
+    custom_queries: dict[str, Query | LexicalQuery] | None = None
+
+    # Custom Queries are combined with regular queries and also with the debug query
+    # action_type -> list of query instances with this type.
+    action2queries: dict[QueryAction, list[Query | LexicalQuery]] = None
+
+    # used in lexical accept
+    query_id2module_name: dict[str, str] | None = None
 
     # instance that stores results and generates reports
     results: ResultsProcessor = None
@@ -53,122 +98,154 @@ class QueryManager:
     parser: Parser = None
 
     # which preset to request
-    requested_preset: str = None
+    preset: str = None
 
-    # additional queries to perform
-    additional_queries: list[str] = None
+    # module loaded from environment
+    external_query_module: Any = None
 
-    # lexical queries only run once per flow visit
-    visited_flows: list[str] = None
+    # list of class names to run from external module. Must not conflict with
+    # any requested built-in queries or with the debug query.
+    #
+    external_class_names: list[str] | None = None
 
-    query_module: Any = None
-
-    class_name: str | None = None
-
-    query_id_to_module_name: dict[str, str] | None = None
-
-    debug_msg: str | None = None
+    # json object that will be passed to the debug query
+    debug_arg: Any | None = None
 
     @classmethod
-    def build(cls, results: ResultsProcessor,
-              parser: Parser = None,
+    def build(cls,
+              parser: FlowParser,
               requested_preset: str | None = None,
-              additional_queries: list[str] | None = None,
-              module_path: str | None = None,
-              class_name: str | None = None,
-              debug_query: str | None = None) -> QueryManager:
+              requested_queries: list[str] | None = None,
+              external_module_path: str | None = None,
+              external_class_names: str | None = None,
+              debug_arg_str: str | None = None) -> QueryManager:
         """Only call this once to build Query Manager at scan start
         """
         qm = QueryManager()
+        qm.parser = parser
+        if debug_arg_str is not None:
+            try:
+                qm.debug_arg = json.loads(debug_arg_str)
 
-        if debug_query is not None:
-            qm.set_debug_query(debug_query)
+            except:
+                logger.critical(f"error parsing debug argument\n{traceback.format_exc()}"
+                                f"\n...skipping debug query in this run")
+                raise
 
-        if module_path is not None:
+        if external_module_path is not None and external_class_names is not None:
             # try to load requested query
-            # TODO: add better error handling
-            query_module = create_module(module_path=module_path)
+            try:
+                query_module = create_module(module_path=external_module_path)
 
-            qm.query_module = query_module
-            qm.class_name = class_name
-            preset, instance = get_instance(query_module_=query_module,
-                                            class_name_=class_name,
-                                            preset_=requested_preset)
-            qm.requested_preset = requested_preset
+                qm.external_query_module = query_module
+                qm.external_class_names = [x.strip() for x in external_class_names.split(",")
+                                           if x.strip() != '']
+
+            except:
+                msg=("error loading external module\n"
+                     f"{traceback.format_exc()}\n"
+                     f"skipping external query in this run.")
+                logger.critical(msg)
+                print(msg)
+                raise
+
+        if requested_queries is not None and requested_preset is not None:
+            # use both
+            qm.preset = requested_preset
+            qm.requested_query_ids = qm.requested_query_ids + [x[1] for x in PRESETS[requested_preset]
+                                                               if x[1] not in qm.requested_query_ids]
+
+        elif requested_queries is not None:
+            # requested preset must be None but user listed queries, so just run those
+            qm.requested_query_ids = requested_queries
 
         else:
-            # use default
-            instance = queries.default_query.DefaultQueryProcessor()
-            preset = instance.set_preset(preset_name=requested_preset)
+            # requested queries must be None, so we rely on preset
+            if requested_preset is None:
+                requested_preset = 'default'
+            qm.preset = requested_preset
+            qm.requested_query_ids = [x[1] for x in PRESETS[requested_preset]]
 
-        if preset is None:
-            raise RuntimeError(f"The loaded query module does not support preset: {preset or 'No preset provided'}")
-
-        # store pointer to query processor
-        qm.query_processor = instance
-        res = build_query_map(additional_queries=additional_queries, debug_msg=debug_query)
-        qm.queries, qm.flattened_queries, qm.query_id_to_module_name = res
-        if qm.flattened_queries is not None:
-            qm.additional_queries = list(qm.flattened_queries.keys())
-        # assign preset to results
-        results.preset = get_updated_preset(preset, additional_query_map=qm.queries)
-
-        # store pointer to results
-        qm.results = results
-        qm.parser = parser
+        qm.queries, qm.custom_queries, qm.action2queries, qm.query_id2module_name = build_query_maps(
+            requested_queries=qm.requested_query_ids,
+            external_module=qm.external_query_module,
+            external_classnames=qm.external_class_names,
+            debug_arg=qm.debug_arg
+        )
 
         return qm
 
-    def reload(self):
-        """Make a new instance of the queries after completing one flow
-
-        Returns:
-            None
+    def generate_effective_preset(self)-> Preset:
         """
 
-        if self.query_module is None or self.class_name is None:
-            # use default
-            self.query_processor = queries.default_query.DefaultQueryProcessor()
-            return
-        else:
-            preset, instance = get_instance(self.query_module,
-                                            self.class_name, self.requested_preset)
-        self.query_processor = instance
-        self.queries, self.flattened_queries, self.query_id_to_module_name = build_query_map(
-            additional_queries=self.additional_queries, debug_msg=self.debug_msg
-        )
+        Returns: The list of query descriptions that will actually be run, combining
+        the preset field selected by the caller and any additional queries selected
+        by the caller
+
+        """
+        q = []
+        if self.queries:
+            q += list(self.queries.values())
+        if self.custom_queries:
+            q += list(self.custom_queries.values())
+
+        query_desc = [instance.get_query_description() for instance in q]
+
+        if self.debug_arg:
+            query_desc.append(debug_query.Detect.get_query_description())
+
+        preset_name = self.preset or "custom"
+
+        return Preset(preset_name=preset_name, preset_owner=None,
+                      queries=set(query_desc))
+
+
 
     def lexical_query(self, parser: Parser, crawler: AbstractCrawler=None) -> None:
-        if self.additional_queries is None:
+        if self.queries is None or QueryAction.lexical not in self.action2queries:
             return None
-        if QueryAction.lexical not in self.queries:
-            return None
-        flow_path = parser.flow_path
-        if self.visited_flows is not None and flow_path in self.visited_flows:
-            return None
-        else:
-            if self.visited_flows is None:
-                self.visited_flows = [flow_path]
-            else:
-                self.visited_flows.append(flow_path)
 
-            to_run = self.queries[QueryAction.lexical]
-            for qry in to_run:
+        to_run = self.action2queries[QueryAction.lexical]
+        for qry in to_run:
+            try:
                 res = qry.execute(parser=parser, crawler=crawler)
                 if res is not None:
                     self.results.add_results(res)
-            return None
+            except:
+                logger.critical(f"error executing lexical query in flow "
+                                f"{parser.flow_path} {traceback.format_exc()}")
+        return None
 
-    def lexical_accept(self, query_id, **kwargs) -> None:
+    def static_accept(self, query_id, **kwargs) -> None:
+        """Calls the (static) 'accept' method of this query. The query must
+        override the static 'accept' method of the abstract class. Expert
+        use only.
 
-        if self.additional_queries is not None and query_id in self.additional_queries:
-            mod_name = self.query_id_to_module_name[query_id]
+        The purpose of accept methods is to record issues found in the course
+        of normal scanning and parsing, and not as a result of running queries.
+
+        Because of this, we are accepting issues found and merely reformatting
+        them into the appropriate query result. But if this query is not requested,
+        then it will not override the parent accept which is a null op.
+
+        Args:
+            query_id (str): Name of class that has the static accept method
+            **kwargs (Any): Keyword args to pass
+
+        Returns:
+            Query Description
+
+        """
+        if self.queries is not None and query_id in self.queries:
+            mod_name = self.query_id2module_name[query_id]
             qry_class = getattr(mod_name,query_id)
-
-            res = getattr(qry_class, 'accept')(**kwargs)
-
-            if res is not None:
-                self.results.add_results(res)
+            try:
+                res = getattr(qry_class, 'accept')(**kwargs)
+                if res is not None:
+                    self.results.add_results(res)
+            except:
+                logger.critical(f"error processing lexical accept "
+                                f"{traceback.format_exc()}")
             else:
                 logger.info(f"The query id {query_id} is not recognized as a requested lexical query id")
 
@@ -182,67 +259,81 @@ class QueryManager:
 
         Returns:
             None
+
         """
-        # TODO: add exception handling and logging as this is third party code
         # when we first enter a state, there is a start elem which is not assigned and so curr elem is None.
         # don't look for sinks into these start states.
-        if action is QueryAction.process_elem and state.get_current_elem() is not None:
+        if action is QueryAction.process_elem and state.get_current_elem() is None:
+            return None
+        else:
+            self.run_queries(action=action, state=state,
+                             crawler=crawler, all_states=None)
 
-            res = self.query_processor.handle_crawl_element(state=state, crawler=crawler)
-            if res is not None:
-                self.results.add_results(res)
-
-        elif action is QueryAction.flow_enter:
-            res = self.query_processor.handle_flow_enter(state=state, crawler=crawler)
-            # TODO: better validation of result
-            if res is not None:
-                self.results.add_results(res)
-
-        self._run_additional_queries(action=action, state=state,
-                                     crawler=crawler, all_states=None)
-
-
+            return None
 
 
     def final_query(self, all_states: tuple[State]=None) -> None:
-        res = self.query_processor.handle_final(all_states=all_states)
-        # TODO: better validation of result
-        if res is not None:
-            self.results.add_results(res)
-        self._run_additional_queries(action=QueryAction.scan_exit,
-                                     all_states=all_states)
+        self.run_queries(action=QueryAction.scan_exit,
+                         all_states=all_states)
 
-        # delete old query instance and reload for next flow to process
+        # delete old query instances, modules, and reload for next flow to process
         self.reload()
-        # delete old states
 
     def accept(self, query_id: str, **kwargs) -> None:
-        if query_id not in self.additional_queries:
+        if query_id not in self.queries:
             return None
-        qry = self.flattened_queries[query_id]
+        qry = self.queries[query_id]
+        try:
+            res = qry.accept(**kwargs)
+            if res is not None:
+                self.results.add_results(res)
+        except:
+            logger.critical(f"error handling accept query {traceback.format_exc()}")
 
-        res = qry.accept(**kwargs)
-        if res is not None:
-            self.results.add_results(res)
         return None
 
     def debug_query(self, msg: str):
-        self.debug_msg = msg
+        self.debug_arg = msg
 
-    def _run_additional_queries(self, action: QueryAction, state: State=None,
-                                crawler: AbstractCrawler=None, all_states: tuple[State]=None) -> None:
-        if self.additional_queries is None:
+    def run_queries(self, action: QueryAction, state: State=None,
+                    crawler: AbstractCrawler=None, all_states: tuple[State]=None) -> None:
+        if self.action2queries is None:
             return None
-        if action not in self.queries:
+        if action not in self.action2queries:
             return None
         else:
-            to_run = self.queries[action]
+            to_run = self.action2queries[action]
             for qry in to_run:
-                res = qry.execute(state=state, crawler=crawler, all_states=all_states)
-                if res is not None:
-                    self.results.add_results(res)
+                try:
+                    res = qry.execute(state=state, crawler=crawler, all_states=all_states)
+                    if res is not None:
+                        self.results.add_results(res)
+                except:
+                    logger.critical(f"error executing query in flow {state.get_parser().get_filename()}"
+                                    f"\n {traceback.format_exc()}")
+
             return None
 
+    def reload(self):
+        """Make a new instance of the queries after completing one flow
+
+        Returns:
+            None
+        """
+        # reload internal modules
+        for mod_ in QUERY_MODULES:
+            reload(mod_[0])
+
+        # reload any external module
+        if self.external_query_module:
+            reload(self.external_query_module)
+
+        self.queries, self.custom_queries, self.action2queries, self.query_id2module_name = build_query_maps(
+            requested_queries=self.requested_query_ids,
+            external_module=self.external_query_module,
+            external_classnames=self.external_class_names,
+            debug_arg=self.debug_arg
+        )
 
 def create_module(module_path: str) -> Any:
     """Loads and Instantiates QueryProcessor
@@ -284,118 +375,164 @@ def create_module(module_path: str) -> Any:
             logger.critical(f"ERROR: could not load module {filename}: {traceback.format_exc()}")
             raise e
 
+def build_query_maps(
+        requested_queries: list[str] | None=None,
+        external_module: Any | None = None,
+        external_classnames: list[str] | None = None,
+        debug_arg: Any | None=None
+) -> tuple[
+    dict[str, Query | LexicalQuery] | None,
+    dict[str, Query | LexicalQuery] | None,
+    dict[QueryAction, list[Query | LexicalQuery]] | None,
+    dict[str,str]
+]:
+    """Instantiates queries and places them into convenient map structures
 
-def get_instance(query_module_, class_name_, preset_):
-    if query_module_ is None:
-        query_instance = queries.default_query.DefaultQueryProcessor()
+    Args:
+            requested_queries: list of validated built in queries
+            external_module: (loaded) external module reference
+            external_classnames: list of classnames in external module
+            debug_arg: json obj corresponding to argument
 
-    else:
-        try:
-            query_instance = getattr(query_module_, class_name_)()
+    Returns:
+            queries (id -> instance),
+            custom_queries (id -> instance),
+            action2queries (actionType -> List[QueryInstance]
+            query_id2module_name (str -> str)
 
-        except Exception as e:
-            logger.critical(f"ERROR: could not instantiate module")
-            raise e
+    """
 
-    try:
-        accepted_preset = query_instance.set_preset(preset_)
-        if accepted_preset is None:
-            raise ValueError("Could not set preset")
+    built_in_id2instance = {}  # only for builtin
+    custom_id2instance = {} # only for custom
+    action2queries = {} # for everything, including debug
+    id2module = {} # for everything except debug
 
+    if requested_queries:
+        for (my_module, qry_map) in QUERY_MODULES:
+            for qry_id in requested_queries:
+                if qry_id in qry_map:
+                    populate_maps_from_instance(
+                        qry_id,
+                        my_module,
+                        id2instance=built_in_id2instance,
+                        id2module=id2module,
+                        action2queries=action2queries
+                    )
+
+    if external_classnames:
+        for class_ in external_classnames:
+            populate_maps_from_instance(
+                qry_id=class_,
+                my_module=external_module,
+                id2instance=custom_id2instance,
+                id2module=id2module,
+                action2queries=action2queries
+            )
+    if debug_arg:
+        instance = Detect(debug_arg)
+        # add to self.queries, debug classname is 'Detect'
+        built_in_id2instance['Detect'] = instance
+        # add to action2queries
+        populate_action2queries(action2queries, instance)
+
+    return built_in_id2instance, custom_id2instance, action2queries, id2module
+
+def populate_maps_from_instance(qry_id, my_module,
+                                id2instance,
+                                id2module,
+                                action2queries)-> None:
+    qry_instance = getattr(my_module, qry_id)()
+    id2instance[qry_id] = qry_instance
+    id2module[qry_id] = my_module
+    populate_action2queries(action2queries, qry_instance)
+
+
+def populate_action2queries(action2queries: dict[QueryAction,list[LexicalQuery | Query]],
+                            instance: Query|LexicalQuery|Detect) -> None:
+    for action in instance.when_to_run():
+        if action not in action2queries:
+            action2queries[action] = [instance]
         else:
-            return accepted_preset, query_instance
-
-    except Exception as e:
-        logger.critical(f"ERROR: could not set preset: {traceback.format_exc()}")
-        raise e
+            action2queries[action].append(instance)
 
 
-def build_query_map(additional_queries: list[str] | None=None,
-                    debug_msg: str|None = None
-                    ) -> tuple[dict[QueryAction, list[Query | LexicalQuery]],
-                         dict[str, Query | LexicalQuery], dict[str,str]] | tuple[None, None, None]:
-    if additional_queries is None:
-        return None, None, None
-    else:
-        instance_map = {}
-        flat_map = {}
-        qry_to_mod = {}
-        for q_name in additional_queries:
-            for (my_module, qry_map) in ADDITIONAL_QUERY_MODULES:
-                match_ = case_insensitive_match(qry_map.keys(), q_name)
-                if match_ is not None:
-                    qry_to_mod[match_] = my_module
-                    if my_module is not queries.debug_query:
-                        q_instance = getattr(my_module, match_)()
-                    else:
-                        q_instance = getattr(my_module, match_)(debug_msg)
-                    action = q_instance.when_to_run()
-                    if action not in instance_map:
-                        instance_map[action] = [q_instance]
-                    else:
-                        instance_map[action].append(q_instance)
-                    if match_ in flat_map.keys():
-                        raise ValueError(f"Duplicate query name: {q_name}")
-                    else:
-                        flat_map[match_] = q_instance
-                    # stop looking in other modules for q_name
-                    break
+def get_query_descriptions()-> str:
+    """
 
-        if len(instance_map) == 0:
-            return None, None, None
-        else:
-            return instance_map, flat_map, qry_to_mod
+    Returns: All descriptions for builtin queries
 
-
-def get_updated_preset(preset, additional_query_map: dict[QueryAction,list[AbstractQuery]]=None):
-    if additional_query_map is None:
-        return preset
-    else:
-        old_queries = preset.queries
-        for q_list in additional_query_map.values():
-            for q in q_list:
-                if q is not None:
-                    old_queries.add(q.get_query_description())
-
-        return Preset(preset_name=preset.preset_name,
-                      preset_owner=preset.preset_owner,
-                      queries=old_queries)
-
-
-def get_all_optional_descriptions()-> str:
+    """
     descriptions = []
-    for (my_module, qry_map) in ADDITIONAL_QUERY_MODULES:
-        for q_name in qry_map.keys():
-            q_instance = getattr(my_module, q_name)()
-            descriptions.append(q_instance.get_query_description())
-    return (json.dumps(descriptions, indent=4, cls=PresetEncoder)
-            .replace('\\"', '"').replace('\\n', "\n"))
+    for (my_module, qry_map) in QUERY_MODULES:
+        if my_module is not queries.debug_query:
+            for q_name in qry_map.keys():
+                q_instance = getattr(my_module, q_name)()
+                descriptions.append(q_instance.get_query_description())
+    return json.dumps(descriptions, indent=4, cls=PresetEncoder)
 
 
-def validate_qry_list(qry_list: list[str]) -> bool | list[str]:
-    query_keys = [x[1].keys() for x in ADDITIONAL_QUERY_MODULES]
+def validate_qry_list(qry_list: list[str]) -> tuple[bool, list[str] | None, list[str] | None, list[str] | None]:
+    """Verifies that the passed in list of strings is a case-insensitive match of legal
+    query names and returns the matching de-duped legal query names along with a boolean
+    that is False if there are any queries requested that are illegal, or if there are any duplicates
+
+    Args:
+        qry_list: list of user provided query_ids to run
+
+    Returns:
+        boolean (is valid), found, missed, duplicates
+
+    """
+    query_keys = [x[1].keys() for x in QUERY_MODULES]
     found_tkns = []
     missed_tkns = []
+    duplicates = []
+
     for tkn in qry_list:
+        found = False
         for query_key in query_keys:
             match_ = case_insensitive_match(query_key, tkn)
             if match_ is not None:
-                found_tkns.append(match_)
+                found = True
+                if match_ not in found_tkns:
+                    found_tkns.append(match_)
+                else:
+                    duplicates.append(query_key)
                 break
-        # tkn not found in any query key
-        missed_tkns.append(tkn)
-    valid = len(found_tkns) == len(qry_list)
-    if valid:
-        return True
-    else:
-        assert len(missed_tkns) != 0
-        return missed_tkns
 
-def get_all_optional_queries() -> list[str]:
+        if not found:
+            # tkn not found in any query key
+            missed_tkns.append(tkn)
+
+    valid = len(missed_tkns) == 0 and len(duplicates) == 0
+    return valid, found_tkns, missed_tkns, duplicates
+
+def build_preset_for_name(preset_name: str) -> Preset | None:
+    """This is used by the CLI to describe an internal preset
+
+    Args:
+        preset_name (str):
+
+    Returns:
+        Preset corresponding to this name
+    """
+    queries = dict.get(PRESETS, preset_name, [])
+    accum = []
+    if not queries:
+        return None
+    for (mod, query) in queries:
+        class_ = getattr(mod, query)
+        accum.append(class_.get_query_description())
+
+    return Preset(preset_name=preset_name,
+                  preset_owner="Salesforce",
+                  queries=accum)
+
+def get_all_queries() -> list[str]:
     """Does not return debug queries
     """
     accum = []
-    for x in ADDITIONAL_QUERY_MODULES:
+    for x in QUERY_MODULES:
         if x[0] is not queries.debug_query:
             accum = accum + list(x[1].keys())
 

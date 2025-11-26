@@ -12,29 +12,26 @@ import json
 import logging
 import os
 import traceback
-from typing import TYPE_CHECKING, Any, TypeAlias
+from datetime import datetime
+from typing import Any
+from typing import TypeAlias
 
 import flow_parser.parse as parse
 import flow_scanner.control_flow as crawl_spec
+import flow_scanner.flows as flows
+import public.custom_parser as CP
 import public.parse_utils
+from flow_scanner import wire
 from flow_scanner.branch_state import BranchState
 from flow_scanner.control_flow import Crawler, ControlFlowGraph
+from flow_scanner.flow_result import ResultsProcessor as Results
 from flow_scanner.flows import FlowVector
 from flow_scanner.query_manager import QueryManager, QueryAction
 from flow_scanner.util import Resolver
 from public import parse_utils
 from public.flow_scanner_exceptions import InvalidFlowException
 
-if TYPE_CHECKING:
-    from public.parse_utils import ET
-
-from datetime import datetime
-
-import flow_scanner.flows as flows
-
-from flow_scanner import wire
-from flow_scanner.flow_result import ResultsProcessor as Results
-
+El: TypeAlias = CP.ET.Element
 #: Controls whether subflows are followed or not, useful for debugging.
 FOLLOW_SUBFLOWS: bool = True
 
@@ -162,11 +159,10 @@ class Stack(object):
                     # nothing on the stack, so perform final queries
                     # and exit processing
                     all_states = _consolidate_collected_frames(self.__collected_frames)
-                    # empty
-                    self.__collected_frames = []
                     self.query_manager.final_query(all_states=all_states)
-                    # delete old states
 
+                    # delete old states
+                    self.__collected_frames = []
                     return self.query_manager
 
                 else:
@@ -182,6 +178,14 @@ class Stack(object):
                         next_frame,
                         self.current_frame.state.filter_input_variables(all_outputs)
                     )
+
+                    # add any new user inputs found in the child frame to the parent's parser
+                    tainted = next_frame.state.parser.tainted_inputs
+                    if not tainted:
+                        tainted = self.current_frame.parser.get_tainted_inputs()
+                    else:
+                        tainted.update(self.current_frame.parser.get_tainted_inputs())
+                    next_frame.state.tainted_inputs = tainted
 
                     # now switch execution to new frame
                     self.current_frame = next_frame
@@ -211,11 +215,11 @@ class Stack(object):
 
         if seen:
             logger.critical(f"found circular reference in {next_frame.flow_path}")
-            self.query_manager.lexical_accept("CyclicSubflow",
-                                              next_flow_path=flow_path,
-                                              current_frame=self.current_frame,
-                                              matching_frame=matching_frame,
-                                              all_frames=self.__frame_stack)
+            self.query_manager.static_accept("CyclicSubflow",
+                                             next_flow_path=flow_path,
+                                             current_frame=self.current_frame,
+                                             matching_frame=matching_frame,
+                                             all_frames=self.__frame_stack)
         return seen
 
 
@@ -359,7 +363,7 @@ class Frame(object):
         self.crawler: Crawler | None = None
 
         #: Subflow XML element that launched this flow (can be None)
-        self.parent_subflow: ET.Element | None = None
+        self.parent_subflow: El | None = None
 
         #: binary semaphore so when we return, we don't execute spawn the subflow again
         self.child_spawned: bool = False
@@ -403,7 +407,7 @@ class Frame(object):
     def build(cls, current_flow_path: str | None = None,
               resolver: Resolver = None,
               resolved_subflows: dict[Any, Any] = None,
-              parent_subflow: ET.Element = None,
+              parent_subflow: El = None,
               query_manager: QueryManager = None) -> Frame:
         """Call this whenever program analysis starts or a subflow is reached
 
@@ -545,7 +549,7 @@ class Frame(object):
 
         return new_map
 
-    def spawn_child_frame(self, subflow: ET.Element,
+    def spawn_child_frame(self, subflow: El,
                           sub_path: str,
                           input_map: dict[str, str],
                           vector_map: dict[tuple[str, str], flows.FlowVector]
@@ -602,20 +606,20 @@ class Frame(object):
                                                     src2tgt_variable_map=input_map,
                                                     transition_elem=subflow)
         # propagate crawl history to child
-        history = self.crawler.get_crawler_history_unsafe()
-        last_index = self.crawler.get_current_step_index()-1 # index always points to *next* step
+        parents = self.crawler.get_subflow_parents()
 
-        if history is None:
-            new_history = [(self.crawler, last_index)]
+        parent = (subflow, self.flow_path)
+        if parents is None:
+            new_parents = [parent]
         else:
-            new_history = history.insert(0, (self.crawler, last_index))
+            new_parents = parents.insert(0, parent)
 
-        new_frame.crawler.crawler_history = new_history
+        new_frame.crawler.subflow_parents = new_parents
 
         self.child_spawned = True
         return new_frame
 
-    def handle_subflows(self, current_elem: ET.Element) -> Frame | None:
+    def handle_subflows(self, current_elem: El) -> Frame | None:
         """Checks whether we have encountered a subflow elem.
 
         Different behavior required if we are returning from the element or entering into it.
@@ -759,7 +763,7 @@ def parse_flow(flow_path: str,
                query_module_path: str = None,
                query_class_name: str = None,
                query_preset: str = None,
-               optional_queries: list[str] | None = None,
+               queries: list[str] | None = None,
                query_manager: QueryManager | None = None,
                crawl_dir: str = None,
                resolver: Resolver = None,
@@ -776,7 +780,7 @@ def parse_flow(flow_path: str,
         query_module_path: path of module where custom queries are stored
         query_class_name: name of query class to instantiate
         query_preset: name of preset to run
-        optional_queries: list of optional queries to run
+        queries: list of optional queries to run
         query_manager: existing instance that invokes queries across entire run. Start with None
                        and one will be created.
         crawl_dir: directory of where to store crawl specifications
@@ -788,9 +792,48 @@ def parse_flow(flow_path: str,
         or passed to other flows.
     """
 
-    # build parser
+    """
+    Bootstrap and overall control flow:
+   
+    parse_flow scans only a single flow file and its subflows. Scanning of entire
+    directories is handled in __main__, by repeatedly calling this function. This allows
+    for (in the future) multi-process/multi-threaded operation as we can scan large
+    directories in parallel. It also supports chunking. 
+    
+    One cost is that we pass the (common) results file back and forth. In reality we pass the
+    query manager (which holds the requested queries) as well as the results object.
+     
+    When __main__ has finished scanning all the files, it asks the ResultsProcessor to generate a report.
+    Now, with chunking, __main__ may force incremental report generation.
+    
+    Bootstrap -- first flow to subflow
+    ----------------------------------
+    
+    1. parse file to create parser
+    2. create QueryManager if it is None, passing in the parser
+    3. if QueryManager is not None, update it with new parser for the current file
+    4. Pass QueryManager into constructor for Stack
+    5. Stack creates a frame for the current file, passing it QueryManager
+    6. Frame grabs parser from Query Manager and uses it to generate a CFG and crawl specification (control flow)
+    7. Frame creates a new State (dataflow state) for the current file, and gives it the parser.
+    8. Now Frame holds a reference to parser and query manager and results. State holds a reference to parser.
+    9. On spawning a child frame, the Stack uses the old frame to spawn a child frame.
+    10 The child frame creates a new parser from the new flow file, and *updates it* with 
+       the old parser info when necessary. Subflows are not the same as flows.
+    11. On return from a function call, the current frame is put into the processed queue
+    and the previous frame (with the original parser) is popped. The original parser is *updated*
+    with the data from the child frame, if necessary.
+    12. when the flow is finished processing, the query manager is returned to __main__
+
+    We are going to replace this flow with something a bit more modern in the future, this
+    work is scheduled for when we replace the crawler. 
+    
+    """
+
+    # 1.  build parser (only use builder)
     parser = parse.Parser.from_file(filepath=flow_path)
 
+    # Special case handling if user wants a CFG.
     if crawl_dir is not None:
         cfg = ControlFlowGraph.from_parser(parser)
         schedule = crawl_spec.get_crawl_data(cfg)
@@ -804,28 +847,35 @@ def parse_flow(flow_path: str,
             crawl_spec.dump_cfg(cfg, fp)
 
     if query_manager is None:
-        # 1. build result processor
-        results = Results(requestor=requestor, report_label=report_label,
+        # 1. build query manager. Only use the builder.
+        query_manager = QueryManager.build(parser=parser,
+                                           requested_preset=query_preset,
+                                           requested_queries=queries,
+                                           external_module_path=query_module_path,
+                                           external_class_names=query_class_name,
+                                           debug_arg_str=debug_query)
+
+        # 2. Generate a preset from user requested preset and any additional queries
+        preset = query_manager.generate_effective_preset()
+
+
+        # 3. build result processor and pass it the effective preset
+        results = Results(preset=preset, requestor=requestor, report_label=report_label,
                           result_id=result_id, service_version=service_version,
                           help_url=help_url)
         results.scan_start = str(datetime.now())[:-7]
 
-        # 2. build parser. This will also populate basic data
-        parser = parse.Parser.from_file(filepath=flow_path)
 
-        # 3. build query manager
-        query_manager = QueryManager.build(results=results,
-                                           parser=parser,
-                                           requested_preset=query_preset,
-                                           additional_queries=optional_queries,
-                                           module_path=query_module_path,
-                                           class_name=query_class_name,
-                                           debug_query=debug_query)
+        # 4. Assign results processor to query manager
+        query_manager.results = results
+
     else:
-        # we are continuing a run, so update parser to work on new file
+        # we are continuing a run as the query manager has been passed back to us,
+        # so update parser to work on new flow file
+        # and keep existing query instances and existing results processor.
         query_manager.parser = parser
 
-    # build stack
+    # 5. build stack
     try:
         stack = Stack(root_flow_path=flow_path,
                       resolver=resolver,
@@ -840,7 +890,9 @@ def parse_flow(flow_path: str,
     # update scan end time
     query_manager.results.scan_end = str(datetime.now())[:-7]
 
-    # return back to __main__, which may scan again with another file
+    # return back to __main__, which may scan again with another file,
+    # in which case scan_end will be overwritten.
+    # TODO: This scan overwriting logic should be moved to __main__.
     return query_manager
 
 
@@ -854,7 +906,7 @@ def report(state: BranchState, current_step: int, total_steps: int) -> None:
     logger.debug(msg)
 
 
-def get_output_variable_map(subflow_elem: ET.Element, subflow_output_vars: list[var_g]) -> dict[str, str]:
+def get_output_variable_map(subflow_elem: El, subflow_output_vars: list[var_g]) -> dict[str, str]:
     # output_variable_map: child name --> parent name the child influences
     auto, output_variable_map = public.parse_utils.get_subflow_output_map(subflow_elem)
     if auto:

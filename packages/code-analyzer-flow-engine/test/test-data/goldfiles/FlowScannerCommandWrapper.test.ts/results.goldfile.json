@@ -1,25 +1,105 @@
 {
-  "preset": "Penetration Testing",
+  "preset": "custom",
   "help_url": null,
-  "result_id": "6b042660",
+  "result_id": "8067e8f5",
   "service_version": "0.9.9",
   "flow_scanner_version": "0.9.9",
   "report_label": "scan of code-analyzer-core",
   "email": null,
-  "scan_start": "2025-10-24 10:55:33",
-  "scan_end": "2025-10-24 10:55:33",
+  "scan_start": "2025-11-26 10:42:22",
+  "scan_end": "2025-11-26 10:42:22",
   "results": {
-    "FlowSecurity.SystemModeWithSharing.recordDeletes.selector": [
+    "MissingFaultHandler": [
       {
-        "query_name": "Flow: SystemModeWithSharing recordDeletes selector",
+        "query_id": "MissingFaultHandler",
+        "query_name": "Missing Fault Handler",
         "severity": "Flow_Low_Severity",
-        "description": "User controlled data flows into recordDeletes element selector in run mode: SystemModeWithSharing",
-        "elem": null,
+        "description": "An element that can fire fault events is missing fault handlers. Add fault handlers to all Create Records, Update Records, Delete Records, Action Calls, and Subflows.",
         "elem_name": "delete_created_case",
         "field": "delete_created_case",
         "elem_code": "<recordDeletes>\n        <name>delete_created_case</name>\n        <label>delete_created_case</label>\n        <locationX>247</locationX>\n        <locationY>201</locationY>\n        <connector>\n            <targetReference>exit_screen</targetReference>\n        </connector>\n        <inputReference>another_case_holder</inputReference>\n    </recordDeletes>",
-        "elem_line_no": null,
-        "filename": null,
+        "elem_line_no": 69,
+        "filename": "__PATH_TO_EXAMPLE1__",
+        "flow_type": "Screen",
+        "flow": null
+      },
+      {
+        "query_id": "MissingFaultHandler",
+        "query_name": "Missing Fault Handler",
+        "severity": "Flow_Low_Severity",
+        "description": "An element that can fire fault events is missing fault handlers. Add fault handlers to all Create Records, Update Records, Delete Records, Action Calls, and Subflows.",
+        "elem_name": "update_to_new_subject",
+        "field": "update_to_new_subject",
+        "elem_code": "<recordUpdates>\n        <name>update_to_new_subject</name>\n        <label>update_to_new_subject</label>\n        <locationX>50</locationX>\n        <locationY>355</locationY>\n        <connector>\n            <targetReference>confirm_delete</targetReference>\n        </connector>\n        <inputReference>another_case_holder</inputReference>\n    </recordUpdates>",
+        "elem_line_no": 102,
+        "filename": "__PATH_TO_EXAMPLE2__",
+        "flow_type": "Screen",
+        "flow": null
+      },
+      {
+        "query_id": "MissingFaultHandler",
+        "query_name": "Missing Fault Handler",
+        "severity": "Flow_Low_Severity",
+        "description": "An element that can fire fault events is missing fault handlers. Add fault handlers to all Create Records, Update Records, Delete Records, Action Calls, and Subflows.",
+        "elem_name": "create_case",
+        "field": "create_case",
+        "elem_code": "<recordCreates>\n        <description>create_from_record</description>\n        <name>create_case</name>\n        <label>create_case</label>\n        <locationX>1045</locationX>\n        <locationY>224</locationY>\n        <connector>\n            <targetReference>press_next</targetReference>\n        </connector>\n        <inputReference>case_holder</inputReference>\n    </recordCreates>",
+        "elem_line_no": 58,
+        "filename": "__PATH_TO_EXAMPLE2__",
+        "flow_type": "Screen",
+        "flow": null
+      },
+      {
+        "query_id": "MissingFaultHandler",
+        "query_name": "Missing Fault Handler",
+        "severity": "Flow_Low_Severity",
+        "description": "An element that can fire fault events is missing fault handlers. Add fault handlers to all Create Records, Update Records, Delete Records, Action Calls, and Subflows.",
+        "elem_name": "create_case",
+        "field": "create_case",
+        "elem_code": "<recordCreates>\n        <description>create_from_record</description>\n        <name>create_case</name>\n        <label>create_case</label>\n        <locationX>1045</locationX>\n        <locationY>224</locationY>\n        <connector>\n            <targetReference>press_next</targetReference>\n        </connector>\n        <inputReference>case_holder</inputReference>\n    </recordCreates>",
+        "elem_line_no": 58,
+        "filename": "__PATH_TO_EXAMPLE1__",
+        "flow_type": "Screen",
+        "flow": null
+      },
+      {
+        "query_id": "MissingFaultHandler",
+        "query_name": "Missing Fault Handler",
+        "severity": "Flow_Low_Severity",
+        "description": "An element that can fire fault events is missing fault handlers. Add fault handlers to all Create Records, Update Records, Delete Records, Action Calls, and Subflows.",
+        "elem_name": "delete_created_case",
+        "field": "delete_created_case",
+        "elem_code": "<recordDeletes>\n        <name>delete_created_case</name>\n        <label>delete_created_case</label>\n        <locationX>247</locationX>\n        <locationY>201</locationY>\n        <connector>\n            <targetReference>exit_screen</targetReference>\n        </connector>\n        <inputReference>another_case_holder</inputReference>\n    </recordDeletes>",
+        "elem_line_no": 69,
+        "filename": "__PATH_TO_EXAMPLE2__",
+        "flow_type": "Screen",
+        "flow": null
+      },
+      {
+        "query_id": "MissingFaultHandler",
+        "query_name": "Missing Fault Handler",
+        "severity": "Flow_Low_Severity",
+        "description": "An element that can fire fault events is missing fault handlers. Add fault handlers to all Create Records, Update Records, Delete Records, Action Calls, and Subflows.",
+        "elem_name": "update_to_new_subject",
+        "field": "update_to_new_subject",
+        "elem_code": "<recordUpdates>\n        <name>update_to_new_subject</name>\n        <label>update_to_new_subject</label>\n        <locationX>50</locationX>\n        <locationY>355</locationY>\n        <connector>\n            <targetReference>confirm_delete</targetReference>\n        </connector>\n        <inputReference>another_case_holder</inputReference>\n    </recordUpdates>",
+        "elem_line_no": 102,
+        "filename": "__PATH_TO_EXAMPLE1__",
+        "flow_type": "Screen",
+        "flow": null
+      }
+    ],
+    "PreventPassingUserDataIntoElementWithSharing": [
+      {
+        "query_id": "PreventPassingUserDataIntoElementWithSharing",
+        "query_name": "User Data DML in System Mode With Sharing",
+        "severity": "Flow_Moderate_Severity",
+        "description": "User controlled data is sent to a DB Element (RecordLookups, RecordCreates, RecordUpdates, RecordDeletes) in System context with sharing. This can result in privilege escalation if the user does not have permission to access the underlying record.",
+        "elem_name": "delete_created_case",
+        "field": "delete_created_case",
+        "elem_code": "<recordDeletes>\n        <name>delete_created_case</name>\n        <label>delete_created_case</label>\n        <locationX>247</locationX>\n        <locationY>201</locationY>\n        <connector>\n            <targetReference>exit_screen</targetReference>\n        </connector>\n        <inputReference>another_case_holder</inputReference>\n    </recordDeletes>",
+        "elem_line_no": 69,
+        "filename": "__PATH_TO_EXAMPLE2__",
         "flow_type": "Screen",
         "flow": [
           {
@@ -50,99 +130,17 @@
             "flow_path": "__PATH_TO_EXAMPLE2__"
           }
         ]
-      }
-    ],
-    "MissingFaultHandler": [
-      {
-        "query_name": "Missing Fault Handler",
-        "severity": "Flow_Low_Severity",
-        "description": "This rule detects when elements that can fire fault events are missing fault handlers. The rule currently detects Create Records, Update Records, Delete Records, Action Calls, and Subflows.",
-        "elem": "create_case",
-        "elem_name": "create_case",
-        "field": "create_case",
-        "elem_code": "<recordCreates>\n        <description>create_from_record</description>\n        <name>create_case</name>\n        <label>create_case</label>\n        <locationX>1045</locationX>\n        <locationY>224</locationY>\n        <connector>\n            <targetReference>press_next</targetReference>\n        </connector>\n        <inputReference>case_holder</inputReference>\n    </recordCreates>",
-        "elem_line_no": 58,
-        "filename": "__PATH_TO_EXAMPLE1__",
-        "flow_type": "Screen",
-        "flow": null
       },
       {
-        "query_name": "Missing Fault Handler",
-        "severity": "Flow_Low_Severity",
-        "description": "This rule detects when elements that can fire fault events are missing fault handlers. The rule currently detects Create Records, Update Records, Delete Records, Action Calls, and Subflows.",
-        "elem": "update_to_new_subject",
-        "elem_name": "update_to_new_subject",
-        "field": "update_to_new_subject",
-        "elem_code": "<recordUpdates>\n        <name>update_to_new_subject</name>\n        <label>update_to_new_subject</label>\n        <locationX>50</locationX>\n        <locationY>355</locationY>\n        <connector>\n            <targetReference>confirm_delete</targetReference>\n        </connector>\n        <inputReference>another_case_holder</inputReference>\n    </recordUpdates>",
-        "elem_line_no": 102,
-        "filename": "__PATH_TO_EXAMPLE1__",
-        "flow_type": "Screen",
-        "flow": null
-      },
-      {
-        "query_name": "Missing Fault Handler",
-        "severity": "Flow_Low_Severity",
-        "description": "This rule detects when elements that can fire fault events are missing fault handlers. The rule currently detects Create Records, Update Records, Delete Records, Action Calls, and Subflows.",
-        "elem": "create_case",
-        "elem_name": "create_case",
-        "field": "create_case",
-        "elem_code": "<recordCreates>\n        <description>create_from_record</description>\n        <name>create_case</name>\n        <label>create_case</label>\n        <locationX>1045</locationX>\n        <locationY>224</locationY>\n        <connector>\n            <targetReference>press_next</targetReference>\n        </connector>\n        <inputReference>case_holder</inputReference>\n    </recordCreates>",
-        "elem_line_no": 58,
-        "filename": "__PATH_TO_EXAMPLE2__",
-        "flow_type": "Screen",
-        "flow": null
-      },
-      {
-        "query_name": "Missing Fault Handler",
-        "severity": "Flow_Low_Severity",
-        "description": "This rule detects when elements that can fire fault events are missing fault handlers. The rule currently detects Create Records, Update Records, Delete Records, Action Calls, and Subflows.",
-        "elem": "delete_created_case",
-        "elem_name": "delete_created_case",
-        "field": "delete_created_case",
-        "elem_code": "<recordDeletes>\n        <name>delete_created_case</name>\n        <label>delete_created_case</label>\n        <locationX>247</locationX>\n        <locationY>201</locationY>\n        <connector>\n            <targetReference>exit_screen</targetReference>\n        </connector>\n        <inputReference>another_case_holder</inputReference>\n    </recordDeletes>",
-        "elem_line_no": 69,
-        "filename": "__PATH_TO_EXAMPLE1__",
-        "flow_type": "Screen",
-        "flow": null
-      },
-      {
-        "query_name": "Missing Fault Handler",
-        "severity": "Flow_Low_Severity",
-        "description": "This rule detects when elements that can fire fault events are missing fault handlers. The rule currently detects Create Records, Update Records, Delete Records, Action Calls, and Subflows.",
-        "elem": "update_to_new_subject",
+        "query_id": "PreventPassingUserDataIntoElementWithSharing",
+        "query_name": "User Data DML in System Mode With Sharing",
+        "severity": "Flow_Moderate_Severity",
+        "description": "User controlled data is sent to a DB Element (RecordLookups, RecordCreates, RecordUpdates, RecordDeletes) in System context with sharing. This can result in privilege escalation if the user does not have permission to access the underlying record.",
         "elem_name": "update_to_new_subject",
         "field": "update_to_new_subject",
         "elem_code": "<recordUpdates>\n        <name>update_to_new_subject</name>\n        <label>update_to_new_subject</label>\n        <locationX>50</locationX>\n        <locationY>355</locationY>\n        <connector>\n            <targetReference>confirm_delete</targetReference>\n        </connector>\n        <inputReference>another_case_holder</inputReference>\n    </recordUpdates>",
         "elem_line_no": 102,
         "filename": "__PATH_TO_EXAMPLE2__",
-        "flow_type": "Screen",
-        "flow": null
-      },
-      {
-        "query_name": "Missing Fault Handler",
-        "severity": "Flow_Low_Severity",
-        "description": "This rule detects when elements that can fire fault events are missing fault handlers. The rule currently detects Create Records, Update Records, Delete Records, Action Calls, and Subflows.",
-        "elem": "delete_created_case",
-        "elem_name": "delete_created_case",
-        "field": "delete_created_case",
-        "elem_code": "<recordDeletes>\n        <name>delete_created_case</name>\n        <label>delete_created_case</label>\n        <locationX>247</locationX>\n        <locationY>201</locationY>\n        <connector>\n            <targetReference>exit_screen</targetReference>\n        </connector>\n        <inputReference>another_case_holder</inputReference>\n    </recordDeletes>",
-        "elem_line_no": 69,
-        "filename": "__PATH_TO_EXAMPLE2__",
-        "flow_type": "Screen",
-        "flow": null
-      }
-    ],
-    "FlowSecurity.SystemModeWithoutSharing.recordUpdates.data": [
-      {
-        "query_name": "Flow: SystemModeWithoutSharing recordUpdates data",
-        "severity": "Flow_High_Severity",
-        "description": "User controlled data flows into recordUpdates element data in run mode: SystemModeWithoutSharing",
-        "elem": null,
-        "elem_name": "update_to_new_subject",
-        "field": "update_to_new_subject",
-        "elem_code": "<recordUpdates>\n        <name>update_to_new_subject</name>\n        <label>update_to_new_subject</label>\n        <locationX>50</locationX>\n        <locationY>355</locationY>\n        <connector>\n            <targetReference>confirm_delete</targetReference>\n        </connector>\n        <inputReference>another_case_holder</inputReference>\n    </recordUpdates>",
-        "elem_line_no": null,
-        "filename": null,
         "flow_type": "Screen",
         "flow": [
           {
@@ -152,7 +150,7 @@
             "comment": "Initialization",
             "line_no": 124,
             "source_text": "<fields>\n            <name>change_subject_of_case</name>\n            <dataType>String</dataType>\n            <defaultValue>\n                <elementReference>another_case_holder.Subject</elementReference>\n            </defaultValue>\n            <fieldText>change subject of case</fieldText>\n            <fieldType>InputField</fieldType>\n            <isRequired>true</isRequired>\n        </fields>",
-            "flow_path": "__PATH_TO_EXAMPLE1__"
+            "flow_path": "__PATH_TO_EXAMPLE2__"
           },
           {
             "influenced_var": "another_case_holder.Subject",
@@ -161,31 +159,31 @@
             "comment": "Variable Assignment",
             "line_no": 26,
             "source_text": "<assignmentItems>\n            <assignToReference>another_case_holder.Subject</assignToReference>\n            <operator>Assign</operator>\n            <value>\n                <elementReference>change_subject_of_case</elementReference>\n            </value>\n        </assignmentItems>",
-            "flow_path": "__PATH_TO_EXAMPLE1__"
+            "flow_path": "__PATH_TO_EXAMPLE2__"
           },
           {
             "influenced_var": "update_to_new_subject",
             "influencer_var": "another_case_holder",
             "element_name": "update_to_new_subject",
-            "comment": "flow into recordUpdates via influence over update_to_new_subject in run mode SystemModeWithoutSharing",
+            "comment": "flow into recordUpdates via influence over update_to_new_subject in run mode SystemModeWithSharing",
             "line_no": 102,
             "source_text": "<recordUpdates>\n        <name>update_to_new_subject</name>\n        <label>update_to_new_subject</label>\n        <locationX>50</locationX>\n        <locationY>355</locationY>\n        <connector>\n            <targetReference>confirm_delete</targetReference>\n        </connector>\n        <inputReference>another_case_holder</inputReference>\n    </recordUpdates>",
-            "flow_path": "__PATH_TO_EXAMPLE1__"
+            "flow_path": "__PATH_TO_EXAMPLE2__"
           }
         ]
       }
     ],
-    "FlowSecurity.SystemModeWithoutSharing.recordDeletes.selector": [
+    "PreventPassingUserDataIntoElementWithoutSharing": [
       {
-        "query_name": "Flow: SystemModeWithoutSharing recordDeletes selector",
+        "query_id": "PreventPassingUserDataIntoElementWithoutSharing",
+        "query_name": "User Data DML in System Mode Without Sharing",
         "severity": "Flow_High_Severity",
-        "description": "User controlled data flows into recordDeletes element selector in run mode: SystemModeWithoutSharing",
-        "elem": null,
+        "description": "User controlled data is sent to a DB Element (RecordLookups, RecordCreates, RecordUpdates, RecordDeletes) in System context without sharing. This can result in privilege escalation if the user does not have permission to access the underlying record.",
         "elem_name": "delete_created_case",
         "field": "delete_created_case",
         "elem_code": "<recordDeletes>\n        <name>delete_created_case</name>\n        <label>delete_created_case</label>\n        <locationX>247</locationX>\n        <locationY>201</locationY>\n        <connector>\n            <targetReference>exit_screen</targetReference>\n        </connector>\n        <inputReference>another_case_holder</inputReference>\n    </recordDeletes>",
-        "elem_line_no": null,
-        "filename": null,
+        "elem_line_no": 69,
+        "filename": "__PATH_TO_EXAMPLE1__",
         "flow_type": "Screen",
         "flow": [
           {
@@ -216,19 +214,17 @@
             "flow_path": "__PATH_TO_EXAMPLE1__"
           }
         ]
-      }
-    ],
-    "FlowSecurity.SystemModeWithSharing.recordUpdates.data": [
+      },
       {
-        "query_name": "Flow: SystemModeWithSharing recordUpdates data",
-        "severity": "Flow_Low_Severity",
-        "description": "User controlled data flows into recordUpdates element data in run mode: SystemModeWithSharing",
-        "elem": null,
+        "query_id": "PreventPassingUserDataIntoElementWithoutSharing",
+        "query_name": "User Data DML in System Mode Without Sharing",
+        "severity": "Flow_High_Severity",
+        "description": "User controlled data is sent to a DB Element (RecordLookups, RecordCreates, RecordUpdates, RecordDeletes) in System context without sharing. This can result in privilege escalation if the user does not have permission to access the underlying record.",
         "elem_name": "update_to_new_subject",
         "field": "update_to_new_subject",
         "elem_code": "<recordUpdates>\n        <name>update_to_new_subject</name>\n        <label>update_to_new_subject</label>\n        <locationX>50</locationX>\n        <locationY>355</locationY>\n        <connector>\n            <targetReference>confirm_delete</targetReference>\n        </connector>\n        <inputReference>another_case_holder</inputReference>\n    </recordUpdates>",
-        "elem_line_no": null,
-        "filename": null,
+        "elem_line_no": 102,
+        "filename": "__PATH_TO_EXAMPLE1__",
         "flow_type": "Screen",
         "flow": [
           {
@@ -238,7 +234,7 @@
             "comment": "Initialization",
             "line_no": 124,
             "source_text": "<fields>\n            <name>change_subject_of_case</name>\n            <dataType>String</dataType>\n            <defaultValue>\n                <elementReference>another_case_holder.Subject</elementReference>\n            </defaultValue>\n            <fieldText>change subject of case</fieldText>\n            <fieldType>InputField</fieldType>\n            <isRequired>true</isRequired>\n        </fields>",
-            "flow_path": "__PATH_TO_EXAMPLE2__"
+            "flow_path": "__PATH_TO_EXAMPLE1__"
           },
           {
             "influenced_var": "another_case_holder.Subject",
@@ -247,16 +243,16 @@
             "comment": "Variable Assignment",
             "line_no": 26,
             "source_text": "<assignmentItems>\n            <assignToReference>another_case_holder.Subject</assignToReference>\n            <operator>Assign</operator>\n            <value>\n                <elementReference>change_subject_of_case</elementReference>\n            </value>\n        </assignmentItems>",
-            "flow_path": "__PATH_TO_EXAMPLE2__"
+            "flow_path": "__PATH_TO_EXAMPLE1__"
           },
           {
             "influenced_var": "update_to_new_subject",
             "influencer_var": "another_case_holder",
             "element_name": "update_to_new_subject",
-            "comment": "flow into recordUpdates via influence over update_to_new_subject in run mode SystemModeWithSharing",
+            "comment": "flow into recordUpdates via influence over update_to_new_subject in run mode SystemModeWithoutSharing",
             "line_no": 102,
             "source_text": "<recordUpdates>\n        <name>update_to_new_subject</name>\n        <label>update_to_new_subject</label>\n        <locationX>50</locationX>\n        <locationY>355</locationY>\n        <connector>\n            <targetReference>confirm_delete</targetReference>\n        </connector>\n        <inputReference>another_case_holder</inputReference>\n    </recordUpdates>",
-            "flow_path": "__PATH_TO_EXAMPLE2__"
+            "flow_path": "__PATH_TO_EXAMPLE1__"
           }
         ]
       }

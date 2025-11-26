@@ -5,18 +5,12 @@
 from __future__ import annotations
 
 import logging
-import re
 from typing import TypeAlias
-import json
 
-import public
-from flow_scanner import control_flow
-from flow_scanner.control_flow import Crawler
 from public import parse_utils
-from public.contracts import (AbstractQuery, QueryAction, QueryDescription,
-                              QueryResult, State, AbstractCrawler, FlowParser, LexicalQuery, Query)
-from public.data_obj import CrawlStep, InfluenceStatement, InfluencePath
-from public.enums import Severity, ConnType, TriggerType, FlowType
+from public.contracts import (Query, QueryAction, QueryDescription,
+                              QueryResult)
+from public.enums import Severity
 
 El: TypeAlias = parse_utils.CP.ET.Element
 
@@ -38,30 +32,27 @@ QUERIES = {
 }
 
 
-class Detect(AbstractQuery):
+class Detect(Query):
+    query_id = 'Detect'
+    query_name = QUERIES[query_id]
 
-    def __init__(self, msg: str|None = None):
-        try:
-            conf = json.loads(msg)
-            self.conf = msg
-        except:
-            self.conf = None
-            self.query_id = 'Detect'
-            self.query_name = QUERIES[self.query_id]
+    def __init__(self, arg_obj: str | None = None):
+        self.conf = arg_obj
 
 
-    def get_query_description(self) -> QueryDescription:
+    @classmethod
+    def get_query_description(cls) -> QueryDescription:
         return QueryDescription(
-            query_id=self.query_id,
-            query_name=self.query_name,
-            query_description="Flow detected from one named element to another",
+            query_id=cls.query_id,
+            query_name=cls.query_name,
+            query_description="Debug query",
             severity=Severity.Flow_Low_Severity,
             is_security=False
         )
 
 
-    def when_to_run(self) -> QueryAction:
-        return QueryAction.process_elem
+    def when_to_run(self) -> list[QueryAction]:
+        return [QueryAction.process_elem]
 
     def execute(self) -> list[QueryResult] | None:
         if self.conf is None:

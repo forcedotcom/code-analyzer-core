@@ -184,7 +184,7 @@ class QueryDescription:
         return {s: str(getattr(self, s)) for s in self.__slots__}
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, slots=True, eq=True)
 class QueryResult:
     """The QueryProcessor performs only local analysis, for example searching
        for whether variables *within* a given Flow Element are assigned to a
@@ -241,77 +241,6 @@ class QueryResult:
 
     # filename (required only for lexical)
     filename: str | None = None
-
-    def __hash__(self):
-        """Prior python 3.12, hash of None was volatile, and we need to support these
-        versions.
-        """
-        if self.influence_statement is None:
-            infl = '#'
-        else:
-            infl = self.influence_statement
-
-        if self.paths is None:
-            paths ='#'
-        else:
-            paths = self.paths
-
-        if self.elem_code is None:
-            elem_code = '#'
-        else:
-            elem_code = self.elem_code
-
-        if self.elem_line_no is None:
-            elem_line_no = '#'
-        else:
-            elem_line_no = self.elem_line_no
-
-        if self.elem_name is None:
-            elem_name = '#'
-        else:
-            elem_name = self.elem_name
-
-        if self.field is None:
-            field = '#'
-        else:
-            field = self.field
-
-        if self.filename is None:
-            filename = '#'
-        else:
-            filename = self.filename
-
-        return hash((infl, elem_code, elem_line_no, elem_name, field, filename,paths, self.query_id))
-
-    def __eq__(self, other):
-        if not isinstance(other, QueryResult):
-            return NotImplemented
-
-        if self.query_id != other.query_id:
-            return False
-
-        if self.influence_statement != other.influence_statement:
-            return False
-
-        if self.paths != other.paths:
-            return False
-
-        if self.elem_code != other.elem_code:
-            return False
-
-        if self.elem_line_no != other.elem_line_no:
-            return False
-
-        if self.elem_name != other.elem_name:
-            return False
-
-        if self.field != other.field:
-            return False
-
-        if self.filename != other.filename:
-            return False
-
-        return True
 
 
 @dataclass(frozen=True, eq=True, slots=True)
@@ -489,10 +418,10 @@ class BranchVisitor:
     previous_label: str | None
     loop_context: tuple[tuple[str, ConnType],...] = field(default_factory=tuple)
 
-    #: tuple of jumps between segments: ( (src, target), (src, target), ... )
-    history: tuple[tuple[str,str], ...] = field(default_factory=tuple)
+    #: previously visited segment labels (label1, label2, ..)
+    history: tuple[str, ...] = field(default_factory=tuple)
 
-    #: list of (jmp src, jpm target) when visitor was spawned
+    #: list of (previous label, curr_label) when visitor was spawned
     token: tuple[tuple[str,str], ...] | None = None
 
     def to_dict(self):
