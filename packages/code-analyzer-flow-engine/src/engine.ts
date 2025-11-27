@@ -90,7 +90,7 @@ export class FlowScannerEngine extends Engine {
             queryIds,
             percentageUpdateHandler
         );
-        const convertedResults: EngineRunResults = toEngineRunResults(executionResults, ruleNames);
+        const convertedResults: EngineRunResults = toEngineRunResults(executionResults);
         this.emitRunRulesProgressEvent(100);
         return convertedResults;
     }
@@ -134,8 +134,7 @@ function normalizeRelativeCompletionPercentage(flowPercentage: number): number {
     return PRE_INVOCATION_RUN_PERCENT + ((flowPercentage * percentageSpread) / 100);
 }
 
-function toEngineRunResults(flowScannerExecutionResult: FlowScannerExecutionResult, requestedRules: string[]): EngineRunResults {
-    const requestedRulesSet: Set<string> = new Set(requestedRules);
+function toEngineRunResults(flowScannerExecutionResult: FlowScannerExecutionResult): EngineRunResults {
     const results: EngineRunResults = {
         violations: []
     };
