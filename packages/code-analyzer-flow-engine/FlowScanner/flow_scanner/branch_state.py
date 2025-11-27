@@ -320,19 +320,20 @@ class BranchState(State):
             old_history = self.current_crawl_step.visitor.history
             new_history = next_cs.visitor.history
 
-            if old_history == ():
+            if old_history == () or old_history == ('*',):
                 # we are on the first branch, so no backtracking
                 old_map = self.__influence_map[self.current_crawl_step]
 
-            elif len(new_history) >= len(old_history) and new_history[0:len(old_history)] == old_history:
+            elif len(new_history) == len(old_history) + 1 and new_history[0:len(old_history)] == old_history:
                 # the new branch is a continuation of old branch so no backtracking
                 old_map = self.__influence_map[self.current_crawl_step]
 
             else:
-                # the new history is a different branch, and we need to backtrack
+                # the new history is a different branch, and we need to either backtrack or jump ahead
+                # get_last_ancestor returns the last time we visited the element right before the current element
                 old_cs = crawler.get_last_ancestor(next_cs)
                 if old_cs is None:
-                    # no predecessor, so we use default
+                    # use default map
                     old_map = self.__default_map
                 else:
                     old_map = self.__influence_map[old_cs]

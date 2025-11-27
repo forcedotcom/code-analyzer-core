@@ -6,6 +6,7 @@
 from __future__ import annotations
 
 import copy
+import dataclasses
 import json
 import logging
 import sys
@@ -25,6 +26,8 @@ DEFAULT_HELP_URL = "https://security.secure.force.com/security/tools/forcecom/sc
 DEFAULT_JOB_TYPE = "FlowSecurityCLI"
 
 logger = logging.getLogger(__name__)
+
+
 
 
 class ResultsProcessor(object):
@@ -276,14 +279,14 @@ class ResultsProcessor(object):
             dictionary of the form::
 
               query_id -> {flow: tuple of DataInfluenceStatements or None (in case this is a dataflow)
-                             query_name: (human_readable),
-                             counter: (fake similarity id),
-                             elem: source code of element,
-                             elem_name: name of Flow Element,
-                             elem_code: source code of element,
-                             elem_line_no: line number of element,
-                             field: name of influenced variable (if any) within the element,
-                             }
+                           query_name: (human_readable),
+                           counter: (fake similarity id),
+                           elem: source code of element,
+                           elem_name: name of Flow Element,
+                           elem_code: source code of element,
+                           elem_line_no: line number of element,
+                           field: name of influenced variable (if any) within the element,
+                          }
 
         """
 
@@ -300,12 +303,16 @@ class ResultsProcessor(object):
             src_code = query_result.elem_code
             src_line = query_result.elem_line_no
             flow_type = query_result.flow_type.name
-
+            file_name = query_result.filename
+            elem_name = query_result.elem_name
 
             if end_stmt is not None:
-                src_code_end = clean_string(end_stmt.source_text)
-                elem_name_end = end_stmt.element_name
+                src_code = clean_string(end_stmt.source_text)
+                elem_name = end_stmt.element_name
                 field_end = end_stmt.influenced_var
+                src_line = end_stmt.line_no
+                file_name = end_stmt.flow_path
+
             else:
                 src_code_end = None
                 elem_name_end = None
@@ -315,16 +322,16 @@ class ResultsProcessor(object):
             if query_path not in accum:
                 accum[query_path] = []
 
-            to_append = {"query_name": query_desc.query_name,
+            to_append = {"query_id": query_desc.query_id,
+                         "query_name": query_desc.query_name,
                          "severity": str(query_desc.severity),
                          "description": query_desc.query_description,
                          "counter": self.counter,
-                         "elem": clean_string(query_result.elem_name),
-                         "elem_name": query_result.elem_name or elem_name_end,
-                         "field": query_result.field or query_result.elem_name or field_end,
-                         "elem_code": src_code or src_code_end,
+                         "elem_name": elem_name,
+                         "field": field_end or elem_name,
+                         "elem_code": src_code,
                          "elem_line_no": src_line,
-                         "filename": query_result.filename,
+                         "filename": file_name,
                          "flow_type": flow_type}
 
             if query_result.paths is None or len(query_result.paths) == 0:
@@ -355,11 +362,15 @@ class ResultsProcessor(object):
 
                 statements = []
                 for path_ in query_result.paths:
-                    pruned_history = tuple([x for x in path_.history if x.source_text != "[builtin]"])
-                    if path_.history[-1] != end_stmt and end_stmt.source_text != "[builtin]":
-                        statements.append(pruned_history + (end_stmt,))
+                    pruned_history = tuple( [fix_names(x) for x in path_.history if x.source_text != "[builtin]"])
+
+                    if end_stmt is not None:
+                        if path_.history[-1] != end_stmt and end_stmt.source_text != "[builtin]":
+                            statements.append(pruned_history + (end_stmt,))
+                        else:
+                            statements.append(pruned_history + (end_stmt,))
                     else:
-                        statements.append(pruned_history + (end_stmt,))
+                        statements.append(pruned_history)
 
             # Now we have our statements normalized and are prepared to render dataflows
             for path_ in statements:
@@ -439,6 +450,9 @@ def render_normal_dataflow_html(statements: tuple[InfluenceStatement, ...], flow
 
 
 def render_html_pathnode(filename: str, flow_type: str, influenced_var: str, line: int, node_id: int, code: str) -> str:
+    if influenced_var == '*':
+        influenced_var = 'start'
+
     result_str = f"<PathNode><FileName>{ESAPI.html_encode(filename)}</FileName>"
     result_str += f"<FlowType>{flow_type}</FlowType>"
     result_str += f"<Line>{line}</Line>"
@@ -493,5 +507,20 @@ def _validate_qr(qr_list: list[QueryResult]) -> list[QueryResult] | None:
             return None
         else:
             return to_return
+
+
+def fix_names(x: InfluenceStatement) -> InfluenceStatement:
+    new_influenced = None
+    new_influencer = None
+
+    if x.influenced_var == '*':
+        new_influenced = 'start'
+
+    elif x.influenced_var == '*':
+        new_influencer = 'start'
+
+    return dataclasses.replace(x,
+                               influencer_var=new_influencer or x.influencer_var,
+                               influenced_var=new_influenced or x.influenced_var)
 
 

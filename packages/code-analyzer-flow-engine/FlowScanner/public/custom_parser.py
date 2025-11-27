@@ -42,6 +42,8 @@ def clean_string(msg: str) -> str:
     """
     if not isinstance(msg, str):
         return msg
+    elif msg == '*':
+        return "start"
     else:
         msg1 = msg.replace("<ns0:", "<").replace("</ns0:", "</")
         msg2 = (msg1.replace(' xmlns="http://soap.sforce.com/2006/04/metadata"', '')

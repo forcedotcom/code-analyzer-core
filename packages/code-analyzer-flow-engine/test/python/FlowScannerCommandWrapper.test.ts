@@ -38,7 +38,7 @@ describe('FlowScannerCommandWrapper implementations', () => {
                         [PATH_TO_EXAMPLE1, PATH_TO_EXAMPLE2],
                         [PATH_TO_EXAMPLE1, PATH_TO_EXAMPLE2],
                         tempLogFile,
-                        ['MissingFaultHandler'], // adding in one optional query as well
+                        ['PreventPassingUserDataIntoElementWithoutSharing','PreventPassingUserDataIntoElementWithSharing','MissingFaultHandler'],
                         statusProcessorFunction);
                     // The `counter` property is irrelevant to us, and causes problems across platforms. So delete it.
                     for (const queryName of Object.keys(results.results)) {

@@ -13,7 +13,7 @@ import {
 import {Clock, RealClock} from '@salesforce/code-analyzer-engine-api/utils';
 import {getMessage} from './messages';
 import {FlowNodeDescriptor, FlowScannerCommandWrapper, FlowScannerExecutionResult, FlowScannerRuleResult} from "./python/FlowScannerCommandWrapper";
-import {getDescriptionForRule, getRuleNameFromQueryName, getAllRuleNames, getOptionalQueryIdsForRule} from "./hardcoded-catalog";
+import {getDescriptionForRule, getRuleNameFromQueryId, getAllRuleNames, getQueryIdsForRule} from "./hardcoded-catalog";
 
 /**
  * An arbitrarily chosen value for how close the engine is to completion before the underlying Flow tool is invoked,
@@ -80,14 +80,14 @@ export class FlowScannerEngine extends Engine {
             this.emitRunRulesProgressEvent(normalizeRelativeCompletionPercentage(percentage));
         }
 
-        const optionalQueryIds: string[] = ruleNames.flatMap(getOptionalQueryIdsForRule);
+        const queryIds: string[] = ruleNames.flatMap(getQueryIdsForRule);
 
         const executionResults: FlowScannerExecutionResult = await this.commandWrapper.runFlowScannerRules(
             runOptions.workingFolder,
             workspaceFlows,
             targetedFlows,
             logFile,
-            optionalQueryIds,
+            queryIds,
             percentageUpdateHandler
         );
         const convertedResults: EngineRunResults = toEngineRunResults(executionResults, ruleNames);
@@ -140,15 +140,10 @@ function toEngineRunResults(flowScannerExecutionResult: FlowScannerExecutionResu
         violations: []
     };
 
-    for (const queryName of Object.keys(flowScannerExecutionResult.results)) {
-        const flowScannerRuleResults: FlowScannerRuleResult[] = flowScannerExecutionResult.results[queryName];
+    for (const queryId of Object.keys(flowScannerExecutionResult.results)) {
+        const flowScannerRuleResults: FlowScannerRuleResult[] = flowScannerExecutionResult.results[queryId];
         for (const flowScannerRuleResult of flowScannerRuleResults) {
-            const ruleName = getRuleNameFromQueryName(flowScannerRuleResult.query_name);
-            // Since the non-optional queries (designated by the default preset) always run, we need filter any of their
-            // results out if their corresponding rule was not selected.
-            if (!requestedRulesSet.has(ruleName)) {
-                continue;
-            }
+            const ruleName = getRuleNameFromQueryId(flowScannerRuleResult.query_id);
 
             const flowNodes: FlowNodeDescriptor[] | undefined = flowScannerRuleResult.flow;
             if (flowNodes) { // If flow based violation
