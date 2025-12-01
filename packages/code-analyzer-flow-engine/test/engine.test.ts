@@ -86,7 +86,7 @@ describe('Tests for the FlowScannerEngine', () => {
             }, {});
             expect(countsPerRule).toEqual({
                 MissingDescription: 56,
-                MissingFaultHandler: 9, // TODO: Follow up with robert to ensure that this should be 9 (not 15 as it was before)
+                MissingFaultHandler: 9,
                 PreventPassingUserDataIntoElementWithoutSharing: 5,
                 PreventPassingUserDataIntoElementWithSharing: 2
             });
@@ -628,7 +628,7 @@ describe('Tests for the FlowScannerEngine', () => {
 
                     const results: EngineRunResults = await engine.runRules(PreventPassingUserDataRules, createRunOptions(workspace));
 
-                    expect(results.violations).toHaveLength(1); // TODO: This test is broken - need to check with Robert about this first!
+                    expect(results.violations).toHaveLength(1);
                     expect(results.violations[0]).toEqual(expectedViolation);
                 });
 
@@ -653,7 +653,7 @@ describe('Tests for the FlowScannerEngine', () => {
 
                     const results: EngineRunResults = await engine.runRules(PreventPassingUserDataRules, createRunOptions(workspace));
 
-                    expect(results.violations).toHaveLength(1); // TODO: This test is broken - need to check with Robert about this first!
+                    expect(results.violations).toHaveLength(1);
                     expect(results.violations[0]).toEqual(expectedViolation);
                 });
 

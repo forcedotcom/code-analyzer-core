@@ -185,7 +185,7 @@ class Stack(object):
                         tainted = self.current_frame.parser.get_tainted_inputs()
                     else:
                         tainted.update(self.current_frame.parser.get_tainted_inputs())
-                    next_frame.state.tainted_inputs = tainted
+                    next_frame.state.parser.tainted_inputs = tainted
 
                     # now switch execution to new frame
                     self.current_frame = next_frame
