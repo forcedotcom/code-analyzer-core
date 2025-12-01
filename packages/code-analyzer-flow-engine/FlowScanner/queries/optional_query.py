@@ -11,8 +11,6 @@ import traceback
 from typing import TypeAlias
 
 import public
-from flow_scanner import control_flow
-from flow_scanner.control_flow import Crawler
 from public import parse_utils
 from public.contracts import (AbstractQuery, QueryAction, QueryDescription,
                               QueryResult, State, AbstractCrawler, FlowParser, LexicalQuery, Query)
@@ -69,19 +67,22 @@ class DbInLoop(AbstractQuery):
     query_id = "DbInLoop"
     query_name = QUERIES[query_id]
 
-    def get_query_description(self) -> QueryDescription:
+    @classmethod
+    def get_query_description(cls) -> QueryDescription:
         return QueryDescription(
-            query_id=self.query_id,
-            query_name=self.query_name,
-            query_description="This rule detects when there are CRUD flow elements within a loop (RecordLookups, RecordCreates, RecordUpdates, RecordDeletes). This rule does not trigger if the CRUD element is in a fault handler. These DB operations should be bulkified by using collections and the IN condition. This rule does not follow subflows.",
+            query_id = cls.query_id,
+            query_name= cls.query_name,
+            query_description=("A Database operation (RecordLookups, RecordCreates, RecordUpdates, RecordDeletes) "
+                               "is being performed within a loop. To avoid excessive Database calls, the operation "
+                               "should be bulkified by using collection variables and the 'IN' operator."),
             query_version="1.0",
             severity=public.enums.Severity.Flow_Moderate_Severity,
             help_url=DEFAULT_HELP_URL,
             is_security=False
         )
 
-    def when_to_run(self) -> QueryAction:
-        return QueryAction.flow_enter
+    def when_to_run(self) -> list[QueryAction]:
+        return [QueryAction.flow_enter]
 
     def convert_results(self, results: list[tuple[CrawlStep, str, str, int]], parser: FlowParser) -> list[QueryResult]:
         q_results = []
@@ -95,7 +96,17 @@ class DbInLoop(AbstractQuery):
             step_line_no = parse_utils.get_line_no(step_elem)
             step_code = parse_utils.get_elem_string(step_elem)
 
-            stmt = InfluenceStatement(
+            stmt_src = InfluenceStatement(
+                influenced_var=loop_name,
+                influencer_var=loop_name,
+                element_name=loop_name,
+                comment=f"Loop",
+                flow_path=flow_path,
+                line_no=loop_line_no,
+                source_text=loop_code,
+                source_path=flow_path,
+            )
+            stmt_sink = InfluenceStatement(
                 influenced_var=step.element_name,
                 influencer_var=loop_name,
                 element_name=step.element_name,
@@ -106,16 +117,25 @@ class DbInLoop(AbstractQuery):
                 source_text=step_code,
                 source_path=flow_path,
             )
-
+            path = InfluencePath(
+                history=(stmt_src,),
+                influenced_name=step.element_name,
+                influencer_name=loop_name,
+                influencer_property=None,
+                influenced_property=None,
+                influenced_filepath=flow_path,
+                influencer_filepath=flow_path,
+                influenced_type_info=None
+            )
             qr = QueryResult(
                 query_id=self.query_id,
                 flow_type=parser.get_flow_type(),
-                influence_statement=stmt,
+                influence_statement=stmt_sink,
                 elem_code=loop_code,
                 elem_line_no=loop_line_no,
                 elem_name=loop_name,
                 filename=flow_path,
-                paths=None  # only print from source to sink
+                paths=frozenset([path])  # only print from source to sink
             )
             q_results.append(qr)
         return q_results
@@ -148,19 +168,21 @@ class HardcodedId(LexicalQuery):
     query_id = "HardcodedId"
     query_name = QUERIES[query_id]
 
-    def get_query_description(self) -> QueryDescription:
+    @classmethod
+    def get_query_description(cls) -> QueryDescription:
         return QueryDescription(
-            query_id=self.query_id,
-            query_name=self.query_name,
-            query_description="This rule detects hardcoded IDs within a flow. Hardcoded Ids are a bad practice, and such flows are not appropriate for distribution.",
+            query_id=cls.query_id,
+            query_name=cls.query_name,
+            query_description=("The flow has a hardcoded Id. Hardcoded Ids are a bad practice, and flows with "
+                               "hardcoded Ids are not appropriate for distribution."),
             query_version="1.0",
             severity=public.enums.Severity.Flow_Low_Severity,
             help_url=DEFAULT_HELP_URL,
             is_security=False
         )
 
-    def when_to_run(self) -> QueryAction:
-        return QueryAction.lexical
+    def when_to_run(self) -> list[QueryAction]:
+        return [QueryAction.lexical]
 
     def execute(self, parser: FlowParser = None, **kwargs) -> list[QueryResult] | None:
         if parser is None:
@@ -214,17 +236,20 @@ class MissingFaultHandler(LexicalQuery):
     def __init__(self):
         self.root = None
 
-    def get_query_description(self) -> QueryDescription:
-        return QueryDescription(query_id=self.query_id,
-                                query_name=self.query_name,
+    @classmethod
+    def get_query_description(cls) -> QueryDescription:
+        return QueryDescription(query_id=cls.query_id,
+                                query_name=cls.query_name,
                                 severity=public.enums.Severity.Flow_Low_Severity,
                                 help_url=DEFAULT_HELP_URL,
                                 is_security=False,
-                                query_description=("This rule detects when elements that can fire fault events are missing fault handlers. The rule currently detects Create Records, Update Records, Delete Records, Action Calls, and Subflows.")
+                                query_description=("An element that can fire fault events is missing "
+                                                   "fault handlers. Add fault handlers to all Create Records, "
+                                                   "Update Records, Delete Records, Action Calls, and Subflows.")
                                 )
 
-    def when_to_run(self) -> QueryAction:
-        return QueryAction.lexical
+    def when_to_run(self) -> list[QueryAction]:
+        return [QueryAction.lexical]
 
     def execute(self, parser: FlowParser = None, **kwargs) -> list[QueryResult] | None:
         accum = []
@@ -273,18 +298,22 @@ class SameRecordUpdate(Query):
         if self.trig_object is None:
             self.should_scan = False
 
-    def get_query_description(self) -> QueryDescription:
+    @classmethod
+    def get_query_description(cls) -> QueryDescription:
         return QueryDescription(
-            query_id=self.query_id,
-            query_name=self.query_name,
+            query_id=cls.query_id,
+            query_name=cls.query_name,
             severity=public.enums.Severity.Flow_Moderate_Severity,
             help_url=DEFAULT_HELP_URL,
             is_security=False,
-            query_description=("This rule detects when an AfterSave record trigger modifies the same record. Record modifications should be done in BeforeSave triggers, not AfterSave triggers. This rule follows subflows, so it will detect if the RecordId is passed to a child flow which then modifies a record with that id.")
+            query_description=("An AfterSave record trigger is modifying the same record. "
+                               "Record modifications should be done in BeforeSave triggers, "
+                               "not AfterSave triggers. The trigger definition may be in a parent flow that calls "
+                               "the current flow as a subflow, passing in the recordId of the trigger record.")
         )
 
-    def when_to_run(self) -> QueryAction:
-        return QueryAction.process_elem
+    def when_to_run(self) -> list[QueryAction]:
+        return [QueryAction.process_elem]
 
     def execute(self,
                 state: State = None,
@@ -383,33 +412,36 @@ class TriggerEntryCriteria(LexicalQuery):
     query_id = "TriggerEntryCriteria"
     query_name = QUERIES[query_id]
 
-    def get_query_description(self) -> QueryDescription:
+    @classmethod
+    def get_query_description(cls) -> QueryDescription:
         return QueryDescription(
-            query_id=self.query_id,
-            query_name=self.query_name,
+            query_id=cls.query_id,
+            query_name=cls.query_name,
             severity=Severity.Flow_Moderate_Severity,
-            query_description="This rule detects when record trigger flows are missing entry criteria. All record trigger flows should have entry criteria specified in the flow trigger definition rather than solely in the flow's own business logic.",
+            query_description=("The record trigger flow has no entry criteria. "
+                              "All record trigger flows should have entry criteria specified in the flow "
+                              "trigger definition rather than solely in the flow's own business logic."),
             is_security=False
         )
 
-    def when_to_run(self) -> QueryAction:
-        return QueryAction.lexical
+    def when_to_run(self) -> list[QueryAction]:
+        return [QueryAction.lexical]
 
     def execute(self, parser: FlowParser = None, **kwargs) -> list[QueryResult] | None:
         root = parser.get_root()
-        starts = parse_utils.get_by_tag(root, tagname='start')
+        starts = parse_utils.get_by_tag(root, tag_name='start')
         if len(starts) != 1:
             # The flow could have a startElementReference
             logger.debug(f"could not find start element in flow {parser.get_filename()}")
             return None
         start = starts[0]
-        trigger_type_els = parse_utils.get_by_tag(start, tagname='recordTriggerType')
+        trigger_type_els = parse_utils.get_by_tag(start, tag_name='recordTriggerType')
 
         if len(trigger_type_els) != 1:
             return None
         else:
-            filter_formula = parse_utils.get_by_tag(elem=start, tagname='filterFormula')
-            filters = parse_utils.get_by_tag(elem=start, tagname='filters')
+            filter_formula = parse_utils.get_by_tag(elem=start, tag_name='filterFormula')
+            filters = parse_utils.get_by_tag(elem=start, tag_name='filters')
 
             if len(filters) == 0 and len(filter_formula) == 0:
 
@@ -430,17 +462,20 @@ class DefaultCopy(LexicalQuery):
     query_id = "DefaultCopy"
     query_name = QUERIES[query_id]
 
-    def get_query_description(self) -> QueryDescription:
+    @classmethod
+    def get_query_description(cls) -> QueryDescription:
         return QueryDescription(
-            query_id=self.query_id,
-            query_name=self.query_name,
+            query_id=cls.query_id,
+            query_name=cls.query_name,
             severity=Severity.Flow_Low_Severity,
-            query_description=("This rule detects default names and labels that were auto assigned to elements pasted elements in the flow builder UI. These labels and names should be changed to make the flow comprehensible to maintainers."),
+            query_description=("An element has the auto-assigned copy name and/or label. "
+                               "These names and labels should be changed to make the flow comprehensible "
+                               "to maintainers."),
             is_security=False
         )
 
-    def when_to_run(self) -> QueryAction:
-        return QueryAction.lexical
+    def when_to_run(self) -> list[QueryAction]:
+        return [QueryAction.lexical]
 
     def execute(self, parser: FlowParser = None, **kwargs) -> list[QueryResult] | None:
         els = parser.get_all_named_elems()
@@ -454,7 +489,7 @@ class DefaultCopy(LexicalQuery):
                     accum.append((name, name, el))
                     continue
 
-                labels = parse_utils.get_by_tag(el, tagname='label')
+                labels = parse_utils.get_by_tag(el, tag_name='label')
                 if len(labels) > 0:
                     for label in labels:
                         label_text = label.text
@@ -482,17 +517,19 @@ class UnusedResource(LexicalQuery):
     query_id = "UnusedResource"
     query_name = QUERIES[query_id]
 
-    def get_query_description(self) -> QueryDescription:
+    @classmethod
+    def get_query_description(cls) -> QueryDescription:
         return QueryDescription(
-            query_id=self.query_id,
-            query_name=self.query_name,
+            query_id=cls.query_id,
+            query_name=cls.query_name,
             severity=Severity.Flow_Low_Severity,
-            query_description="This rule detects redundant variables that are not used in the flow. This can be a sign of developer error.",
+            query_description=("A resource is not used elsewhere in the flow. Check that you did not "
+                               "intend to use the resource and then delete it."),
             is_security=False
         )
 
-    def when_to_run(self) -> QueryAction:
-        return QueryAction.lexical
+    def when_to_run(self) -> list[QueryAction]:
+        return [QueryAction.lexical]
 
     def execute(self, parser: FlowParser = None, **kwargs) -> list[QueryResult] | None:
         root = parser.get_root()
@@ -547,23 +584,27 @@ class MissingNextValueConnector(LexicalQuery):
     query_id = "MissingNextValueConnector"
     query_name = QUERIES[query_id]
 
-    def get_query_description(self) -> QueryDescription:
+    @classmethod
+    def get_query_description(cls) -> QueryDescription:
         return QueryDescription(
-            query_id=self.query_id,
-            query_name=self.query_name,
+            query_id=cls.query_id,
+            query_name=cls.query_name,
             severity=Severity.Flow_Moderate_Severity,
-            query_description=("This rule detects Loops without nextValue connectors. Loops should always have nextValue connectors, and lack of one usually signifies developer error when connecting the loop element to other elements."),
+            query_description=("A Loop is missing a nextValue connector. "
+                               "Loops should always have nextValue connectors, "
+                               "and lack of one usually signifies developer error when "
+                               "connecting the loop element to other elements."),
             is_security=False
         )
 
-    def when_to_run(self) -> QueryAction:
-        return QueryAction.lexical
+    def when_to_run(self) -> list[QueryAction]:
+        return [QueryAction.lexical]
 
     def execute(self, parser: FlowParser = None, **kwargs) -> list[QueryResult] | None:
         accum = []
         root = parser.get_root()
         flow_type = parser.get_flow_type()
-        loops = parse_utils.get_by_tag(root, tagname='loops')
+        loops = parse_utils.get_by_tag(root, tag_name='loops')
         filename = parser.get_filename()
 
         for loop in loops:
@@ -618,17 +659,19 @@ class CyclicSubflow(LexicalQuery):
             )
         ]
 
-    def get_query_description(self) -> QueryDescription:
+    @classmethod
+    def get_query_description(cls) -> QueryDescription:
         return QueryDescription(
-            query_id=self.query_id,
-            query_name=self.query_name,
+            query_id=cls.query_id,
+            query_name=cls.query_name,
             severity=Severity.Flow_Moderate_Severity,
-            query_description="This rule detects when a subflow calls a parent flow, creating a cyclic flow. The rule will detect cycles of any depth.",
+            query_description=("A subflow calls a parent flow, creating a cycle. Ensure that subflows do not call back"
+                               "into a parent."),
             is_security=False
             )
 
-    def when_to_run(self) -> QueryAction:
-        return QueryAction.lexical
+    def when_to_run(self) -> list[QueryAction]:
+        return [QueryAction.lexical]
 
     def execute(self, parser: FlowParser = None, **kwargs) -> list[QueryResult] | None:
         pass
@@ -638,22 +681,33 @@ class UnreachableElement(LexicalQuery):
     query_id = "UnreachableElement"
     query_name = QUERIES[query_id]
 
-    def get_query_description(self) -> QueryDescription:
+    @classmethod
+    def get_query_description(cls) -> QueryDescription:
         return QueryDescription(
-            query_id=self.query_id,
-            query_name=self.query_name,
+            query_id=cls.query_id,
+            query_name=cls.query_name,
             severity=Severity.Flow_Moderate_Severity,
-            query_description=("This rule identifies elements that have not been connected to the start element of the flow. Unreachable elements are usually due to incomplete flows or developer error.")
+            query_description=("An element is not connected to the start element of the flow. "
+                               "Unreachable elements are usually due to incomplete flows or developer error. "
+                               "Connect this element to the start element or remove it from the flow.")
         )
 
-    def when_to_run(self) -> QueryAction:
-        return QueryAction.lexical
+    def when_to_run(self) -> list[QueryAction]:
+        return [QueryAction.lexical]
 
     def execute(self, parser: FlowParser = None, **kwargs) -> list[QueryResult] | None:
         crawler = kwargs["crawler"]
         cfg = crawler.get_cfg()
         # noinspection PyTypeChecker
-        missing = control_flow.validate_cfg(cfg=cfg, parser=parser, missing_only=True)
+        all_elems = parser.get_all_traversable_flow_elements()
+        all_elem_tuples = [(parse_utils.get_name(x), parse_utils.get_tag(x)) for x in all_elems]
+
+        crawled_elems = []
+        for segment in cfg.segment_map.values():
+            crawled_elems = crawled_elems + segment.traversed
+
+        # ..check there are no elements not in the cfg
+        missing = [x for x in all_elem_tuples if x not in crawled_elems]
 
         if len(missing) == 0:
             return None
@@ -685,20 +739,23 @@ class UnreachableElement(LexicalQuery):
             return results
 
 class MissingDescription(LexicalQuery):
+
     query_id = "MissingDescription"
     query_name = QUERIES[query_id]
 
-    def get_query_description(self) -> QueryDescription:
+    @classmethod
+    def get_query_description(cls) -> QueryDescription:
         return QueryDescription(
-            query_id=self.query_id,
-            query_name=self.query_name,
+            query_id=cls.query_id,
+            query_name=cls.query_name,
             severity=Severity.Flow_Low_Severity,
-            query_description=("This rule detects elements that contain labels but are missing descriptions. All elements with labels should have accompanying descriptions to make the flow comprehensible to future maintainers."),
+            query_description=("An element contains a label that is missing a description. Document all elements "
+                               "with labels to make the flow comprehensible to future maintainers."),
             is_security=False
             )
 
-    def when_to_run(self) -> QueryAction:
-        return QueryAction.lexical
+    def when_to_run(self) -> list[QueryAction]:
+        return [QueryAction.lexical]
 
     def execute(self, parser: FlowParser = None, **kwargs) -> list[QueryResult] | None:
         all_named = list(parser.get_all_named_elems())
@@ -771,17 +828,21 @@ class TriggerWaitEvent(LexicalQuery):
         self.should_check: bool = True
         self.start_elems: list[El] | None = None
 
-    def get_query_description(self) -> QueryDescription:
+    @classmethod
+    def get_query_description(cls) -> QueryDescription:
         return QueryDescription(
-            query_id=self.query_id,
-            query_name=self.query_name,
+            query_id=cls.query_id,
+            query_name=cls.query_name,
             severity=Severity.Flow_High_Severity,
-            query_description=("This rule detects when a wait event is reached during trigger execution. Triggers must be performant and cannot contain wait events. For async processing, use scheduled paths within your trigger and async callouts, not wait events. This rule follows subflows."),
+            query_description=("A wait event is reached during trigger execution. The trigger may be in a parent flow "
+                               "that calls the current flow as a subflow. Triggers must be performant and cannot "
+                               "contain wait events. For async processing, use scheduled paths within your trigger "
+                               "and async callouts, not wait events."),
             is_security=False
             )
 
-    def when_to_run(self) -> QueryAction:
-        return QueryAction.lexical
+    def when_to_run(self) -> list[QueryAction]:
+        return [QueryAction.lexical]
 
     def execute(self, parser: FlowParser = None, **kwargs) -> list[QueryResult] | None:
         if self.should_check:
@@ -824,156 +885,200 @@ class TriggerWaitEvent(LexicalQuery):
             return accum
 
 class TriggerCallout(LexicalQuery):
+
     query_id = "TriggerCallout"
     query_name = QUERIES[query_id]
 
     def __init__(self):
+
         self.should_scan: bool = False
         self.should_check: bool = True
+        self.has_scheduled_path: bool = False
         self.top_flow_path: str | None = None
-        self.called_names: list[str] | None = None
-
+        self.start_el: El | None = None
         #: element name corresponding to direct path from start
-        self.conn_target_name: str| None = None
+        self.conn_target_el: El | None = None
+        self.top_parser: FlowParser | None = None
 
-
-    def get_query_description(self) -> QueryDescription:
+    @classmethod
+    def get_query_description(cls) -> QueryDescription:
         return QueryDescription(
-            query_id=self.query_id,
-            query_name=self.query_name,
+            query_id=cls.query_id,
+            query_name=cls.query_name,
             severity=Severity.Flow_Moderate_Severity,
-            query_description=("This rule detects when a trigger performs a callout on the synchronous path. Triggers must be performant and may only contain callouts on async scheduled paths. This rule follows subflows.")
+            query_description=("A callout is performed on the synchronous path of a trigger. The trigger may be in a "
+                               "parent flow. Triggers must be performant and may only contain callouts on async "
+                               "scheduled paths. It is recommended that you create an async path and place "
+                               "the callout there.")
 
         )
 
-    def when_to_run(self) -> QueryAction:
-        return QueryAction.lexical
+    def when_to_run(self) -> list[QueryAction]:
+        return [QueryAction.lexical]
 
     def execute(self, parser: FlowParser = None, **kwargs) -> list[QueryResult] | None:
         if self.should_check:
-            if parser.get_flow_type() is FlowType.Trigger:
-                try:
-                    start_el = parser.get_start_elem()
-                    conn = parse_utils.get_by_tag(start_el, 'connector')[0]
-                    conn_target = parse_utils.get_text_of_tag(conn, 'targetReference')
-                except:
-                    logger.debug(f"exception thrown when searching for start connector target in {self.top_flow_path}"
-                                 f"\n {traceback.format_exc()}")
-                    self.should_scan = False
+            try:
+                if parser.get_flow_type() is not FlowType.Trigger:
                     self.should_check = False
-                    return None
-
-                if conn_target is None:
                     self.should_scan = False
-                    self.should_check = False
                     return None
                 else:
-                    self.should_scan = True
                     self.should_check = False
+                    self.should_scan = True
                     self.top_flow_path = parser.get_filename()
-                    self.conn_target_name = conn_target
-                    self.called_names = parser.get_traversable_descendents_of_elem(conn_target)
+                    self.start_el = parser.get_start_elem()
+                    self.top_parser = parser
+                    scheduled_paths = self.start_el.findall(f'.//{ns}scheduledPaths/{ns}connector')
+                    if not scheduled_paths:
+                        self.has_scheduled_path = False
+                        # we look for anything connected to start as everything is on the
+                        # synchronous path
+                        self.conn_target_el = self.start_el
+                    else:
+                        self.has_scheduled_path = True
+                        conn = parse_utils.get_by_tag(self.start_el, 'connector')[0]
+                        conn_target = parse_utils.get_text_of_tag(conn, 'targetReference')
+                        if conn is None or conn_target is None or len(conn_target) == 0:
+                            self.should_scan = False
+                            self.should_check = False
+                            return None
+                        else:
+                            self.conn_target_el = parser.get_by_name(conn_target)
+                            if self.conn_target_el is None:
+                                logger.error(f"start element pointing to a non-existing connector "
+                                             f"in flow {self.top_flow_path}")
+                                self.should_scan = False
+                                self.should_check = False
+                                return None
 
-            else:
+            except:
+                logger.debug(f"exception thrown when searching for start connector target in {self.top_flow_path}"
+                             f"\n {traceback.format_exc()}")
                 self.should_scan = False
                 self.should_check = False
                 return None
+
+
         elif not self.should_scan:
             return None
 
         # fall through
+
+        # a map from actionType -> list of tuples (action_element, action_name)
         action_calls = parser.get_action_call_map()
-        if action_calls is None:
+        if not action_calls:
             return None
 
         callouts = dict.get(action_calls, 'externalService', None)
         if not callouts:
             return None
-        callout_names = [x[0] for x in callouts]
 
+        accum = []
         crawler = kwargs.get("crawler")
 
-        results = search_for_sync_jumps(
-            parser=parser,
-            called_names=self.called_names,
-            current_crawler=crawler,
-            prev_crawlers=crawler.get_crawler_history_unsafe(),
-            target_el_names=callout_names,
-            conn_target_name=self.conn_target_name,
-            current_filename=parser.get_filename(),
-            top_filename=self.top_flow_path)
+        for callout_el, callout_name in callouts:
 
-        if len(results) == 0:
-            return None
-        else:
-            accum = []
-            for result in results:
-                elem = parser.get_by_name(name_to_match=result)
+            res = crawler.get_call_chain(source_el=self.conn_target_el,
+                                         source_path=self.top_flow_path,
+                                         sink_el=callout_el,
+                                         source_parser=self.top_parser)
+            if not res:
+                continue
+            res.insert(0, (self.start_el, self.top_flow_path))
 
-                accum.append(QueryResult(
-                    query_id=self.query_id,
-                    flow_type=FlowType.Trigger,
-                    elem_code=parse_utils.get_elem_string(elem),
-                    elem_name=result,
-                    elem_line_no=parse_utils.get_line_no(elem),
-                    field=result,
-                    filename=parser.get_filename()
-                    )
-                )
+            qr = generate_query_result_from_call_chain(
+                chain=res,
+                flow_type=FlowType.Trigger,
+                query_id=self.query_id,
+            )
+            accum.append(qr)
 
+        if accum:
             return accum
-
-
-def search_for_sync_jumps(
-        parser: FlowParser,
-        called_names: list[str],
-        current_crawler: Crawler,
-        prev_crawlers: list[Crawler] | None,
-        target_el_names: list[str],
-        conn_target_name: str,
-        current_filename: str,
-        top_filename: str) -> list[str]:
-    """
-        target_el_names = names of http callouts that should not be called from
-        the conn_target_name
-
-    Returns:
-        list of target_el_names that are running in the synchronous path
-    """
-
-    results = []
-
-    if top_filename == current_filename:
-
-        for tgt_name in target_el_names:
-            if tgt_name in called_names:
-                results.append(tgt_name)
-
-    else:
-        # we are in a subflow so we need to find the first top level crawler
-        # that is connected to this frame.
-        if prev_crawlers is None:
-            # This means the executor didn't set the parent crawler
-            logger.critical(f"could not link back to {top_filename} from {current_filename}")
-            return results
-
         else:
-            crawler_to_check, index = next((c for c in prev_crawlers if c[0].get_flow_path() == top_filename), None)
-            # The crawler was set, but incorrectly
-            if crawler_to_check is None:
-                logger.critical(f"could not link back to {top_filename} from {current_filename}")
-                return results
+            return None
 
-        step_to_check = crawler_to_check.get_current_step_index() - 1
+def generate_query_result_from_call_chain(chain: list[tuple[El, str]],
+                                          flow_type: FlowType,
+                                          query_id: str,
+                                          )-> QueryResult | None:
 
-        subflow_name = crawler_to_check.get_crawl_schedule()[step_to_check].element_name
 
-        if subflow_name in called_names:
-            # all the actions in this subflow are running in the direct path
-            results = results + target_el_names
+    influence_path = generate_path_from_call_chain(chain)
+    assert influence_path is not None
 
-    return results
+    qr = QueryResult(
+        query_id=query_id,
+        flow_type=flow_type,
+        paths=frozenset([influence_path])
+        )
 
+    return qr
+
+
+def generate_path_from_call_chain(chain: list[tuple[El, str]]) -> InfluencePath:
+    """
+    Args:
+        chain is the call chain (element, flow_path of element). It must start at the source
+        and end at the sink, and it must be non-empty.
+    """
+    assert chain is not None and len(chain) > 0
+    accum = []
+    for index, (el, filename) in enumerate(chain):
+        comment = None
+        if index == 0:
+            if el is not chain[1][0]:
+                influencer_var = parse_utils.get_name(chain[0][0])
+                comment = f"start of call chain"
+            else:
+                continue
+        else:
+            influencer_var = parse_utils.get_name(chain[index-1][0])
+
+        influenced_var = parse_utils.get_name(el)
+        assert influenced_var is not None
+
+        if influencer_var == '*':
+            influencer_var = 'start'
+        if influenced_var == '*':
+            influenced_var = 'start'
+
+        if not comment:
+            comment = f"{influenced_var} is in the call chain of {influencer_var}"
+
+        code = parse_utils.get_elem_string(el)
+        line_no = parse_utils.get_line_no(el)
+        source_path = flow_path = filename
+        element_name = influenced_var
+
+        accum.append(InfluenceStatement(
+            influenced_var=influenced_var,
+            influencer_var=influencer_var,
+            element_name=element_name,
+            comment=comment,
+            flow_path=flow_path,
+            source_path=source_path,
+            line_no=line_no,
+            source_text=code
+            )
+        )
+    influenced_name = accum[-1].influenced_var
+    influencer_name = accum[0].influencer_var
+    influenced_filepath = accum[-1].flow_path
+    influencer_filepath = accum[0].flow_path
+
+    influence_path = InfluencePath(
+        influencer_name=influencer_name,
+        influenced_name=influenced_name,
+        influenced_filepath=influenced_filepath,
+        influencer_filepath=influencer_filepath,
+        influenced_type_info=None,
+        influenced_property=None,
+        influencer_property=None,
+        history=tuple(accum)
+        )
+    return influence_path
 
 def check_in_templates_or_formulas(name_to_check: str,
                                    formula_elems: list[El],

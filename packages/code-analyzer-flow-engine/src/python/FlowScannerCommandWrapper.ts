@@ -19,7 +19,7 @@ export type FlowScannerExecutionResult = {
 }
 
 export type FlowScannerRuleResult = {
-    query_name: string;
+    query_id: string;
     severity: string;
     counter?: number;
     description: string;
@@ -59,7 +59,7 @@ export class RunTimeFlowScannerCommandWrapper implements FlowScannerCommandWrapp
         workspaceFlowFiles: string[],
         targetedFlowFiles: string[],
         absLogFilePath: string,
-        optionalQueryIds: string[],
+        queryIds: string[],
         completionPercentageHandler: (percentage: number) => void
     ): Promise<FlowScannerExecutionResult> {
         const workspaceFlowsFile: string = path.join(workingFolder, 'workspaceFiles.txt');
@@ -80,8 +80,8 @@ export class RunTimeFlowScannerCommandWrapper implements FlowScannerCommandWrapp
             workspaceFlowsFile,
             '--target',
             targetedFlowsFile,
-            '--optional_queries',
-            optionalQueryIds.join(','),
+            '--queries',
+            queryIds.join(','),
             '--json',
             flowScannerResultsFile
         ];
@@ -143,7 +143,7 @@ export class RunTimeFlowScannerCommandWrapper implements FlowScannerCommandWrapp
     private ruleResultIsValid(ruleResult: object): ruleResult is FlowScannerRuleResult {
         // Only require the fields that we actually use
 
-        if (!('query_name' in ruleResult) || typeof ruleResult.query_name !== 'string') {
+        if (!('query_id' in ruleResult) || typeof ruleResult.query_id !== 'string') {
             return false;
         }
         if (!('severity' in ruleResult) || typeof ruleResult.severity !== 'string') {

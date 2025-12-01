@@ -9,15 +9,25 @@ import logging
 import traceback
 from collections.abc import Generator
 from dataclasses import dataclass, field
-from typing import TextIO, TypeAlias
+from typing import TypeAlias, TYPE_CHECKING
+import public.custom_parser as CP
 
 import flow_parser.parse as parse
+import flow_scanner.util as util
 from flow_parser.parse import Parser
-from public.contracts import AbstractSegment, AbstractControlFlowGraph, AbstractCrawler
+from public import parse_utils
+from public.contracts import AbstractSegment, AbstractControlFlowGraph, AbstractCrawler, FlowParser
 from public.data_obj import BranchVisitor, CrawlStep, Jump, JSONSerializable
 from public.enums import ConnType
-from public.parse_utils import (ET, get_name, get_conn_target_map,
+from public.flow_scanner_exceptions import InvalidFlowException
+from public.parse_utils import (get_name, get_conn_target_map,
                                 is_subflow, is_loop, get_tag)
+
+El: TypeAlias = CP.ET.Element
+
+if TYPE_CHECKING:
+    # False at run time, only for type checker
+    from _typeshed import SupportsWrite
 
 MAX_VISITS_PER_SEGMENT = 20
 
@@ -40,28 +50,27 @@ class Segment(JSONSerializable, AbstractSegment):
     # list of traversal indexes that are subflow elements
     subflows: list[int]
 
-    # connectors at the end of this segment
+    # connectors at the end of this segment. Empty list if no jumps.
     jumps: list[Jump]
 
     # whether this segment may end execution
     is_terminal: bool
 
-    # for tracking whether it has been visited
-    seen_tokens: list[tuple[tuple[str, str], ...]] = field(default_factory=list)
+    # is multiple-inbound
+    is_multiple_inbound: bool=False
+
+    # label ->
+    seen_tokens: dict[str, list[tuple[tuple[str,str], ...]]] = field(default_factory=dict)
 
 
-    def accept(self, visitor: BranchVisitor, multiple_inbound: bool=False) -> list[BranchVisitor] | None:
+    def accept(self, visitor: BranchVisitor) -> list[BranchVisitor] | None:
         """does the node accept the visitor
 
         Also updates visitor state
 
         Args:
             visitor: Branch Visitor trying to jump into node
-            multiple_inbound: Whether this segment accepts more than
-                              a single inbound, in which case it will
-                              need to assign tokens for the extra inbounds.
-                              Whether an inbound is 'extra' is decided by
-                              order of visit.
+
         Returns:
             list of labels to process or None
 
@@ -69,24 +78,33 @@ class Segment(JSONSerializable, AbstractSegment):
         if not self.jumps:
             return None
 
-        if visitor.token in self.seen_tokens:
+        prev_label = visitor.previous_label
+
+        if prev_label in self.seen_tokens and visitor.token in self.seen_tokens[prev_label]:
             return None
 
+        # We must allow one cycle to traverse loops fully
+        count, cycle = util.find_cycles(target=self.label, history=visitor.history)
+        if count > 1 or (count == 1 and len(cycle) == 1):
+            return None
         else:
-            self.seen_tokens.append(visitor.token)
-            if multiple_inbound:
-                return self._send_outbound(visitor, add_token=True)
+            if prev_label in self.seen_tokens:
+                self.seen_tokens[prev_label].append(visitor.token)
             else:
-                return self._send_outbound(visitor)
+                self.seen_tokens[prev_label] = [visitor.token]
+            return self._send_outbound(visitor)
 
 
-    def _send_outbound(self, visitor, add_token=False):
+    def _send_outbound(self, visitor):
         jumps = self.jumps
 
         to_return = []
         loop_context = visitor.loop_context or tuple()
 
-        history = visitor.history + ((visitor.previous_label, visitor.current_label),)
+        if visitor.history is None:
+            visitor.history = tuple()
+
+        history = visitor.history + (self.label,)
 
         for jmp in jumps:
             current_label = jmp.target
@@ -109,8 +127,9 @@ class Segment(JSONSerializable, AbstractSegment):
                     # remove everything before the entrance to the loop
                     loop_context = loop_context[:z]
 
-            if add_token:
+            if self.is_multiple_inbound:
                 new_token = visitor.token
+
                 to_add = (visitor.previous_label, visitor.current_label)
                 if visitor.token is None:
                     new_token = (to_add,)
@@ -136,160 +155,135 @@ class Segment(JSONSerializable, AbstractSegment):
             to_return.append(outbound_to_add)
         return to_return
 
+    # noinspection PyTypeChecker
     @classmethod
-    def build_from_parser(cls, parser: parse.Parser, elem: ET.Element) -> Segment:
+    def build_from_parser(cls, parser: parse.Parser, start_elem: El) -> Segment:
         """Build a segment starting at this element
 
         Args:
             parser: flow parser instance
-            elem: first element in this segment
+            start_elem: first element in this segment
 
         Returns:
             segment
         """
-
-        label = get_name(elem)
-        start_tag = get_tag(elem)
-        jumps = []
-
-        if is_subflow(elem):
-            subflows = [0]
+        inbound_map = parser.get_traversable_inbound()
+        label = get_name(start_elem)
+        if label is None:
+            pass
+        if len(inbound_map[label]) > 1:
+            is_multiple_inbound = True
         else:
-            subflows = []
+            is_multiple_inbound = False
 
-        conn_map = _get_connector_map(elem, parser=parser)
-        optional_values = [x[2] for x in conn_map.values() if x[2] is True]
-        is_optional = len(optional_values) > 0
-        curr_elem = elem
+        elem = start_elem
+        elem_name = get_name(elem)
+        elem_tag = get_tag(elem)
 
-        # elements traversed within this segment,
-        # so always initialized to zero
-        traversed = []
-
-        if len(conn_map) == 0:
-            return Segment(label=label,
-                           subflows=subflows,
-                           traversed=[(label, start_tag)],
-                           jumps=[],
-                           is_terminal=True)
+        # elements traversed within this segment
+        traversed = [(elem_name, elem_tag)]
+        # outbound jumps
+        subflows = []
         index = 0
 
-        while len(conn_map) > 0:
-            curr_name = get_name(curr_elem)
-            curr_tag = get_tag(curr_elem)
-            assert curr_tag is not None
+        while True:
+            try:
+                jumps, is_terminal = get_jumps_and_terminal(elem_name, elem_tag, elem)
 
-            if (curr_name, curr_tag) in traversed:
-                # we are looping back in the segment. break here, and
-                # the element will not be added to this segment.
-                # It will then appear in some other segment pointing to this segment.
-                #
-                # If it points to an element somewhere in the middle of this segment,
-                # that will be addressed in the `fix_duplicates` function below.
-                break
+                if is_subflow(elem):
+                    subflows = [index]
+
+                if len(jumps) == 1 and elem_tag != 'loops' and not is_terminal:
+                    # now check that the next elem has only one inbound
+                    next_elem = parser.get_by_name(jumps[0].target)
+                    next_name = get_name(next_elem)
+
+                    # some flows are missing target elements even
+                    # though the target is specified in the connector. WTF.
+                    if next_name in inbound_map:
+                        next_inbound = inbound_map[next_name]
+                    else:
+                        next_inbound = []
+
+                    if len(next_inbound) == 1:
+                        # we continue in the segment
+                        elem = next_elem
+                        elem_name = next_name
+                        elem_tag = get_tag(elem)
+
+                        assert (elem_name, elem_tag) not in traversed
+                        traversed.append((elem_name, elem_tag))
+                        index += 1
+                        continue
+
+                return Segment(label=label,
+                               subflows=subflows,
+                               traversed=traversed,
+                               jumps=jumps,
+                               is_multiple_inbound=is_multiple_inbound,
+                               is_terminal=is_terminal
+                               )
+            except:
+                logger.critical(f"Could not crawl flow {parser.get_filename()} {traceback.format_exc()}")
+                raise InvalidFlowException("Could not crawl flow", flow_path=parser.get_filename())
+
+
+def get_jumps_and_terminal(el_name: str, el_tag:str, elem: El) -> tuple[list[Jump], bool]:
+    """Return list of jumps for this element, is_terminal (bool)"""
+
+    jumps = []
+    conns = get_conn_target_map(elem)
+
+    if not conns:
+        # no outbound connectors means the element is terminal
+        return jumps, True
+
+    if is_loop(elem):
+        no_more_seen = False
+        # loops will be terminal without a noMoreValues connector
+        for key, val in conns.items():
+            conn_tag = get_tag(key)
+            if conn_tag == 'noMoreValuesConnector':
+                is_no_more = True
+                no_more_seen = True
             else:
-                traversed.append((curr_name, curr_tag))
+                is_no_more = False
 
-            if is_subflow(curr_elem):
-                subflows.append(index)
+            jumps.append(Jump(src_name=el_name,
+                              target=val[0],
+                              is_goto=val[1] is ConnType.Goto,
+                              is_loop=is_no_more is False,
+                              is_no_more_values=is_no_more,
+                              is_fault=False
+                              )
+                         )
+        # If the loop does not have a noMoreValuesConnector, then it is terminal
+        jumps.sort(key=lambda x: x.priority())
+        return jumps, no_more_seen is False
 
-            if is_loop(curr_elem):
-                # loops always terminate a segment
-                for conn, val in conn_map.items():
-                    elem_is_loop = False
-                    no_more_seen = False
+    for key, val in conns.items():
+        jumps.append(Jump(src_name=el_name,
+                          is_goto=val[1] is ConnType.Goto,
+                          target=val[0],
+                          is_loop=False,
+                          is_no_more_values=False,
+                          is_fault=val[1] is ConnType.Exception))
 
-                    if get_tag(conn) == 'noMoreValuesConnector':
-                        is_optional = False
-                        no_more_seen = True
 
-                    if get_tag(conn) == 'nextValueConnector':
-                        elem_is_loop = True
-                        # there may be no values at all,
-                        # in which case this branch may never be taken
-                        is_optional = True
+    jumps.sort(key=lambda x: x.priority())
 
-                    jumps.append(Jump(src_name=curr_name,
-                                      target=val[0],
-                                      is_goto=val[1] is ConnType.Goto,
-                                      is_loop=elem_is_loop,
-                                      is_no_more_values=no_more_seen,
-                                      is_fault=False
-                                      )
-                                 )
-                break
+    # Now we need to decide if the element is terminal.
+    #
+    # If a decision
+    is_terminal = False
+    if el_tag == 'decisions':
+        is_terminal = next((x for x in conns.keys() if get_tag(x) == 'defaultConnector'), False) is False
 
-            elif len(conn_map) == 1:
-                vals = list(conn_map.values())
-                is_optional = vals[0][2]
+    elif len(conns) == 1 and list(conns.values())[0][1] is ConnType.Exception:
+        # we may also have the case where the only outbound connector is a faultHandler
+        is_terminal = True
 
-                if (vals[0][1] is not ConnType.Goto and
-                    not is_optional):
-
-                    # this is a normal connector that must always be followed
-                    curr_elem = parser.get_by_name(vals[0][0])
-                    conn_map = _get_connector_map(curr_elem, parser=parser)
-                    continue
-
-                else:
-                    # although there is only one connector, it is optional
-                    # which means the current element terminates the segment
-                    # and *may* terminate the flow
-                    # and the connector is turned into a jump
-                    jumps.append(Jump(src_name=curr_name,
-                                      is_goto=vals[0][1] is ConnType.Goto,
-                                      target=vals[0][0],
-                                      is_loop=False,
-                                      is_no_more_values=False,
-                                      is_fault=vals[0][1] is ConnType.Exception))
-
-                    break
-
-            elif len(conn_map) > 1:
-                is_optional = True
-                # There is more than one connector, so
-                for val in conn_map.values():
-
-                    # a single non-optional connector makes the segment non-terminal
-                    if not val[2]:
-                        is_optional = False
-                    jumps.append(Jump(src_name=curr_name,
-                                      target=val[0],
-                                      is_goto=val[1] is ConnType.Goto,
-                                      is_loop=False,
-                                      is_no_more_values=False,
-                                      is_fault=val[1] is ConnType.Exception
-                                      )
-                                 )
-                break
-
-            # end of conditionals
-            index += 1
-
-        # end of while loop
-
-        # Check if the last element in a segment that may also end the flow
-        if len(conn_map) == 0:
-            curr_tag = get_tag(curr_elem)
-            curr_name = get_name(curr_elem)
-            if (curr_name, curr_tag) not in traversed:
-                traversed.append((curr_name, curr_tag))
-
-                if is_subflow(curr_elem):
-                    subflows.append(index)
-
-        if len(jumps) == 0:
-            # if there are no more jumps, this is a terminal element
-            is_optional = True
-        else:
-            # sort jumps so nextValue is taken first
-            jumps.sort(key=lambda x: x.priority())
-
-        return Segment(label=label,
-                       subflows=subflows,
-                       jumps=jumps,
-                       traversed=traversed,
-                       is_terminal=is_optional)
+    return jumps, is_terminal
 
 
 @dataclass(frozen=True, eq=True, slots=True)
@@ -308,47 +302,42 @@ class ControlFlowGraph(JSONSerializable, AbstractControlFlowGraph):
         start_elem = parser.get_start_elem()
         start_label = get_name(start_elem)
         visited_labels = []
-        visited_elems = set()
+        visited_elems = []
         segment_map = {}
         to_visit = [start_elem]
 
+        # segment label -> jumps that reach it
+        inbound_jumps = {}
         while len(to_visit) > 0:
 
             curr_elem = to_visit.pop(0)
-            curr_segment = Segment.build_from_parser(parser=parser,
-                                                     elem=curr_elem)
-
-            segment_map[curr_segment.label] = curr_segment
+            curr_segment = Segment.build_from_parser(parser=parser, start_elem=curr_elem)
+            curr_name = curr_segment.label
+            segment_map[curr_name] = curr_segment
 
             # add segment label to visited
             if curr_segment.label not in visited_labels:
                 visited_labels.append(curr_segment.label)
-
-            visited_elems.update(curr_segment.traversed)
+                visited_elems = visited_elems + curr_segment.traversed
 
             # update to_visit with new jumps
             for jmp in curr_segment.jumps:
                 tgt = jmp.target
+
                 tgt_elem = parser.get_by_name(tgt)
+
+                # handle case of missing targets in malformed flows
+                if tgt_elem is None:
+                    continue
+
                 if tgt not in visited_labels and tgt_elem not in to_visit:
                     to_visit.append(tgt_elem)
-
-        # The resulting Segments are fine except for
-        # gotos leading to duplicates. These are fixed here.
-        _fix_duplicates(segment_map)
-
-        # Now generate inbound:
-        inbound = {}
-
-        for seg in segment_map.values():
-            for jmp in seg.jumps:
-                if jmp.target in inbound:
-                    inbound[jmp.target].append(jmp)
+                    inbound_jumps[tgt] = [jmp]
                 else:
-                    inbound[jmp.target] = [jmp]
+                    inbound_jumps[tgt].append(jmp)
 
         return ControlFlowGraph(start_label=start_label,
-                                inbound=inbound,
+                                inbound=inbound_jumps,
                                 segment_map=segment_map)
 
 def get_crawl_data(cfg: ControlFlowGraph) -> \
@@ -370,7 +359,6 @@ def get_crawl_data(cfg: ControlFlowGraph) -> \
     terminal_steps = []
     el_2_cs = dict() # mapping el_name to list of crawl steps
     step = 0
-    max_visit = 100
 
     for (visitor, segment) in generator:
 
@@ -402,13 +390,13 @@ def get_crawl_data(cfg: ControlFlowGraph) -> \
             if vals is None:
                 el_2_cs[el_name] = [cs]
             else:
-                vals.append(cs)
+                vals.append(cs) # noqa
 
             step += 1
 
     return tuple(crawl_steps), tuple(terminal_steps), el_2_cs
 
-def get_visits_statistics(visit_map: dict[str, Jump | None], cfg: ControlFlowGraph):
+def get_visits_statistics(visit_map: dict[str, list[Jump] | None], cfg: ControlFlowGraph):
     # first check that every label has been visited:
     missed = []
     for label in cfg.segment_map:
@@ -487,7 +475,6 @@ def _crawl_iter(cfg: ControlFlowGraph) -> Generator[tuple[BranchVisitor, Segment
     worklist = []
     visitor_counts = {}
     visited_jumps = []
-    first_seen_inbound = {} #: segment_label -> visitor.previous_label
 
     while len(worklist) > 0 or visitor is not None:
         if visitor is None and len(worklist) > 0:
@@ -516,7 +503,7 @@ def _crawl_iter(cfg: ControlFlowGraph) -> Generator[tuple[BranchVisitor, Segment
         else:
             visitor_counts[curr_label] += 1
             if visitor_counts[curr_label] > MAX_VISITS_PER_SEGMENT:
-                logger.critical(f"Attempting to visit {curr_label} {visitor_counts[curr_label]} "
+                logger.info(f"Attempting to visit {curr_label} {visitor_counts[curr_label]} "
                                 f"times, stopping this visitor.")
                 visitor = None
                 continue
@@ -525,37 +512,11 @@ def _crawl_iter(cfg: ControlFlowGraph) -> Generator[tuple[BranchVisitor, Segment
 
         yield visitor, segment
 
-        # todo: cache this
-        if segment.label == '*':
-            is_multiple = False
-        else:
-            inbounds = cfg.inbound[segment.label]
-            if len(inbounds) <= 1:
-                is_multiple = False
-
-            elif curr_label not in first_seen_inbound:
-                is_multiple = False
-                first_seen_inbound[curr_label] = prev_label
-
-            else:
-                is_multiple = prev_label != first_seen_inbound[curr_label]
-
-        next_visitors = segment.accept(visitor, multiple_inbound=is_multiple)
+        next_visitors = segment.accept(visitor)
 
         if next_visitors is None or len(next_visitors) == 0:
             visitor = None
-            """
-            # no more visitors means current branch is exhausted
-            # if the current branch was not visited, then yield it now
-            history = visitor.history + ((visitor.previous_label, visitor.current_label),)
-            last_visitor = dataclasses.replace(visitor,
-                previous_label=label,
-                current_label=None,
-                history=history
-            )
-            yield last_visitor, segment
-            visitor = None
-            """
+
         else:
             # depth-first search so take first branch and assign as current
             visitor = next_visitors[0]
@@ -599,96 +560,6 @@ def _find_segments_with_elem(val: str, segment_map: dict[str, Segment]) -> list[
                 break
 
     return to_return
-
-
-def _fix_duplicates(segment_map: dict[str, Segment]) -> None:
-    """segment surgery to merge duplicate paths
-
-    Sometimes we have::
-
-       segment 1: A->B->C
-       segment 2: X->A->B->C
-
-    Which should be turned into::
-
-       segment 1: A->B->C
-       segment 2': X :jump A
-
-    Or if we have::
-
-        segment 3: X->Y->A
-        segment 4: W->B->A
-
-    Then this should be merged into:
-
-        segment 3': X->Y jump A
-        segment 4': W->B jump A
-        new segment: A
-
-    Args:
-        segment_map: label -> Segment
-
-    Returns:
-        None. (Segments updated in place)
-    """
-    crawled = []
-    segments = segment_map.values()
-    for segment in segments:
-        crawled = crawled + segment.traversed
-
-    dupes = {x for x in crawled if crawled.count(x) > 1}
-    if len(dupes) == 0:
-        return
-    # el: string name of dupe flow element
-    # val: list (segment, index of traversed in segment)
-    processed = []
-    for val in dupes:
-        if val in processed:
-            continue
-
-        dupes = _find_segments_with_elem(val, segment_map)
-        new_segment = None
-
-        # (segment, index)
-        for (label, segment, val_index) in dupes:
-            if val_index == 0:
-                # the dupe *starts* a segment, so it is the entire segment
-                new_segment = segment
-            else:
-                # the dupe is partway through the segment
-                subflows = [x for x in segment.subflows if x < val_index]
-                new_jump = Jump(src_name=segment.traversed[val_index - 1][0],
-                                target=val[0],
-                                is_loop=False,
-                                is_goto=False,
-                                is_no_more_values=False,
-                                is_fault=False
-                                )
-                # replace the segment
-                segment_map[label] = Segment(label=segment.label,
-                                             traversed=segment.traversed[:val_index],
-                                             subflows=subflows,
-                                             jumps=[new_jump],
-                                             is_terminal=False)
-        # now, make the jump target
-        if new_segment is not None:
-            # we already have it, no need to add it.
-            pass
-        else:
-            # make it. All dupes of the same value must end in the same way
-            # so take the first
-            (seg_index, segment, val_index) = dupes[0]
-            new_segment = Segment(label=val[0],
-                                  traversed=segment.traversed[val_index:],
-                                  subflows=[x for x in segment.subflows if x >= val_index],
-                                  jumps=segment.jumps,
-                                  is_terminal=segment.is_terminal)
-
-            segment_map[val[0]] = new_segment
-
-        # add all the traversed elems to processed
-        # so we don't make more new segments unnecessarily
-        processed = processed + new_segment.traversed
 
 class CrawlEncoder(json.JSONEncoder):
     def default(self, obj):
@@ -739,15 +610,22 @@ class Crawler(AbstractCrawler):
         #: crawl_step -> last seen ancestor
         self.history_maps: dict[tuple[tuple[str, str], ...], CrawlStep] = history_maps or {}
 
-        #: previous crawlers, None if this is the first
-        #: if we are 3 frames deep, this is descending order: history = [(crawler 2, int 2), (crawler 1, int 1)]
-        self.crawler_history: list[tuple[Crawler, int]] | None = None
+        #: previous subflow/action elements that spawned the current crawler.
+        # None if this is the first. if we are 3 frames deep, this is descending order:
+        #       history = [(parent_subflow, parent_path), (grandparent_subflow, grandparent_path), ...]
+        self.subflow_parents: list[tuple[El, str]] | None = None
 
         #: file path
         self.flow_path: str | None = flow_path
 
-        #:
+        #: map from element to all crawl_steps in which it has been crawled
         self.el_2_cs: dict[str, list[CrawlStep]] | None = el_2_cs
+
+        #: traversable elem name -> list of other elements that point to it
+        self.traversable_inbound: dict[str, list[str]] | None = None
+
+        #: all traversable element tuples (names, tags) connected to the start
+        self.crawlable_elem_tuples: list[tuple[str, str]] | None = None
 
     @classmethod
     def from_parser(cls, parser: parse.Parser):
@@ -774,94 +652,20 @@ class Crawler(AbstractCrawler):
             el_2_cs=el_2_cs
         )
 
-    def get_control_influence_from_source(self, influenced_var: str,
-                                                source_var: var_t) ->tuple[var_t, ...] | None:
-        """Both the influenced and source variables are top level flow elements.
-           The influenced variable is in the current flow path, the source variable may be in
-           a different flow path (so we need the tuple (path, varname)). If the source variable control
-           influences the influenced_variable, then a chain of (path, element name) will be returned starting
-           at the source and leading to the influenced variable. The chain only contains branches
-           and subflow chains, not every step, but every step could be reconstructed if desired
-           by adding in the segment traversals.
-
-           This must be run at every frame load, because a subflow may be loaded multiple times, with a larger
-           set of control influencers each time it is called.
-
-           For example, in frame A, we have start --> branch 1, branch 2, and each branch may call the same subflow.
-           So a given element in the subflow will be control influenced by branch 1 the first time it is called,
-           and by both branch 1 and branch 2 the second time it is entered. So to get a global control
-           influencing answer, you need to call this function on every subflow load. You do not need to wait
-           until a given subflow is fully crawled, as the full crawl info is generated by the parser when the
-           flow is loaded.
-
-        Args:
-            influenced_var (str): top level (traversable) flow element name in the flow crawled by this current crawler.
-            source_var (str, str): flow_path, element name in either the current flow or in another flow that may or
-                                   may not be an ancestor in the call chain.
-
-        Returns:
-            None if there is no influence, or a set of crawl steps linking the source to the influenced.
-            Only a single chain of crawl steps is returned, there may be other control influence chains.
-
-        """
-        if source_var is None or influenced_var is None:
-            return None
-
-        # case 1: (Local Analysis) everything is in the same flow
-        src_path = source_var[0]
-        if self.flow_path == src_path:
-            if influenced_var == source_var[1]:
-                # trivial case
-                return (src_path, influenced_var)
-
-            res = self._get_local_control(influenced_var, source_var)
-            if res is None:
-                return None
-            else:
-                return tuple([(src_path, x) for x in res])
-
-        # case 2: the source is in a subflow descendent. Because all elements
-        # are connected to the start, we only care about the chain of start elements/subflow
-        # elems connecting to the source elem.
-
-        # set of (call-chain height, (crawler, crawler_step_index))
-        candidates = [(index, x) for (index, x) in enumerate(self.crawler_history) if x[0].flow_path == src_path]
-
-        if len(candidates) == 0:
-            return None
-        else:
-            for index, (crawler, step_index) in candidates:
-                tail = self._get_local_control(crawler.crawl_schedule[step_index].element_name, source_var[1])
-                if tail is not None:
-                    result = [(self.flow_path, influenced_var)]
-                    # we have a chain from source -> subflow that exited the frame.
-                    # Now, fill in until we get to the start element of the current frame.
-                    for i in range(index):
-                        c = self.crawler_history[i][0]
-                        step = self.crawler_history[i][1]
-                        elem = c.crawl_schedule[step].element_name
-                        path = c.flow_path
-                        result.append((path, elem))
-
-                    [result.append((src_path, el)) for el in tail]
-                    return tuple(result)
-
-            return None
-
     def get_crawl_schedule(self)->tuple[CrawlStep, ...]:
         return self.crawl_schedule
 
     def get_flow_path(self) -> str | None:
         return self.flow_path
 
-    def get_crawler_history_unsafe(self) -> list[tuple[Crawler, int]]:
+    def get_subflow_parents(self) -> list[tuple[El, str]]:
         """READ ONLY
 
         Returns:
             history of crawlers encountered during crawl, together with the current step (int)
             when they entered a child flow.
         """
-        return self.crawler_history
+        return self.subflow_parents
 
     def get_cfg(self)-> ControlFlowGraph:
         return self.cfg
@@ -917,7 +721,7 @@ class Crawler(AbstractCrawler):
             return res
 
     def get_elem_to_crawl_step(self, elem_name: str) -> list[CrawlStep]:
-        """returns a list of all crawlsteps in which this element has been visited
+        """returns a list of all crawl steps in which this element has been visited
          during the crawl of this flow. If not visited, the empty list is returned.
 
         Args:
@@ -934,39 +738,71 @@ class Crawler(AbstractCrawler):
         else:
             return dict.get(self.el_2_cs, elem_name, list())
 
-    def _get_local_control(self, influenced_el: str, influencer_el) -> tuple[var_t, ...] | None:
-        sink_crawl_steps = self.el_2_cs.get(influenced_el, [])
-        source_crawl_steps = self.el_2_cs.get(influencer_el, [])
+    def get_crawlable_elem_tuples(self) -> list[tuple[str, str]] | None:
+        """Returns all traversable element name, tag tuples that are connected to the start element
+        """
+        if self.crawlable_elem_tuples is None:
+            accum = []
+            for seg in self.cfg.segment_map.values():
+                accum = accum + seg.traversed
 
-        if len(sink_crawl_steps) == 0 or len(source_crawl_steps) == 0:
-            return None
+            self.crawlable_elem_tuples = accum
+        return self.crawlable_elem_tuples
+
+    def get_call_chain(self, source_el: El, source_path: str,
+                       sink_el: El, source_parser: FlowParser) -> list[tuple[El, str]] | None:
+        """sink_el must be in the current flow. source_el can be in an ancestor
+        flow. Only returns paths currently crawled, so this must be called
+        every time a specific frame is loaded.
+
+        Returns:
+            A list starting with the source and ending with the sink in which the each is an
+            ancestor caller of the succeeding element.
+            [(element, element flow path)]
+
+        """
+        source_el_tag = parse_utils.get_tag(source_el)
+        source_el_name = parse_utils.get_name(source_el)
+        sink_el_name = parse_utils.get_name(sink_el)
+
+        if source_el_tag in parse_utils.START_ELEMS:
+            local_source_influenced = [x[0] for x in self.get_crawlable_elem_tuples()]
         else:
-            for source in source_crawl_steps:  #
-                # Because of how this info is built, the first element is likely
-                # to have the smallest branch history, which speeds things up.
-                sink = sink_crawl_steps[0]
+            local_source_influenced = source_parser.get_traversable_descendents_of_elem(source_el_name)
 
-                sin_l = len(sink.visitor.history)
-                src_l = len(source.visitor.history)
-                if sin_l > src_l and (sink.visitor.history[0:len(source.visitor.history)] == source.visitor.history):
+        if not local_source_influenced:
+            return None
 
-                    # we choose jump target arbitrarily - it doesn't matter
-                    # as long as we are consistent since this is for the auditor's own info
-                    return ((source.element_name,) + tuple([x[1] for x in sink.visitor.history[src_l + 1:]])
-                            + (sink.element_name,))
+        if source_path == self.flow_path:
+            if sink_el_name in local_source_influenced:
+                if sink_el_name == source_el_name:
+                    return [(source_el, source_path)]
+                else:
+                    return [(source_el, source_path), (sink_el, source_path)]
+            else:
+                return None
 
-                elif sin_l == src_l and sink.visitor.history == source.visitor.history:
-                    # Both the sink and source are already on the same segment, so
-                    # we only need to check if src is dominant.
-                    if sink.local_index > source.local_index:
-                        # sink is downstream of source, so source dominates
-                        return source.element_name, sink.element_name
-                    else:
-                        return None
+        else:
+            # sink is in a subflow of the source
+            if not self.subflow_parents:
+                return None
 
-        return None
+            reversed_subs = list(reversed(self.subflow_parents))
+            subs_start_in_src = [(index, sub_entry) for
+                                 (index, sub_entry) in enumerate(reversed_subs)
+                                 if (sub_entry[1] == source_path and parse_utils.get_name(sub_entry[0]) in local_source_influenced)]
 
-def dump_cfg(cfg: ControlFlowGraph, fp: TextIO) -> None:
+            if not subs_start_in_src:
+                return None
+            else:
+                # take last one, which is the shortest path of subflow calls
+                # from source to current location
+                index, x = subs_start_in_src[-1]
+                result_path = reversed_subs[index:] + [(sink_el, self.flow_path)]
+                return result_path
+
+
+def dump_cfg(cfg: ControlFlowGraph, fp: SupportsWrite[str]) -> None:
     """Writes to file pointer
 
     Args:
@@ -990,11 +826,20 @@ def validate_cfg(cfg: ControlFlowGraph,
     for segment in cfg.segment_map.values():
         crawled_elems = crawled_elems + segment.traversed
 
-    # ..check there are no missing crawlable elements
+    # ..check there are elements not in the cfg
     missing = [x for x in all_elem_tuples if x not in crawled_elems]
 
+    # make sure this is not a disconnected flow:
+    inbound = parser.get_traversable_inbound()
+    is_disconnected = next((x is not None for x in inbound if
+                            (not inbound[x] and x != '*')), False)
+    if is_disconnected is True:
+        not_orphaned = []
+    else:
+        not_orphaned = missing
+
     if missing_only:
-        return missing
+        return not_orphaned
 
     else:
         # continue to gather other statistics
@@ -1003,21 +848,21 @@ def validate_cfg(cfg: ControlFlowGraph,
         # ..check there are no duplicates
         duplicates = [x for x in crawled_elems if counts[x] > 1]
 
-        if len(duplicates) != 0:
+        if len(duplicates) != 0 or len(not_orphaned) != 0:
             valid = False
             print("invalid crawl info")
             for x in duplicates:
                 print(f"duplicate: {x}")
+            for x in not_orphaned:
+                # some flows include disconnected elements that can't be crawled.
+                print(f"caution missing element found: {x}")
         else:
             valid = True
-        for x in missing:
-            # some flows include disconnected elements that can't be crawled.
-            print(f"caution missing element found: {x}")
 
         return valid
 
-def _get_connector_map(elem: ET.Element,
-                       parser: Parser) -> dict[ET.Element, tuple[str, ConnType, bool]]:
+def _get_connector_map(elem: El,
+                       parser: Parser) -> dict[El, tuple[str, ConnType, bool]]:
     """
     Wrapper for getting connectors that handles start elements and missing
     connector targets, which requires a parser. 
@@ -1037,6 +882,7 @@ def _get_connector_map(elem: ET.Element,
 
 def tuple_trace(x: tuple[tuple[str, str], ...]) -> frozenset[tuple[str, str]]:
     return frozenset([t for t in x])
+
 
 def _right_find(my_iter: tuple[str, ConnType], val_to_find) -> int:
     """

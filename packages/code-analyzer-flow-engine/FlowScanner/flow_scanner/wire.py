@@ -35,9 +35,12 @@ import flow_parser.parse as parse
 from flow_scanner.branch_state import BranchState
 from public import parse_utils
 from public.data_obj import InfluenceStatement
-from public.parse_utils import ET
 from public.parse_utils import ns
 from enum import Enum
+import public.custom_parser as CP
+
+from typing import TypeAlias
+El: TypeAlias = CP.ET.Element
 
 #: module logger
 logger = logging.getLogger(__name__)
@@ -49,7 +52,7 @@ class QueryResult(Enum):
     OutputAssignmentsEls = 40
 
 
-def initialize(state: BranchState, elem: ET.Element, elem_name: str) -> dict[QueryResult, bool | str | ET.Element]:
+def initialize(state: BranchState, elem: El, elem_name: str) -> dict[QueryResult, bool | str | El]:
     """Add this element name to influence map if it represents its own output data
 
     (Element name is passed in so we don't need to keep looking it up)
@@ -84,7 +87,7 @@ def initialize(state: BranchState, elem: ET.Element, elem_name: str) -> dict[Que
 
     return result
 
-def wire(state: BranchState, elem: ET.Element) -> None:
+def wire(state: BranchState, elem: El) -> None:
     """Wires influence statements and variable initialization.
 
     When the value of one variable changes based on another.
@@ -168,7 +171,7 @@ def wire(state: BranchState, elem: ET.Element) -> None:
 
     return None
 
-def wire_waits(state: BranchState, elem: ET.Element, el_name: str, stored):
+def wire_waits(state: BranchState, elem: El, el_name: str, stored):
     """Wait events can fire events on exit which is handled via output ref
     """
     wait_events = parse_utils.get_by_tag(elem, 'waitEvents')
@@ -188,7 +191,7 @@ def wire_waits(state: BranchState, elem: ET.Element, el_name: str, stored):
 
 
 
-def wire_assignment(state: BranchState, elem: ET.Element, elem_name: str, stored):
+def wire_assignment(state: BranchState, elem: El, elem_name: str, stored):
     """Wires assignment statements to influence map in `state`
 
     Args:
@@ -316,7 +319,7 @@ def wire_orchestrated_stages(state, elem, el_name, stored):
             state.get_or_make_vector(name=fixed_name, store=True)
 
 
-def wire_loop(state: BranchState, elem: ET.Element, elem_name: str, stored):
+def wire_loop(state: BranchState, elem: El, elem_name: str, stored):
     """Wires collection loop is over to loop variable.
 
     Args:
@@ -328,7 +331,7 @@ def wire_loop(state: BranchState, elem: ET.Element, elem_name: str, stored):
         None
 
     """
-    collection_ref_els = parse.get_by_tag(elem, tagname='collectionReference')
+    collection_ref_els = parse.get_by_tag(elem, tag_name='collectionReference')
     if len(collection_ref_els) != 1:
         logger.warning(f"Found Loop without a collection reference in {elem_name}")
         return
@@ -341,7 +344,7 @@ def wire_loop(state: BranchState, elem: ET.Element, elem_name: str, stored):
                    el_name=elem_name, elem=elem,comment='assign to loop variable')
 
 
-def wire_collection_processor(state: BranchState, elem: ET.Element, elem_name: str, stored):
+def wire_collection_processor(state: BranchState, elem: El, elem_name: str, stored):
     """Wires collection reference in collection processor to collection elem.
 
     Args:
@@ -354,9 +357,9 @@ def wire_collection_processor(state: BranchState, elem: ET.Element, elem_name: s
 
     """
     # every collectionProcessor must have a single collection ref
-    subtype = parse.get_by_tag(elem, tagname='elementSubtype')
+    subtype = parse.get_by_tag(elem, tag_name='elementSubtype')
     if len(subtype) == 1 and subtype[0].text == 'FilterCollectionProcessor':
-        collection_el = parse.get_by_tag(elem, tagname='collectionReference')[0]
+        collection_el = parse.get_by_tag(elem, tag_name='collectionReference')[0]
     else:
         return
     collection_ref_var = collection_el.text
@@ -432,7 +435,7 @@ def wire_screens(state, elem, el_name, stored):
 
 
 def wire_and_store(state: BranchState, influencer:str, influenced: str,
-                   el_name: str, elem: ET.Element, comment: str) -> None:
+                   el_name: str, elem: El, comment: str) -> None:
     stmt = InfluenceStatement(
         influenced_var=influenced,
         influencer_var=influencer,
