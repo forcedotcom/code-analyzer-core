@@ -13,7 +13,7 @@ import {
 import {Clock, RealClock} from '@salesforce/code-analyzer-engine-api/utils';
 import {getMessage} from './messages';
 import {FlowNodeDescriptor, FlowScannerCommandWrapper, FlowScannerExecutionResult, FlowScannerRuleResult} from "./python/FlowScannerCommandWrapper";
-import {getDescriptionForRule, getRuleNameFromQueryId, getAllRuleNames, getQueryIdsForRule} from "./hardcoded-catalog";
+import {getDescriptionForRule, getAllRuleNames} from "./hardcoded-catalog";
 
 /**
  * An arbitrarily chosen value for how close the engine is to completion before the underlying Flow tool is invoked,
@@ -80,7 +80,8 @@ export class FlowScannerEngine extends Engine {
             this.emitRunRulesProgressEvent(normalizeRelativeCompletionPercentage(percentage));
         }
 
-        const queryIds: string[] = ruleNames.flatMap(getQueryIdsForRule);
+        // Query IDs are the same as rule names (1:1 mapping)
+        const queryIds: string[] = ruleNames;
 
         const executionResults: FlowScannerExecutionResult = await this.commandWrapper.runFlowScannerRules(
             runOptions.workingFolder,
@@ -142,7 +143,7 @@ function toEngineRunResults(flowScannerExecutionResult: FlowScannerExecutionResu
     for (const queryId of Object.keys(flowScannerExecutionResult.results)) {
         const flowScannerRuleResults: FlowScannerRuleResult[] = flowScannerExecutionResult.results[queryId];
         for (const flowScannerRuleResult of flowScannerRuleResults) {
-            const ruleName = getRuleNameFromQueryId(flowScannerRuleResult.query_id);
+            const ruleName = flowScannerRuleResult.query_id; // Query IDs are the same as rule names
             const flowNodes: FlowNodeDescriptor[] | undefined = flowScannerRuleResult.flow;
             if (flowNodes) { // If flow based violation
                 results.violations.push({

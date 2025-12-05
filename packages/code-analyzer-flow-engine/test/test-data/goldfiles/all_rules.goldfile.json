@@ -33,7 +33,7 @@
     "resourceUrls": []
   },
   {
-    "name": "HardCodedId",
+    "name": "HardcodedId",
     "description": "This rule detects hardcoded IDs within a flow. Hardcoded Ids are a bad practice, and such flows are not appropriate for distribution.",
     "severityLevel": 3,
     "tags": [
