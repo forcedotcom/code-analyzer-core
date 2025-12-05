@@ -43,7 +43,7 @@ const RULE_DESCRIPTIONS: RuleDescription[] = [
         resourceUrls: []
     },
     {
-        name: RuleName.HardCodedId,
+        name: RuleName.HardcodedId,
         description: getMessage('HardcodedIdRuleDescription'),
         severityLevel: SeverityLevel.Moderate,
         tags: [COMMON_TAGS.RECOMMENDED, COMMON_TAGS.CATEGORIES.BEST_PRACTICES, COMMON_TAGS.LANGUAGES.XML],
