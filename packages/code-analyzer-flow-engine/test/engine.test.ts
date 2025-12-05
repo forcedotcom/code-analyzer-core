@@ -60,31 +60,6 @@ function getPythonQueryIds(): string[] {
     return [...defaultQueryIds, ...optionalQueryIds].sort();
 }
 
-describe('TypeScript and Python rule name validation', () => {
-    it('All TypeScript rule names must match Python query IDs exactly (including case)', () => {
-        const tsRuleNames = getAllRuleNames().sort();
-        const pythonQueryIds = getPythonQueryIds();
-        
-        // Validate same count
-        expect(tsRuleNames).toHaveLength(pythonQueryIds.length);
-        
-        // Validate exact match (case-sensitive)
-        expect(tsRuleNames).toEqual(pythonQueryIds);
-    });
-
-    it('No duplicate rule names in TypeScript', () => {
-        const tsRuleNames = getAllRuleNames();
-        const uniqueNames = new Set(tsRuleNames);
-        expect(tsRuleNames.length).toEqual(uniqueNames.size);
-    });
-
-    it('No duplicate query IDs in Python', () => {
-        const pythonQueryIds = getPythonQueryIds();
-        const uniqueIds = new Set(pythonQueryIds);
-        expect(pythonQueryIds.length).toEqual(uniqueIds.size);
-    });
-});
-
 //the space in the "example workspaces" path is important for testing purposes. do not remove.
 const TEST_DATA_FOLDER: string = path.resolve(__dirname, 'test-data');
 const PATH_TO_NO_FLOWS_WORKSPACE = path.resolve(TEST_DATA_FOLDER, 'example workspaces', 'contains-no-flows');
@@ -751,5 +726,30 @@ describe('Tests for the FlowScannerEngine', () => {
                 expect(version).toMatch(/\d+\.\d+\.\d+.*/);
             });
         });
+    });
+});
+
+describe('TypeScript and Python rule name validation', () => {
+    it('All TypeScript rule names must match Python query IDs exactly (including case)', () => {
+        const tsRuleNames = getAllRuleNames().sort();
+        const pythonQueryIds = getPythonQueryIds();
+        
+        // Validate same count
+        expect(tsRuleNames).toHaveLength(pythonQueryIds.length);
+        
+        // Validate exact match (case-sensitive)
+        expect(tsRuleNames).toEqual(pythonQueryIds);
+    });
+
+    it('No duplicate rule names in TypeScript', () => {
+        const tsRuleNames = getAllRuleNames();
+        const uniqueNames = new Set(tsRuleNames);
+        expect(tsRuleNames.length).toEqual(uniqueNames.size);
+    });
+
+    it('No duplicate query IDs in Python', () => {
+        const pythonQueryIds = getPythonQueryIds();
+        const uniqueIds = new Set(pythonQueryIds);
+        expect(pythonQueryIds.length).toEqual(uniqueIds.size);
     });
 });
