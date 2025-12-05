@@ -8,7 +8,7 @@ enum RuleName {
     CyclicSubflow = 'CyclicSubflow',
     DbInLoop = 'DbInLoop',
     DefaultCopy = 'DefaultCopy',
-    HardcodedId = 'HardCodedId',
+    HardcodedId = 'HardcodedId',
     MissingDescription = 'MissingDescription',
     MissingFaultHandler = 'MissingFaultHandler',
     MissingNextValueConnector = 'MissingNextValueConnector',
