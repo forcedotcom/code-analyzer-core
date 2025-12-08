@@ -1,14 +1,12 @@
 import {COMMON_TAGS, RuleDescription, SeverityLevel} from '@salesforce/code-analyzer-engine-api';
 import {getMessage} from './messages';
 
-// Code Analyzer rule names
-//   Good news: The python flow scanner query ids now happen to be the exact same names as our code analyzer rule names
-//   so we no longer need to keep a map between the two.
+// Code Analyzer rule names (these match the Python flow scanner query IDs 1:1)
 enum RuleName {
     CyclicSubflow = 'CyclicSubflow',
     DbInLoop = 'DbInLoop',
     DefaultCopy = 'DefaultCopy',
-    HardcodedId = 'HardCodedId',
+    HardcodedId = 'HardcodedId',
     MissingDescription = 'MissingDescription',
     MissingFaultHandler = 'MissingFaultHandler',
     MissingNextValueConnector = 'MissingNextValueConnector',
@@ -136,32 +134,11 @@ export function getAllRuleNames(): string[] {
     return Object.values(RuleName);
 }
 
-export function getRuleNameFromQueryId(queryId: string): string {
-    // Good news: The python flow scanner query ids now happen to be the exact same names as our code analyzer rule names
-    //  so we no longer need to keep a map between the two. But leaving this helper just in case we need it again in the
-    //  future.
-
-    // istanbul ignore else
-    if (Object.values(RuleName).includes(queryId as RuleName)) {
-        return queryId;
-    } else {
-        throw new Error(`Developer error: invalid query id ${queryId}`);
-    }
-}
-
-export function getQueryIdsForRule(ruleName: string): string[] {
-    // It used to be that a single Code Analyzer rule could map to multiple flow scanner query ids. But now
-    // they are mapped 1-to-1 and happen to be the exact same names. But keeping the output as a string array
-    // just in case things change in the future.
-    const queryIds: string[] = [ruleName];
-    return queryIds;
-}
-
 export function getDescriptionForRule(ruleName: string): RuleDescription {
     // istanbul ignore else
     if (RULE_DESCRIPTIONS_BY_NAME.has(ruleName)) {
         return RULE_DESCRIPTIONS_BY_NAME.get(ruleName)!;
     } else {
-        throw new Error(`Developer rule: No rule with name ${ruleName}`);
+        throw new Error(`Developer error: No rule with name ${ruleName}`);
     }
 }

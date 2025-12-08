@@ -17,9 +17,48 @@ import {FlowScannerEngine} from "../src/engine";
 import {RunTimeFlowScannerCommandWrapper} from "../src/python/FlowScannerCommandWrapper";
 import {changeWorkingDirectoryToPackageRoot, createDescribeOptions, createRunOptions} from "./test-helpers";
 import {getMessage} from "../src/messages";
+import {getAllRuleNames} from "../src/hardcoded-catalog";
 import * as fs from "node:fs";
 
 changeWorkingDirectoryToPackageRoot();
+
+/**
+ * Extracts query IDs from a Python file by parsing the QUERIES dictionary.
+ * Looks for patterns like: QUERIES = { "QueryId": "Description", ... }
+ */
+function extractQueryIdsFromPythonFile(filePath: string): string[] {
+    const content = fs.readFileSync(filePath, 'utf-8');
+    
+    // Match QUERIES = { ... } block
+    const queriesMatch = content.match(/QUERIES\s*=\s*\{([^}]+)\}/s);
+    if (!queriesMatch) {
+        return [];
+    }
+    
+    // Extract keys from the dictionary (supports both single and double quotes)
+    const queryIds: string[] = [];
+    const keyPattern = /['"]([^'"]+)['"]\s*:/g;
+    let match;
+    while ((match = keyPattern.exec(queriesMatch[1])) !== null) {
+        queryIds.push(match[1]);
+    }
+    return queryIds;
+}
+
+/**
+ * Gets all Python query IDs by reading the actual Python source files.
+ * This ensures TypeScript stays in sync with Python automatically.
+ */
+function getPythonQueryIds(): string[] {
+    const flowScannerPath = path.resolve(__dirname, '..', 'FlowScanner', 'queries');
+    const defaultQueryPath = path.join(flowScannerPath, 'default_query.py');
+    const optionalQueryPath = path.join(flowScannerPath, 'optional_query.py');
+    
+    const defaultQueryIds = extractQueryIdsFromPythonFile(defaultQueryPath);
+    const optionalQueryIds = extractQueryIdsFromPythonFile(optionalQueryPath);
+    
+    return [...defaultQueryIds, ...optionalQueryIds].sort();
+}
 
 //the space in the "example workspaces" path is important for testing purposes. do not remove.
 const TEST_DATA_FOLDER: string = path.resolve(__dirname, 'test-data');
@@ -687,5 +726,30 @@ describe('Tests for the FlowScannerEngine', () => {
                 expect(version).toMatch(/\d+\.\d+\.\d+.*/);
             });
         });
+    });
+});
+
+describe('TypeScript and Python rule name validation', () => {
+    it('All TypeScript rule names must match Python query IDs exactly (including case)', () => {
+        const tsRuleNames = getAllRuleNames().sort();
+        const pythonQueryIds = getPythonQueryIds();
+        
+        // Validate same count
+        expect(tsRuleNames).toHaveLength(pythonQueryIds.length);
+        
+        // Validate exact match (case-sensitive)
+        expect(tsRuleNames).toEqual(pythonQueryIds);
+    });
+
+    it('No duplicate rule names in TypeScript', () => {
+        const tsRuleNames = getAllRuleNames();
+        const uniqueNames = new Set(tsRuleNames);
+        expect(tsRuleNames.length).toEqual(uniqueNames.size);
+    });
+
+    it('No duplicate query IDs in Python', () => {
+        const pythonQueryIds = getPythonQueryIds();
+        const uniqueIds = new Set(pythonQueryIds);
+        expect(pythonQueryIds.length).toEqual(uniqueIds.size);
     });
 });
