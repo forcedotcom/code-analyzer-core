@@ -1,9 +1,7 @@
-"""
-  Python module for parsing xml result file and generating html reports.
-  @author: rsussland@salesforce.com
+"""Python module for parsing XML result file and generating HTML reports.
 
-  This file will read from the package
-
+This module handles parsing of XML scan results and generation of HTML reports
+for flow scanner results. It reads query descriptions from the package data.
 """
 
 from __future__ import annotations
@@ -26,8 +24,8 @@ from . import ESAPI
 
 if TYPE_CHECKING:
     from public.data_obj import QueryDescription
-# Compatability:
-#   Python 3 doesn't have a 'unicode' function
+# Compatibility:
+#   Python 3 doesn't have a 'Unicode' function
 #
 
 # set up logging
@@ -65,20 +63,16 @@ QUERY_GROUP_PRIORITY = {
 
 
 def add_to_query_config(list_of_desc: list[QueryDescription]) -> None:
-    """Adds query descriptions to module-level config file if not present
+    """Add query descriptions to module-level config file if not present.
 
-    Call after loading any queries from disk. Must pass
-    an object of type public.data_obj.QueryDescription
+    Call after loading any queries from disk. Must pass objects of type
+    public.data_obj.QueryDescription.
 
     Args:
-        list_of_desc:
-
-    Returns:
-        None
+        list_of_desc: List of QueryDescription objects to add to config.
 
     Raises:
-        ValueError if query descriptions are already present
-
+        ValueError: If query descriptions are already present in config.
     """
     global QUERY_DESC
     if len(QUERY_DESC) == 1:
@@ -94,7 +88,7 @@ def add_to_query_config(list_of_desc: list[QueryDescription]) -> None:
         key_name = desc.query_id
         raw_severity = desc.severity.name.strip()
         severity = raw_severity.replace("_", " ")
-        if desc.is_security is True:
+        if desc.is_security:
             security = "1"
         else:
             security = "0"
@@ -112,7 +106,12 @@ def add_to_query_config(list_of_desc: list[QueryDescription]) -> None:
         QUERY_DESC.set(key_name, "security", security)
 
 
-def load_query_desc_from_config(path: str | None):
+def load_query_desc_from_config(path: str | None) -> None:
+    """Load query descriptions from a config file.
+
+    Args:
+        path: Path to config file. If None, uses DEFAULT_DESC_CONFIG_PATH.
+    """
     if path is None:
         path = DEFAULT_DESC_CONFIG_PATH
     if not os.path.exists(path):
@@ -122,33 +121,53 @@ def load_query_desc_from_config(path: str | None):
         QUERY_DESC.read_string(
             pkgutil.get_data(__name__, os.path.join("data", path)).decode()
         )
+        return None
 
 
 def add_to_presets(presets: list[str], preset_name: str) -> None:
+    """Add a preset to the software presets dictionary.
+
+    Args:
+        presets: List of query names in the preset.
+        preset_name: Name of the preset to add.
+    """
     global SOFTWARE_PRESETS
     SOFTWARE_PRESETS[preset_name] = presets
     pass
 
 
 def get_software_presets(preset_name: str) -> list[str]:
-    """Returns empty list if no software presets found with this name
+    """Get a software preset by name.
 
     Args:
-        preset_name: name of preset to retrieve
+        preset_name: Name of preset to retrieve.
 
     Returns:
-        List of query names in this preset
+        List of query names in this preset, or empty list if not found.
     """
     return dict.get(SOFTWARE_PRESETS, preset_name, [])
 
 
-def serialize(portion, elem):
-    """ serializes element from iterparse.
-        (N.B: iterparse returns bytestrings, not code points. This is true for events, tags, etc.
-        Because we are using unicode literals, this means a decoding will occur. Decoding automatically
-        occurs when concatenating a string with a unicode code point)
-        """
-    out = ''
+def serialize(portion: str | None, elem) -> str:
+    """Serialize element from iterparse to string representation.
+
+    .. note::
+        iterparse returns bytestrings, not code points. This is true for events,
+        tags, etc. Because we are using Unicode literals, decoding will occur.
+        Decoding automatically occurs when concatenating a string with a Unicode
+        code point.
+
+    Args:
+        portion: Portion to serialize ('start', 'end', or None).
+        elem: XML Element to serialize.
+
+    Returns:
+        Serialized string representation of the element.
+
+    Raises:
+        RuntimeError: If portion is invalid.
+    """
+
     line_end = '\n'
     if os.name == 'nt':
         line_end = '\r' + line_end
@@ -177,7 +196,15 @@ def serialize(portion, elem):
         raise RuntimeError('Called with invalid portion' + portion)
 
 
-def escape(msg):
+def escape(msg: str) -> str:
+    """Escape HTML special characters in a string.
+
+    Args:
+        msg: String to escape.
+
+    Returns:
+        Escaped string with HTML entities.
+    """
     msg = msg.replace("<", "&lt;")
     msg = msg.replace(">", "&gt;")
     msg = msg.replace("&", "&amp;")
@@ -185,7 +212,17 @@ def escape(msg):
     return msg
 
 
-def normalize_query_path(s):
+def normalize_query_path(s: str) -> str:
+    """Normalize a query path string.
+
+    Removes version information and normalizes path separators and spaces.
+
+    Args:
+        s: Query path string to normalize.
+
+    Returns:
+        Normalized query path.
+    """
     index = s.rfind('Version:')
     if index > 1:
         t = s[:s.find('Version:')].strip()
@@ -194,8 +231,8 @@ def normalize_query_path(s):
     return t.replace('\\', '.').replace(' ', '_')
 
 
-def _get_fallback_query(s):
-    """Gets default query in case no match found
+def _get_fallback_query(s: str) -> str | None:
+    """Get default query in case no exact match found.
 
     If we override a query, the path changes, e.g. from::
 
@@ -205,16 +242,15 @@ def _get_fallback_query(s):
 
         'Apex.Corp.General.SOQL_SOSL_Injection'
 
-    but we don't want to make a new query description entry
-    so look through the description file to see if
-    there is an existing description
+    but we don't want to make a new query description entry. So we look
+    through the description file to see if there is an existing description
+    with the same short name.
 
     Args:
-        s: the normalized corp query found
+        s: The normalized query path found.
 
     Returns:
-        original normalized cx query path
-
+        Original normalized query path if found, None otherwise.
     """
     try:
         QUERY_DESC.get(s, 'name')
@@ -228,7 +264,15 @@ def _get_fallback_query(s):
             return None
 
 
-def get_query_for_config(path):
+def get_query_for_config(path: str) -> str:
+    """Get query path for config lookup, using fallback if needed.
+
+    Args:
+        path: Original query path.
+
+    Returns:
+        Query path to use for config lookup (original or fallback).
+    """
     original_query = normalize_query_path(path)
     fallback = _get_fallback_query(original_query)
     if fallback is None:
@@ -238,18 +282,43 @@ def get_query_for_config(path):
     return query_path
 
 
-def normalize_time(s):
+def normalize_time(s: str | None) -> str | None:
+    """Normalize a timestamp string.
+
+    Args:
+        s: Timestamp string to normalize.
+
+    Returns:
+        Normalized timestamp string, or None if input is None.
+    """
     if s is not None and 'Z' in s:
         return s.replace('T', ' ').replace('Z', '')[:-4]
     else:
         return s
 
 
-def truncate(msg, size=40):
+def truncate(msg: str, size: int = 40) -> str:
+    """Truncate a string to a maximum length.
+
+    Args:
+        msg: String to truncate.
+        size: Maximum length before truncation. Defaults to 40.
+
+    Returns:
+        Truncated string with "..." appended if truncated, original string otherwise.
+    """
     return (msg[:size] + "...") if len(msg) > size else msg
 
 
-def _make_scanner_help(help_url):
+def _make_scanner_help(help_url: str | None) -> str:
+    """Generate HTML help message for scanner reports.
+
+    Args:
+        help_url: Optional URL to scanner help page.
+
+    Returns:
+        HTML string with help message.
+    """
     if help_url is not None:
         msg = ('<div class="row"><div class="col-xs-10">'
                'For any questions about this service, please consult the scanner help page at'
@@ -260,26 +329,53 @@ def _make_scanner_help(help_url):
     return msg
 
 
-def reverse_map(vuln_map):
-    """Go from 1) a dict of field names to vuln name list
-    to 2) a dict of vuln names to field name lists
+def reverse_map(vuln_map: dict) -> dict:
+    """Reverse a vulnerability mapping dictionary.
+
+    Converts from a dict of field names to vulnerability name lists,
+    to a dict of vulnerability names to field name lists.
+
+    Args:
+        vuln_map: Dictionary mapping field names to lists of vulnerability names.
+
+    Returns:
+        Dictionary mapping vulnerability names to lists of field names.
     """
-    reverse_map = {}
+    rev_map = {}
     for key in vuln_map:
         for val in vuln_map[key]:
-            if val not in reverse_map:
-                reverse_map[val] = []
-                reverse_map[val].append(key)
-    return reverse_map
+            if val not in rev_map:
+                rev_map[val] = []
+                rev_map[val].append(key)
+    return rev_map
 
 
-def _bail(msg, exception=Exception):
+def _bail(msg: str, exception: type[Exception] = Exception) -> None:
+    """Log a critical error and raise an exception.
+
+    Args:
+        msg: Error message.
+        exception: Exception class to raise. Defaults to Exception.
+
+    Raises:
+        exception: Always raises the specified exception type.
+    """
     logger.critical(PARSE_ERROR + msg)
     raise exception(msg)
 
 
-def _safe_append(fp, data):
-    """Accepts file pointer and unicode data to append. Does not throw exceptions."""
+def _safe_append(fp, data: str) -> bool:
+    """Safely append Unicode data to a file pointer.
+
+    Does not throw exceptions - logs errors instead.
+
+    Args:
+        fp: File pointer to write to.
+        data: Unicode string data to append.
+
+    Returns:
+        True if write succeeded, False otherwise.
+    """
     # TODO: email exception?
     try:
         fp.write(data)
@@ -290,8 +386,18 @@ def _safe_append(fp, data):
         return False
 
 
-def _safe_prepend(filepath, data):
-    """Accepts filepath and data to prepend. Does not throw exceptions."""
+def _safe_prepend(filepath: str, data: str) -> bool:
+    """Safely prepend data to a file.
+
+    Does not throw exceptions - logs errors instead.
+
+    Args:
+        filepath: Path to file to prepend to.
+        data: String data to prepend.
+
+    Returns:
+        True if prepend succeeded, False otherwise.
+    """
     # TODO: email exception?
     try:
         temp_file = filepath + "_tmp"
@@ -310,14 +416,14 @@ def _safe_prepend(filepath, data):
         return False
 
 
-def count_issues(scan_results):
-    """
+def count_issues(scan_results) -> tuple[int, int]:
+    """Count security and quality issues from scan results.
+
     Args:
-        scan_results: scan_results: List<QueryData>
+        scan_results: List of QueryData objects from scan.
 
     Returns:
-        tuple: security issues, quality issues total counts from
-        scan_results
+        Tuple of (security_issues_count, quality_issues_count).
     """
 
     sec_count = 0
@@ -334,18 +440,35 @@ def count_issues(scan_results):
 
 # noinspection PyPep8
 class JobInfo(object):
+    """Stores metadata about a scan job.
+
+    Attributes:
+        email_add: Email address for the scan.
+        friendly_name: Friendly name/description of the scan.
+        job_type: Type of job (e.g., 'Portal').
+        preset: Preset name used for the scan.
+        scan_start: Scan start timestamp.
+        scan_end: Scan end timestamp.
+        result_id: Scan result ID.
+        cx_version: Checkmarx version.
+        service_version: Service version string.
+        lightning_api_version: Lightning API version if applicable.
+        lightning_api_too_low: Whether Lightning API version is too low.
+        help_url: URL to help documentation.
+    """
+
     def __init__(self,
-                 email_add,
-                 friendly_name,
-                 job_type,
-                 preset,
-                 scan_start,
-                 scan_end,
-                 result_id,
-                 service_version,
-                 lightning_api_version=None,
-                 lightning_api_too_low=False,
-                 help_url=None):
+                 email_add: str | None,
+                 friendly_name: str | None,
+                 job_type: str | None,
+                 preset: str | None,
+                 scan_start: str | None,
+                 scan_end: str | None,
+                 result_id: str | None,
+                 service_version: str,
+                 lightning_api_version: str | None = None,
+                 lightning_api_too_low: bool = False,
+                 help_url: str | None = None):
 
         self.email_add = None if email_add is None else email_add
         self.friendly_name = None if friendly_name is None else friendly_name
@@ -360,39 +483,11 @@ class JobInfo(object):
         self.lightning_api_too_low = lightning_api_too_low
         self.help_url = help_url
 
-    def update(self, root_elem):
-        r"""Attempts to populate params from root xml element:
+    def update(self) -> None:
+        """Populate missing parameters with default values.
 
-        <CxXMLResults
-            InitiatorName="admin admin"
-            Owner="admin@cx"
-            ScanId="1000015"
-            ProjectId="17"
-            ProjectName="checkmarx_v1"
-            TeamFullPathOnReportDate=r"CxServer\SP\Appexchange\Portal"
-            DeepLink="http://SFM-APPSCAN-WS2/CxWebClient/ViewerMain.aspx?scanid=1000015&amp;projectid=17"
-            ScanStart="Tuesday, September 13, 2016 2:11:28 AM"
-            Preset="PortalSecurity"
-            ScanTime="00h:02m:30s"
-            LinesOfCodeScanned="10241"
-            FilesScanned="283"
-            ReportCreationTime="Tuesday, September 13, 2016 3:54:49 AM"
-            Team="Portal"
-            CheckmarxVersion="8.1.0"
-            ScanComments=""
-            ScanType="Full"
-            SourceOrigin="LocalPath"
-            Visibility="Public">
-
-        JobInfo(
-            email_add,
-            friendly_name,
-            job_type,
-            preset,
-            scan_start,
-            scan_end,
-            result_id
-            )
+        Attempts to populate params from root XML element attributes.
+        Sets default values for any None attributes.
         """
         if self.email_add is None:
             self.email_add = 'N/A'
@@ -415,8 +510,15 @@ class JobInfo(object):
         if self.result_id is None:
             self.result_id = "default"
 
-    def make_html(self, scan_results):
-        """Generates report metadata html"""
+    def make_html(self, scan_results) -> str:
+        """Generate HTML report metadata section.
+
+        Args:
+            scan_results: List of QueryData objects from scan.
+
+        Returns:
+            HTML string containing report metadata.
+        """
         security_count, quality_count = count_issues(scan_results)
         data = ('<div class = "container-fluid">'
                 '  <div class = "row">'
@@ -467,7 +569,20 @@ class JobInfo(object):
 
 
 class QueryData(object):
-    def __init__(self, path):
+    """Stores data about a query and its results.
+
+    Attributes:
+        query_path: Normalized query path.
+        success: Whether query executed successfully.
+        tallies: Number of issues found.
+        name: Query name from config.
+        group: Query group/severity from config.
+        references: Reference URLs from config.
+        security: Whether this is a security query ('1') or quality ('0').
+        help_name: Short name for help lookup.
+    """
+
+    def __init__(self, path: str):
         if len(QUERY_DESC) == 1:
             load_query_desc_from_config(path=None)
 
@@ -481,28 +596,55 @@ class QueryData(object):
         tmp = self.query_path.split('.')
         self.help_name = tmp[len(tmp) - 1]
 
-    def get_name(self):
+    def get_name(self) -> str:
+        """Get formatted query name.
+
+        Returns:
+            Query name with underscores replaced by spaces.
+        """
         # TODO: Have a real dictionary, but currently we get rid of underscores only
         return self.name.replace('_', ' ')
 
-    def get_group(self):
+    def get_group(self) -> str:
+        """Get formatted query group.
+
+        Returns:
+            Query group with underscores replaced by spaces.
+        """
         # TODO: Have a real dictionary as above
         return self.group.replace('_', ' ')
 
-    def found_issues(self):
+    def found_issues(self) -> int:
+        """Check if query found issues.
+
+        Returns:
+            0 if issues found, 1 otherwise (for sorting).
+        """
         if self.success and (int(self.tallies) > 0):
             return 0
         else:
             return 1
 
-    def isSecurity(self):
+    def isSecurity(self) -> bool:
+        """Check if this is a security query.
+
+        Returns:
+            True if security query, False if quality query.
+        """
         return self.security == '1'
 
 
-def _report_append(element, report_fp, source_dir='None', tallies=None):
-    """Converts element to appropriate HTML report line.
-        In the future, should use XSLT, but currently our transforms are very simple, and on a streaming per-element
-        basis so there is not a lot of structure to the tag transforms that happen.
+def _report_append(element, report_fp, tallies: int | None = None) -> None:
+    """Convert element to appropriate HTML report line.
+
+    In the future, should use XSLT, but currently our transforms are very
+    simple and on a streaming per-element basis, so there is not a lot of
+    structure to the tag transforms that happen.
+
+    Args:
+        element: XML Element to convert.
+        report_fp: File pointer to write HTML to.
+        tallies: Optional tally count for path elements.
     """
     logger.debug("_report_append invoked with element tag: " + element.tag)
     data = None
@@ -537,7 +679,7 @@ def _report_append(element, report_fp, source_dir='None', tallies=None):
                 '</small></span></div></div>\n')
 
     if element.tag == "PathNode":
-        node_data = {}
+
         source = None
         snippet = element.find('Snippet')
         if snippet is not None:
@@ -545,7 +687,6 @@ def _report_append(element, report_fp, source_dir='None', tallies=None):
 
         filename = element.find('FileName').text
         flow_type = element.find('FlowType').text
-        node_id = str(element.find('NodeId').text)
         name = element.find('Name').text
         column = str(element.find('Column').text)
         line_no = str(element.find('Line').text)
@@ -569,9 +710,16 @@ def _report_append(element, report_fp, source_dir='None', tallies=None):
                     '</code></div><div><pre>' + ESAPI.html_encode(source) + '</pre></div></div></div>\n')
 
     _safe_append(report_fp, data)
+    return None
 
 
-def _append_overflow(report_fp, max_results):
+def _append_overflow(report_fp, max_results: int) -> None:
+    """Append overflow message to report when results are truncated.
+
+    Args:
+        report_fp: File pointer to write to.
+        max_results: Maximum number of results shown.
+    """
     data = ('<div class = "row">'
             '<div class = "col-xs-9 col-xs-offset-2">'
             '<strong>Only the first ' + str(max_results) +
@@ -581,28 +729,29 @@ def _append_overflow(report_fp, max_results):
     _safe_append(report_fp, data)
 
 
-def _add_source(source_dir, filename, target_line_no, obj_name):
-    """OBSOLETE:
-    Adds line from source, if possible. As the Cx XML line no has off by one errors,
-    we first look for the object in the provided line, and if not present, we look
-    for the object in the previous line.
+def _add_source(source_dir: str, filename: str, target_line_no: int, obj_name: str) -> tuple[int, str | None]:
+    """Add source line from file (OBSOLETE).
 
-    If we still cannot find the object,
-    we log the issue and return the original source line.
+    .. deprecated::
+        This function is obsolete and may be removed in future versions.
 
-    The XML file is written on a windows server. While popcrab may be running on a
-    windows OS, testing versions may not. But source_dir is the location of the
-    staging version of the code which may be in unix format.
+    Adds line from source if possible. As the XML line number has off-by-one
+    errors, we first look for the object in the provided line, and if not
+    present, we look for the object in the previous line.
 
-    Therefore we convert the FileName
-    in the xml file to be suitable to the filename on the popcrab host.
+    Args:
+        source_dir: Directory containing source files.
+        filename: Name of source file.
+        target_line_no: Target line number to extract.
+        obj_name: Object name to search for in line.
+
+    Returns:
+        Tuple of (line_number, source_line). Returns (-1, None) on error.
     """
-
-    source = None
 
     try:
         if os.sep != u'\\':
-            # we are running on linux/mac
+            # we are running on Linux/Mac
             normalized_path = os.path.join(source_dir, filename.replace(u'\\', u'/'))
         else:
             normalized_path = os.path.join(source_dir, filename)
@@ -637,19 +786,22 @@ def _add_source(source_dir, filename, target_line_no, obj_name):
         return -1, None
 
 
-def _update_results(scan_results, failed_scans, preset):
-    """Newer versions of CX omit <Query> nodes in the xml file when
-    the query succeeds and no issues are found or when the query fails.
+def _update_results(scan_results, failed_scans: list[str] | None, preset: str):
+    """Update scan results with failed and missing queries.
+
+    Newer versions of CX omit <Query> nodes in the XML file when the query
+    succeeds and no issues are found or when the query fails. This function
+    patches the results to include these missing queries.
 
     Args:
-        scan_results: are results from this (reduced) xml file (List<QueryData>)
-        failed_scans: is a list of QueryPaths from logfile (may be None)
-        preset: is the name of the preset used.
+        scan_results: Results from the (reduced) XML file (set of QueryData).
+        failed_scans: List of QueryPaths from logfile, or None.
+        preset: Name of the preset used.
 
     Returns:
-        an enlarged scan_results with additional failed QueryData or missing QueryData
-
-    This should be called to patch scan_results before report html table is generated
+        Enlarged scan_results set with additional failed QueryData or missing
+        QueryData. This should be called to patch scan_results before report
+        HTML table is generated.
     """
     keys = [q.query_path for q in scan_results]
     failed = []
@@ -662,10 +814,6 @@ def _update_results(scan_results, failed_scans, preset):
             q.success = False
             scan_results.add(q)
 
-    # Get all queries
-    all_d = []
-    # with codecs.open(os.path.join(FLOW_SCANNER_HOME, 'data', preset + '_preset.txt'), encoding='utf-8') as fp:
-    #    all_d = [query_path.strip() for query_path in fp]
     disk_preset = os.path.join('data', preset + "_preset.txt")
     if os.path.exists(disk_preset):
         preset_str = pkgutil.get_data(__name__, os.path.join('data', preset + "_preset.txt")).decode().strip()
@@ -682,7 +830,15 @@ def _update_results(scan_results, failed_scans, preset):
     return scan_results
 
 
-def _make_query_desc(query_path):
+def _make_query_desc(query_path: str) -> str:
+    """Generate HTML description section for a query.
+
+    Args:
+        query_path: Query path to get description for.
+
+    Returns:
+        HTML string containing query description and references.
+    """
     description = QUERY_DESC.get(query_path, 'description')
     references = QUERY_DESC.get(query_path, 'references')
     data = ('<div class="row top-half"><div class="col-xs-10 col-xs-offset-1">'
@@ -714,8 +870,16 @@ def _make_query_desc(query_path):
     return data
 
 
-def _make_header(scan_results, jobinfo):
-    """TODO: change to file builder"""
+def _make_header(scan_results, jobinfo: JobInfo) -> str:
+    """Generate HTML header section for report.
+
+    Args:
+        scan_results: List of QueryData objects.
+        jobinfo: JobInfo object with scan metadata.
+
+    Returns:
+        HTML string containing report header.
+    """
     logger.debug("_make_header invoked with scan_results of length:" + str(len(scan_results)))
     # with open(os.path.join(FLOW_SCANNER_HOME, 'data', 'header.out'), mode='r', encoding="utf-8") as fp:
     #    data = fp.read()
@@ -725,20 +889,19 @@ def _make_header(scan_results, jobinfo):
     return data
 
 
-def _present_query_results(scan_results):
-    """Builds html table summarizing query results.
+def _present_query_results(scan_results) -> str:
+    """Build HTML table summarizing query results.
 
     Results are sorted on:
-    Security, Quality with decreasing severity levels:
-    Critical, Serious, Warning
-    finally by number of issues
+    - Security, Quality
+    - Decreasing severity levels: Critical, Serious, Warning
+    - Finally by number of issues
 
     Args:
-        scan_results: List<QueryData>
+        scan_results: List of QueryData objects.
 
     Returns:
-        string (html file)
-
+        HTML string containing results table.
     """
     data = ('<div class="row"><div class="col-xs-10 col-xs-offset-1">'
             '<table class="table table-hover table-responsive">'
@@ -769,7 +932,15 @@ def _present_query_results(scan_results):
     return data
 
 
-def _make_footer(report_fp):
+def _make_footer(report_fp) -> None:
+    """Write footer to report file.
+
+    Args:
+        report_fp: File pointer to write footer to.
+
+    Raises:
+        Exception: If footer cannot be written.
+    """
     report_path = os.path.join(FLOW_SCANNER_HOME, 'data', 'footer.out')
     # with codecs.open(report_path, 'r') as fp:
     #    data = fp.read()
@@ -780,14 +951,32 @@ def _make_footer(report_fp):
         _bail('failed to write footer for report file at ' + report_path)
 
 
-def _clean_up(element):
+def _clean_up(element) -> None:
+    """Clean up XML element to free memory.
+
+    Args:
+        element: XML Element to clean up.
+    """
     if element is not None:
         element.clear()
         # while element.getprevious() is not None:
         #    del element.getparent()[0]
 
 
-def _get_signature(element):
+def _get_signature(element) -> tuple[str, str] | str | None:
+    """Get signature from an XML element.
+
+    Args:
+        element: XML Element to extract signature from.
+
+    Returns:
+        For PathNode: (filename, line_no) tuple.
+        For Path: SimilarityId string.
+        None for other elements or on error.
+
+    Raises:
+        RuntimeError: If element is None.
+    """
     if element is None:
         raise RuntimeError('tried to get signature of None element')
     elif element.tag == 'PathNode':
@@ -800,6 +989,7 @@ def _get_signature(element):
 
     elif element.tag == 'Path':
         return element.attrib['SimilarityId']
+    return None
 
 
 def parse_results(xml_file=None,
@@ -820,7 +1010,7 @@ def parse_results(xml_file=None,
                   min_api_version=40.0,
                   help_url=None
                   ):
-    """Parses Cx xml results file and generates HTML report.
+    """Parses XML results file and generates HTML report.
 
         Parsing policy:
 
@@ -835,16 +1025,15 @@ def parse_results(xml_file=None,
         Attributes set during start events but not tag contents.
 
     Args:
-        xml_file: unicode path of xml file containing results
-        xml_report_str: unicode str of xml report (if file not provided)
-        report_path: (required for report gen) unicode path where the
+        xml_file: unicode path of XML file containing results
+        xml_report_str: unicode str of XML report (if file not provided)
+        report_path: (required for report gen) Unicode path where the
                      HTML report should be stored
         failed_queries: pulled from log file. list of query_paths that
                         failed.
         throttle: Boolean (whether to limit the number of issues found
                   per query)
-        source_dir: unicode directory where source code is stored (on
-                    Cx)
+        source_dir: unicode directory where source code is stored
         email_add: unicode email address to which report should be sent
         friendly_name: unicode friendly name of scan
         job_type: unicode job type (TZ, Portal)
@@ -868,17 +1057,8 @@ def parse_results(xml_file=None,
                       result_id, service_version, help_url)
 
     scan_results = set()
-    query_data = None
     report_fp = None
     query_data = None
-    context = None
-    root = None  # reference
-
-    if scan_start is not None:
-        scan_start = normalize_time(scan_start)
-
-    if scan_end is not None:
-        scan_end = normalize_time(scan_end)
 
     if report_path is not None:
         report_fp = open(report_path, mode='a', encoding='utf-8')
@@ -896,7 +1076,7 @@ def parse_results(xml_file=None,
 
     event, root = next(context)  # grab root. c.f. http://effbot.org/zone/element-iterparse.htm
 
-    jobinfo.update(root)
+    jobinfo.update()
     logger.debug('preset is: ' + jobinfo.preset)
     parent = root
 
@@ -920,11 +1100,10 @@ def parse_results(xml_file=None,
                         query_printed is False):
                     # render parent (result) info
                     query_printed = True
-                    _report_append(element.getparent(), report_fp, source_dir)
+                    _report_append(element.getparent(), report_fp)
 
                 if report_fp is not None:
                     _report_append(element, report_fp,
-                                   source_dir,
                                    query_data.tallies)
 
         if event == 'end':
@@ -970,21 +1149,17 @@ def parse_results(xml_file=None,
     return jobinfo, scan_results
 
 
-def get_issues_for_org(scan_results, vuln_map):
-    """Counts findings for each query
+def get_issues_for_org(scan_results, vuln_map: dict) -> dict:
+    """Count findings for each query by organization field.
 
     Args:
-        scan_results: List<Query Data> list of found issues
-        vuln_map: map of scan info fields to CX issues e.g.
-                  vuln_map[StoredXSS]=[cx_desc1,cx_desc2,] etc.
-
-    (A bit inefficient since we loop through all queries rather than
-    removing already used queries, but this is not a concern here.)
+        scan_results: List of QueryData objects with found issues.
+        vuln_map: Map of scan info fields to issue descriptions, e.g.
+            vuln_map[StoredXSS] = [desc1, desc2, ...].
 
     Returns:
-        a dictionary with keys = issue types in scan info and number of
-        issues found
-
+        Dictionary with keys = issue types in scan info and values = number
+        of issues found, plus 'type' key set to SFDC_OBJECT_NAME.
     """
     d = dict()
 

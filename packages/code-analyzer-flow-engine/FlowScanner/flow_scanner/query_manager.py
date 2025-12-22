@@ -16,13 +16,12 @@ from typing import Any
 
 import queries.default_query
 import queries.optional_query
-
 from flow_parser.parse import Parser
-from flow_scanner.util import case_insensitive_match
 from flow_scanner.control_flow import Crawler
 from flow_scanner.flow_result import ResultsProcessor
+from flow_scanner.util import case_insensitive_match
 from public.contracts import State, AbstractCrawler, Query, LexicalQuery, FlowParser
-from public.data_obj import Preset, PresetEncoder, QueryDescription
+from public.data_obj import Preset, PresetEncoder
 from public.enums import QueryAction
 from queries import debug_query
 from queries.debug_query import Detect
@@ -66,14 +65,15 @@ QUERY_MODULES = [
 ]
 
 class QueryManager:
-    """
-        Lifecycle: QueryManager is instantiated once per invocation of flow_scanner.
-        That means that if an argument is set to None due to error, it will not be
-        attempted again in the next flow.
+    """Manages query execution during flow scanning.
 
-        At the end of a full flow parse (including subflows), the queries are reloaded, e.g.
-        re-instantiated. But query instances persist across subflows. They persist until reload
-        is called.
+    Lifecycle: QueryManager is instantiated once per invocation of flow_scanner.
+    That means that if an argument is set to None due to error, it will not be
+    attempted again in the next flow.
+
+    At the end of a full flow parse (including subflows), the queries are reloaded,
+    e.g. re-instantiated. But query instances persist across subflows. They persist
+    until reload is called.
     """
     # which built-in queries were requested, combining preset and any optional
     requested_query_ids: list[str] | None = None
@@ -95,7 +95,7 @@ class QueryManager:
     results: ResultsProcessor = None
 
     # current parser associated to flow-file
-    parser: Parser = None
+    parser: FlowParser = None
 
     # which preset to request
     preset: str = None
@@ -108,7 +108,7 @@ class QueryManager:
     #
     external_class_names: list[str] | None = None
 
-    # json object that will be passed to the debug query
+    # JSON object that will be passed to the debug query
     debug_arg: Any | None = None
 
     @classmethod
@@ -119,7 +119,24 @@ class QueryManager:
               external_module_path: str | None = None,
               external_class_names: str | None = None,
               debug_arg_str: str | None = None) -> QueryManager:
-        """Only call this once to build Query Manager at scan start
+        """Build QueryManager instance at scan start.
+
+        Only call this once to build Query Manager at scan start.
+
+        Args:
+            parser: FlowParser instance for the current flow.
+            requested_preset: Name of preset to use, or None.
+            requested_queries: List of specific query IDs to run, or None.
+            external_module_path: Path to external query module, or None.
+            external_class_names: Comma-separated class names from external module, or None.
+            debug_arg_str: JSON string for debug query arguments, or None.
+
+        Returns:
+            Configured QueryManager instance.
+
+        Raises:
+            ValueError: If debug_arg_str cannot be parsed.
+            ImportError: If external module cannot be loaded.
         """
         qm = QueryManager()
         qm.parser = parser
@@ -175,13 +192,15 @@ class QueryManager:
 
         return qm
 
-    def generate_effective_preset(self)-> Preset:
-        """
+    def generate_effective_preset(self) -> Preset:
+        """Generate the effective preset that will actually be run.
 
-        Returns: The list of query descriptions that will actually be run, combining
-        the preset field selected by the caller and any additional queries selected
-        by the caller
+        Combines the preset field selected by the caller and any additional
+        queries selected by the caller.
 
+        Returns:
+            Preset object containing the list of query descriptions that will
+            actually be run.
         """
         q = []
         if self.queries:
@@ -201,7 +220,13 @@ class QueryManager:
 
 
 
-    def lexical_query(self, parser: Parser, crawler: AbstractCrawler=None) -> None:
+    def lexical_query(self, parser: Parser, crawler: AbstractCrawler = None) -> None:
+        """Execute all lexical queries on the parser.
+
+        Args:
+            parser: Parser instance for the flow.
+            crawler: Optional crawler instance (not used for lexical queries).
+        """
         if self.queries is None or QueryAction.lexical not in self.action2queries:
             return None
 
@@ -216,25 +241,21 @@ class QueryManager:
                                 f"{parser.flow_path} {traceback.format_exc()}")
         return None
 
-    def static_accept(self, query_id, **kwargs) -> None:
-        """Calls the (static) 'accept' method of this query. The query must
-        override the static 'accept' method of the abstract class. Expert
-        use only.
+    def static_accept(self, query_id: str, **kwargs) -> None:
+        """Call the (static) 'accept' method of a query.
+
+        The query must override the static 'accept' method of the abstract class.
+        Expert use only.
 
         The purpose of accept methods is to record issues found in the course
         of normal scanning and parsing, and not as a result of running queries.
-
         Because of this, we are accepting issues found and merely reformatting
         them into the appropriate query result. But if this query is not requested,
         then it will not override the parent accept which is a null op.
 
         Args:
-            query_id (str): Name of class that has the static accept method
-            **kwargs (Any): Keyword args to pass
-
-        Returns:
-            Query Description
-
+            query_id: Name of class that has the static accept method.
+            **kwargs: Keyword arguments to pass to the accept method.
         """
         if self.queries is not None and query_id in self.queries:
             mod_name = self.query_id2module_name[query_id]
@@ -250,16 +271,12 @@ class QueryManager:
                 logger.info(f"The query id {query_id} is not recognized as a requested lexical query id")
 
     def query(self, action: QueryAction, state: State, crawler: Crawler = None) -> None:
-        """Invokes QueryProcessor to execute query and stores results
+        """Invoke QueryProcessor to execute query and store results.
 
         Args:
-            action: type of invocation (flow entrance or element entrance)
-            state: current state
-            crawler: flow crawler object which has crawl schedule and cfg
-
-        Returns:
-            None
-
+            action: Type of invocation (flow entrance or element entrance).
+            state: Current execution state.
+            crawler: Flow crawler object which has crawl schedule and CFG.
         """
         # when we first enter a state, there is a start elem which is not assigned and so curr elem is None.
         # don't look for sinks into these start states.
@@ -272,7 +289,15 @@ class QueryManager:
             return None
 
 
-    def final_query(self, all_states: tuple[State]=None) -> None:
+    def final_query(self, all_states: tuple[State] = None) -> None:
+        """Run final queries and reload for next flow.
+
+        Executes scan_exit queries and then reloads query instances
+        for the next flow to process.
+
+        Args:
+            all_states: Tuple of all execution states, or None.
+        """
         self.run_queries(action=QueryAction.scan_exit,
                          all_states=all_states)
 
@@ -280,6 +305,12 @@ class QueryManager:
         self.reload()
 
     def accept(self, query_id: str, **kwargs) -> None:
+        """Call the accept method of a query instance.
+
+        Args:
+            query_id: Query ID to call accept on.
+            **kwargs: Keyword arguments to pass to accept method.
+        """
         if query_id not in self.queries:
             return None
         qry = self.queries[query_id]
@@ -292,11 +323,24 @@ class QueryManager:
 
         return None
 
-    def debug_query(self, msg: str):
+    def debug_query(self, msg: str) -> None:
+        """Set debug argument for debug query.
+
+        Args:
+            msg: Debug message string.
+        """
         self.debug_arg = msg
 
-    def run_queries(self, action: QueryAction, state: State=None,
-                    crawler: AbstractCrawler=None, all_states: tuple[State]=None) -> None:
+    def run_queries(self, action: QueryAction, state: State = None,
+                    crawler: AbstractCrawler = None, all_states: tuple[State] = None) -> None:
+        """Run all queries for a specific action.
+
+        Args:
+            action: QueryAction type to run queries for.
+            state: Current execution state, or None.
+            crawler: Flow crawler instance, or None.
+            all_states: Tuple of all execution states, or None.
+        """
         if self.action2queries is None:
             return None
         if action not in self.action2queries:
@@ -314,11 +358,11 @@ class QueryManager:
 
             return None
 
-    def reload(self):
-        """Make a new instance of the queries after completing one flow
+    def reload(self) -> None:
+        """Make new instances of queries after completing one flow.
 
-        Returns:
-            None
+        Deletes old query instances, modules, and reloads for the next flow
+        to process.
         """
         # reload internal modules
         for mod_ in QUERY_MODULES:
@@ -336,18 +380,17 @@ class QueryManager:
         )
 
 def create_module(module_path: str) -> Any:
-    """Loads and Instantiates QueryProcessor
+    """Load and instantiate a query module.
 
-        Args:
-            module_path: location of module to load
+    Args:
+        module_path: Location of module file to load.
 
-        Returns:
-            QueryProcessor module
+    Returns:
+        Loaded module object.
 
-        Raises:
-            ValueError if module name cannot be parsed or preset not accepted
-            ImportError if the module cannot be loaded
-
+    Raises:
+        ValueError: If module name cannot be parsed or file doesn't end in .py.
+        ImportError: If the module cannot be loaded.
     """
     if module_path is None:
         # we'll build default
@@ -376,30 +419,30 @@ def create_module(module_path: str) -> Any:
             raise e
 
 def build_query_maps(
-        requested_queries: list[str] | None=None,
+        requested_queries: list[str] | None = None,
         external_module: Any | None = None,
         external_classnames: list[str] | None = None,
-        debug_arg: Any | None=None
+        debug_arg: Any | None = None
 ) -> tuple[
     dict[str, Query | LexicalQuery] | None,
     dict[str, Query | LexicalQuery] | None,
     dict[QueryAction, list[Query | LexicalQuery]] | None,
-    dict[str,str]
+    dict[str, str]
 ]:
-    """Instantiates queries and places them into convenient map structures
+    """Instantiate queries and place them into convenient map structures.
 
     Args:
-            requested_queries: list of validated built in queries
-            external_module: (loaded) external module reference
-            external_classnames: list of classnames in external module
-            debug_arg: json obj corresponding to argument
+        requested_queries: List of validated built-in query IDs.
+        external_module: Loaded external module reference, or None.
+        external_classnames: List of class names in external module, or None.
+        debug_arg: JSON object for debug query arguments, or None.
 
     Returns:
-            queries (id -> instance),
-            custom_queries (id -> instance),
-            action2queries (actionType -> List[QueryInstance]
-            query_id2module_name (str -> str)
-
+        Tuple of:
+        - queries: Dictionary mapping query_id to built-in query instance.
+        - custom_queries: Dictionary mapping query_id to custom query instance.
+        - action2queries: Dictionary mapping QueryAction to list of query instances.
+        - query_id2module_name: Dictionary mapping query_id to module name.
     """
 
     built_in_id2instance = {}  # only for builtin
@@ -437,18 +480,32 @@ def build_query_maps(
 
     return built_in_id2instance, custom_id2instance, action2queries, id2module
 
-def populate_maps_from_instance(qry_id, my_module,
-                                id2instance,
-                                id2module,
-                                action2queries)-> None:
+def populate_maps_from_instance(qry_id: str, my_module: Any,
+                                id2instance: dict, id2module: dict,
+                                action2queries: dict) -> None:
+    """Populate query maps from a query instance.
+
+    Args:
+        qry_id: Query ID/class name.
+        my_module: Module containing the query class.
+        id2instance: Dictionary to add query instance to.
+        id2module: Dictionary to add module mapping to.
+        action2queries: Dictionary to add action mappings to.
+    """
     qry_instance = getattr(my_module, qry_id)()
     id2instance[qry_id] = qry_instance
     id2module[qry_id] = my_module
     populate_action2queries(action2queries, qry_instance)
 
 
-def populate_action2queries(action2queries: dict[QueryAction,list[LexicalQuery | Query]],
-                            instance: Query|LexicalQuery|Detect) -> None:
+def populate_action2queries(action2queries: dict[QueryAction, list[LexicalQuery | Query]],
+                            instance: Query | LexicalQuery | Detect) -> None:
+    """Add query instance to action2queries map based on when_to_run.
+
+    Args:
+        action2queries: Dictionary mapping QueryAction to list of queries.
+        instance: Query instance to add to the map.
+    """
     for action in instance.when_to_run():
         if action not in action2queries:
             action2queries[action] = [instance]
@@ -456,11 +513,11 @@ def populate_action2queries(action2queries: dict[QueryAction,list[LexicalQuery |
             action2queries[action].append(instance)
 
 
-def get_query_descriptions()-> str:
-    """
+def get_query_descriptions() -> str:
+    """Get all descriptions for built-in queries.
 
-    Returns: All descriptions for builtin queries
-
+    Returns:
+        JSON string containing all built-in query descriptions.
     """
     descriptions = []
     for (my_module, qry_map) in QUERY_MODULES:
@@ -472,16 +529,17 @@ def get_query_descriptions()-> str:
 
 
 def validate_qry_list(qry_list: list[str]) -> tuple[bool, list[str] | None, list[str] | None, list[str] | None]:
-    """Verifies that the passed in list of strings is a case-insensitive match of legal
-    query names and returns the matching de-duped legal query names along with a boolean
-    that is False if there are any queries requested that are illegal, or if there are any duplicates
+    """Verify that query list contains valid, case-insensitive query names.
 
     Args:
-        qry_list: list of user provided query_ids to run
+        qry_list: List of user-provided query IDs to validate.
 
     Returns:
-        boolean (is valid), found, missed, duplicates
-
+        Tuple of (is_valid, found_list, missed_list, duplicates_list).
+        - is_valid: True if all queries are valid and no duplicates.
+        - found_list: List of matching legal query names (de-duplicated).
+        - missed_list: List of unrecognized query names.
+        - duplicates_list: List of duplicate query names in input.
     """
     query_keys = [x[1].keys() for x in QUERY_MODULES]
     found_tkns = []
@@ -508,28 +566,36 @@ def validate_qry_list(qry_list: list[str]) -> tuple[bool, list[str] | None, list
     return valid, found_tkns, missed_tkns, duplicates
 
 def build_preset_for_name(preset_name: str) -> Preset | None:
-    """This is used by the CLI to describe an internal preset
+    """Build a Preset object for an internal preset name.
+
+    Used by the CLI to describe an internal preset.
 
     Args:
-        preset_name (str):
+        preset_name: Name of the preset to build.
 
     Returns:
-        Preset corresponding to this name
+        Preset object corresponding to this name, or None if not found.
     """
-    queries = dict.get(PRESETS, preset_name, [])
-    accum = []
+    queries_ = dict.get(PRESETS, preset_name, [])
+    accum = set()
     if not queries:
         return None
-    for (mod, query) in queries:
+    for (mod, query) in queries_:
         class_ = getattr(mod, query)
-        accum.append(class_.get_query_description())
+        accum.add(class_.get_query_description())
+
 
     return Preset(preset_name=preset_name,
                   preset_owner="Salesforce",
                   queries=accum)
 
 def get_all_queries() -> list[str]:
-    """Does not return debug queries
+    """Get list of all built-in query IDs.
+
+    Does not return debug queries.
+
+    Returns:
+        List of all built-in query ID strings.
     """
     accum = []
     for x in QUERY_MODULES:

@@ -1,5 +1,7 @@
-"""Definitions of data classes used for querying and reporting
+"""Definitions of data classes used for querying and reporting.
 
+This module contains the core data structures used throughout the flow scanner
+for representing query results, influence paths, and flow metadata.
 """
 
 from __future__ import annotations
@@ -17,17 +19,28 @@ if TYPE_CHECKING:
 
 @dataclass(frozen=True)
 class JSONSerializable(ABC):
+    """Abstract base class for objects that can be serialized to JSON.
 
-    def to_dict(self):
+    Provides a default implementation of to_dict() that converts all
+    slot attributes to a dictionary.
+    """
+
+    def to_dict(self) -> dict:
+        """Convert the object to a dictionary representation.
+
+        Returns:
+            Dictionary mapping slot attribute names to their values.
+        """
         return {s: getattr(self, s) for s in self.__slots__}
 
 
 @dataclass(frozen=True, eq=True, slots=True)
 class InfluenceStatement:
-    """Represents a statement in which one variable influences
-    another, usually as the result of an assignment,
-    formula or template field, or builtin function.
-    These statement are the basic building blocks of dataflows.
+    """Represents a statement in which one variable influences another.
+
+    Influence statements are usually the result of an assignment, formula,
+    template field, or builtin function. These statements are the basic
+    building blocks of dataflows.
     """
 
     # Variable being influenced.
@@ -81,13 +94,22 @@ class InfluenceStatement:
     # elements such as subflows, action calls, etc
     source_path: str
 
-    def to_dict(self):
+    def to_dict(self) -> dict:
+        """Convert the influence statement to a dictionary.
+
+        Returns:
+            Dictionary representation with all string values cleaned.
+        """
         return {s: clean_string(getattr(self, s)) for s in self.__slots__}
 
 
 @dataclass(frozen=True, eq=True, slots=True)
 class VariableType:
-    """This class contains type information for a variable"""
+    """Contains type information for a variable.
+
+    Tracks metadata about variable types including data type, reference type,
+    collection status, and object/field information.
+    """
 
     # the tag (type of this object in metadata spec)
     tag: str
@@ -133,54 +155,63 @@ class VariableType:
 
 @dataclass(frozen=True, eq=True, slots=True)
 class Preset:
-    # Publicly displayed in report file.
+    """Represents a preset collection of queries to run.
+
+    Presets define which queries are executed during a scan. It's important
+    to report when a query was run and had no findings (e.g., for security reviews),
+    not just queries that found issues.
+
+    Attributes:
+        preset_name: Publicly displayed name in report file.
+        preset_owner: Publicly displayed owner in report file. None if not specified.
+        queries: Set of QueryDescription objects specifying which queries to run.
+    """
+
     preset_name: str
-
-    # Publicly displayed in report file - leave none if you do not want this
     preset_owner: str | None
-
-    # The list of query names that are run. Not the list of queries which have findings,
-    # as it's important [e.g. for the security review] to report when a query was run and had no findings.
-
-    # specify which dataflow queries are run on each Flow Element
-    # with enough information for users to understand the significance of not finding any issues
-    # for that query
     queries: set[QueryDescription]
 
-    def to_dict(self):
+    def to_dict(self) -> dict:
+        """Convert the preset to a dictionary.
+
+        Returns:
+            Dictionary representation of the preset.
+        """
         return {s: str(getattr(self, s)) for s in self.__slots__}
 
 
 @dataclass(frozen=True, eq=True, slots=True)
 class QueryDescription:
-    # this is the id that occurs in the preset and is not displayed to the user.
+    """Metadata describing a query for reporting purposes.
+
+    Attributes:
+        query_id: Internal ID used in presets, not displayed to users.
+        query_name: Prominently displayed name in table of contents and headings.
+            Must be unique for each preset.
+        severity: Severity level of issues found by this query.
+        query_description: Plaintext description appearing at the beginning of
+            results. One or two sentences recommended. Markup will be encoded.
+        help_url: Optional URL to documentation for secure patterns, remediation,
+            and false positive diagnosis.
+        query_version: Version string appearing in XML/HTML fields. Defaults to "0".
+        is_security: Whether this query detects security issues (True) or
+            code quality issues (False). Defaults to True.
+    """
+
     query_id: str
-
-    # This will be prominently displayed in the table of contents and as a heading
-    # Must be unique for each preset. See default query for examples.
     query_name: str
-
-    # see description of severity enum
     severity: Severity
-
-    # This will appear at the beginning of the list of results, under the query name.
-    # This must be plaintext (any markup will be encoded).
-    # One or two sentences should be sufficient - provide links if more detailed discussions
-    # are needed.
     query_description: str
-
-    # Often developers will need assistance with secure patterns and remediation options, as
-    # well as false positive diagnosis. If this material is available online in published
-    # best practices (which it should be) then place a url link here. Optional.
     help_url: str | None = None
-
-    # This will appear only in small xml/html fields
     query_version: str = "0"
-
-    # Whether this query is for a security or code quality issue
     is_security: bool = True
 
-    def to_dict(self):
+    def to_dict(self) -> dict:
+        """Convert the query description to a dictionary.
+
+        Returns:
+            Dictionary representation of the query description.
+        """
         return {s: str(getattr(self, s)) for s in self.__slots__}
 
 
@@ -321,10 +352,11 @@ class InfluencePath:
     influenced_type_info: VariableType | None
 
     def report_influence_tuples(self) -> list[tuple[str, str]]:
-        """Returns simple chain of variables for high level analysis
+        """Get a simple chain of variables for high-level analysis.
 
         Returns:
-            list of (flow_filename, influenced_var_name)
+            List of (flow_filename, influenced_var_name) tuples representing
+            the influence chain.
         """
         (df_start, df_end) = _get_end_vars(self)
 
@@ -345,15 +377,14 @@ class InfluencePath:
         return start
 
     def short_report(self, arrows: bool = False, filenames: bool = False) -> str:
-        """Prints a short report of influence chain
+        """Generate a short text report of the influence chain.
 
         Args:
-            arrows: whether the report should use '->' (True) or commas
-                    (False) for statement separators
-            filenames: whether the report should include filenames in the report
+            arrows: Whether to use '->' (True) or commas (False) for separators.
+            filenames: Whether to include filenames in the report.
 
         Returns:
-            string containing summary report.
+            String containing a summary report of the influence chain.
         """
         if arrows:
             joiner = "->"
@@ -370,22 +401,24 @@ class InfluencePath:
     def combine(cls, start_flow: InfluencePath, end_flow: InfluencePath,
                 cross_flow: bool = False,
                 type_override: VariableType | None = None) -> InfluencePath:
-        """Combine two paths
+        """Combine two influence paths into a single path.
+
+        Creates a new path where A influences C if start_flow is "A influences B"
+        and end_flow is "B influences C".
 
         Args:
-            start_flow: the new path starts with this influencer
-            end_flow: the new path ends with this flow's influenced
-            cross_flow: whether the end dataflow is in a different flow
-            type_override: specify type directly, otherwise we keep the
-                end_flow's type unchanged
+            start_flow: Path that provides the starting influencer.
+            end_flow: Path that provides the ending influenced variable.
+            cross_flow: Whether the end dataflow is in a different flow.
+            type_override: Optional type to use for the combined path.
+                If None, uses the end_flow's type.
 
         Returns:
-            A influences C if start_flow is A influences B, and end_flow is B
-            influences C
+            New InfluencePath combining both input paths.
 
         Raises:
-            ValueError if the influencers don't match up and crossflow is False as cross-flow
-            dataflows will have different names and filenames.
+            ValueError: If the influencers don't match up and cross_flow is False.
+                Cross-flow dataflows will have different names and filenames.
         """
 
         if not cross_flow:
@@ -414,55 +447,85 @@ class InfluencePath:
 
 @dataclass(frozen=True, eq=True, slots=True)
 class BranchVisitor:
+    """Tracks state during control flow graph traversal.
+
+    Attributes:
+        current_label: Current segment label being visited.
+        previous_label: Previous segment label, or None if at start.
+        loop_context: Tuple of (label, ConnType) pairs for loop context.
+        history: Previously visited segment labels in order.
+        token: List of (previous_label, current_label) tuples when visitor
+            was spawned, or None.
+    """
+
     current_label: str
     previous_label: str | None
-    loop_context: tuple[tuple[str, ConnType],...] = field(default_factory=tuple)
-
-    #: previously visited segment labels (label1, label2, ..)
+    loop_context: tuple[tuple[str, ConnType], ...] = field(default_factory=tuple)
     history: tuple[str, ...] = field(default_factory=tuple)
+    token: tuple[tuple[str, str], ...] | None = None
 
-    #: list of (previous label, curr_label) when visitor was spawned
-    token: tuple[tuple[str,str], ...] | None = None
+    def to_dict(self) -> dict:
+        """Convert the branch visitor to a dictionary.
 
-    def to_dict(self):
+        Returns:
+            Dictionary representation of the branch visitor.
+        """
         return {s: str(getattr(self, s)) for s in self.__slots__}
 
 @dataclass(frozen=True, eq=True, slots=True)
 class CrawlStep:
+    """Represents a single step in the flow crawl process.
+
+    Attributes:
+        step: Step number in the crawl sequence.
+        visitor: BranchVisitor tracking traversal state.
+        element_name: Name of the flow element.
+        element_tag: XML tag of the flow element.
+        local_index: Position within the current segment. Defaults to 0.
+    """
+
     step: int
     visitor: BranchVisitor
     element_name: str
     element_tag: str
-    local_index: int = 0  # position within segment
+    local_index: int = 0
 
-    def to_dict(self):
+    def to_dict(self) -> dict:
+        """Convert the crawl step to a dictionary.
+
+        Returns:
+            Dictionary representation of the crawl step.
+        """
         return {s: getattr(self, s) for s in self.__slots__}
 
 @dataclass(frozen=True, eq=True, slots=True)
 class Jump(JSONSerializable):
-    """Class representing a connector
+    """Represents a connector (jump) in the control flow graph.
 
+    Attributes:
+        src_name: Name of the element where the jump is located.
+        target: Name of the element the connector points to.
+        is_goto: True if this is a goto connector.
+        is_loop: True if this is a next-value (loop) connector.
+        is_no_more_values: True if this is a no-more-values connector.
+        is_fault: True if this is a fault connector.
     """
-    # name of element where jump is located
+
     src_name: str
-
-    # where connector points to
     target: str
-
-    # true if goto connector
     is_goto: bool
-
-    # true if next-value
     is_loop: bool
-
-    # true if no more values connector
     is_no_more_values: bool
-
-    # true if fault connector
     is_fault: bool
 
     def priority(self) -> int:
-        # lower is higher priority
+        """Get the priority of this jump for traversal.
+
+        Lower numbers indicate higher priority.
+
+        Returns:
+            Priority value (0 for loops, 1 for others).
+        """
         if self.is_loop:
             return 0
         else:
@@ -470,7 +533,22 @@ class Jump(JSONSerializable):
 
 
 class InfluenceStatementEncoder(json.JSONEncoder):
+    """JSON encoder for InfluenceStatement objects.
+
+    For public display, replaces flow_path with source_path to correctly
+    display transmission elements.
+    """
+
     def default(self, obj):
+        """Encode an object to JSON.
+
+        Args:
+            obj: Object to encode.
+
+        Returns:
+            Dictionary representation for InfluenceStatement objects,
+            otherwise falls back to default JSON encoding.
+        """
         if isinstance(obj, InfluenceStatement):
             raw_dict = obj.to_dict()
             # For public display, we replace flow_path with source_path
@@ -485,7 +563,18 @@ class InfluenceStatementEncoder(json.JSONEncoder):
 
 
 class PresetEncoder(json.JSONEncoder):
+    """JSON encoder for Preset and QueryDescription objects."""
+
     def default(self, obj):
+        """Encode an object to JSON.
+
+        Args:
+            obj: Object to encode.
+
+        Returns:
+            Dictionary representation for Preset/QueryDescription objects,
+            otherwise falls back to default JSON encoding.
+        """
         if isinstance(obj, Preset) or isinstance(obj, QueryDescription):
             return obj.to_dict()
         else:
@@ -493,11 +582,28 @@ class PresetEncoder(json.JSONEncoder):
 
 
 def _get_end_vars(df: InfluencePath) -> tuple[str, str]:
+    """Get the start and end variable names from an influence path.
+
+    Args:
+        df: InfluencePath to extract variables from.
+
+    Returns:
+        Tuple of (influencer_var, influenced_var) with property names included.
+    """
     return (_recover_var(df.influencer_name, df.influencer_property),
             _recover_var(df.influenced_name, df.influenced_property))
 
 
-def _recover_var(name: str, prop: str) -> str:
+def _recover_var(name: str, prop: str | None) -> str:
+    """Recover a full variable name from name and optional property.
+
+    Args:
+        name: Base variable name.
+        prop: Optional property name.
+
+    Returns:
+        Full variable name (e.g., "Account.Name" if prop is "Name").
+    """
     if prop is None:
         return name
     else:

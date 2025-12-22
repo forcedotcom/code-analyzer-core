@@ -1,14 +1,18 @@
-"""Security Encoding library
+"""Security Encoding library.
+
+Provides functions for HTML encoding, SQL escaping, and related security
+utilities for safe output handling.
 """
 
 
 def html_encode(msg: str) -> str | int | None:
-    """Performs html encoding
+    """Perform HTML encoding on a message.
+
     Args:
-        msg: unicode message to encode
+        msg: Unicode message to encode.
 
     Returns:
-        html encoded message
+        HTML-encoded message, or original value if None or int.
     """
     if msg is None:
         return msg
@@ -25,13 +29,13 @@ def html_encode(msg: str) -> str | int | None:
 
 
 def sql_escape(msg: str) -> str:
-    """simple sql escape (unicode)
+    """Simple SQL escape for Unicode strings.
 
     Args:
-        msg: string to escape
+        msg: String to escape.
 
     Returns:
-        escapes \\ and '
+        Escaped string with backslashes and single quotes escaped.
     """
     msg = msg.replace("\\", "\\\\")
     msg = msg.replace("'", "\\'")
@@ -41,26 +45,26 @@ def sql_escape(msg: str) -> str:
 def legal_sql_escape(msg: str) -> str:
     """Escape single quotes with two single quotes.
 
-    This is the SQL standard escaping.
+    This is the SQL standard escaping method.
 
     Args:
-        msg: string to escape
+        msg: String to escape.
 
-    Returns: escaped string
-
+    Returns:
+        Escaped string with single quotes doubled.
     """
     msg = msg.replace("'", "''")
     return msg
 
 
 def sql_enc_html_dec(msg: str) -> str:
-    """Decodes html-encoded text
+    """Decode HTML-encoded text and apply SQL escaping.
 
     Args:
-        msg: string to decode
+        msg: HTML-encoded string to decode.
 
-    Returns: decoded string
-
+    Returns:
+        Decoded and SQL-escaped string.
     """
     msg = msg.replace('&amp;', '&')
     msg = msg.replace('&gt;', '>')
