@@ -671,7 +671,7 @@
     "description": "Enforce assertion to be made in a test body",
     "name": "jest/expect-expect",
     "resourceUrls": [
-      "https://github.com/jest-community/eslint-plugin-jest/blob/v29.2.1/docs/rules/expect-expect.md"
+      "https://github.com/jest-community/eslint-plugin-jest/blob/v29.5.0/docs/rules/expect-expect.md"
     ],
     "severityLevel": 5,
     "tags": [
@@ -685,7 +685,7 @@
     "description": "Disallow alias methods",
     "name": "jest/no-alias-methods",
     "resourceUrls": [
-      "https://github.com/jest-community/eslint-plugin-jest/blob/v29.2.1/docs/rules/no-alias-methods.md"
+      "https://github.com/jest-community/eslint-plugin-jest/blob/v29.5.0/docs/rules/no-alias-methods.md"
     ],
     "severityLevel": 3,
     "tags": [
@@ -699,7 +699,7 @@
     "description": "Disallow commented out tests",
     "name": "jest/no-commented-out-tests",
     "resourceUrls": [
-      "https://github.com/jest-community/eslint-plugin-jest/blob/v29.2.1/docs/rules/no-commented-out-tests.md"
+      "https://github.com/jest-community/eslint-plugin-jest/blob/v29.5.0/docs/rules/no-commented-out-tests.md"
     ],
     "severityLevel": 5,
     "tags": [
@@ -713,7 +713,7 @@
     "description": "Disallow calling `expect` conditionally",
     "name": "jest/no-conditional-expect",
     "resourceUrls": [
-      "https://github.com/jest-community/eslint-plugin-jest/blob/v29.2.1/docs/rules/no-conditional-expect.md"
+      "https://github.com/jest-community/eslint-plugin-jest/blob/v29.5.0/docs/rules/no-conditional-expect.md"
     ],
     "severityLevel": 2,
     "tags": [
@@ -727,7 +727,7 @@
     "description": "Disallow disabled tests",
     "name": "jest/no-disabled-tests",
     "resourceUrls": [
-      "https://github.com/jest-community/eslint-plugin-jest/blob/v29.2.1/docs/rules/no-disabled-tests.md"
+      "https://github.com/jest-community/eslint-plugin-jest/blob/v29.5.0/docs/rules/no-disabled-tests.md"
     ],
     "severityLevel": 5,
     "tags": [
@@ -741,7 +741,7 @@
     "description": "Disallow using a callback in asynchronous tests and hooks",
     "name": "jest/no-done-callback",
     "resourceUrls": [
-      "https://github.com/jest-community/eslint-plugin-jest/blob/v29.2.1/docs/rules/no-done-callback.md"
+      "https://github.com/jest-community/eslint-plugin-jest/blob/v29.5.0/docs/rules/no-done-callback.md"
     ],
     "severityLevel": 3,
     "tags": [
@@ -755,7 +755,7 @@
     "description": "Disallow using `exports` in files containing tests",
     "name": "jest/no-export",
     "resourceUrls": [
-      "https://github.com/jest-community/eslint-plugin-jest/blob/v29.2.1/docs/rules/no-export.md"
+      "https://github.com/jest-community/eslint-plugin-jest/blob/v29.5.0/docs/rules/no-export.md"
     ],
     "severityLevel": 3,
     "tags": [
@@ -769,7 +769,7 @@
     "description": "Disallow focused tests",
     "name": "jest/no-focused-tests",
     "resourceUrls": [
-      "https://github.com/jest-community/eslint-plugin-jest/blob/v29.2.1/docs/rules/no-focused-tests.md"
+      "https://github.com/jest-community/eslint-plugin-jest/blob/v29.5.0/docs/rules/no-focused-tests.md"
     ],
     "severityLevel": 3,
     "tags": [
@@ -783,7 +783,7 @@
     "description": "Disallow identical titles",
     "name": "jest/no-identical-title",
     "resourceUrls": [
-      "https://github.com/jest-community/eslint-plugin-jest/blob/v29.2.1/docs/rules/no-identical-title.md"
+      "https://github.com/jest-community/eslint-plugin-jest/blob/v29.5.0/docs/rules/no-identical-title.md"
     ],
     "severityLevel": 3,
     "tags": [
@@ -797,7 +797,7 @@
     "description": "Disallow string interpolation inside snapshots",
     "name": "jest/no-interpolation-in-snapshots",
     "resourceUrls": [
-      "https://github.com/jest-community/eslint-plugin-jest/blob/v29.2.1/docs/rules/no-interpolation-in-snapshots.md"
+      "https://github.com/jest-community/eslint-plugin-jest/blob/v29.5.0/docs/rules/no-interpolation-in-snapshots.md"
     ],
     "severityLevel": 2,
     "tags": [
@@ -811,7 +811,7 @@
     "description": "Disallow Jasmine globals",
     "name": "jest/no-jasmine-globals",
     "resourceUrls": [
-      "https://github.com/jest-community/eslint-plugin-jest/blob/v29.2.1/docs/rules/no-jasmine-globals.md"
+      "https://github.com/jest-community/eslint-plugin-jest/blob/v29.5.0/docs/rules/no-jasmine-globals.md"
     ],
     "severityLevel": 3,
     "tags": [
@@ -825,7 +825,7 @@
     "description": "Disallow manually importing from `__mocks__`",
     "name": "jest/no-mocks-import",
     "resourceUrls": [
-      "https://github.com/jest-community/eslint-plugin-jest/blob/v29.2.1/docs/rules/no-mocks-import.md"
+      "https://github.com/jest-community/eslint-plugin-jest/blob/v29.5.0/docs/rules/no-mocks-import.md"
     ],
     "severityLevel": 2,
     "tags": [
@@ -839,7 +839,7 @@
     "description": "Disallow using `expect` outside of `it` or `test` blocks",
     "name": "jest/no-standalone-expect",
     "resourceUrls": [
-      "https://github.com/jest-community/eslint-plugin-jest/blob/v29.2.1/docs/rules/no-standalone-expect.md"
+      "https://github.com/jest-community/eslint-plugin-jest/blob/v29.5.0/docs/rules/no-standalone-expect.md"
     ],
     "severityLevel": 3,
     "tags": [
@@ -853,7 +853,7 @@
     "description": "Require using `.only` and `.skip` over `f` and `x`",
     "name": "jest/no-test-prefixes",
     "resourceUrls": [
-      "https://github.com/jest-community/eslint-plugin-jest/blob/v29.2.1/docs/rules/no-test-prefixes.md"
+      "https://github.com/jest-community/eslint-plugin-jest/blob/v29.5.0/docs/rules/no-test-prefixes.md"
     ],
     "severityLevel": 3,
     "tags": [
@@ -867,7 +867,7 @@
     "description": "Enforce valid `describe()` callback",
     "name": "jest/valid-describe-callback",
     "resourceUrls": [
-      "https://github.com/jest-community/eslint-plugin-jest/blob/v29.2.1/docs/rules/valid-describe-callback.md"
+      "https://github.com/jest-community/eslint-plugin-jest/blob/v29.5.0/docs/rules/valid-describe-callback.md"
     ],
     "severityLevel": 2,
     "tags": [
@@ -881,7 +881,7 @@
     "description": "Enforce valid `expect()` usage",
     "name": "jest/valid-expect",
     "resourceUrls": [
-      "https://github.com/jest-community/eslint-plugin-jest/blob/v29.2.1/docs/rules/valid-expect.md"
+      "https://github.com/jest-community/eslint-plugin-jest/blob/v29.5.0/docs/rules/valid-expect.md"
     ],
     "severityLevel": 3,
     "tags": [
@@ -895,7 +895,7 @@
     "description": "Require promises that have expectations in their chain to be valid",
     "name": "jest/valid-expect-in-promise",
     "resourceUrls": [
-      "https://github.com/jest-community/eslint-plugin-jest/blob/v29.2.1/docs/rules/valid-expect-in-promise.md"
+      "https://github.com/jest-community/eslint-plugin-jest/blob/v29.5.0/docs/rules/valid-expect-in-promise.md"
     ],
     "severityLevel": 3,
     "tags": [
@@ -909,7 +909,7 @@
     "description": "Enforce valid titles",
     "name": "jest/valid-title",
     "resourceUrls": [
-      "https://github.com/jest-community/eslint-plugin-jest/blob/v29.2.1/docs/rules/valid-title.md"
+      "https://github.com/jest-community/eslint-plugin-jest/blob/v29.5.0/docs/rules/valid-title.md"
     ],
     "severityLevel": 3,
     "tags": [

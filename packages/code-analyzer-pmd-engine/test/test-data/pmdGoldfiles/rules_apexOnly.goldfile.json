@@ -298,6 +298,19 @@
     ]
   },
   {
+    "name": "AvoidFutureAnnotation",
+    "severityLevel": 4,
+    "tags": [
+      "Recommended",
+      "BestPractices",
+      "Apex"
+    ],
+    "description": "Usage of the `@Future` annotation should be limited. The `@Future` annotation is a legacy way to execute asynchronous Apex code, but it has several limitations: - Methods must be static - Only primitive data types, primitive arrays, or collections of primitive data types can be parameters - No way to monitor job status or handle failures - No support for chaining jobs Consider... Learn more: https://docs.pmd-code.org/pmd-doc-{{PMD_VERSION}}/pmd_rules_apex_bestpractices.html#avoidfutureannotation",
+    "resourceUrls": [
+      "https://docs.pmd-code.org/pmd-doc-{{PMD_VERSION}}/pmd_rules_apex_bestpractices.html#avoidfutureannotation"
+    ]
+  },
+  {
     "name": "AvoidGetInstanceWithTaint",
     "severityLevel": 3,
     "tags": [
@@ -665,11 +678,10 @@
     "name": "ExcessiveClassLength",
     "severityLevel": 3,
     "tags": [
-      "Recommended",
       "Design",
       "Apex"
     ],
-    "description": "Excessive class file lengths are usually indications that the class may be burdened with excessive responsibilities that could be provided by external classes or functions. In breaking these methods apart the code becomes more managable and ripe for reuse.",
+    "description": "Excessive class file lengths are usually indications that the class may be burdened with excessive responsibilities that could be provided by external classes or functions. In breaking these methods apart the code becomes more manageable and ripe for reuse. **Deprecated:** This rule is deprecated since PMD 7.19.0 and will be removed with PMD 8.0.0. Use {%rule NcssCount %} to find big classes.",
     "resourceUrls": [
       "https://docs.pmd-code.org/pmd-doc-{{PMD_VERSION}}/pmd_rules_apex_design.html#excessiveclasslength"
     ]
@@ -834,24 +846,35 @@
     "name": "NcssConstructorCount",
     "severityLevel": 4,
     "tags": [
-      "Recommended",
       "Design",
       "Apex"
     ],
-    "description": "This rule uses the NCSS (Non-Commenting Source Statements) algorithm to determine the number of lines of code for a given constructor. NCSS ignores comments, and counts actual statements. Using this algorithm, lines of code that are split are counted as one.",
+    "description": "This rule uses the NCSS (Non-Commenting Source Statements) algorithm to determine the number of lines of code for a given constructor. NCSS ignores comments, and counts actual statements. Using this algorithm, lines of code that are split are counted as one. **Deprecated:** This rule is deprecated since PMD 7.19.0 and will be removed with PMD 8.0.0. Use {% rule NcssCount %} instead.",
     "resourceUrls": [
       "https://docs.pmd-code.org/pmd-doc-{{PMD_VERSION}}/pmd_rules_apex_design.html#ncssconstructorcount"
+    ]
+  },
+  {
+    "name": "NcssCount",
+    "severityLevel": 3,
+    "tags": [
+      "Recommended",
+      "Apex",
+      "Custom"
+    ],
+    "description": "This rule uses the NCSS (Non-Commenting Source Statements) metric to determine the number of lines of code in a class, method or constructor. NCSS ignores comments, blank lines, and only counts actual statements. For more details on the calculation, see the documentation {% jdoc apex::lang.apex.metrics.ApexMetrics#NCSS %}.",
+    "resourceUrls": [
+      "https://docs.pmd-code.org/pmd-doc-{{PMD_VERSION}}/pmd_rules_apex_design.html#ncsscount"
     ]
   },
   {
     "name": "NcssMethodCount",
     "severityLevel": 4,
     "tags": [
-      "Recommended",
       "Design",
       "Apex"
     ],
-    "description": "This rule uses the NCSS (Non-Commenting Source Statements) algorithm to determine the number of lines of code for a given method. NCSS ignores comments, and counts actual statements. Using this algorithm, lines of code that are split are counted as one.",
+    "description": "This rule uses the NCSS (Non-Commenting Source Statements) algorithm to determine the number of lines of code for a given method. NCSS ignores comments, and counts actual statements. Using this algorithm, lines of code that are split are counted as one. **Deprecated:** This rule is deprecated since PMD 7.19.0 and will be removed with PMD 8.0.0. Use {% rule NcssCount %} instead.",
     "resourceUrls": [
       "https://docs.pmd-code.org/pmd-doc-{{PMD_VERSION}}/pmd_rules_apex_design.html#ncssmethodcount"
     ]
@@ -863,7 +886,7 @@
       "Design",
       "Apex"
     ],
-    "description": "This rule uses the NCSS (Non-Commenting Source Statements) algorithm to determine the number of lines of code for a given type. NCSS ignores comments, and counts actual statements. Using this algorithm, lines of code that are split are counted as one.",
+    "description": "This rule uses the NCSS (Non-Commenting Source Statements) algorithm to determine the number of lines of code for a given type. NCSS ignores comments, and counts actual statements. Using this algorithm, lines of code that are split are counted as one. **Deprecated:** This rule is deprecated since PMD 7.19.0 and will be removed with PMD 8.0.0. Use {% rule NcssCount %} instead.",
     "resourceUrls": [
       "https://docs.pmd-code.org/pmd-doc-{{PMD_VERSION}}/pmd_rules_apex_design.html#ncsstypecount"
     ]

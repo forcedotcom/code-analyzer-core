@@ -1084,6 +1084,19 @@
     ]
   },
   {
+    "description": "Disallow default values that will never be used",
+    "name": "@typescript-eslint/no-useless-default-assignment",
+    "resourceUrls": [
+      "https://typescript-eslint.io/rules/no-useless-default-assignment"
+    ],
+    "severityLevel": 3,
+    "tags": [
+      "Recommended",
+      "BestPractices",
+      "TypeScript"
+    ]
+  },
+  {
     "description": "Disallow empty exports that don't change anything in a module file",
     "name": "@typescript-eslint/no-useless-empty-export",
     "resourceUrls": [
