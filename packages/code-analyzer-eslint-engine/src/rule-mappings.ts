@@ -1478,7 +1478,7 @@ export const RULE_MAPPINGS: Record<string, {severity: SeverityLevel, tags: strin
     },
     "@typescript-eslint/no-useless-default-assignment": {
         severity: SeverityLevel.Moderate,
-        tags: [COMMON_TAGS.RECOMMENDED, COMMON_TAGS.CATEGORIES.BEST_PRACTICES, COMMON_TAGS.LANGUAGES.TYPESCRIPT]
+        tags: [/* NOT RECOMMENDED */     COMMON_TAGS.CATEGORIES.BEST_PRACTICES, COMMON_TAGS.LANGUAGES.TYPESCRIPT]
     },
     "@typescript-eslint/no-useless-empty-export": {
         severity: SeverityLevel.Moderate,

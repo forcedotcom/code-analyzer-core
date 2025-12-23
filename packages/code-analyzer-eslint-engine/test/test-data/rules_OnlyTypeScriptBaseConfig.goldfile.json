@@ -1091,7 +1091,6 @@
     ],
     "severityLevel": 3,
     "tags": [
-      "Recommended",
       "BestPractices",
       "TypeScript"
     ]
