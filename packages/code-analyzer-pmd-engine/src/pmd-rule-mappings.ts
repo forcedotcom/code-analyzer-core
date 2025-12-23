@@ -96,6 +96,10 @@ export const RULE_MAPPINGS: Record<string, {severity: SeverityLevel, tags: strin
         severity: SeverityLevel.Low,
         tags: [COMMON_TAGS.RECOMMENDED, COMMON_TAGS.CATEGORIES.PERFORMANCE,    COMMON_TAGS.LANGUAGES.APEX]
     },
+    "AvoidFutureAnnotation": {
+        severity: SeverityLevel.Low,
+        tags: [COMMON_TAGS.RECOMMENDED, COMMON_TAGS.CATEGORIES.BEST_PRACTICES, COMMON_TAGS.LANGUAGES.APEX]
+    },
     "AvoidDeeplyNestedIfStmts": {
         severity: SeverityLevel.Moderate,
         tags: [COMMON_TAGS.RECOMMENDED, COMMON_TAGS.CATEGORIES.DESIGN,         COMMON_TAGS.LANGUAGES.APEX]
@@ -170,7 +174,7 @@ export const RULE_MAPPINGS: Record<string, {severity: SeverityLevel, tags: strin
     },
     "ExcessiveClassLength": {
         severity: SeverityLevel.Moderate,
-        tags: [COMMON_TAGS.RECOMMENDED, COMMON_TAGS.CATEGORIES.DESIGN,         COMMON_TAGS.LANGUAGES.APEX]
+        tags: [/* NOT RECOMMENDED */ COMMON_TAGS.CATEGORIES.DESIGN,         COMMON_TAGS.LANGUAGES.APEX]
     },
     "ExcessiveParameterList": {
         severity: SeverityLevel.Moderate,
@@ -222,11 +226,15 @@ export const RULE_MAPPINGS: Record<string, {severity: SeverityLevel, tags: strin
     },
     "NcssConstructorCount": {
         severity: SeverityLevel.Low,
-        tags: [COMMON_TAGS.RECOMMENDED, COMMON_TAGS.CATEGORIES.DESIGN,         COMMON_TAGS.LANGUAGES.APEX]
+        tags: [/* NOT RECOMMENDED */ COMMON_TAGS.CATEGORIES.DESIGN,         COMMON_TAGS.LANGUAGES.APEX]
+    },
+    "NcssCount": {
+        severity: SeverityLevel.Moderate,
+        tags: [COMMON_TAGS.RECOMMENDED, COMMON_TAGS.LANGUAGES.APEX, COMMON_TAGS.CUSTOM]
     },
     "NcssMethodCount": {
         severity: SeverityLevel.Low,
-        tags: [COMMON_TAGS.RECOMMENDED, COMMON_TAGS.CATEGORIES.DESIGN,         COMMON_TAGS.LANGUAGES.APEX]
+        tags: [/* NOT RECOMMENDED */ COMMON_TAGS.CATEGORIES.DESIGN,         COMMON_TAGS.LANGUAGES.APEX]
     },
     "NcssTypeCount": {
         severity: SeverityLevel.Low,

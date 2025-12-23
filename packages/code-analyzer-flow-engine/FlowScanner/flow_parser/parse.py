@@ -1,5 +1,7 @@
-"""Module for xml parsing of flow global attributes
+"""Module for XML parsing of flow global attributes.
 
+This module provides the Parser class for parsing Salesforce Flow XML files
+and extracting global attributes, variable types, and flow metadata.
 """
 
 from __future__ import annotations
@@ -42,20 +44,19 @@ logger: logging.Logger = logging.getLogger(__name__)
 
 
 def get_root(path: str) -> El:
-    """Get flow root
+    """Get the root element of an XML flow file.
 
     Args:
-        path: path of xml file to load
+        path: Path of XML file to load.
 
     Returns:
-        the root of the xml file
-
+        The root element of the XML file.
     """
     return CP.get_root(path)
 
 
 class Parser(FlowParser):
-    """API for parsing global lexical attributes of flow xml files.
+    """API for parsing global lexical attributes of flow XML files.
 
     Parser instances do not contain any branch-dependent data. In particular
     when a variable is seen by the parser, that does not mean it has been
@@ -65,10 +66,9 @@ class Parser(FlowParser):
     Parsers should not have any data modified after initialization except
     new member resolutions (e.g. Account.foo where 'foo' is new).
 
-    Parsers should always be built with the :meth:`Parser.from_file` class method
-    except for testing where from_string can be used, but then be sure to provide
+    Parsers should always be built with the :meth:`from_file` class method
+    except for testing where :meth:`from_string` can be used, but then be sure to provide
     a dummy filename.
-
     """
 
     def __init__(self, root):
@@ -101,7 +101,7 @@ class Parser(FlowParser):
         self.all_named_elems: frozenset[El] | None = None
 
         #: set of all names (names of named elements)
-        self.all_names: tuple[str,] | None = None
+        self.all_names: tuple[str,...] | None = None
 
         #: all traversable elements that are not crawlable
         self.not_crawlable_elems: list[El] | None = None
@@ -131,30 +131,68 @@ class Parser(FlowParser):
         self.tainted_inputs: Optional[set[tuple[str, str]]] = None
 
     def get_all_named_elems(self) -> frozenset[tuple[str, str]] | None:
+        """Get all named elements in the flow.
+
+        Returns:
+            Frozenset of all named elements, or None if not yet computed.
+        """
         return self.all_named_elems
 
     def get_all_names(self) -> tuple[str] | None:
+        """Get all element names in the flow.
+
+        Returns:
+            Tuple of all element names, or None if not yet computed.
+        """
         return self.all_names
 
     def get_effective_run_mode(self) -> RunMode:
+        """Get the effective run mode (considering inheritance).
+
+        Returns:
+            Effective RunMode enum value.
+        """
         return self.effective_run_mode
 
     def get_declared_run_mode(self) -> RunMode:
+        """Get the declared run mode (without inheritance).
+
+        Returns:
+            Declared RunMode enum value.
+        """
         return self.declared_run_mode
 
     def get_filename(self) -> str:
+        """Get the filename/path of the flow.
+
+        Returns:
+            Flow file path as string.
+        """
         return self.flow_path
 
     def get_root(self) -> El:
+        """Get the root XML element of the flow.
+
+        Returns:
+            Root XML element.
+        """
         return self.root
 
     def get_literal_var(self) -> VariableType:
+        """Get the literal variable type for string literals.
+
+        Returns:
+            VariableType instance for string literals.
+        """
         return self.literal_var
 
 
     def get_traversable_inbound(self) -> dict[str, list[str]]:
-        """Returns dict from element name to list of all inbound element names
-           will be empty list if no inbound.
+        """Get dictionary mapping element names to inbound element names.
+
+        Returns:
+            Dictionary from element name to list of all inbound element names.
+            Will be empty list if no inbound elements exist.
         """
         if self.traversable_inbound is None:
             self.set_traversable_inbound()
@@ -162,6 +200,7 @@ class Parser(FlowParser):
         return self.traversable_inbound
 
     def set_traversable_inbound(self) -> None:
+        """Set the traversable_inbound mapping for all flow elements."""
         start_el = self.get_start_elem()
         node_els =  self.get_all_traversable_flow_elements()
         node_els.append(start_el)
@@ -183,8 +222,11 @@ class Parser(FlowParser):
 
 
     def get_action_call_map(self) -> dict[str, list[tuple[El, str]]] | None:
-        """Gets all actionCalls in the flow element
-        Returns: actionCall type -> (action_element, action name)
+        """Get all actionCalls in the flow element.
+
+        Returns:
+            Dictionary mapping actionCall type to list of (action_element, action_name) tuples,
+            or None if no actionCalls are found.
         """
         accum = {}
         action_call_els = parse_utils.get_by_tag(self.root, 'actionCalls')
@@ -207,6 +249,11 @@ class Parser(FlowParser):
             return accum
 
     def get_async_scheduled_paths(self) -> list[str]:
+        """Get list of async scheduled path target references.
+
+        Returns:
+            List of target reference names for async scheduled paths.
+        """
         accum = []
         start = self.get_start_elem()
         if start is None or start.tag != f'{ns}start':
@@ -224,6 +271,11 @@ class Parser(FlowParser):
         return accum
 
     def get_trigger_object(self) -> str | None:
+        """Get the trigger object name for this flow.
+
+        Returns:
+            Trigger object name as string, or None if not a trigger or unknown.
+        """
         if self.trigger_object is True:
             return None
         elif isinstance(self.trigger_object, str):
@@ -256,6 +308,11 @@ class Parser(FlowParser):
                         return obj_name
 
     def get_trigger_type(self) -> TriggerType:
+        """Get the trigger type for this flow.
+
+        Returns:
+            TriggerType enum value indicating the type of trigger, or NotTrigger if not a trigger.
+        """
         if self.trigger_type is not None:
             return self.trigger_type
 
@@ -307,13 +364,13 @@ class Parser(FlowParser):
 
 
     def get_flow_type(self) -> FlowType:
-        """Returns type of flow
+        """Get the type of flow.
 
         If the flow_type member attribute is not set, it is determined,
         set and returned.
 
         Returns:
-            FlowType
+            FlowType enum value indicating the type of flow.
         """
         if self.flow_type is not None:
             return self.flow_type
@@ -362,20 +419,19 @@ class Parser(FlowParser):
 
     def resolve_by_name(self, name: str, path: str | None = None,
                         strict: bool = False) -> Optional[(str, str, VariableType)]:
-        """Resolves name to variable, property, VariableType. Does not store anything.
+        """Resolve name to variable, property, and VariableType.
 
-        Examples::
+        Does not store anything in the cache. This is a pure resolution function.
 
         Args:
-            name: raw name as it is used in the flow xml file (e.g. foo.bar.baz)
-            path: filename in which to resolve
-            strict: whether to resolve unknown variables to None (which can cause program execution
+            name: Raw name as it is used in the flow XML file (e.g. foo.bar.baz).
+            path: Filename in which to resolve (defaults to current flow path).
+            strict: Whether to resolve unknown variables to None (which can cause program execution
                     to terminate) or to create a best effort 'unknown' variable type resolution.
 
         Returns:
-            ``None`` if the name cannot be resolved,
-            else the triple (parent name, member, type)
-
+            None if the name cannot be resolved,
+            else the triple (parent_name, member, VariableType).
         """
 
         """
@@ -481,6 +537,15 @@ class Parser(FlowParser):
 
     @classmethod
     def from_file(cls, filepath: str, old_parser: Parser = None) -> Parser:
+        """Build a Parser instance from a file path.
+
+        Args:
+            filepath: Path to the flow XML file.
+            old_parser: Optional previous parser to inherit data from.
+
+        Returns:
+            New Parser instance.
+        """
         root = CP.get_root(filepath)
         parser = Parser(root)
         parser.flow_path = filepath
@@ -490,6 +555,19 @@ class Parser(FlowParser):
     @classmethod
     def from_string(cls, xml_string: str | bytes, filepath_to_use: str,
                     old_parser: Parser = None) -> Parser:
+        """Build a Parser instance from an XML string.
+
+        Args:
+            xml_string: XML content as string or bytes.
+            filepath_to_use: Dummy filename to use for this parser (required for testing).
+            old_parser: Optional previous parser to inherit data from.
+
+        Returns:
+            New Parser instance.
+
+        Raises:
+            ValueError: If xml_string is not str or bytes.
+        """
         if isinstance(xml_string, str):
             root = CP.get_root_from_string(xml_string.encode())
         elif isinstance(xml_string, bytes):
@@ -503,17 +581,15 @@ class Parser(FlowParser):
         return parser
 
     def update(self, old_parser: Parser = None, is_return=False) -> Parser:
-        """Parse flow root and populate default values
+        """Parse flow root and populate default values.
 
         Args:
-            old_parser: when updating a new parser from an old, to copy over elements
-                        and update run-mode
-
-            is_return: are we returning from a function call?
+            old_parser: When updating a new parser from an old, to copy over elements
+                        and update run-mode.
+            is_return: Are we returning from a function call?
 
         Returns:
-            None
-
+            Self (for method chaining).
         """
         if old_parser is not None:
             self.top_flow_path = old_parser.flow_path
@@ -567,23 +643,45 @@ class Parser(FlowParser):
         return self
 
     def get_output_variables(self, path: str | None = None) -> set[tuple[str, str]]:
+        """Get output variables for a specific path.
+
+        Args:
+            path: Flow path to filter by (defaults to current flow path).
+
+        Returns:
+            Set of (flow_path, variable_name) tuples for output variables.
+        """
         if path is None:
             path = self.flow_path
         return {(x, y) for (x, y) in self.output_variables if x == path}
 
     def get_input_variables(self, path: str | None = None) -> set[tuple[str, str]]:
+        """Get input variables for a specific path.
+
+        Args:
+            path: Flow path to filter by (defaults to current flow path).
+
+        Returns:
+            Set of (flow_path, variable_name) tuples for input variables.
+        """
         if path is None:
             path = self.flow_path
         return {(x, y) for (x, y) in self.input_variables if x == path}
 
     def get_input_field_elems(self) -> set[El] | None:
+        """Get all input field elements from the flow.
+
+        Returns:
+            Set of input field XML elements, or None if none found.
+        """
         return parse_utils.get_input_fields(self.root)
 
     def get_input_output_elems(self) -> dict[str, set[El]]:
-        """
-        Returns::
-              {"input": input variable elements,
-              "output": output variable elements }
+        """Get input and output variable elements.
+
+        Returns:
+            Dictionary with keys "input" and "output", each mapping to
+            a set of XML elements representing input or output variables.
         """
         vars_ = self.get_all_variable_elems()
         input_accum = set()
@@ -602,7 +700,15 @@ class Parser(FlowParser):
                 }
 
     def get_by_name(self, name_to_match: str, scope: El | None = None) -> El | None:
-        """returns the first elem with the given name that is a child of the scope element"""
+        """Get the first element with the given name within the scope.
+
+        Args:
+            name_to_match: Name of element to find (use '*' for start element).
+            scope: XML element to search within (defaults to root).
+
+        Returns:
+            First matching XML element, or None if not found.
+        """
         if name_to_match == '*':
             return self.get_start_elem()
 
@@ -621,7 +727,14 @@ class Parser(FlowParser):
         return None
 
     def get_flow_name(self) -> str:
-        """we assume there is always a flow label."""
+        """Get the flow name from the label element.
+
+        Returns:
+            Flow name as string.
+
+        Raises:
+            InvalidFlowException: If flow has no label element.
+        """
         res = get_by_tag(self.root, 'label')
         if len(res) == 0:
             raise InvalidFlowException(f"Flow {self.flow_path} has no name, skipping..", flow_path=self.flow_path)
@@ -629,11 +742,10 @@ class Parser(FlowParser):
             return res[0].text
 
     def get_run_mode(self) -> RunMode:
-        """Get effective context of flow
+        """Get effective context (run mode) of flow.
 
         Returns:
-            RunMode public enum
-
+            RunMode enum value indicating the execution context.
         """
         flow_type = self.get_flow_type()
 
@@ -654,14 +766,28 @@ class Parser(FlowParser):
             return RunMode[elems[0].text]
 
     def get_api_version(self) -> str:
+        """Get the API version of the flow.
+
+        Returns:
+            API version string.
+        """
         return get_by_tag(self.root, 'apiVersion')[0].text
 
     def get_all_traversable_flow_elements(self) -> list[El]:
-        """ ignore start"""
+        """Get all traversable flow elements (excluding start element).
+
+        Returns:
+            List of traversable flow XML elements.
+        """
         return [child for child in self.root if
                 get_tag(child) in parse_utils.CTRL_FLOW_ELEM]
 
     def get_all_variable_elems(self) -> list[El] | None:
+        """Get all variable elements from the flow.
+
+        Returns:
+            List of variable XML elements, or None if none found.
+        """
         elems = get_by_tag(self.root, 'variables')
         if len(elems) == 0:
             return None
@@ -669,37 +795,58 @@ class Parser(FlowParser):
             return elems
 
     def get_templates(self) -> list[El]:
-        """Grabs all template elements.
-           Returns empty list if none found
+        """Get all template elements.
+
+        Returns:
+            List of template XML elements (empty list if none found).
         """
         templates = get_by_tag(self.root, 'textTemplates')
         return templates
 
     def get_formulas(self) -> list[El]:
-        """Grabs all formula elements.
-                Returns empty list if none found
+        """Get all formula elements.
+
+        Returns:
+            List of formula XML elements (empty list if none found).
         """
         formulas = get_by_tag(self.root, 'formulas')
         return formulas
 
     def get_choices(self) -> list[El]:
+        """Get all choice elements.
+
+        Returns:
+            List of choice XML elements.
+        """
         choices = get_by_tag(self.root, 'choices')
         return choices
 
     def get_dynamic_choice_sets(self) -> list[El]:
+        """Get all dynamic choice set elements.
+
+        Returns:
+            List of dynamic choice set XML elements.
+        """
         dcc = get_by_tag(self.root, 'dynamicChoiceSets')
         return dcc
 
     def get_constants(self) -> list[El]:
+        """Get all constant elements.
+
+        Returns:
+            List of constant XML elements.
+        """
         constants = get_by_tag(self.root, 'constants')
         return constants
 
     def get_start_elem(self) -> El:
-        """Get first element of flow
-            Raises InvalidFlowException if no start element
-        Returns:
-            <start> element or element pointed to in <startElementReference>
+        """Get the first element of the flow.
 
+        Returns:
+            Start XML element or element pointed to in startElementReference.
+
+        Raises:
+            InvalidFlowException: If no start element is found.
         """
         res = parse_utils.get_start_element(self.root)
         if res is None:
@@ -708,10 +855,12 @@ class Parser(FlowParser):
             return res
 
     def get_all_indirect_tuples(self) -> list[tuple[str, El]]:
-        """returns a list of tuples of all indirect references, e.g.
-        str, elem, where str influences elem.
-        The elem is a formula or template element and
-        str is an extracted merge-field from the elem
+        """Get all indirect references from formulas and templates.
+
+        Returns:
+            List of (variable_name, element) tuples where the variable influences
+            the element. The element is a formula or template element and the
+            variable name is an extracted merge-field from the element.
         """
         accum = []
         elems = self.get_templates() + self.get_formulas()
@@ -739,16 +888,16 @@ class Parser(FlowParser):
         return accum
 
     def get_cached_resolution(self, name: str, path: str | None = None) -> tuple[str, str | None, VariableType] | None:
-        """Gets the VariableType for the named Flow Element
+        """Get the VariableType for the named Flow Element from cache.
 
-        Only looks in cache.
+        Only looks in cache, does not perform new resolution.
 
         Args:
-            name: name of Flow Element to retrieve
-            path: filename to use (if None, use current path)
+            name: Name of Flow Element to retrieve.
+            path: Filename to use (if None, use current path).
 
         Returns:
-            VariableType or None if not present in cache
+            Tuple of (parent_name, member, VariableType) or None if not present in cache.
         """
         if name == STRING_LITERAL_TOKEN:
             return name, None, self.literal_var
@@ -762,7 +911,13 @@ class Parser(FlowParser):
             return None
 
     def get_called_descendents(self, elem_name: str) -> list[str]:
-        """Returns empty list if no descendents
+        """Get all called descendant element names.
+
+        Args:
+            elem_name: Name of element to get descendants for.
+
+        Returns:
+            List of descendant element names (empty list if none).
         """
         el = self.get_by_name(elem_name)
         target_map = get_conn_target_map(el)
@@ -771,8 +926,15 @@ class Parser(FlowParser):
         else:
             return [x[0] for x in get_conn_target_map(el).values()]
 
-    def get_traversable_descendents_of_elem(self, elem_name: str) -> list[str]:
-        """includes the original elem name, elem_tag"""
+    def get_traversable_descendants_of_elem(self, elem_name: str) -> list[str]:
+        """Get all traversable descendants of an element.
+
+        Args:
+            elem_name: Name of element to get descendants for.
+
+        Returns:
+            List of element names including the original element name.
+        """
         visited = []
         worklist = []
         curr_name = elem_name
@@ -789,14 +951,11 @@ class Parser(FlowParser):
                 return visited
 
     def get_tainted_inputs(self) -> set[tuple[str, str]] | None:
-        """Looks for sources
-        Args:
-            parser: parser instance for flow
-            start: whether this is the first flow being scanned
+        """Get tainted input variables (user-controlled sources).
 
         Returns:
-            ((path, varname), ) corresponding to sources of taint
-
+            Set of (path, varname) tuples corresponding to sources of taint,
+            or None if not yet computed.
         """
         start = self.flow_path == self.top_flow_path
 
@@ -835,7 +994,7 @@ class Parser(FlowParser):
         return self.tainted_inputs
 
 def build_vartype_from_elem(elem: El) -> VariableType | None:
-    """Build VariableType from XML Element
+    """Build VariableType from XML Element.
 
     The purpose of this function is to assign types to named
     flow elements, in order to assist in object resolution
@@ -850,12 +1009,12 @@ def build_vartype_from_elem(elem: El) -> VariableType | None:
     variable from this flow element.
 
     Args:
-        elem: must be a *named* Flow element (e.g. an element with a <name> tag that
-              is a child of the element root)
+        elem: Must be a *named* Flow element (e.g. an element with a <name> tag that
+              is a child of the element root).
 
     Returns:
-        VariableType instance containing type information for the element or None
-        If the element is not a named Flow element or is unknown to the parser.
+        VariableType instance containing type information for the element, or None
+        if the element is not a named Flow element or is unknown to the parser.
     """
     if elem is None:
         return None
@@ -1116,8 +1275,22 @@ def build_vartype_from_elem(elem: El) -> VariableType | None:
     return None
 
 def _get_global_flow_data(flow_path: str, root: El) \
-        -> tuple[list[El], tuple[str,...], dict[tuple[str, str], VariableType],
+        -> tuple[frozenset[El], tuple[str,...], dict[tuple[str, str], VariableType],
         frozenset[tuple[str, str]], frozenset[tuple[str, str]]]:
+    """Extract global flow data from the XML root.
+
+    Args:
+        flow_path: Path of the flow file.
+        root: Root XML element of the flow.
+
+    Returns:
+        Tuple containing:
+            - frozenset of all named elements
+            - tuple of all element names
+            - dictionary mapping (flow_path, name) to VariableType
+            - frozenset of (flow_path, name) tuples for input variables
+            - frozenset of (flow_path, name) tuples for output variables
+    """
 
     all_named = get_named_elems(root)
 
@@ -1159,6 +1332,6 @@ def _get_global_flow_data(flow_path: str, root: El) \
             if var.is_output:
                 outputs.append((flow_path, name_dict[x]))
 
-    return all_named, all_names, vars_, frozenset(inputs), frozenset(outputs)
+    return frozenset(all_named), all_names, vars_, frozenset(inputs), frozenset(outputs)
 
 

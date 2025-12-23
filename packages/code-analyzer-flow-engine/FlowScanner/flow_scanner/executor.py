@@ -1,9 +1,9 @@
-"""Performs symbolic execution and vulnerability analysis
-
-  @author: rsussland@salesforce.com
+"""Performs symbolic execution and vulnerability analysis.
 
 The executor handles the element crawl and dispatches
-query handlers and dataflow updates as appropriate
+query handlers and dataflow updates as appropriate.
+
+@author: rsussland@salesforce.com
 """
 
 from __future__ import annotations
@@ -68,20 +68,17 @@ class Stack(object):
     """The Stack handles subflow invocation.
 
     When we pass to a subflow a new frame is pushed on the stack and when we
-    return it is popped."""
+    return it is popped.
+    """
 
     def __init__(self, root_flow_path: str, resolver: Resolver,
                  query_manager: QueryManager):
-        """Constructor (can be used)
+        """Initialize a Stack instance.
 
         Args:
-            root_flow_path: current filename of flow being processed
-            resolver: map[flow_name] -> flow_path of all files in scope
-            query_manager: invokes queries and stores results
-
-        Results:
-            result instance object
-
+            root_flow_path: Current filename of flow being processed.
+            resolver: Map from flow_name to flow_path of all files in scope.
+            query_manager: Invokes queries and stores results.
         """
 
         #: tracks list of frames that need to be processed *after* current frame
@@ -110,11 +107,10 @@ class Stack(object):
         self.query_manager: QueryManager = query_manager
 
     def pop(self) -> Frame | None:
-        """Get next frame from stack
+        """Get next frame from stack.
 
         Returns:
-            frame or None if empty
-
+            Frame or None if stack is empty.
         """
         if len(self.__frame_stack) > 0:
             return self.__frame_stack.pop(0)
@@ -122,24 +118,21 @@ class Stack(object):
             return None
 
     def push(self, frame: Frame):
-        """Pushes a frame onto stack, call when invoking a subflow
+        """Push a frame onto stack.
+
+        Call this when invoking a subflow.
 
         Args:
-            frame: frame to push to the top of the stack
-
-        Returns:
-            None
-
+            frame: Frame to push to the top of the stack.
         """
         self.__frame_stack.insert(0, frame)
         return
 
     def run(self) -> QueryManager:
-        """Main entry point for symbolic execution of an initialized stack
+        """Main entry point for symbolic execution of an initialized stack.
 
         Returns:
-            Query Manager object
-
+            QueryManager object after execution completes.
         """
         while True:
             next_frame = self.current_frame.execute()
@@ -191,14 +184,13 @@ class Stack(object):
                     self.current_frame = next_frame
 
     def is_circular_reference(self, next_frame: Frame) -> bool:
-        """Checks if the next frame is in the previously
-           processed frames.
+        """Check if the next frame is in the previously processed frames.
 
         Args:
-            next_frame: next frame to process
+            next_frame: Next frame to process.
 
         Returns:
-            True if the next frame is in the old frames
+            True if the next frame is in the old frames (circular reference detected).
         """
         if next_frame is None:
             return False
@@ -227,16 +219,15 @@ def add_inputs_to_call_cache(cache: dict[str, list[list[flow_vec_g]]],
                              sub_path: str,
                              val: flow_vec_g,
                              ) -> dict[str, list[list[flow_vec_g]]]:
-    """Store input values to subflow in cache
+    """Store input values to subflow in cache.
 
     Args:
-        cache: cached return values (subflow name -> flow_vec_g)
-        sub_path: path of subflow
-        val: input values to store
+        cache: Cached return values (subflow name -> flow_vec_g).
+        sub_path: Path of subflow.
+        val: Input values to store.
 
     Returns:
-        updated cache
-
+        Updated cache dictionary.
     """
     if cache is None:
         cache = {sub_path: [[val]]}
@@ -255,17 +246,16 @@ def add_outputs_to_call_cache(cache: dict[str, list[list[flow_vec_g]]],
                               inputs: flow_vec_g,
                               added: flow_vec_g,
                               flow_path: str) -> dict[str,list[list[flow_vec_g]]]:
-    """Store return values of subflow in call cache
+    """Store return values of subflow in call cache.
 
     Args:
-        cache: cached subflow inputs and outputs
-        inputs: inputs whose outputs are being added to cache
-        added: vars to flow vectors to add to cache
-        flow_path: filename of flow
+        cache: Cached subflow inputs and outputs.
+        inputs: Inputs whose outputs are being added to cache.
+        added: Variables to flow vectors to add to cache.
+        flow_path: Filename of flow.
 
     Returns:
-        the updated cache
-
+        The updated cache dictionary.
     """
     # outputs should only be added after inputs
     assert cache is not None and flow_path in cache
@@ -278,18 +268,17 @@ def call_carnac(input_cache: dict[str, list[list[flow_vec_g]]] | None,
                 vector_map: flow_vec_g,
                 subflow_path: str,
                 outputs: flow_vec_g = None) -> flow_vec_g | None:
-    """Predicts what the subflow will return
+    """Predict what the subflow will return based on cached inputs/outputs.
 
     Args:
-        input_cache: cache of previous flow inputs
-                     subflow_path ->[[input1, output1], [input2, output2], ]
-        vector_map: subflow inputs being called now
-        subflow_path: filepath of subflow to be called
-        outputs: outputs to add
+        input_cache: Cache of previous flow inputs/outputs.
+                     Format: subflow_path -> [[input1, output1], [input2, output2], ...]
+        vector_map: Subflow inputs being called now.
+        subflow_path: Filepath of subflow to be called.
+        outputs: Outputs to add to cache (optional).
 
     Returns:
-        output vector map (return values from subflow)
-
+        Output vector map (return values from subflow) if found in cache, None otherwise.
     """
     if input_cache is None or subflow_path not in input_cache:
         # Carnac not ready as cache is not populated yet
@@ -319,7 +308,7 @@ class Frame(object):
     """Frame is responsible for managing program analysis within a single flow.
 
     Execution happens along each branch, which is assigned a branch state
-    and branching xml element (e.g. Loop element or Decision element)
+    and branching XML element (e.g. Loop element or Decision element)
 
     Branch management is via maintaining a worklist consisting of branches
     that need to be processed, with each branch a tuple (State, branch elem)
@@ -350,14 +339,14 @@ class Frame(object):
         #: placeholder for fast-forward scans (not currently used)
         self.resolved_subflows: dict[Any, Any] = {}
 
-        #: path of flow we are working on, needed when labelling inputs/outputs
+        #: path of flow we are working on, needed when labeling inputs/outputs
         self.flow_path: str = current_flow_path
 
         #: name of flow we are working on. Needed for loading subflows
         self.flow_name: str | None = None
 
-        #: XML parser instance
-        self.parser: parse.Parser | None = None
+        #: XML parser instance (the or is to quiet typing complaints)
+        self.parser: parse.Parser | parse.FlowParser | None = None
 
         #: supplies next element and branch-state to process
         self.crawler: Crawler | None = None
@@ -409,19 +398,22 @@ class Frame(object):
               resolved_subflows: dict[Any, Any] = None,
               parent_subflow: El = None,
               query_manager: QueryManager = None) -> Frame:
-        """Call this whenever program analysis starts or a subflow is reached
+        """Build a new Frame instance.
+
+        Call this whenever program analysis starts or a subflow is reached.
 
         Args:
-            current_flow_path: current path of flow
-            resolver: Resolves subflows to be scanned
-            resolved_subflows: subflows that have been already processed
-            parent_subflow: current subflow element that spawned this
-                frame
-            query_manager: manages query instances
+            current_flow_path: Current path of flow.
+            resolver: Resolves subflows to be scanned.
+            resolved_subflows: Subflows that have been already processed.
+            parent_subflow: Current subflow element that spawned this frame.
+            query_manager: Manages query instances.
 
         Returns:
-            new Frame
+            New Frame instance.
 
+        Raises:
+            ValueError: If current_flow_path is None.
         """
 
         if current_flow_path is None:
@@ -453,20 +445,18 @@ class Frame(object):
         return frame
 
     def update_parent_frame(self, parent_frame: Frame, output_vector_map) -> None:
-        """Updates the provided parent frame with the return values of the current frame.
+        """Update the provided parent frame with the return values of the current frame.
 
-        * Query Manager updated to have new parser
+        * Query Manager updated to have new parser.
         * New Influence Paths that flow into the output variables of the subflow are pushed
           into the parent.
 
         Args:
-            output_vector_map: map from tuples to output vectors of the child subflow
-            parent_frame: frame which spawned the current frame via a
-                subflow
+            output_vector_map: Map from tuples to output vectors of the child subflow.
+            parent_frame: Frame which spawned the current frame via a subflow.
 
-        Returns:
-            None
-
+        Raises:
+            RuntimeError: If parent_frame or self.parent_subflow is None.
         """
         if parent_frame is None or self.parent_subflow is None:
             raise RuntimeError("Attempted to update a null parent frame")
@@ -514,14 +504,13 @@ class Frame(object):
     """
 
     def get_consolidated_output_vars(self) -> dict[tuple[str, str], flows.FlowVector]:
-        """get all output variable vectors from all terminal BranchStates.
+        """Get all output variable vectors from all terminal BranchStates.
 
         Call this method after flow processing has completed for a subflow
         in order to return all possible output variables to the parent.
 
         Returns:
-            a map (flow_path, variable name) -> FlowVector
-
+            A map from (flow_path, variable name) to FlowVector.
         """
 
         # grab from current state
@@ -556,7 +545,6 @@ class Frame(object):
                           ) -> Frame:
         """Spawn a child frame when entering subflow.
 
-
         Function Call and Return
         ============================
 
@@ -575,19 +563,18 @@ class Frame(object):
             4. set self.child_spawned = True (so when we return, we don't spawn again!)
             5. return the new Frame.
 
-        .. NOTE:: the parser object remembers all the sources and sinks from the parent
+        .. note:: The parser object remembers all the sources and sinks from the parent
                   and these are available to the child as well (the old parser is propagated
-                  to the child, as is the old result instance)
+                  to the child, as is the old result instance).
 
         Args:
-            sub_path: filepath of subflow being called
-            input_map: map of output variables in child to input variables of subflow elem in parent
-            vector_map: map from tuple to the flow vectors that will be pushed into the child
-            subflow: subflow xml element
+            sub_path: Filepath of subflow being called.
+            input_map: Map of output variables in child to input variables of subflow elem in parent.
+            vector_map: Map from tuple to the flow vectors that will be pushed into the child.
+            subflow: Subflow XML element.
 
         Returns:
-            updated child frame ready to begin processing
-
+            Updated child frame ready to begin processing.
         """
         # build a parser for new subflow, which inherits variable info
         new_parser = parse.Parser.from_file(filepath=sub_path, old_parser=self.parser)
@@ -620,17 +607,16 @@ class Frame(object):
         return new_frame
 
     def handle_subflows(self, current_elem: El) -> Frame | None:
-        """Checks whether we have encountered a subflow elem.
+        """Check whether we have encountered a subflow element.
 
         Different behavior required if we are returning from the element or entering into it.
 
         Args:
-            current_elem: Flow element to check
+            current_elem: Flow element to check.
 
         Returns:
-            new Frame in case we are entering a new subflow, or None in
+            New Frame in case we are entering a new subflow, or None in
             case we are returning from the subflow.
-
         """
 
         if not FOLLOW_SUBFLOWS:
@@ -649,12 +635,11 @@ class Frame(object):
             return None
 
     def execute(self) -> Frame | None:
-        """Performs symbolic execution on the Frame.
+        """Perform symbolic execution on the Frame.
 
         Returns:
-            new Frame to process in case a subflow has been launched,
+            New Frame to process in case a subflow has been launched,
             and finally returning None when the Frame's processing is complete.
-
         """
 
         # once, we run queries at flow start:
@@ -686,11 +671,18 @@ class Frame(object):
                 return child_frame
 
 
-    def process_subflow(self, current_elem):
+    def process_subflow(self, current_elem) -> Frame | None:
+        """Process a subflow element.
 
-        # If there is a problem, we return None and the parent
-        # continues on as if the subflow did not exist
+        If there is a problem, we return None and the parent
+        continues on as if the subflow did not exist.
 
+        Args:
+            current_elem: Subflow XML element to process.
+
+        Returns:
+            Child Frame if subflow should be processed, None otherwise.
+        """
         try:
             sub_name = parse_utils.get_subflow_name(current_elem)
             sub_path = self.resolver.get_subflow_path(sub_name=sub_name, flow_path=self.flow_path)
@@ -768,27 +760,27 @@ def parse_flow(flow_path: str,
                crawl_dir: str = None,
                resolver: Resolver = None,
                debug_query: str | None = None) -> QueryManager:
-    """Main loop that performs control and dataflow analysis
+    """Main loop that performs control and dataflow analysis.
 
     Args:
-        flow_path: path (on filesystem) of flow-meta.xml file
-        requestor: email address of scan recipient (optional)
-        report_label: human-readable name for report (optional)
-        result_id: id of report (for use in a jobs management system) (optional)
-        service_version: version of jobs management system (optional)
-        help_url: url to display on report for more info about results (optional)
-        query_module_path: path of module where custom queries are stored
-        query_class_name: name of query class to instantiate
-        query_preset: name of preset to run
-        queries: list of optional queries to run
-        query_manager: existing instance that invokes queries across entire run. Start with None
-                       and one will be created.
-        crawl_dir: directory of where to store crawl specifications
-        resolver: used for looking up flow paths of subflows
-        debug_query (str): pass this string to the query_manager constructor
+        flow_path: Path (on filesystem) of flow-meta.xml file.
+        requestor: Email address of scan recipient (optional).
+        report_label: Human-readable name for report (optional).
+        result_id: ID of report (for use in a jobs management system) (optional).
+        service_version: Version of jobs management system (optional).
+        help_url: URL to display on report for more info about results (optional).
+        query_module_path: Path of module where custom queries are stored.
+        query_class_name: Name of query class to instantiate.
+        query_preset: Name of preset to run.
+        queries: List of optional queries to run.
+        query_manager: Existing instance that invokes queries across entire run.
+                       Start with None and one will be created.
+        crawl_dir: Directory of where to store crawl specifications.
+        resolver: Used for looking up flow paths of subflows.
+        debug_query: Pass this string to the query_manager constructor.
 
     Returns:
-        instance of ger_report.Result class that can be used to generate reports
+        Instance of QueryManager that can be used to generate reports
         or passed to other flows.
     """
 
@@ -897,7 +889,15 @@ def parse_flow(flow_path: str,
 
 
 def report(state: BranchState, current_step: int, total_steps: int) -> None:
-    # TODO: this will be made pretty later
+    """Report progress during symbolic execution.
+
+    Args:
+        state: Current branch state.
+        current_step: Current step number.
+        total_steps: Total number of steps.
+
+    .. todo:: This will be made pretty later.
+    """
     msg = (f"flow: {state.flow_name}"
            f"step: {current_step}"
            f"total steps: {total_steps}"
@@ -907,6 +907,15 @@ def report(state: BranchState, current_step: int, total_steps: int) -> None:
 
 
 def get_output_variable_map(subflow_elem: El, subflow_output_vars: list[var_g]) -> dict[str, str]:
+    """Get output variable map from subflow element.
+
+    Args:
+        subflow_elem: Subflow XML element.
+        subflow_output_vars: List of (flow_path, variable_name) tuples for output variables.
+
+    Returns:
+        Dictionary mapping child variable name to parent variable name.
+    """
     # output_variable_map: child name --> parent name the child influences
     auto, output_variable_map = public.parse_utils.get_subflow_output_map(subflow_elem)
     if auto:
@@ -920,6 +929,14 @@ def get_output_variable_map(subflow_elem: El, subflow_output_vars: list[var_g]) 
 
 
 def _consolidate_collected_frames(old_frames: list[Frame]) -> tuple[BranchState,]:
+    """Consolidate collected frames by filtering to terminal steps.
+
+    Args:
+        old_frames: List of Frame instances to consolidate.
+
+    Returns:
+        Tuple of BranchState instances from terminal steps.
+    """
     to_return = []
     for frame in old_frames:
         to_keep = list(frame.crawler.terminal_steps)
@@ -929,4 +946,12 @@ def _consolidate_collected_frames(old_frames: list[Frame]) -> tuple[BranchState,
 
 
 def report_map(vec_map: flow_vec_g) -> str:
+    """Generate a string report from a flow vector map.
+
+    Args:
+        vec_map: Dictionary mapping (flow_path, variable_name) to FlowVector.
+
+    Returns:
+        Multi-line string report of all flow vectors.
+    """
     return '\n'.join([x.short_report() for x in vec_map.values()])

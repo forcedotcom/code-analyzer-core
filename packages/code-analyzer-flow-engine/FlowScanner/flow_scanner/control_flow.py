@@ -64,16 +64,14 @@ class Segment(JSONSerializable, AbstractSegment):
 
 
     def accept(self, visitor: BranchVisitor) -> list[BranchVisitor] | None:
-        """does the node accept the visitor
-
-        Also updates visitor state
+        """Check if the node accepts the visitor and update visitor state.
 
         Args:
-            visitor: Branch Visitor trying to jump into node
+            visitor: Branch Visitor trying to jump into node.
 
         Returns:
-            list of labels to process or None
-
+            List of BranchVisitor instances to process next, or None if
+            visitor is rejected (e.g., due to cycles).
         """
         if not self.jumps:
             return None
@@ -95,7 +93,15 @@ class Segment(JSONSerializable, AbstractSegment):
             return self._send_outbound(visitor)
 
 
-    def _send_outbound(self, visitor):
+    def _send_outbound(self, visitor: BranchVisitor) -> list[BranchVisitor]:
+        """Generate outbound visitors from this segment.
+
+        Args:
+            visitor: BranchVisitor entering this segment.
+
+        Returns:
+            List of BranchVisitor instances for outbound jumps.
+        """
         jumps = self.jumps
 
         to_return = []
@@ -126,6 +132,7 @@ class Segment(JSONSerializable, AbstractSegment):
                 else:
                     # remove everything before the entrance to the loop
                     loop_context = loop_context[:z]
+                    pass
 
             if self.is_multiple_inbound:
                 new_token = visitor.token
@@ -158,14 +165,14 @@ class Segment(JSONSerializable, AbstractSegment):
     # noinspection PyTypeChecker
     @classmethod
     def build_from_parser(cls, parser: parse.Parser, start_elem: El) -> Segment:
-        """Build a segment starting at this element
+        """Build a segment starting at this element.
 
         Args:
-            parser: flow parser instance
-            start_elem: first element in this segment
+            parser: Flow parser instance.
+            start_elem: First element in this segment.
 
         Returns:
-            segment
+            Segment instance built from the element.
         """
         inbound_map = parser.get_traversable_inbound()
         label = get_name(start_elem)
@@ -228,8 +235,17 @@ class Segment(JSONSerializable, AbstractSegment):
                 raise InvalidFlowException("Could not crawl flow", flow_path=parser.get_filename())
 
 
-def get_jumps_and_terminal(el_name: str, el_tag:str, elem: El) -> tuple[list[Jump], bool]:
-    """Return list of jumps for this element, is_terminal (bool)"""
+def get_jumps_and_terminal(el_name: str, el_tag: str, elem: El) -> tuple[list[Jump], bool]:
+    """Get list of jumps for an element and determine if it's terminal.
+
+    Args:
+        el_name: Name of the element.
+        el_tag: XML tag of the element.
+        elem: XML element to analyze.
+
+    Returns:
+        Tuple of (list of Jump objects, is_terminal boolean).
+    """
 
     jumps = []
     conns = get_conn_target_map(elem)
@@ -298,7 +314,15 @@ class ControlFlowGraph(JSONSerializable, AbstractControlFlowGraph):
     segment_map: dict[str, Segment]
 
     @classmethod
-    def from_parser(cls, parser: parse.Parser):
+    def from_parser(cls, parser: parse.Parser) -> 'ControlFlowGraph':
+        """Build a ControlFlowGraph from a parser.
+
+        Args:
+            parser: Flow parser instance.
+
+        Returns:
+            ControlFlowGraph instance.
+        """
         start_elem = parser.get_start_elem()
         start_label = get_name(start_elem)
         visited_labels = []
@@ -344,14 +368,16 @@ def get_crawl_data(cfg: ControlFlowGraph) -> \
         tuple[tuple[CrawlStep, ...],
          tuple[CrawlStep, ...],
          dict[str, list[CrawlStep]]]:
-    """Builds crawl schedule
+    """Build crawl schedule from control flow graph.
 
     Args:
-        cfg: Control Flow Graph
+        cfg: Control Flow Graph to build schedule from.
 
     Returns:
-        (tuple of crawl steps, tuple of terminal steps, dict of element to list of crawl steps)
-
+        Tuple of:
+        - Tuple of all crawl steps in execution order.
+        - Tuple of terminal crawl steps.
+        - Dictionary mapping element names to lists of crawl steps.
     """
 
     generator = _crawl_iter(cfg)
@@ -396,7 +422,15 @@ def get_crawl_data(cfg: ControlFlowGraph) -> \
 
     return tuple(crawl_steps), tuple(terminal_steps), el_2_cs
 
-def get_visits_statistics(visit_map: dict[str, list[Jump] | None], cfg: ControlFlowGraph):
+def get_visits_statistics(visit_map: dict[str, list[Jump] | None], cfg: ControlFlowGraph) -> None:
+    """Print statistics about CFG traversal visits.
+
+    Checks that every label has been visited and every jump has been traversed.
+
+    Args:
+        visit_map: Dictionary mapping segment labels to lists of visits.
+        cfg: Control Flow Graph to analyze.
+    """
     # first check that every label has been visited:
     missed = []
     for label in cfg.segment_map:
@@ -440,13 +474,13 @@ def get_visits_statistics(visit_map: dict[str, list[Jump] | None], cfg: ControlF
 
 
 def _get_crawl_visits(cfg: ControlFlowGraph) -> dict[str, list[BranchVisitor]]:
-    """For testing and analysis.
+    """Get visit map for testing and analysis.
 
     Args:
-        cfg: control flow graph
+        cfg: Control flow graph to analyze.
 
     Returns:
-        map from label to BranchVisitor
+        Dictionary mapping segment labels to lists of BranchVisitor instances.
     """
     # for testing and analysis
     # initialize visits
@@ -460,14 +494,13 @@ def _get_crawl_visits(cfg: ControlFlowGraph) -> dict[str, list[BranchVisitor]]:
 
 
 def _crawl_iter(cfg: ControlFlowGraph) -> Generator[tuple[BranchVisitor, Segment], None, None]:
-    """crawls CFG
+    """Crawl a control flow graph.
 
     Args:
-        cfg: control flow graph
+        cfg: Control flow graph to crawl.
 
     Yields:
-        current Branch visitor (that points to the current segment),
-        the segment (list of flow elements to process, and outgoing visitors)
+        Tuples of (BranchVisitor, Segment) as the graph is traversed.
     """
 
     label = cfg.start_label
@@ -530,19 +563,15 @@ def _crawl_iter(cfg: ControlFlowGraph) -> Generator[tuple[BranchVisitor, Segment
 
 
 def _find_segments_with_elem(val: str, segment_map: dict[str, Segment]) -> list[tuple[str, Segment, int]]:
-    """Find segments that also contain an element.
+    """Find segments that contain a specific element.
 
     Args:
-        val: string name of element
-        segment_map: label -> segment
+        val: String name of element to find.
+        segment_map: Dictionary mapping labels to Segment instances.
 
     Returns:
-
-        * list of segments that have this element along with their label
-          and the index of the found element in the form
-          (label, segment, dupe_index)
-
-        * Empty set if no segments found
+        List of (label, segment, index) tuples where the element appears.
+        Returns empty list if no segments found.
 
     """
     if segment_map is None or len(segment_map) == 0:
@@ -562,7 +591,18 @@ def _find_segments_with_elem(val: str, segment_map: dict[str, Segment]) -> list[
     return to_return
 
 class CrawlEncoder(json.JSONEncoder):
+    """JSON encoder for crawl-related objects."""
+
     def default(self, obj):
+        """Encode an object to JSON.
+
+        Args:
+            obj: Object to encode.
+
+        Returns:
+            Dictionary representation for JSONSerializable, BranchVisitor,
+            or CrawlStep objects, otherwise falls back to default JSON encoding.
+        """
         if (isinstance(obj, JSONSerializable) or isinstance(obj, BranchVisitor)
                 or isinstance(obj, CrawlStep)):
             return obj.to_dict()
@@ -571,26 +611,32 @@ class CrawlEncoder(json.JSONEncoder):
 
 
 class Crawler(AbstractCrawler):
-    """Class representing the crawl of a graph
+    """Class representing the crawl of a control flow graph.
 
+    Manages the crawl schedule, terminal steps, and traversal state
+    for symbolic execution of a flow.
     """
 
     def __init__(self, total_steps: int, cfg: ControlFlowGraph,
-                 crawl_schedule: tuple[CrawlStep,...],
-                 terminal_steps: tuple[CrawlStep,...],
+                 crawl_schedule: tuple[CrawlStep, ...],
+                 terminal_steps: tuple[CrawlStep, ...],
                  history_maps: dict[tuple[tuple[str, str], ...], CrawlStep] | None,
                  flow_path: str,
                  el_2_cs: dict[str, list[CrawlStep]] | None = None):
-        """Constructor
+        """Initialize Crawler instance.
 
-        .. WARNING:: For module use only
+        .. warning::
+            For module use only. Use :meth:`from_parser` instead.
 
         Args:
-            total_steps: how many steps in crawl
-            cfg: control flow graph
-            crawl_schedule: tuple of :class:`public.data_obj.CrawlStep` in order of execution
-            terminal_steps: tuple of :class:`public.data_obj.CrawlStep`
-                            that can end program (note, *not* in any specific order)
+            total_steps: Total number of steps in crawl.
+            cfg: Control flow graph.
+            crawl_schedule: Tuple of :class:`public.data_obj.CrawlStep` in order of execution.
+            terminal_steps: Tuple of :class:`public.data_obj.CrawlStep` that can end program
+                (note, *not* in any specific order).
+            history_maps: Dictionary mapping history tuples to crawl steps, or None.
+            flow_path: File path of the flow.
+            el_2_cs: Dictionary mapping element names to crawl steps, or None.
         """
         #: int current step of crawl
         self.current_step: int = 0
@@ -628,15 +674,14 @@ class Crawler(AbstractCrawler):
         self.crawlable_elem_tuples: list[tuple[str, str]] | None = None
 
     @classmethod
-    def from_parser(cls, parser: parse.Parser):
-        """Builds a crawl schedule (recommended builder)
+    def from_parser(cls, parser: parse.Parser) -> 'Crawler':
+        """Build a crawl schedule from a parser (recommended builder).
 
         Args:
-            parser: :obj:`flow_parser.parse.Parser` instance
+            parser: :obj:`flow_parser.parse.Parser` instance.
 
         Returns:
-            :obj:`Crawler` instance
-
+            :obj:`Crawler` instance with crawl schedule built.
         """
         cfg = ControlFlowGraph.from_parser(parser)
         crawl_schedule, terminal_steps, el_2_cs = get_crawl_data(cfg)
@@ -652,35 +697,54 @@ class Crawler(AbstractCrawler):
             el_2_cs=el_2_cs
         )
 
-    def get_crawl_schedule(self)->tuple[CrawlStep, ...]:
+    def get_crawl_schedule(self) -> tuple[CrawlStep, ...]:
+        """Get the crawl schedule.
+
+        Returns:
+            Tuple of all crawl steps in execution order.
+        """
         return self.crawl_schedule
 
     def get_flow_path(self) -> str | None:
+        """Get the file path of the current flow.
+
+        Returns:
+            Flow file path, or None if not set.
+        """
         return self.flow_path
 
     def get_subflow_parents(self) -> list[tuple[El, str]]:
-        """READ ONLY
+        """Get history of subflow parents (read-only).
 
         Returns:
-            history of crawlers encountered during crawl, together with the current step (int)
+            List of (element, flow_path) tuples representing the history of
+            crawlers encountered during crawl, together with the current step
             when they entered a child flow.
         """
         return self.subflow_parents
 
-    def get_cfg(self)-> ControlFlowGraph:
+    def get_cfg(self) -> ControlFlowGraph:
+        """Get the control flow graph.
+
+        Returns:
+            ControlFlowGraph instance.
+        """
         return self.cfg
 
-    def get_current_step_index(self)->int:
-        """Retrieve current crawl step (read-only)"""
+    def get_current_step_index(self) -> int:
+        """Get current crawl step index (read-only).
+
+        Returns:
+            Current step index in the crawl schedule.
+        """
         return self.current_step
 
 
     def load_crawl_step(self) -> CrawlStep | None:
-        """Retrieve the current crawl step and advance counter (irreversible)
+        """Retrieve the current crawl step and advance counter (irreversible).
 
         Returns:
-            :obj:`public.data_obj.BranchVisitor` and flow element name to process
-
+            :obj:`public.data_obj.CrawlStep` instance, or None if crawl is complete.
         """
         if self.current_step >= self.total_steps:
             return None
@@ -691,17 +755,16 @@ class Crawler(AbstractCrawler):
             return to_return
 
 
-    def get_last_ancestor(self, crawl_step) -> CrawlStep | None:
-        """Get latest ancestor branch that was last visited at crawl_step
+    def get_last_ancestor(self, crawl_step: CrawlStep) -> CrawlStep | None:
+        """Get latest ancestor branch that was last visited at crawl_step.
 
-        Useful for knowing which influence map to clone
+        Useful for knowing which influence map to clone.
 
         Args:
-            crawl_step: step whose history is sought
+            crawl_step: CrawlStep whose history is sought.
 
         Returns:
-            CrawlStep instance or None
-
+            CrawlStep instance representing the last visited ancestor, or None.
         """
         history = crawl_step.visitor.history
 
@@ -721,15 +784,14 @@ class Crawler(AbstractCrawler):
             return res
 
     def get_elem_to_crawl_step(self, elem_name: str) -> list[CrawlStep]:
-        """returns a list of all crawl steps in which this element has been visited
-         during the crawl of this flow. If not visited, the empty list is returned.
+        """Get all crawl steps in which this element has been visited.
 
         Args:
-            elem_name (str): element name (use '*' for the start element)
+            elem_name: Element name (use '*' for the start element).
 
         Returns:
-            list of :obj:`CrawlStep` instances that visit this element
-
+            List of :obj:`CrawlStep` instances that visit this element.
+            Returns empty list if not visited.
         """
         if self.el_2_cs is None:
             logger.error(f"requested element to crawlstep but "
@@ -739,7 +801,10 @@ class Crawler(AbstractCrawler):
             return dict.get(self.el_2_cs, elem_name, list())
 
     def get_crawlable_elem_tuples(self) -> list[tuple[str, str]] | None:
-        """Returns all traversable element name, tag tuples that are connected to the start element
+        """Get all traversable element name, tag tuples connected to the start element.
+
+        Returns:
+            List of (element_name, element_tag) tuples, or None if none found.
         """
         if self.crawlable_elem_tuples is None:
             accum = []
@@ -751,15 +816,22 @@ class Crawler(AbstractCrawler):
 
     def get_call_chain(self, source_el: El, source_path: str,
                        sink_el: El, source_parser: FlowParser) -> list[tuple[El, str]] | None:
-        """sink_el must be in the current flow. source_el can be in an ancestor
-        flow. Only returns paths currently crawled, so this must be called
-        every time a specific frame is loaded.
+        """Get the call chain from a source element to a sink element.
+
+        The sink_el must be in the current flow. The source_el can be in an
+        ancestor flow. Only returns paths currently crawled, so this must be
+        called every time a specific frame is loaded.
+
+        Args:
+            source_el: Source XML element.
+            source_path: Flow path of the source element.
+            sink_el: Sink XML element (must be in the current flow).
+            source_parser: Parser instance for the source flow path.
 
         Returns:
-            A list starting with the source and ending with the sink in which the each is an
-            ancestor caller of the succeeding element.
-            [(element, element flow path)]
-
+            List of (element, element flow path) tuples starting with the source
+            and ending with the sink, where each is an ancestor caller of the
+            succeeding element. Returns None if no call chain is found.
         """
         source_el_tag = parse_utils.get_tag(source_el)
         source_el_name = parse_utils.get_name(source_el)
@@ -768,7 +840,7 @@ class Crawler(AbstractCrawler):
         if source_el_tag in parse_utils.START_ELEMS:
             local_source_influenced = [x[0] for x in self.get_crawlable_elem_tuples()]
         else:
-            local_source_influenced = source_parser.get_traversable_descendents_of_elem(source_el_name)
+            local_source_influenced = source_parser.get_traversable_descendants_of_elem(source_el_name)
 
         if not local_source_influenced:
             return None
@@ -803,15 +875,11 @@ class Crawler(AbstractCrawler):
 
 
 def dump_cfg(cfg: ControlFlowGraph, fp: SupportsWrite[str]) -> None:
-    """Writes to file pointer
+    """Serialize control flow graph to JSON and write to file pointer.
 
     Args:
-        cfg (ControlFlowGraph): graph to serialize (JSON)
-        fp (TextIO): file pointer:
-
-    Returns:
-        None
-
+        cfg: ControlFlowGraph to serialize.
+        fp: File pointer to write JSON to.
     """
     json.dump(cfg, indent=4, fp=fp, cls=CrawlEncoder)
 
@@ -863,17 +931,18 @@ def validate_cfg(cfg: ControlFlowGraph,
 
 def _get_connector_map(elem: El,
                        parser: Parser) -> dict[El, tuple[str, ConnType, bool]]:
-    """
+    """Get connector map with validation.
+
     Wrapper for getting connectors that handles start elements and missing
-    connector targets, which requires a parser. 
-    
+    connector targets, which requires a parser.
+
     Args:
-        elem: element to search for connectors
-        parser: parser containing global file data
+        elem: Element to search for connectors.
+        parser: Parser containing global file data.
 
     Returns:
-        connector map (connector elem: name of target, type of connector, is_optional)
-
+        Dictionary mapping connector elements to (target_name, connector_type, is_optional).
+        Only includes connectors whose targets exist in the parser.
     """
     raw = get_conn_target_map(elem)
 
@@ -881,19 +950,44 @@ def _get_connector_map(elem: El,
     return {x: v for x, v in raw.items() if v[0] in parser.all_names}
 
 def tuple_trace(x: tuple[tuple[str, str], ...]) -> frozenset[tuple[str, str]]:
+    """Convert a tuple of tuples to a frozenset.
+
+    Args:
+        x: Tuple of (str, str) tuples.
+
+    Returns:
+        Frozenset of the tuples.
+    """
     return frozenset([t for t in x])
 
 
-def _right_find(my_iter: tuple[str, ConnType], val_to_find) -> int:
-    """
-        returns -1 if val_to_find is not in the second value of my_iter
+def _right_find(my_iter: tuple[tuple[str, ConnType], ...], val_to_find: ConnType) -> int:
+    """Find the rightmost occurrence of a ConnType value in a tuple.
+
+    Args:
+        my_iter: Tuple of (element_name, ConnType) tuples.
+        val_to_find: ConnType value to find.
+
+    Returns:
+        Index of rightmost occurrence (from right), or -1 if not found.
     """
     iter_len = len(my_iter)
     if iter_len == 0:
         return -1
     else:
+        best = None
+        el_name = None
         for index, x in enumerate(reversed(my_iter)):
-            if x[1] == val_to_find:
-                return iter_len - index
-        return -1
+            if el_name is None:
+                if x[1] == val_to_find:
+                     el_name = x[0]  # name of loop_context to pop
+                     best = index
+            elif x == (el_name, val_to_find):
+                best = index
+
+        if best is not None:
+            return (iter_len - 1) - best
+        else:
+            return -1
+
 

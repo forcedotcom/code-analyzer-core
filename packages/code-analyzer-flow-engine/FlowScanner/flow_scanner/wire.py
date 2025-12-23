@@ -1,33 +1,30 @@
-"""performs dataflow wiring for flow elements
+"""Performs dataflow wiring for flow elements.
 
-    -------------
-    Wiring Policy
-    -------------
+Wiring Policy
+-------------
 
-    Wiring policy for flow elements
+1. When we encounter any variable defined or initialized in an element,
+   we add that variable to the influence map.
 
-    1.  When we encounter any variable defined or initialized in an element,
-        we add that variable to the influence map
+2. When dataflows _out_ of an element to another element, we wire the flow.
 
-    2.  When dataflows _out_ of an element to another element, we wire the flow.
+   We do not presently wire flows _into_ the current element, as we don't support
+   second order dataflow analysis.
 
-        We do not presently wire flows _into_ the current element, as we don't support
-        second order dataflow analysis.
+   For example, user data may flow into the filter field of a Get Records,
+   and the return value of the function may be assigned to another variable.
+   Only the second dataflow is wired. If both flows were wired, we would have
+   a second order flow, e.g. assuming that the inputs to a function are part
+   of the same dataflow as the return values, which is rarely useful for
+   dataflow analysis and generates misleading flows.
 
-        For example, user data may flow into the filter field
-        of a Get Records, and the return value of the function may be assigned to another variable.
-        Only the second dataflow is wired. If both flows were wired, we would have a second order flow,
-        e.g. assuming that the inputs to a function are part of the same dataflow as the return values,
-        which is rarely useful for dataflow analysis and generates misleading flows.
+   If we are searching for dangerous flows *into* elements, this is done by
+   the query processor, which does not wire anything, it only searches for
+   the flows. This is why our dataflow results generally contain one missing
+   step, which must be added by the QueryProcessor.
 
-        If we are searching for dangerous flows *into* elements, this is done by the query processor,
-        which does not wire anything, it only searches for the flows. This is why our dataflow results
-        generally contain one missing step, which must be added by the QueryProcessor.
-
-    This allows us to know, at any point in program execution which variables have been
-    initialized and also what the dataflow history of each variable is.
-
-
+This allows us to know, at any point in program execution, which variables
+have been initialized and also what the dataflow history of each variable is.
 """
 import logging
 
@@ -53,18 +50,17 @@ class QueryResult(Enum):
 
 
 def initialize(state: BranchState, elem: El, elem_name: str) -> dict[QueryResult, bool | str | El]:
-    """Add this element name to influence map if it represents its own output data
+    """Add element name to influence map if it represents its own output data.
 
-    (Element name is passed in so we don't need to keep looking it up)
+    Element name is passed in so we don't need to keep looking it up.
 
     Args:
-        state: current branch state
-        elem: current xml elem
-        elem_name: element name
+        state: Current branch state.
+        elem: Current XML element.
+        elem_name: Element name.
 
     Returns:
-        None
-
+        Dictionary mapping QueryResult enum values to initialization results.
     """
     tag = parse_utils.get_tag(elem)
     auto_store = parse_utils.is_auto_store(elem)
@@ -118,25 +114,27 @@ def wire(state: BranchState, elem: El) -> None:
         wire_apex_plugin_calls(state, elem, el_name, stored)
 
     elif el_type == 'assignments':
-        wire_assignment(state, elem, el_name, stored)
+        wire_assignment(state, elem, el_name)
 
     # loops and collection processors work with collection references
     elif el_type == 'collectionProcessors':
-        wire_collection_processor(state, elem, el_name, stored)
+        wire_collection_processor(state, elem, el_name)
 
     elif el_type == 'dynamicChoiceSets':
-        wire_dynamic_choice_sets(state, elem, el_name, stored)
+        pass
+        # Todo: audit if this is necessary
+        # wire_dynamic_choice_sets(state, elem, el_name, stored)
 
     elif el_type == 'loops':
-        wire_loop(state, elem, el_name, stored)
+        wire_loop(state, elem, el_name)
 
     elif el_type == 'orchestratedStages':
         # Inside Orchestrated stages, stageSteps are wired as step_name.Outputs.var
-        wire_orchestrated_stages(state, elem, el_name, stored)
+        wire_orchestrated_stages(state, elem)
 
     elif el_type == 'recordCreates':
         # look for passing id to variable in create
-        wire_record_creates(state, elem, el_name, stored)
+        wire_record_creates(state, elem, el_name)
 
     elif el_type == 'recordDeletes':
         # these only auto-wired as the standard boolean (e.g. true if success)
@@ -154,7 +152,7 @@ def wire(state: BranchState, elem: El) -> None:
     elif el_type == 'screens':
         # TODO: need to handle output from screen to action or vice-versa
         # This should wait until we crawl actions separately
-        wire_screens(state, elem, el_name, stored)
+        wire_screens(state, elem, el_name)
 
     elif el_type == 'subflows':
         # subflow wiring is done in the executor
@@ -164,15 +162,21 @@ def wire(state: BranchState, elem: El) -> None:
         pass
 
     elif el_type == 'transforms':
-        wire_transforms(state, elem, el_name, stored)
+        wire_transforms(state, elem, el_name)
 
     elif el_type == 'waits':
-        wire_waits(state, elem, el_name, stored)
+        wire_waits(state, elem)
 
     return None
 
-def wire_waits(state: BranchState, elem: El, el_name: str, stored):
-    """Wait events can fire events on exit which is handled via output ref
+def wire_waits(state: BranchState, elem: El) -> None:
+    """Wire wait element events.
+
+    Wait events can fire events on exit which is handled via output reference.
+
+    Args:
+        state: Current branch state.
+        elem: Wait element to wire.
     """
     wait_events = parse_utils.get_by_tag(elem, 'waitEvents')
     for event in wait_events:
@@ -191,17 +195,13 @@ def wire_waits(state: BranchState, elem: El, el_name: str, stored):
 
 
 
-def wire_assignment(state: BranchState, elem: El, elem_name: str, stored):
-    """Wires assignment statements to influence map in `state`
+def wire_assignment(state: BranchState, elem: El, elem_name: str) -> None:
+    """Wire assignment statements to influence map in state.
 
     Args:
-        state: current Branch State
-        elem: assignment element to be wired
-        elem_name: element name passed in for convenience
-
-    Returns:
-        None
-
+        state: Current branch state.
+        elem: Assignment element to be wired.
+        elem_name: Element name passed in for convenience.
     """
     res = parse_utils.get_assignment_statement_dicts(elem)
     if res is None:
@@ -240,7 +240,14 @@ def wire_assignment(state: BranchState, elem: El, elem_name: str, stored):
         logger.debug(f"Propagated flow for {elem_name}: {entry}")
 
 
-def wire_transforms(state, elem, el_name, stored):
+def wire_transforms(state: BranchState, elem: El, el_name: str) -> None:
+    """Wire transform element influencers to outputs.
+
+    Args:
+        state: Current branch state.
+        elem: Transform element to wire.
+        el_name: Element name.
+    """
     res = parse_utils.get_transform_influencers(elem)
     if res is None:
         return
@@ -263,14 +270,29 @@ def wire_transforms(state, elem, el_name, stored):
                        elem=elem, el_name=el_name,
                        comment='influence via transform element')
 
-def wire_record_creates(state, elem, el_name, stored):
+def wire_record_creates(state: BranchState, elem: El, el_name: str) -> None:
+    """Wire record create element to assign record ID.
+
+    Args:
+        state: Current branch state.
+        elem: Record create element to wire.
+        el_name: Element name.
+    """
     influenced = parse_utils.get_text_of_tag(elem, 'assignRecordIdToReference')
     if influenced is not None:
         wire_and_store(state=state, influencer=el_name, influenced=influenced,
                        el_name=el_name, elem=elem, comment='id from record Create')
 
 
-def wire_record_lookups(state, elem, el_name, stored):
+def wire_record_lookups(state: BranchState, elem: El, el_name: str, stored: dict) -> None:
+    """Wire record lookup element outputs.
+
+    Args:
+        state: Current branch state.
+        elem: Record lookup element to wire.
+        el_name: Element name.
+        stored: Dictionary of stored query results from initialize().
+    """
     assignments =  stored[QueryResult.OutputAssignmentsEls]
     for assignment in assignments:
         influenced = parse_utils.get_text_of_tag(assignment, 'assignToReference')
@@ -286,14 +308,30 @@ def wire_record_lookups(state, elem, el_name, stored):
                             el_name=el_name, elem=elem, comment='output of record Lookup')
 
 
-def wire_action_calls(state, elem, el_name, stored):
+def wire_action_calls(state: BranchState, elem: El, el_name: str, stored: dict) -> None:
+    """Wire action call element outputs.
+
+    Args:
+        state: Current branch state.
+        elem: Action call element to wire.
+        el_name: Element name.
+        stored: Dictionary of stored query results from initialize().
+    """
     if not stored[QueryResult.IsAutoStore]:
         # If auto-stored, then this will have already been autowired when initialized
         wire_apex_plugin_calls(state, elem, el_name, stored)
 
 
 
-def wire_apex_plugin_calls(state, elem, el_name, stored):
+def wire_apex_plugin_calls(state: BranchState, elem: El, el_name: str, stored: dict) -> None:
+    """Wire Apex plugin call element outputs.
+
+    Args:
+        state: Current branch state.
+        elem: Apex plugin call element to wire.
+        el_name: Element name.
+        stored: Dictionary of stored query results from initialize().
+    """
     output_params = stored[QueryResult.OutputParametersEls]
     for output in output_params:
         influenced = parse_utils.get_text_of_tag(output, 'assignToReference')
@@ -304,12 +342,19 @@ def wire_apex_plugin_calls(state, elem, el_name, stored):
                            el_name=el_name, elem=elem, comment="action output value")
 
 
+"""
 def wire_dynamic_choice_sets(state, elem, el_name, stored):
     #TODO: audit these
     pass
+"""
 
+def wire_orchestrated_stages(state: BranchState, elem: El) -> None:
+    """Wire orchestrated stage element outputs.
 
-def wire_orchestrated_stages(state, elem, el_name, stored):
+    Args:
+        state: Current branch state.
+        elem: Orchestrated stage element to wire.
+    """
     # Todo: update this with additional wiring after audit
     steps = parse_utils.get_by_tag(elem, 'stageSteps')
     for step in steps:
@@ -319,17 +364,13 @@ def wire_orchestrated_stages(state, elem, el_name, stored):
             state.get_or_make_vector(name=fixed_name, store=True)
 
 
-def wire_loop(state: BranchState, elem: El, elem_name: str, stored):
-    """Wires collection loop is over to loop variable.
+def wire_loop(state: BranchState, elem: El, elem_name: str) -> None:
+    """Wire collection loop reference to loop variable.
 
     Args:
-        state: current Branch State
-        elem: assignment element to be wired
-        elem_name: element name passed in for convenience
-
-    Returns:
-        None
-
+        state: Current branch state.
+        elem: Loop element to be wired.
+        elem_name: Element name passed in for convenience.
     """
     collection_ref_els = parse.get_by_tag(elem, tag_name='collectionReference')
     if len(collection_ref_els) != 1:
@@ -344,17 +385,13 @@ def wire_loop(state: BranchState, elem: El, elem_name: str, stored):
                    el_name=elem_name, elem=elem,comment='assign to loop variable')
 
 
-def wire_collection_processor(state: BranchState, elem: El, elem_name: str, stored):
-    """Wires collection reference in collection processor to collection elem.
+def wire_collection_processor(state: BranchState, elem: El, elem_name: str) -> None:
+    """Wire collection reference in collection processor to collection element.
 
     Args:
-        state: current Branch State
-        elem: assignment element to be wired
-        elem_name: element name passed in for convenience
-
-    Returns:
-        None
-
+        state: Current branch state.
+        elem: Collection processor element to be wired.
+        elem_name: Element name passed in for convenience.
     """
     # every collectionProcessor must have a single collection ref
     subtype = parse.get_by_tag(elem, tag_name='elementSubtype')
@@ -372,7 +409,14 @@ def wire_collection_processor(state: BranchState, elem: El, elem_name: str, stor
                    elem=collection_el)
 
 
-def wire_screens(state, elem, el_name, stored):
+def wire_screens(state: BranchState, elem: El, el_name: str) -> None:
+    """Wire screen element fields and actions.
+
+    Args:
+        state: Current branch state.
+        elem: Screen element to wire.
+        el_name: Element name.
+    """
     parser = state.get_parser()
     stored_els = []
 
@@ -434,14 +478,24 @@ def wire_screens(state, elem, el_name, stored):
                 continue
 
 
-def wire_and_store(state: BranchState, influencer:str, influenced: str,
+def wire_and_store(state: BranchState, influencer: str, influenced: str,
                    el_name: str, elem: El, comment: str) -> None:
+    """Create an influence statement and propagate flows.
+
+    Args:
+        state: Current branch state.
+        influencer: Variable or element doing the influencing.
+        influenced: Variable or element being influenced.
+        el_name: Element name where influence occurs.
+        elem: XML element where influence occurs.
+        comment: Human-readable comment explaining the influence.
+    """
     stmt = InfluenceStatement(
         influenced_var=influenced,
         influencer_var=influencer,
         element_name=el_name,
         source_text=parse_utils.get_elem_string(elem),
-        line_no=elem.sourceline,
+        line_no=elem.sourceline,  # noqa
         comment=comment,
         flow_path=state.flow_path,
         source_path=state.flow_path

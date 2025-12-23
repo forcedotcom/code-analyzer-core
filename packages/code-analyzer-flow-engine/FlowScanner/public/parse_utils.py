@@ -1,6 +1,6 @@
-"""Public Utility module for xml queries on flows.
+"""Public Utility module for XML queries on flows.
 
-    The goal is to move all xml queries into this module,
+    The goal is to move all XML queries into this module,
     so they can be shared by other modules and made available
     to third parties in custom query development.
 
@@ -9,7 +9,7 @@
               has access to the flow root and does global analysis on flows,
               whereas the utility functions here are stateless.
 
-    If you find yourself doing manual xml queries, look in this module
+    If you find yourself doing manual XML queries, look in this module
     first and add a method if one isn't already present.
 
 """
@@ -187,12 +187,15 @@ reg = re.compile(r"""\{!([^}]*)""")
 
 
 def parse_expression(txt: str) -> list[str]:
-    """
+    """Parse merge-fields from an expression or template string.
+
+    Extracts variable references in the format {!variableName} from the input string.
+
     Args:
-        txt: expression or template definition string in which merge-fields are present
+        txt: Expression or template definition string containing merge-fields.
 
     Returns:
-        List of elementRef names (empty list if no matches)
+        List of element reference names (empty list if no matches found).
     """
     accum = []
     res = re.finditer(reg, txt)
@@ -202,6 +205,14 @@ def parse_expression(txt: str) -> list[str]:
 
 
 def get_tag(elem: El) -> str:
+    """Get the tag name of an element without the namespace prefix.
+
+    Args:
+        elem: XML Element to get the tag from.
+
+    Returns:
+        Tag name without namespace, or empty string if not an Element.
+    """
     if isinstance(elem, El):
         return elem.tag[NS_LEN:]
     # elif isinstance(elem, ET._Comment):
@@ -210,8 +221,18 @@ def get_tag(elem: El) -> str:
         return ''
 
 def get_text_of_tag(elem: El, tag_name: str) -> str | None:
-    """look for a single child elem (does not recurse) with the specified tag_name and return the text.
-       returns None if there is not exactly one child elem with the specified tag_name or if it has no text."""
+    """Get text content from a single child element with the specified tag.
+
+    Does not recurse - only looks at direct children.
+
+    Args:
+        elem: Parent element to search.
+        tag_name: Tag name to find (without namespace).
+
+    Returns:
+        Text content of the child element, or None if there is not exactly
+        one child with the tag or if it has no text.
+    """
     res = get_by_tag(elem, tag_name)
     if len(res) == 1 and res[0] is not None:
         r = res[0].text
@@ -223,6 +244,14 @@ def get_text_of_tag(elem: El, tag_name: str) -> str | None:
 
 
 def is_subflow(elem: El) -> bool:
+    """Check if an element is a subflow element.
+
+    Args:
+        elem: XML Element to check.
+
+    Returns:
+        True if the element is a subflow, False otherwise.
+    """
     if elem is None:
         return False
     return get_tag(elem) == 'subflows'
@@ -232,7 +261,7 @@ def is_loop(elem: El) -> bool:
     """Is this a Loop Flow Element?
 
     Args:
-        elem: xml element
+        elem: XML element
 
     Returns:
         True if this is a loop element
@@ -243,14 +272,14 @@ def is_loop(elem: El) -> bool:
 
 
 def is_goto_connector(elem: El) -> bool | None:
-    """Is this element a goto?
+    """Check if an element is a goto connector.
 
     Args:
-        elem: connector element
+        elem: Connector element to check.
 
     Returns:
-        whether this is a goto element,
-        None if child has no tag or no children
+        True if this is a goto connector, False if not, None if element
+        has no tag or no children.
     """
     for child in elem:
         if get_tag(child) == 'isGoTo':
@@ -261,49 +290,58 @@ def is_goto_connector(elem: El) -> bool | None:
 
 
 def is_decision(elem: El) -> bool:
-    """True if this is a decision Flow Element
+    """Check if an element is a decision flow element.
 
     Args:
-        elem: Flow Element
+        elem: Flow element to check.
 
     Returns:
-        True if decision
+        True if this is a decision element, False otherwise.
     """
     return get_tag(elem) == 'decisions'
 
 
 def get_by_tag(elem: El, tag_name: str) -> list[El]:
-    """Get list of all elem with the tag (ignoring ns).
+    """Get list of all child elements with the specified tag (ignoring namespace).
 
-        Convenience method as manually dealing with namespaces is clumsy.
+    Convenience method for dealing with namespaced XML. Does not recurse into
+    nested elements.
 
-        Notes:
-            WARNING: does not recurse. Use this for top level flow
-            elements -- e.g. screens, variables
+    .. warning::
+        Does not recurse. Use this for top-level flow elements (e.g., screens, variables).
 
-        Returns:
-            XML Elements else [] if no matches
+    Args:
+        elem: Parent element to search.
+        tag_name: Tag name to find (without namespace).
 
+    Returns:
+        List of XML Elements with the tag, or empty list if no matches.
     """
     return elem.findall(f'./{ns}{tag_name}')
 
 
-def get_named_elems(elem: El) -> list[El]:
-    """Get all descendents (recursive) of elem that have a ``name`` tag
+def get_named_elems(elem: El) -> frozenset[El]:
+    """Get all descendants (recursive) of elem that have a name tag.
 
     Args:
-        elem: base element whose children to search
+        elem: Base element whose descendants to search.
 
     Returns:
-        [elem] or [] if None found
-
+        Frozenset of named elements, excluding processMetadataValues.
     """
     named = elem.findall(f'.//{ns}name/..')
     to_return = [x for x in named if get_tag(x) != 'processMetadataValues']
-    return to_return
+    return frozenset(to_return)
 
 def get_name(elem: El | None) -> str | None:
-    """returns the string name of elem or None if no name or '*'"""
+    """Get the string name of an element.
+
+    Args:
+        elem: XML Element to get the name from.
+
+    Returns:
+        Element name string, '*' for start elements, or None if no name found.
+    """
     if elem is None:
         return None
     name = elem.find(f'{ns}name')
@@ -316,6 +354,14 @@ def get_name(elem: El | None) -> str | None:
 
 
 def get_elem_string(elem: El) -> str | None:
+    """Get the string representation of an XML element.
+
+    Args:
+        elem: XML Element to convert.
+
+    Returns:
+        String representation of the element, or empty string if None.
+    """
     if elem is None:
         return ''
     else:
@@ -323,11 +369,27 @@ def get_elem_string(elem: El) -> str | None:
 
 
 def get_line_no(elem: El) -> int:
+    """Get the source line number of an element.
+
+    Args:
+        elem: XML Element with source line information.
+
+    Returns:
+        Source line number where the element appears.
+    """
     # noinspection PyUnresolvedReferences
     return elem.sourceline
 
 
 def get_start_element(root: El) -> El | None:
+    """Get the start element from a flow root.
+
+    Args:
+        root: Root XML element of the flow.
+
+    Returns:
+        Start element if found, None otherwise.
+    """
     start_elements = START_ELEMS
     start_res = {x: get_by_tag(root, x) for x in start_elements}
 
@@ -337,7 +399,15 @@ def get_start_element(root: El) -> El | None:
     return None
 
 
-def get_subflow_name(subflow):
+def get_subflow_name(subflow: El) -> str | None:
+    """Get the name of a subflow element.
+
+    Args:
+        subflow: Subflow XML element.
+
+    Returns:
+        Subflow name string, or None if not found.
+    """
     sub_name_el = get_by_tag(subflow, "flowName")
     if sub_name_el is None or len(sub_name_el) == 0:
         sub_name_el = get_by_tag(subflow, "subflowName")
@@ -349,13 +419,15 @@ def get_subflow_name(subflow):
 
 
 def get_assignment_statement_dicts(elem: El) -> list[tuple[str, dict[str, str]]] | None:
-    """Returns assignment statement keywords in 'assignments' elems
+    """Extract assignment statement data from an assignments element.
+
     Args:
-        elem: elem to parse, should have a tag of "assignments"
+        elem: Element to parse, should have a tag of "assignments".
 
     Returns:
-        [(operator, dict)] where dict is suitable for constructing
-        DataInfluenceStatements via args unpack passed to the constructor.
+        List of (operator, dict) tuples where dict is suitable for constructing
+        DataInfluenceStatements via argument unpacking. Returns None if no
+        assignments found.
     """
     if get_tag(elem) == "assignments":
         elem_name = get_name(elem)
@@ -373,28 +445,28 @@ def get_assignment_statement_dicts(elem: El) -> list[tuple[str, dict[str, str]]]
 
 
 def get_filters(elem: El) -> list[El]:
-    """Find all filter elements
+    """Find all filter elements recursively.
 
     Searches recursively to find all <filters> elements that are children
-    of the current elem
+    of the current element.
 
     Args:
-        elem: element to search
+        elem: Element to search.
 
     Returns:
-        list of xml elements
-
+        List of filter XML elements.
     """
     return elem.findall(f'.//{ns}filters')
 
-def get_transform_influencers(transform_elem: El) -> list[tuple[TransformType,str|None,tuple[str, ...]]] | None:
-    """Converts transform elem to a list of tuples [(transform_type, outputAPI field (or None), tuple(influencer_names)]
+def get_transform_influencers(transform_elem: El) -> list[tuple[TransformType, str | None, tuple[str, ...]]] | None:
+    """Convert transform element to a list of influencer tuples.
+
     Args:
-        transform_elem: top level elem to process
+        transform_elem: Top-level transform element to process.
 
     Returns:
-        [(transform_type, influenced_name, tuple(influencer_names, ...))]
-
+        List of (transform_type, outputAPI_field, tuple(influencer_names)) tuples,
+        or None if no transform values found.
     """
     if transform_elem is None:
         logger.error("called get_transform_influencers will null element")
@@ -502,31 +574,25 @@ def get_transform_influencers(transform_elem: El) -> list[tuple[TransformType,st
         return None
 
 def get_vars_from_value(elem: El,
-                        expr_parser :Callable[[str], list[str]]=parse_expression) -> dict[str, list[str]] | None:
-    """accepts <value>, <defaultValue>, or <rightValue> element and returns a list
-       of variables that influence this element.
-         * The variables are not normalized, e.g. "foo.Name" will appear.
-         * In the case of inner join complex values, further processing
-           is needed to resolve the join tables
+                        expr_parser: Callable[[str], list[str]] = parse_expression) -> dict[str, list[str]] | None:
+    """Extract variables that influence a value element.
+
+    Accepts <value>, <defaultValue>, or <rightValue> elements and returns
+    variables that influence them. Variables are not normalized (e.g., "foo.Name"
+    will appear). For inner join complex values, further processing is needed
+    to resolve join tables.
 
     Args:
-        expr_parser (callable): method to parse expressions (default regexp is provided)
-        elem: (El): <complexValue> element
+        elem: <complexValue> element or similar value element.
+        expr_parser: Callable method to parse expressions (default regexp provided).
 
     Returns:
-        a dict tag_name: list[variable names]
-        where tag_name is the tag of the child element of value holding the reference unless
-        this is a complexValue, in which case the tag_name contains refined information:
-            'ComplexValueType.FieldReference': ['var1', 'var2']
-            'ComplexValueType.FieldReference': ['var1', 'var2']
-            'ComplexValueType.JoinDefinition.leftJoinKeys: ['var1', 'var2']
-            'ComplexValueType.JoinDefinition.rightJoinKeys: ['var1', 'var2']
-            'ComplexValueType.JoinDefinition.leftElementReference': ['var1']
-            'ComplexValueType.JoinDefinition.rightElementReference': ['var1']
-            'ComplexValueType.JoinDefinition.leftSelectedFields': ['var1']
-            'ComplexValueType.JoinDefinition.rightSelectedFields': ['var1']
-
-        If there are no variable influencers, the None is returned.
+        Dictionary mapping tag_name to list of variable names. For complex values,
+        tag_name contains refined information like:
+        - 'ComplexValueType.FieldReference': ['var1', 'var2']
+        - 'ComplexValueType.JoinDefinition.leftJoinKeys': ['var1', 'var2']
+        - 'ComplexValueType.JoinDefinition.leftElementReference': ['var1']
+        Returns None if no variable influencers found.
     """
     if elem is None:
         logger.error("called 'get_vars_from_value' with null input")
@@ -551,8 +617,22 @@ def get_vars_from_value(elem: El,
     return None
 
 def _process_val_child(elem: El, el_tag: str, parent_el: El,
-                       expr_parser :Callable[[str], list[str]]=parse_expression) -> dict[str, list[str]] | None:
+                       expr_parser: Callable[[str], list[str]] = parse_expression) -> dict[str, list[str]] | None:
+    """Process a child element of a value element to extract variable references.
 
+    Handles various value types including element references, string values,
+    complex values, and transform value references.
+
+    Args:
+        elem: Child element to process.
+        el_tag: Tag name of the child element (without namespace).
+        parent_el: Parent element containing the child.
+        expr_parser: Callable to parse expressions (default: parse_expression).
+
+    Returns:
+        Dictionary mapping tag names to lists of variable names, or None if
+        no variables found or element has no text.
+    """
     raw_data = elem.text
     if raw_data is None or len(raw_data) == 0:
         return None
@@ -672,25 +752,24 @@ def _process_val_child(elem: El, el_tag: str, parent_el: El,
 
 
 def get_input_assignments(elem: El) -> list[El]:
-    """Find all input assignments
+    """Find all input assignment elements recursively.
 
-    Searches recursively to find all <inputAssignments> elements that are children
-    of the current elem
+    Searches recursively to find all <inputAssignments> elements that are
+    children of the current element.
 
     Args:
-        elem: element to search
+        elem: Element to search.
 
     Returns:
-        list of xml elements
-
+        List of input assignment XML elements.
     """
     return elem.findall(f'.//{ns}inputAssignments')
 
 
 def get_sinks_from_field_values(elems: list[El]) -> list[tuple[str, str | None, str]]:
-    """Find variables that flow into field/value pairs
+    """Find variables that flow into field/value pairs.
 
-    E.g.if a recordLookup field has a filter::
+    For example, if a recordLookup field has a filter::
 
         <filters>
             <field>Name</field>
@@ -700,7 +779,7 @@ def get_sinks_from_field_values(elems: list[El]) -> list[tuple[str, str | None, 
             </value>
         </filters>
 
-    then this would return [('Name', 'Contains', 'var3')]
+    then this would return [('Name', 'Contains', 'var3')].
 
     This strategy also works for inputAssignments::
 
@@ -711,16 +790,14 @@ def get_sinks_from_field_values(elems: list[El]) -> list[tuple[str, str | None, 
             </value>
         </inputAssignments>
 
-    then this would return [('Company', None, 'Company')]
+    then this would return [('Company', None, 'Company')].
 
-    Notes:
-          This should be added later.
     Args:
-        elems: inputAssignment or field selection criteria xml elements.
+        elems: Input assignment or field selection criteria XML elements.
 
     Returns:
-        ``list[(field_name, op, influencer_name)]``  (an empty list if no sinks are found)
-
+        List of (field_name, operator, influencer_name) tuples.
+        Returns empty list if no sinks are found.
     """
     accum = []
     for a_filter in elems:
@@ -751,19 +828,23 @@ def get_sinks_from_field_values(elems: list[El]) -> list[tuple[str, str | None, 
     return accum
 
 def process_output_assignments(elem: El) -> list[tuple[str, str]]:
-    """Searches elem recursively and pulls out doubles of the form:
+    """Extract output assignments from an element recursively.
+
+    Searches element recursively and extracts pairs of the form::
+
         <outputAssignments>
             <assignToReference>WorkItemID</assignToReference>
             <field>Id</field>
         </outputAssignments>
 
-    returning a list of doubles [('Id', 'WorkItemID')]
+    returning a list of tuples [('Id', 'WorkItemID')].
 
-    if none found, it returns the empty list []
+    Args:
+        elem: Element to search recursively.
 
-    :param elem: to search (recursively)
-    :return: list of triples (influencer field, (influenced) assignTo field)
-
+    Returns:
+        List of (influencer_field, assignTo_field) tuples.
+        Returns empty list if none found.
     """
     elems = elem.findall(f'.//{ns}outputAssignments')
     accum = []
@@ -780,37 +861,43 @@ def process_output_assignments(elem: El) -> list[tuple[str, str]]:
     return accum
 
 def get_field_op_values_from_elem(elem: El, tag: str) -> list[tuple[str, str | None, str]]:
-    """
-    Searches elem recursively for tag, and the pull-out triples of the form:
-    <tag>
-      <field>foo</field>
-      <operator>Contains</operator>
-      <value>
-        <elementReference>bar</elementReference>
+    """Extract field/operator/value triples from elements with a specific tag.
 
-    returning a list of triples [('foo', 'Contains', 'bar')]
+    Searches element recursively for the tag and extracts triples of the form::
 
-    if none found, it returns the empty list
+        <tag>
+          <field>foo</field>
+          <operator>Contains</operator>
+          <value>
+            <elementReference>bar</elementReference>
+          </value>
+        </tag>
 
-    :param elem: to search (recursively)
-    :param tag: tag that must be a descendent of elem
-    :return: list of triples (field_name, operator, influencer_name)
+    returning a list of triples [('foo', 'Contains', 'bar')].
+
+    Args:
+        elem: Element to search recursively.
+        tag: Tag name that must be a descendant of elem.
+
+    Returns:
+        List of (field_name, operator, influencer_name) triples.
+        Returns empty list if none found.
     """
 
     elems = elem.findall(f'.//{ns}{tag}')
     return get_sinks_from_field_values(elems)
 
 def get_conn_target_map(elem: El) -> dict[El, tuple[str, ConnType, bool]] | None:
-    """Get a connector map that also works for all possible start elements
+    """Get a connector map that works for all possible start elements.
 
     Args:
-        elem: element to search for connectors
+        elem: Element to search for connectors.
 
     Returns:
-        connector map (connector elem: name of target, type of connector, is_optional)
-
-        optional connectors are ones that need not be followed, e.g. in a decision.
-        If an element contains only optional connectors, then it may be a terminal element
+        Dictionary mapping connector elements to (target_name, connector_type, is_optional).
+        Optional connectors are ones that need not be followed (e.g., in a decision).
+        If an element contains only optional connectors, it may be a terminal element.
+        Returns None if element is None.
     """
     if elem is None:
         return None
@@ -848,13 +935,14 @@ def get_conn_target_map(elem: El) -> dict[El, tuple[str, ConnType, bool]] | None
 
 
 def _get_conn_target_map(elem: El) -> dict[El, tuple[str, ConnType, bool]]:
-    """returns map from connectors at elem to where they point
+    """Get map from connectors at element to where they point.
 
     Args:
-        elem: base element containing connectors (Flow Element)
+        elem: Base element containing connectors (Flow Element).
 
     Returns:
-        connector element -> target reference (string), connector type, is_optional (True if connector is optional)
+        Dictionary mapping connector elements to (target_reference, connector_type, is_optional).
+        Returns empty dict if element is None.
     """
     if elem is None:
         return {}
@@ -925,6 +1013,15 @@ def _get_conn_target_map(elem: El) -> dict[El, tuple[str, ConnType, bool]]:
 #
 
 def is_assign_null(elem: El) -> bool | None:
+    """Check if an element has assignNullValuesIfNoRecordsFound set.
+
+    Args:
+        elem: XML Element to check.
+
+    Returns:
+        True if assignNullValuesIfNoRecordsFound is 'true', False if 'false',
+        None if the field is missing.
+    """
     res = elem.find(f'{ns}assignNullValuesIfNoRecordsFound')
     if res is None:
         return None
@@ -932,8 +1029,15 @@ def is_assign_null(elem: El) -> bool | None:
 
 
 def is_auto_store(elem: El) -> bool | None:
-    # None if the field is missing or can't be parsed
-    # otherwise true or false
+    """Check if an element has storeOutputAutomatically set.
+
+    Args:
+        elem: XML Element to check.
+
+    Returns:
+        True if storeOutputAutomatically is 'true', False if 'false',
+        None if the field is missing or can't be parsed.
+    """
     res = elem.find(f'{ns}storeOutputAutomatically')
     if res is None:
         return None
@@ -941,8 +1045,15 @@ def is_auto_store(elem: El) -> bool | None:
 
 
 def is_collection(elem: El) -> bool | None:
-    # None if the field is missing or can't be parsed
-    # otherwise true or false
+    """Check if an element represents a collection.
+
+    Args:
+        elem: XML Element to check.
+
+    Returns:
+        True if isCollection is 'true', False if 'false',
+        None if the field is missing or can't be parsed.
+    """
     res = elem.find(f'{ns}isCollection')
     if res is None:
         return None
@@ -950,6 +1061,14 @@ def is_collection(elem: El) -> bool | None:
 
 
 def get_input_fields(elem: El) -> set[El] | None:
+    """Get all input field elements from a flow element.
+
+    Args:
+        elem: Element to search for input fields.
+
+    Returns:
+        Set of input field XML elements, or None if none found.
+    """
     accum = set()
     elems = elem.findall(f'.//{ns}fields')
     for el in elems:
@@ -964,6 +1083,14 @@ def get_input_fields(elem: El) -> set[El] | None:
 
 
 def get_obj_name(elem: El) -> str | None:
+    """Get the object name from an element.
+
+    Args:
+        elem: XML Element to extract object name from.
+
+    Returns:
+        Object name string, or None if not found.
+    """
     object_name = elem.find(f'{ns}object')
     if object_name is None:
         return None
@@ -971,6 +1098,14 @@ def get_obj_name(elem: El) -> str | None:
 
 
 def get_output_reference(elem: El) -> str | None:
+    """Get the output reference from an element.
+
+    Args:
+        elem: XML Element to extract output reference from.
+
+    Returns:
+        Output reference string, or None if not found.
+    """
     object_name = elem.find(f'{ns}outputReference')
     if object_name is None:
         return None
@@ -978,6 +1113,14 @@ def get_output_reference(elem: El) -> str | None:
 
 
 def get_datatype(elem: El) -> DataType | None:
+    """Get the data type from an element.
+
+    Args:
+        elem: XML Element to extract data type from.
+
+    Returns:
+        DataType enum value, or None if not found or unrecognized.
+    """
     obj_ = elem.find(f'{ns}dataType')
     if obj_ is None:
         return None
@@ -996,6 +1139,15 @@ def get_datatype(elem: El) -> DataType | None:
 
 
 def is_get_first_record_only(elem: El) -> bool | None:
+    """Check if an element has getFirstRecordOnly set.
+
+    Args:
+        elem: XML Element to check.
+
+    Returns:
+        True if getFirstRecordOnly is 'true', False if 'false',
+        None if the field is missing.
+    """
     res = elem.find(f'{ns}getFirstRecordOnly')
     if res is None:
         return None
@@ -1003,11 +1155,27 @@ def is_get_first_record_only(elem: El) -> bool | None:
 
 
 def is_input(elem: El) -> bool:
+    """Check if an element is marked as an input.
+
+    Args:
+        elem: XML Element to check.
+
+    Returns:
+        True if isInput is 'true', False otherwise.
+    """
     res = get_by_tag(elem, 'isInput')
     return len(res) > 0 and res[0].text == 'true'
 
 
 def is_output(elem: El) -> bool:
+    """Check if an element is marked as an output.
+
+    Args:
+        elem: XML Element to check.
+
+    Returns:
+        True if isOutput is 'true', False otherwise.
+    """
     res = get_by_tag(elem, 'isOutput')
     return len(res) > 0 and res[0].text == 'true'
 
@@ -1020,18 +1188,15 @@ def is_output(elem: El) -> bool:
 
 
 def _process_assignment_item(elem: El) -> tuple[str, dict[str, str]] | None:
-    """Returns assignment item dict from assignment element
+    """Extract assignment item data from an assignmentItem element.
 
     Args:
-        elem: (not a top Flow element) but an assignmentItem elem
+        elem: AssignmentItem element (not a top-level Flow element).
 
     Returns:
-        ::{ 'influenced_var': var_name, 'influencer_var': var_name or
-        STRING_LITERAL_TOKEN, 'line_no': int, 'source_text': str
-        assignmentItem code , 'comment': "Variable Assignment",
-    }
-    which is all keywords needed to construct DataInfluenceStatement
-    except for 'element_name'
+        Tuple of (operator, dict) where dict contains all keywords needed to
+        construct DataInfluenceStatement except 'element_name'. Returns None
+        if processing fails.
     """
     # This must match DataInfluenceStatement constructor
     entry = {
@@ -1066,6 +1231,15 @@ def _process_assignment_item(elem: El) -> tuple[str, dict[str, str]] | None:
 
 
 def _get_value(el: El) -> str | None:
+    """Extract value from a value element.
+
+    Args:
+        el: Value element to extract from.
+
+    Returns:
+        Element reference text if found, STRING_LITERAL_TOKEN if other value type,
+        None if no children.
+    """
     for child in el:
         if get_tag(child) == 'elementReference':
             return child.text
@@ -1074,10 +1248,16 @@ def _get_value(el: El) -> str | None:
     return None
 
 
-def get_subflow_output_map(subflow: El) -> tuple[bool, dict[str,str]]:
-    """returns a tuple (bool:, map: child name --> parent name)
-       where the first return value is true if outputs are automatically assigned
-       in which case they are flow_name.flow_var
+def get_subflow_output_map(subflow: El) -> tuple[bool, dict[str, str]]:
+    """Get the output mapping for a subflow.
+
+    Args:
+        subflow: Subflow XML element.
+
+    Returns:
+        Tuple of (auto_assign, mapping) where:
+        - auto_assign: True if outputs are automatically assigned (flow_name.flow_var format)
+        - mapping: Dictionary mapping child variable names to parent variable names
     """
     auto = False
     mappings = {}
@@ -1098,27 +1278,28 @@ def get_subflow_output_map(subflow: El) -> tuple[bool, dict[str,str]]:
 
 
 def get_subflow_input_map(subflow: El) -> dict[str, str]:
-    """Returns a map from caller variable to variable in called flow
+    """Get the input mapping for a subflow.
 
-        E.g. in this example::
+    Returns a map from caller variable to variable in called flow.
 
-            <inputAssignments>
-                <name>input_var1</name>
-                <value>
-                    <elementReference>parent_input_var</elementReference>
-                </value>
-            </inputAssignments>
+    For example, in this input assignment::
 
-        we return::
+        <inputAssignments>
+            <name>input_var1</name>
+            <value>
+                <elementReference>parent_input_var</elementReference>
+            </value>
+        </inputAssignments>
 
-            'parent_input_var' (name in parent) -> 'input_var1' (name in child)
+    we return::
+
+        'parent_input_var' (name in parent) -> 'input_var1' (name in child)
 
     Args:
-        subflow: XML Element
+        subflow: Subflow XML Element.
 
     Returns:
-        map from parent output_variable name to child input variable
-        name
+        Dictionary mapping parent variable names to child input variable names.
     """
     accum = dict()
     inputs = get_by_tag(subflow, "inputAssignments")
@@ -1136,6 +1317,15 @@ def get_subflow_input_map(subflow: El) -> dict[str, str]:
     return accum
 
 def _get_tags(root: El, tags: list[str]) -> list[str]:
+    """Extract text content from elements with specified tags.
+
+    Args:
+        root: Root element to search recursively.
+        tags: List of tag names (without namespace) to find.
+
+    Returns:
+        List of non-empty text content from matching elements.
+    """
     accum = []
     for tag in tags:
         res = root.findall(f'.//{ns}{tag}')
@@ -1145,6 +1335,17 @@ def _get_tags(root: El, tags: list[str]) -> list[str]:
     return accum
 
 def get_all_flow_refs(root: El) -> list[str]:
+    """Get all flow variable references from a flow root element.
+
+    Extracts references from both direct reference holders and expression
+    reference holders (which may contain merge-fields).
+
+    Args:
+        root: Root XML element of the flow.
+
+    Returns:
+        List of unique variable reference names.
+    """
     accum = _get_tags(root, tags=DIRECT_REF_HOLDERS)
     expressions = _get_tags(root, tags=EXPRESSION_REF_HOLDERS)
     for expr in expressions:
@@ -1154,19 +1355,30 @@ def get_all_flow_refs(root: El) -> list[str]:
 
 
 def rid_item(msg: str) -> str:
-    return msg.replace('[$EachItem]', '')
-
-def recursive_parse(my_obj, parse_callable=parse_expression, accum=None) -> None:
-    """walks through json objs and applies the parse_callable to values
+    """Remove [$EachItem] token from a string.
 
     Args:
-        my_obj (obj): JSON object
-        parse_callable (Callable): callable to parse strings
-        accum (list[str]): list of strings that values are added to
+        msg: String to process.
 
     Returns:
-        None (accum is changed in place)
+        String with [$EachItem] removed.
+    """
+    return msg.replace('[$EachItem]', '')
 
+def recursive_parse(my_obj: dict | list | str, parse_callable: Callable[[str], list[str]] = parse_expression, accum: list[str] | None = None) -> None:
+    """Walk through JSON objects and apply parse_callable to string values.
+
+    Recursively traverses dictionaries, lists, and strings, applying the
+    parse_callable to all string values found.
+
+    Args:
+        my_obj: JSON object (dict, list, or str) to parse.
+        parse_callable: Callable to parse strings (default: parse_expression).
+        accum: List to accumulate results in. If None, creates a new list.
+            Modified in place.
+
+    Returns:
+        None (results are added to accum in place).
     """
     if accum is None:
         my_accum = []
@@ -1188,7 +1400,18 @@ def recursive_parse(my_obj, parse_callable=parse_expression, accum=None) -> None
 
     return None
 
-def quick_validate(flow_path: str) -> bool:
+def quick_validate(flow_path: str) -> bool | None:
+    """Quickly validate a flow file by checking for required and banned tags.
+
+    Performs a fast string-based check without full XML parsing.
+
+    Args:
+        flow_path: Path to the flow file to validate.
+
+    Returns:
+        True if flow has a start element and no banned elements,
+        False if validation fails, None if file not found.
+    """
     has_start = False
     has_banned = False
     try:
@@ -1214,15 +1437,17 @@ def quick_validate(flow_path: str) -> bool:
         return False
 
 def validate_flow(flow_path: str) -> bool:
-    """There are many legacy versions of flows that contain grammars we cannot parse.
-       This tool only processes modern flows that can be built in flow builder.
+    """Validate that a flow file can be parsed and processed.
+
+    There are many legacy versions of flows that contain grammars we cannot parse.
+    This tool only processes modern flows that can be built in flow builder.
 
     Args:
-        flow_path (str): path of flow
+        flow_path: Path to the flow file to validate.
 
     Returns:
-        True if the flow is valid, False otherwise
-
+        True if the flow is valid (parseable, has start element, no banned elements),
+        False otherwise.
     """
     # 1. Flows must be parseable
     # 2. Flows must have a start element

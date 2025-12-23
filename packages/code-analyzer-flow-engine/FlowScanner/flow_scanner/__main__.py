@@ -6,11 +6,13 @@ import os
 import re
 import sys
 import traceback
+import uuid
 
 import flow_scanner.executor as executor
 import flow_scanner.query_manager
 import flow_scanner.util as util
 import flow_scanner.version as version
+import flow_scanner.db_storage as db_storage
 
 from flow_scanner.query_manager import validate_qry_list, get_all_queries
 from flow_scanner.util import make_id
@@ -151,11 +153,12 @@ def get_validated_queries(data: list[str]) -> list[str]:
         return found
     else:
         for issue, data in [('Duplicate', duplicates), ('Unrecognized', missed)]:
-            if data is not None and len(data) == 1:
-                raise argparse.ArgumentTypeError(f"{issue} query requested: %s" % data[0])
-            else:
-                raise argparse.ArgumentTypeError(f"{issue} queries requested: %s" %
-                                                 ",".join(data))
+            if data is not None and len(data) > 0:
+                if len(data) == 1:
+                    raise argparse.ArgumentTypeError(f"{issue} query requested: %s" % data[0])
+                else:
+                    raise argparse.ArgumentTypeError(f"{issue} queries requested: %s" %
+                                                     ",".join(data))
 
 
 def unsplit(msg: str) -> list[str]:
@@ -299,6 +302,10 @@ def parse_args(my_args: list[str], default: str = None) -> argparse.Namespace:
                         type=check_not_exist)
     parser.add_argument("-t", "--html", required=False,
                         help="Path to store html report", type=check_not_exist)
+    parser.add_argument("--db", required=False, nargs='?', const=True,
+                        help="path to SQLite database file for storing results. "
+                             "If --db is provided without a path, a database with a UUID-based name will be created in the current directory.",
+                        default=None)
     parser.add_argument("-c", "--chunk", required=False,
                         help=(f"chunk scan into groups of files, with one report generated for each group. "
                               "Reports will be appended with the chunk number. Useful for processing "
@@ -437,8 +444,8 @@ def main(argv: list[str] = None) -> str | None:
 
     query_manager = None
 
-    # make sure a report has been chosen
-    if args.html is None and args.xml is None and args.json is None:
+    # make sure a report has been chosen (including database)
+    if args.html is None and args.xml is None and args.json is None and args.db is None:
         raise argparse.ArgumentTypeError("No report format chosen")
 
     chunk_counter = 0
@@ -461,56 +468,98 @@ def main(argv: list[str] = None) -> str | None:
               f"you use the `--chunk` switch to break this scan up into smaller pieces to avoid excessively large"
               f"reports and to reduce scan memory usage. Chunked scans have no reduction in scan accuracy.")
 
-    for (index, flow_path) in enumerate(flow_paths):
-
-        status_message = get_status_msg(index, total_paths)
-        print(f"{status_message} scanning {flow_path}...")
+    # Set up database connection and run_id if database output is requested
+    db_conn = None
+    run_id = None
+    if args.db is not None:
+        # Determine database path
+        # With nargs='?' and const=True:
+        # - If --db is not provided: args.db = None
+        # - If --db is provided without value: args.db = True (const)
+        # - If --db is provided with value: args.db = that value (string)
+        if args.db is True:
+            # User provided --db without path, generate UUID-based name
+            db_path = f"flow_scanner_results_{uuid.uuid4()}.db"
+        else:
+            # User provided a path
+            db_path = args.db
+            # Ensure parent directory exists if path has directory component
+            db_abs_path = os.path.abspath(db_path)
+            db_dir = os.path.dirname(db_abs_path)
+            if db_dir and not os.path.exists(db_dir):
+                os.makedirs(db_dir, exist_ok=True)
+            db_path = db_abs_path
+        
         try:
-            # top level loop in case something goes wrong
-            # specifically we have noticed it's now possible
-            # to save malformed flows :(
-            query_manager = executor.parse_flow(flow_path,
-                                                requestor=args.requestor,
-                                                report_label=label,
-                                                result_id=args.id,
-                                                service_version=args.service_version,
-                                                help_url=args.url,
-                                                query_manager=query_manager,
-                                                query_module_path=args.query_path,
-                                                query_class_name=args.query_class,
-                                                query_preset=args.preset,
-                                                queries=qry_l,
-                                                crawl_dir=args.crawl_dir,
-                                                resolver=resolver)
+            db_conn = db_storage.create_database(db_path)
+            # Create run with description
+            description = args.label or f"scan of {len(flow_paths)} flows"
+            run_id = db_storage.create_run(db_conn, description=description)
+            print(f"Database initialized at {db_path}, run_id={run_id}")
+        except Exception as e:
+            print(f"Error setting up database: {e}")
+            raise
 
-        except KeyboardInterrupt:
-            # Program could be long-running and should be interruptible by the user
-            return
+    try:
+        for (index, flow_path) in enumerate(flow_paths):
 
-        except:
-            msg = (f"error processing flow {flow_path}"
-                  f"{traceback.format_exc()}"
-                  "...continuing to next flow..")
-            print(msg)
-
-        if (index % chunk == 0 and index > 0) or index == total_paths-1:
-            chunk_counter += 1
+            status_message = get_status_msg(index, total_paths)
+            print(f"{status_message} scanning {flow_path}...")
             try:
-                gen_reports(args, query_manager, chunk_counter, number_chunks)
+                # top level loop in case something goes wrong
+                # specifically we have noticed it's now possible
+                # to save malformed flows :(
+                query_manager = executor.parse_flow(flow_path,
+                                                    requestor=args.requestor,
+                                                    report_label=label,
+                                                    result_id=args.id,
+                                                    service_version=args.service_version,
+                                                    help_url=args.url,
+                                                    query_manager=query_manager,
+                                                    query_module_path=args.query_path,
+                                                    query_class_name=args.query_class,
+                                                    query_preset=args.preset,
+                                                    queries=qry_l,
+                                                    crawl_dir=args.crawl_dir,
+                                                    resolver=resolver)
 
             except KeyboardInterrupt:
+                # Program could be long-running and should be interruptible by the user
                 return
 
             except:
-                print("error generating reports")
-                print(traceback.format_exc())
+                msg = (f"error processing flow {flow_path}"
+                      f"{traceback.format_exc()}"
+                      "...continuing to next flow..")
+                print(msg)
 
-            query_manager = None
+            if (index % chunk == 0 and index > 0) or index == total_paths-1:
+                chunk_counter += 1
+                try:
+                    gen_reports(args, query_manager, chunk_counter, number_chunks, db_conn=db_conn, run_id=run_id)
 
-    print("scanning complete.")
-    print(f"{STATUS_LABEL} {STATUS_COMPLETE}")
+                except KeyboardInterrupt:
+                    return
 
-def gen_reports(args, query_manager, chunk_counter, number_chunks):
+                except:
+                    print("error generating reports")
+                    print(traceback.format_exc())
+
+                query_manager = None
+
+        print("scanning complete.")
+        print(f"{STATUS_LABEL} {STATUS_COMPLETE}")
+    finally:
+        # Ensure database connection is closed when processing ends
+        # This will execute even if there's an early return or exception
+        if db_conn is not None:
+            try:
+                db_conn.close()
+            except Exception as e:
+                # Log but don't raise - connection might already be closed
+                logging.warning(f"Error closing database connection: {e}")
+
+def gen_reports(args, query_manager, chunk_counter, number_chunks, db_conn=None, run_id=None):
 
     # we are not chunking, we are generating a single report for everything
     if query_manager is None:
@@ -551,6 +600,16 @@ def gen_reports(args, query_manager, chunk_counter, number_chunks):
             query_manager.results.dump_json(fp)
 
         print(f"json result file written to {rep_path}")
+
+    # Dump results to database if connection and run_id are provided
+    if db_conn is not None and run_id is not None:
+        try:
+            num_stored = query_manager.results.dump_result_to_db(db_conn, run_id)
+            print(f"stored {num_stored} query results to database for run_id={run_id}")
+        except Exception as e:
+            print(f"error storing results to database: {e}")
+            print(traceback.format_exc())
+            # Continue execution even if database dump fails
 
 def add_chunk_to_path(old_path: str, to_insert)-> str:
     if to_insert == '':

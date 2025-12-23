@@ -1,10 +1,22 @@
-"""Public Enum types
+"""Public Enum types.
 
+This module defines all enumeration types used throughout the flow scanner
+for representing flow metadata, query actions, severity levels, and more.
 """
 from enum import Enum, EnumMeta
 
 class MetaEnum(EnumMeta):
+    """Metaclass for enums that support case-insensitive string membership checks."""
+
     def __contains__(cls, item):
+        """Check if an item is in the enum, with case-insensitive string support.
+
+        Args:
+            item: Item to check for membership.
+
+        Returns:
+            True if item is a valid enum value (case-insensitive for strings).
+        """
         if isinstance(item, str):
             try:
                 cls(item.lower())
@@ -14,6 +26,7 @@ class MetaEnum(EnumMeta):
         return super.__contains__(cls, item)
 
 class BaseEnum(Enum, metaclass=MetaEnum):
+    """Base enum class with case-insensitive string membership support."""
     pass
 
 class TransformType(BaseEnum):
@@ -23,48 +36,26 @@ class TransformType(BaseEnum):
     Count = "count"
 
 class ComplexValueType(BaseEnum):
-    """Class the identifies JSON structure schema of complexValue
+    """Identifies JSON structure schema of complexValue elements.
 
+    Complex values in flows can have various structures. This enum identifies
+    the different types of complex value schemas.
     """
-    """
-        "resourceTemplate": text_template (with merge-fields)
-    """
+
     ResourceDescriptor = "resourcedescriptor"
+    """Resource template with merge-fields: "resourceTemplate": text_template"""
 
-    """
-        "name": "myAccVar.Name",
-        "resourceType": "SObjectField",
-        "resourceName": "Account",
-        "resourceField": "Name",
-        "collection": false
-    """
     ResourceAnnotationMap = "resourceannotationmap"
+    """Resource annotation map with name, resourceType, resourceName, etc."""
 
-    """
-        "dataType": "SObject",
-        "objectType": "MyObj__c",
-        "fieldReferences": ["FieldA__c", "FieldB__c"],
-        "elementReference": "Get_Override_Time_Entries"
-    """
     FieldReference = "fieldreference"
+    """Field reference with dataType, objectType, fieldReferences, elementReference"""
 
-    """
-        "dataType": "SObject",
-        "objectType": "MyObj__c",
-        "fieldReferences": ["FieldA__c", "FieldB__c"],
-        "elementReference": "Get_Override_Time_Entries"
-    """
     ComplexObjectFieldDetails = "complexobjectfielddetails"
+    """Complex object field details with dataType, objectType, fieldReferences"""
 
-    """
-        "leftElementReference":"ContentVersions",
-        "leftJoinKeys":["Id"],
-        "leftSelectedFields":["ContentDocumentId"],
-        "rightElementReference":"Deserialize_File_Upload.fileUpload.files",
-        "rightJoinKeys":["contentVersionId"],
-        "rightSelectedFields":["name"]
-    """
     JoinDefinition = "joindefinition"
+    """Join definition with left/right element references, join keys, and selected fields"""
 
 class FlowType(Enum):
 

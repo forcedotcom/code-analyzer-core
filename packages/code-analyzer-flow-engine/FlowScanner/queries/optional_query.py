@@ -758,10 +758,12 @@ class MissingDescription(LexicalQuery):
         return [QueryAction.lexical]
 
     def execute(self, parser: FlowParser = None, **kwargs) -> list[QueryResult] | None:
-        all_named = list(parser.get_all_named_elems())
+        need_description = [el for el in list(parser.get_all_named_elems()) if
+                            parse_utils.get_tag(el) != 'rules']
+
 
         accum = []
-        for el in all_named:
+        for el in need_description:
             desc = parse_utils.get_by_tag(el,'description')
             if len(desc) == 0:
                 accum.append(el)

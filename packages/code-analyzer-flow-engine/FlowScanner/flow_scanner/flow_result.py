@@ -21,7 +21,8 @@ from flow_scanner import ESAPI
 from flow_scanner import flow_metrics
 from flow_scanner.version import __version__
 from public.data_obj import QueryResult, Preset, InfluenceStatementEncoder, InfluenceStatement
-from public.enums import FlowType
+import flow_scanner.db_storage as db_storage
+
 DEFAULT_HELP_URL = "https://security.secure.force.com/security/tools/forcecom/scannerhelp"
 DEFAULT_JOB_TYPE = "FlowSecurityCLI"
 
@@ -33,11 +34,11 @@ logger = logging.getLogger(__name__)
 class ResultsProcessor(object):
     """Class storing all the information necessary for a report.
 
-        This includes labelling information like the report requested,
-        scan start time, etc., as well as the results of the findings.
+    This includes labeling information like the report requested,
+    scan start time, etc., as well as the results of the findings.
 
-        The class contains methods to take this information and generate
-        json, xml and html reports.
+    The class contains methods to take this information and generate
+    JSON, XML and HTML reports.
     """
 
     def __init__(self, preset: Preset = None, requestor="System", report_label=None,
@@ -69,7 +70,17 @@ class ResultsProcessor(object):
         # xml report string
         self.report_xml: str | None = None
 
-    def get_root(self, filepath: str):
+    def get_root(self, filepath: str) -> ET.Element | None:
+        """Get root XML element for a file path.
+
+        Caches results in root_map for efficiency.
+
+        Args:
+            filepath: Path to flow file.
+
+        Returns:
+            Root XML Element if found, None on error.
+        """
         if self.root_map is not None and filepath not in self.root_map:
             return self.root_map[filepath]
         else:
@@ -86,14 +97,16 @@ class ResultsProcessor(object):
                 return None
 
     def write_html(self, html_report_path: str):
-        """Writes html report to disk
+        """Write HTML report to disk.
 
         Args:
-            html_report_path: where to write html report
+            html_report_path: Path where to write HTML report.
 
         Returns:
-            metrics (results) of issues sorted and counted.
+            Tuple of (jobinfo, scan_results) with metrics of issues sorted and counted.
 
+        Raises:
+            RuntimeError: If no valid preset is set.
         """
         if self.report_xml is None:
             self.get_cx_xml_str()
@@ -131,31 +144,29 @@ class ResultsProcessor(object):
         return results
 
     def dump_json(self, fp: TextIO) -> None:
-        """Write json string of results to file pointer
+        """Dump results as JSON to a file pointer.
 
-        Returns:
-            None
-
+        Args:
+            fp: Text file pointer to write JSON to.
         """
         job_result = self._make_job_result()
         json.dump(job_result, indent=4, fp=fp, cls=InfluenceStatementEncoder)
 
     def get_json_str(self) -> str:
-        """get json result string
+        """Get JSON result string.
 
         Returns:
-            string that serializes list of QueryResult objects
-
+            JSON string that serializes list of QueryResult objects.
         """
         job_result = self._make_job_result()
 
         return json.dumps(job_result, indent=4, cls=InfluenceStatementEncoder)
 
-    def get_cx_xml_str(self):
-        """Converts results to popcrab compatible report format
+    def get_cx_xml_str(self) -> str:
+        """Convert results to popcrab compatible report format.
 
         Returns:
-            report xml string
+            Report XML string in CxXMLResults format.
         """
 
         id2path_dict = self._make_query_id_to_path_dict()
@@ -244,19 +255,16 @@ class ResultsProcessor(object):
         return self.report_xml
 
     def add_results(self, query_results: list[QueryResult]) -> None:
-        """Add results to processor
+        """Add results to processor.
 
         Stores results internally for simple de-duplication.
         All we do is use datapath equality, so please don't put
         unique comment strings containing things like step number
-        or timestamps into influence statements, as they wont be
-        de-duped.
+        in the influence statements, as this will prevent proper
+        de-duplication.
 
         Args:
-            query_results: list of Query-Result objects
-
-        Returns:
-            None
+            query_results: List of QueryResult objects to add.
         """
         query_results = _validate_qr(query_results)
 
@@ -268,28 +276,25 @@ class ResultsProcessor(object):
             self.stored_results = list(set(self.stored_results + query_results))
 
     def gen_result_dict(self) -> dict[str, dict[str, str]]:
-        """Sorts results into query buckets
+        """Sort results into query buckets.
 
-        Used internally to generate popcrab compatible
-        xml and html report formats.
-        
-        Also useful for testing
+        Used internally to generate popcrab compatible XML and HTML report formats.
+        Also useful for testing.
 
         Returns:
-            dictionary of the form::
+            Dictionary of the form::
 
-              query_id -> {flow: tuple of DataInfluenceStatements or None (in case this is a dataflow)
-                           query_name: (human_readable),
-                           counter: (fake similarity id),
-                           elem: source code of element,
-                           elem_name: name of Flow Element,
-                           elem_code: source code of element,
-                           elem_line_no: line number of element,
-                           field: name of influenced variable (if any) within the element,
-                          }
-
+                query_id -> {
+                    flow: tuple of DataInfluenceStatements or None (in case this is a dataflow),
+                    query_name: (human_readable),
+                    counter: (fake similarity id),
+                    elem: source code of element,
+                    elem_name: name of Flow Element,
+                    elem_code: source code of element,
+                    elem_line_no: line number of element,
+                    field: name of influenced variable (if any) within the element,
+                }
         """
-
         query_results = self.stored_results
         accum = {}
         if query_results is None or len(query_results) == 0:
@@ -385,17 +390,22 @@ class ResultsProcessor(object):
         return accum
 
     def _make_query_id_to_path_dict(self) -> dict[str, str]:
-        """Generate a dictionary from query_id to query_path
+        """Generate a dictionary from query_id to query_path.
 
-        e.g. foo bar -> foo\\bar: Version X
+        Example: 'foo.bar' -> 'foo\\bar: Version X'
 
         Returns:
-            dictionary
+            Dictionary mapping query_id to formatted query path string.
         """
         return {x.query_id: x.query_id.strip().replace(".", "\\") + f" Version: {x.query_version.strip()}"
                 for x in self.preset.queries}
 
-    def _make_job_result(self):
+    def _make_job_result(self) -> dict:
+        """Generate job result dictionary for JSON/XML output.
+
+        Returns:
+            Dictionary containing job metadata and results.
+        """
         if self.results_dict is None:
             self.gen_result_dict()
 
@@ -412,22 +422,68 @@ class ResultsProcessor(object):
                       }
         return job_result
 
-    def _get_query_desc_from_id(self, query_id: str):
+    def _get_query_desc_from_id(self, query_id: str) -> QueryDescription:
+        """Get QueryDescription by query ID from preset.
+
+        Args:
+            query_id: Query ID to look up.
+
+        Returns:
+            QueryDescription object matching the query_id.
+
+        Raises:
+            ValueError: If no query with the given ID is in the preset.
+        """
         descriptions = self.preset.queries
         for x in descriptions:
             if x.query_id == query_id:
                 return x
         raise ValueError(f"No query with id {query_id} is in the preset provided")
 
+    def dump_result_to_db(self, conn, run_id: int) -> int:
+        """Dump query results to the database.
+        
+        This function stores all QueryResult objects from this ResultsProcessor
+        into the database, associated with the given run_id. The results_dict
+        will be generated if it doesn't already exist.
+        
+        Args:
+            conn: SQLite database connection (from db_storage.create_database)
+            run_id: Integer run ID to associate results with (from db_storage.create_run)
+        
+        Returns:
+            int: Number of QueryResult objects stored in the database
+        
+        Raises:
+            sqlite3.Error: If database insertion fails
+            ValueError: If stored_results is None or empty
+        """
+        # Ensure results_dict is generated if it doesn't exist
+        if self.results_dict is None:
+            self.gen_result_dict()
+        
+        # Get the stored QueryResult objects
+        if self.stored_results is None or len(self.stored_results) == 0:
+            logger.warning("No query results to dump to database")
+            return 0
+        
+        # Insert all results into the database
+        row_ids = db_storage.insert_query_results(conn, self.stored_results, run_id)
+        
+        num_stored = len(row_ids)
+        logger.info(f"Stored {num_stored} query results to database for run_id={run_id}")
+        
+        return num_stored
+
 
 def _validate_and_prettify_xml(xml_str: str) -> str:
-    """Pretty print and validate generated xml string
+    """Pretty print and validate generated XML string.
 
     Args:
-        xml_str: string to validate
+        xml_str: XML string to validate and prettify.
 
     Returns:
-        validated/beautified xml_string
+        Validated and beautified XML string.
     """
     my_root = CP.get_root_from_string(bytes(xml_str, encoding='utf-8'))
     ET.indent(my_root)
@@ -435,6 +491,16 @@ def _validate_and_prettify_xml(xml_str: str) -> str:
 
 
 def render_normal_dataflow_html(statements: tuple[InfluenceStatement, ...], flow_type: str, start_node_id: int = 0) -> str:
+    """Render a normal dataflow as HTML PathNode elements.
+
+    Args:
+        statements: Tuple of InfluenceStatement objects representing the dataflow.
+        flow_type: Type of flow (e.g., 'Screen', 'AutoLaunched').
+        start_node_id: Starting node ID for numbering. Defaults to 0.
+
+    Returns:
+        HTML string containing PathNode elements.
+    """
     result_str = ''
     for index, node in enumerate(statements, start=start_node_id):
         filename = node.source_path
@@ -450,6 +516,19 @@ def render_normal_dataflow_html(statements: tuple[InfluenceStatement, ...], flow
 
 
 def render_html_pathnode(filename: str, flow_type: str, influenced_var: str, line: int, node_id: int, code: str) -> str:
+    """Render a single PathNode as HTML.
+
+    Args:
+        filename: Path to the flow file.
+        flow_type: Type of flow.
+        influenced_var: Name of influenced variable ('*' becomes 'start').
+        line: Line number in source.
+        node_id: Unique node identifier.
+        code: Source code snippet.
+
+    Returns:
+        HTML string for a PathNode element.
+    """
     if influenced_var == '*':
         influenced_var = 'start'
 
@@ -465,19 +544,29 @@ def render_html_pathnode(filename: str, flow_type: str, influenced_var: str, lin
 
 
 def make_path_node_header(filename: str, flow_type: str, similarity_id: int = 0) -> str:
+    """Generate HTML header for a path node.
+
+    Args:
+        filename: Path to the flow file.
+        flow_type: Type of flow.
+        similarity_id: Similarity ID for the path. Defaults to 0.
+
+    Returns:
+        HTML string containing Result and Path opening tags.
+    """
     return (f'<Result NodeId="{similarity_id}" FileName="{ESAPI.html_encode(filename)}" FlowType="{flow_type}">'
             f'<Path SimilarityId="{similarity_id}FT">')
 
 
 def _validate_qr(qr_list: list[QueryResult]) -> list[QueryResult] | None:
-    """Checks query result for correctness
+    """Check query results for correctness.
 
     Args:
-        qr_list: Query Result list to validate
+        qr_list: Query Result list to validate.
 
     Returns:
-        list of valid QueryResults with invalid results removed
-        None if the list was None
+        List of valid QueryResults with invalid results removed,
+        or None if the input list was None or empty.
     """
     if qr_list is None or len(qr_list) == 0:
         return None
@@ -510,13 +599,23 @@ def _validate_qr(qr_list: list[QueryResult]) -> list[QueryResult] | None:
 
 
 def fix_names(x: InfluenceStatement) -> InfluenceStatement:
+    """Fix special variable names in an InfluenceStatement.
+
+    Replaces '*' with 'start' for both influenced and influencer variables.
+
+    Args:
+        x: InfluenceStatement to fix.
+
+    Returns:
+        New InfluenceStatement with fixed names.
+    """
     new_influenced = None
     new_influencer = None
 
     if x.influenced_var == '*':
         new_influenced = 'start'
 
-    elif x.influenced_var == '*':
+    elif x.influencer_var == '*':
         new_influencer = 'start'
 
     return dataclasses.replace(x,

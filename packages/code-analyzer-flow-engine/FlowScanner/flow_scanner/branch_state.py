@@ -91,20 +91,20 @@ logger = logging.getLogger(__name__)
 
 
 class BranchState(State):
-    """Instances of BranchState track dataflows within a given flow
+    """Instances of BranchState track dataflows within a given flow.
 
-        * the current element being processed
-        * all influence flows seen on this branch and up to this element
+    Tracks:
+    - The current element being processed
+    - All influence flows seen on this branch and up to this element
 
     All interaction with influence flows must be done via public APIs
     exposed by BranchState. Instantiate only with a builder method.
 
-    A shallow copy of the influence map is made at each crawl
-    step (the influence map contains only immutable elements).
+    A shallow copy of the influence map is made at each crawl step
+    (the influence map contains only immutable elements).
 
     Prior to exiting a subflow, all branches must be consolidated so that
     all execution paths are available as return values.
-
     """
 
     def __init__(self, parser: parse.Parser):
@@ -140,16 +140,16 @@ class BranchState(State):
 
     @classmethod
     def from_parser(cls, parser: parse.Parser) -> BranchState:
-        """Returns a state instance with variable defaults populated
+        """Create a state instance with variable defaults populated.
 
         This instance is *not* ready to be used until it is loaded
         with a crawl step. Only the defaults have been added.
 
         Args:
-            parser: parser instance for this flow
+            parser: Parser instance for this flow.
 
         Returns:
-            Branch State instance
+            BranchState instance with defaults populated.
         """
         state = BranchState(parser=parser)
         state.flow_path = parser.flow_path
@@ -171,25 +171,26 @@ class BranchState(State):
         return self.parser
 
     def get_current_elem(self) -> ET.Element:
-        """Get current element being processed
+        """Get current element being processed.
 
         Returns:
-            xml element associated to the flow's crawl step
+            XML element associated to the flow's crawl step.
         """
         return self.current_elem
 
     def get_current_elem_name(self) -> str:
-        """Get name of element
+        """Get name of current element.
 
         Returns:
-            Flow Element name of the current crawl step
+            Flow Element name of the current crawl step.
         """
         return self.current_elem_name
 
-    def filter_maps(self, steps: list[CrawlStep]):
-        """Removes all influence maps except those in `steps`
+    def filter_maps(self, steps: list[CrawlStep]) -> None:
+        """Remove all influence maps except those in steps.
 
-        .. WARNING:: Destructive operation, only call after flow
+        .. warning::
+            Destructive operation, only call after flow
                      processing is complete.
 
         Args:
@@ -778,7 +779,7 @@ class BranchState(State):
         return dict.get(self._get_influence_map(crawl_step=step), (flow_path, name))
 
     def _init_vec_from_elem(self, elem: ET.Element, store=True) -> FlowVector | None:
-        """Initializes a FlowVector from the provided (named) xml element
+        """Initializes a FlowVector from the provided (named) XML element
 
         Args:
             elem: XML Element whose name is the vector's parent
@@ -928,7 +929,7 @@ def _build_path_from_history(parser: parse.Parser, history: tuple[InfluenceState
         Args:
             parser: parser that can convert variables in statements to
                 element names and properties, as well as extract type
-                information from the flow xml file.
+                information from the flow XML file.
             history: tuple of DataflowInfluenceStatement
             type_replacements: [expert use] name/value pairs for property overrides
 

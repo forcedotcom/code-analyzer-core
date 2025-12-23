@@ -1,7 +1,7 @@
 {
   "name": "@salesforce/code-analyzer-eslint-engine",
   "description": "Plugin package that adds 'eslint' as an engine into Salesforce Code Analyzer",
-  "version": "0.37.1",
+  "version": "0.38.0-SNAPSHOT",
   "author": "The Salesforce Code Analyzer Team",
   "license": "BSD-3-Clause",
   "homepage": "https://developer.salesforce.com/docs/platform/salesforce-code-analyzer/overview",
@@ -13,24 +13,24 @@
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "dependencies": {
-    "@eslint/js": "^9.39.1",
+    "@eslint/js": "^9.39.2",
     "@lwc/eslint-plugin-lwc": "^3.3.0",
     "@lwc/eslint-plugin-lwc-platform": "^6.3.0",
     "@salesforce-ux/eslint-plugin-slds": "^1.0.7",
-    "@salesforce/code-analyzer-engine-api": "0.32.0",
-    "@salesforce/code-analyzer-eslint8-engine": "0.9.0",
-    "@salesforce/eslint-config-lwc": "^4.1.1",
+    "@salesforce/code-analyzer-engine-api": "0.33.0-SNAPSHOT",
+    "@salesforce/code-analyzer-eslint8-engine": "0.10.0-SNAPSHOT",
+    "@salesforce/eslint-config-lwc": "^4.1.2",
     "@salesforce/eslint-plugin-lightning": "^2.0.0",
     "@types/node": "^20.0.0",
-    "@typescript-eslint/eslint-plugin": "^8.47.0",
-    "@typescript-eslint/parser": "^8.47.0",
-    "eslint": "^9.39.1",
+    "@typescript-eslint/eslint-plugin": "^8.50.0",
+    "@typescript-eslint/parser": "^8.50.0",
+    "eslint": "^9.39.2",
     "eslint-plugin-import": "^2.32.0",
-    "eslint-plugin-jest": "^29.2.0",
+    "eslint-plugin-jest": "^29.5.0",
     "globals": "^16.5.0",
     "semver": "^7.7.3",
     "typescript": "^5.9.3",
-    "typescript-eslint": "^8.47.0"
+    "typescript-eslint": "^8.50.0"
   },
   "devDependencies": {
     "@types/jest": "^30.0.0",
@@ -38,8 +38,8 @@
     "@types/unzipper": "^0.10.11",
     "cross-env": "^10.1.0",
     "jest": "^30.2.0",
-    "rimraf": "^6.0.1",
-    "ts-jest": "^29.4.5",
+    "rimraf": "^6.1.2",
+    "ts-jest": "^29.4.6",
     "unzipper": "^0.12.3"
   },
   "engines": {

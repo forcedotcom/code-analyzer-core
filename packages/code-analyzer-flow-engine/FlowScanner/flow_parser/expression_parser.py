@@ -1,6 +1,7 @@
-"""
-Lightweight expression parser to extract data influencing
-variables from flow expressions.
+"""Lightweight expression parser to extract data influencing variables from flow expressions.
+
+This module provides functions for parsing Salesforce Flow expressions and formulas,
+extracting variable references and determining data flow dependencies.
 
 @author: rsussland@salesforce.com
 """
@@ -38,12 +39,13 @@ ALWAYS_PROPAGATE = ["ABS", "CASESAFEID", "CEILING", "DATETIMEVALUE",
 
 
 def _has_skips(function_name: str) -> bool:
-    """
-    Determine whether this is a supported function that may skip propagation
-    Args:
-        function_name:
+    """Determine whether this is a supported function that may skip propagation.
 
-    Returns: True if supported function
+    Args:
+        function_name: Name of the function to check.
+
+    Returns:
+        True if the function is supported and may skip propagation.
     """
     msg = function_name.upper()
 
@@ -63,13 +65,13 @@ def _should_propagate_by_arg(function_name: str | None, arg_num: int, last_arg: 
     """Determine transfer policy for arguments passed to functions.
 
     Args:
-        function_name: name of function (must be uppercase)
-        arg_num: position of argument (starting at 1)
-        last_arg: True if this is the last argument
+        function_name: Name of function (must be uppercase).
+        arg_num: Position of argument (starting at 1).
+        last_arg: True if this is the last argument.
 
     Returns:
         True if argument is propagated, False otherwise.
-        Note that for unrecognized functions we default to True
+        Note that for unrecognized functions we default to True.
     """
     # TODO: should we be stricter and raise an argument error if too many arguments are passed?
     if function_name is None:
@@ -89,7 +91,7 @@ def _should_propagate_by_arg(function_name: str | None, arg_num: int, last_arg: 
         # must have at least 1 CASE
         if arg_num == 1:
             return False
-        if last_arg is True:
+        if last_arg:
             return True
         if arg_num % 2 == 0:
             return False
@@ -118,29 +120,38 @@ def _should_propagate_by_arg(function_name: str | None, arg_num: int, last_arg: 
 
 # parse_utils.parse_expression(txt)
 def _strip_quoted(msg: str) -> str:
-    """
-    Replaces quoted values with empty strings
+    """Replace quoted values with empty strings.
+
     Args:
-        msg: string to be processed
+        msg: String to be processed.
 
-    Returns: message where all quoted strings are empty
-
+    Returns:
+        Message where all quoted strings are replaced with empty strings.
     """
     no_doubles = re.sub(double_re, '""', msg)
     return re.sub(single_re, '\'\'', no_doubles)
 
 
 def _strip_whitespace(msg: str) -> str:
+    """Remove all whitespace from a string.
+
+    Args:
+        msg: String to process.
+
+    Returns:
+        String with all whitespace removed.
+    """
     return re.sub(r'\s+', '', msg)
 
 
 def extract_expression(txt: str) -> list[str]:
-    """
+    """Extract variable references from an expression using regex.
+
     Args:
-        txt: expression in which merge-fields may be present
+        txt: Expression in which merge-fields may be present.
 
     Returns:
-        List of elementRef names (empty list if no matches)
+        List of elementRef names (empty list if no matches).
     """
     accum = []
     res = re.finditer(reg, txt)
@@ -152,14 +163,15 @@ def extract_expression(txt: str) -> list[str]:
 
 
 def parse_expression(expression: str) -> list[str]:
-    """Main entry point for parsing expressions. Do not use this on templates
-       in which expressions are mixed with text or html.
+    """Main entry point for parsing expressions.
+
+    Do not use this on templates in which expressions are mixed with text or HTML.
 
     Args:
-        expression: expression to be evaluated.
+        expression: Expression to be evaluated.
 
     Returns:
-        list of variables that data influence the expression
+        List of variables that data influence the expression.
     """
     # TODO: might as well extract variables directly here and save the grep
     try:
@@ -171,13 +183,13 @@ def parse_expression(expression: str) -> list[str]:
 
 
 def process_expression(expression: str) -> list[str]:
-    """Process expression to return list of data influencing variables
+    """Process expression to return list of data influencing variables.
 
     Args:
-        expression: expression to be processed
+        expression: Expression to be processed.
 
     Returns:
-        list of variable names that data influence the expression
+        List of variable names that data influence the expression.
     """
     expr = _strip_whitespace(expression)
     # Handle degenerate cases
@@ -213,12 +225,13 @@ def process_expression(expression: str) -> list[str]:
 
 
 def _extract_results_from_context(context: Context) -> list[str]:
-    """returns list of variables names from context
+    """Extract list of variable names from context.
 
     Args:
-        context:
+        context: Parsing context containing processed arguments.
 
-    Returns: list of variable names (de-duped)
+    Returns:
+        List of variable names (de-duplicated).
     """
     res_list = util.safe_list_add(context.prev_arguments_text_array,
                                   context.current_argument_text_array)
@@ -231,14 +244,14 @@ def _extract_results_from_context(context: Context) -> list[str]:
 
 
 def _update_parent_context(parent_ctx: Context, child_ctx: Context) -> Context:
-    """Updates the parent context after child context has finished processing
+    """Update the parent context after child context has finished processing.
 
     Args:
-        parent_ctx: parent context
-        child_ctx: child context
+        parent_ctx: Parent context to update.
+        child_ctx: Child context that has finished processing.
 
-    Returns: parent_ctx
-
+    Returns:
+        Updated parent context.
     """
     # Add the processed segments to the parent
     parent_ctx.current_argument_text_array = util.safe_list_add(
@@ -260,16 +273,18 @@ def _update_parent_context(parent_ctx: Context, child_ctx: Context) -> Context:
 
 
 def _parse_function(ctx: Context) -> Context | None:
-    """Enter this function after the first parenthesis
-       and call with function name and skip policy in context
+    """Parse a function call within an expression.
+
+    Enter this function after the first parenthesis
+    and call with function name and skip policy in context.
 
     Args:
-        ctx: function parsing context
+        ctx: Function parsing context.
 
     Returns:
-        None if the entire function has completed processing
+        None if the entire function has completed processing,
         or a new context if processing was interrupted with a function call
-        in which case it resumes in current position
+        in which case it resumes in current position.
     """
     if ctx.current_position + 1 == len(ctx.expression):
         # we are done processing, so collect arguments
@@ -294,7 +309,7 @@ def _parse_function(ctx: Context) -> Context | None:
         if i > 0:
             ctx.current_position += 1
 
-        if empty_call is True:
+        if empty_call:
             # We're in a FOO() situation and want to skip over it
             empty_call = False
             continue
@@ -340,20 +355,20 @@ def _parse_function(ctx: Context) -> Context | None:
                 return None
             else:
                 continue
+    return None
 
     # we've finished processing this function
 
 
 def _handle_argument_end(ctx: Context, is_comma=True) -> Context:
-    """Decides whether to flush or add to processed buffers the current
-    portion of the argument being scanned.
+    """Decide whether to flush or add to processed buffers the current argument.
 
     Args:
-        ctx: current context
-        is_comma: True if comma, False if parenthesis
+        ctx: Current parsing context.
+        is_comma: True if comma separator, False if closing parenthesis.
 
     Returns:
-        copy of the current context
+        Updated context.
     """
     # dispose of last argument
     should_propagate = ctx.function_propagate_policy
@@ -363,7 +378,7 @@ def _handle_argument_end(ctx: Context, is_comma=True) -> Context:
                                                     ctx.current_argument_no,
                                                     last_arg=(not is_comma))
 
-    if should_propagate is True:
+    if should_propagate:
         # add existing text array to processed buffer
         ctx.prev_arguments_text_array = util.safe_list_add(
             ctx.current_argument_text_array,
@@ -383,20 +398,21 @@ def _handle_argument_end(ctx: Context, is_comma=True) -> Context:
 
 
 def _handle_open_paren(ctx: Context, is_bracket=False) -> Context:
-    """When encountering an open parenthesis, we halt current
+    """Handle an open parenthesis in the expression.
+
+    When encountering an open parenthesis, we halt current
     argument processing up to the function name start, if any.
 
     Args:
-        ctx: context of current function with index at open paren
+        ctx: Context of current function with index at open paren.
         is_bracket: True if this is a bracket pseudo-function so
                     that we don't search for a function identifier to
                     precede it.
 
-    Caution:
-        Make sure we are not at the end of the expression
-
     Returns:
-        new context to process
+        New context to process the nested function.
+
+    .. warning:: Make sure we are not at the end of the expression.
     """
     # current position is a (
     segment = ctx.expression[ctx.start_of_current_argument_processing: ctx.current_position]
@@ -433,14 +449,16 @@ def _handle_open_paren(ctx: Context, is_bracket=False) -> Context:
 
 
 def _get_function_name(msg: str) -> str:
-    """
-    Assumes the string terminates with a ( but the ( is not
-    passed into the msg
+    """Extract function name from a string.
+
+    Assumes the string terminates with a '(' but the '(' is not
+    passed into the msg.
+
     Args:
-        msg:
+        msg: String containing function name (without the opening parenthesis).
 
-    Returns: name of the function
-
+    Returns:
+        Name of the function.
     """
     res = re.findall(func_name, msg)
     assert len(res) >= 1
@@ -449,6 +467,30 @@ def _get_function_name(msg: str) -> str:
 
 @dataclass(init=True, kw_only=True)
 class Context:
+    """Context for parsing expressions with nested function calls.
+
+    This dataclass tracks the state of expression parsing, including
+    current position, function names, and argument processing.
+
+    Attributes:
+        expression: The master expression we are working with.
+        length: Total length of this expression.
+        current_position: Current position in the expression.
+        start_of_current_argument_processing: Where in the expression the first
+            character (after previous comma) appears OR where we resumed
+            processing for in the current argument.
+        current_argument_text_array: Text of current argument (only append string
+            when receiving values from function call return).
+        current_function_name: Name of current function being parsed (None if
+            just in a parenthesis or unknown function context).
+        function_propagate_policy: Whether it is known that all arguments do or
+            do not propagate. If unknown, set to None.
+        current_argument_no: Which argument we are on, starting at 1.
+        is_last_argument: Whether this is the last argument (only relevant for
+            case statement).
+        prev_arguments_text_array: Already pruned text from previous arguments
+            (or None).
+    """
     # The expression is the master expression we are working with
     expression: str
 
