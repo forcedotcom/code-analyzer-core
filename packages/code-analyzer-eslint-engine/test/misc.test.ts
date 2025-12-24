@@ -8,19 +8,22 @@ import {ESLintWorkspace} from "../src/workspace";
 
 const DEFAULT_CONFIG_FOR_TESTING: ESLintEngineConfig = {
     ...DEFAULT_CONFIG,
-    config_root: __dirname
+    config_root: __dirname,
+    // React is gated in production (default: true). For testing, enable it (eventual default: false)
+    disable_react_base_config: false
 }
 const testDataFolder: string = path.join(__dirname, 'test-data');
 
 describe("Miscellaneous tests that test sensitive implementation details more directly", () => {
-    it("Make sure that the ESLint.Options can be stringified to an output that is no larger than 1000 lines", async () => {
+    it("Make sure that the ESLint.Options can be stringified to an output that is no larger than 1500 lines", async () => {
         const eslintOptionsFactory: ESLintOptionsFactory = new ESLintOptionsFactory();
         const eslintOptions: ESLint.Options = await eslintOptionsFactory.createESLintOptions(
             DEFAULT_CONFIG_FOR_TESTING, __dirname, undefined);
         eslintOptions.ruleFilter = () => true; // Doesn't matter
         const optionsString: string = stringifyESLintOptions(eslintOptions);
         const numLines: number = optionsString.split('\n').length;
-        expect(numLines).toBeLessThanOrEqual(1000);
+        // Increased from 1000 to 1500 to accommodate React config rules
+        expect(numLines).toBeLessThanOrEqual(1500);
 
         // Checking a few substrings as sanity checks:
         expect(optionsString).toContain('"baseConfig":');
