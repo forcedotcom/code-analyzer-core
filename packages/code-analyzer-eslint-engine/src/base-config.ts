@@ -65,28 +65,27 @@ export class BaseConfigFactory {
     private createJavascriptPlusLwcConfigArray(): Linter.Config[] {
         let configs: Linter.Config[] = validateAndGetRawLwcConfigArray();
 
-        // Deep clone the languageOptions to avoid mutating the original shared config from the LWC package
+        // Reconstruct languageOptions to avoid mutating the original shared config from the LWC package
+        // TODO: Remove configFile and sourceType overrides when https://github.com/salesforce/eslint-config-lwc/issues/158 is fixed
         const originalParserOptions = configs[0].languageOptions!.parserOptions as Linter.ParserOptions;
-        const clonedBabelOptions = JSON.parse(JSON.stringify(originalParserOptions.babelOptions));
+        const originalBabelOptions = originalParserOptions.babelOptions || {};
         configs[0].languageOptions = {
             ...configs[0].languageOptions,
             parserOptions: {
                 ...originalParserOptions,
-                babelOptions: clonedBabelOptions
+                // For some reason babel doesn't like .cjs files unless we explicitly set this to undefined
+                // because ESLint 9 is setting it to "commonjs" automatically when the field doesn't exist
+                // in the parserOptions (and for babel "commonjs" isn't a valid option)
+                sourceType: undefined,
+                babelOptions: {
+                    ...originalBabelOptions,
+                    // Turn off the babel parser's configFile option from the lwc base plugin
+                    configFile: false,
+                    // Add @babel/preset-react to enable JSX parsing for React/JSX files
+                    presets: [...(originalBabelOptions.presets || []), '@babel/preset-react']
+                }
             }
         };
-
-        // TODO: Remove the For the following 2 updates when https://github.com/salesforce/eslint-config-lwc/issues/158 is fixed
-        // 1) Turn off the babel parser's configFile option from the lwc base plugin
-        clonedBabelOptions.configFile = false;
-        // 2) For some reason babel doesn't like .cjs files unless we explicitly set this to undefined because I think
-        // ESLint 9 is setting it to "commonjs" automatically when the field doesn't exist in the parserOptions (and for
-        // babel "commonjs" isn't a valid option)
-        (configs[0].languageOptions!.parserOptions as Linter.ParserOptions).sourceType = undefined;
-
-        // 3) Add @babel/preset-react to enable JSX parsing for React/JSX files
-        const existingPresets = clonedBabelOptions.presets || [];
-        clonedBabelOptions.presets = [...existingPresets, '@babel/preset-react'];
 
         // Swap out eslintJs.configs.recommended with eslintJs.configs.all
         configs[1] = eslintJs.configs.all;

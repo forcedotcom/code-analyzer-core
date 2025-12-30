@@ -143,8 +143,9 @@ export const LEGACY_ESLINT_IGNORE_FILE: string = '.eslintignore';
 
 
 export function validateAndNormalizeConfig(configValueExtractor: ConfigValueExtractor): ESLintEngineConfig {
-    // Note: disable_react_base_config is intentionally excluded - React support is gated
-    // TODO: Add 'disable_react_base_config' when React support is released
+    // disable_react_base_config bypasses validation - React support is gated but we need it for internal testing
+    // TODO: Move 'disable_react_base_config' to validateContainsOnlySpecifiedKeys when React support is released
+    configValueExtractor.addKeysThatBypassValidation(['disable_react_base_config']);
     configValueExtractor.validateContainsOnlySpecifiedKeys(['eslint_config_file', 'eslint_ignore_file',
         'auto_discover_eslint_config', 'disable_javascript_base_config', 'disable_lwc_base_config',
         'disable_slds_base_config', 'disable_typescript_base_config', 'file_extensions']);
