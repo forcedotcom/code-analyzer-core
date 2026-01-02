@@ -82,7 +82,8 @@ export class BaseConfigFactory {
                     // Turn off the babel parser's configFile option from the lwc base plugin
                     configFile: false,
                     // Add @babel/preset-react to enable JSX parsing for React/JSX files
-                    presets: [...(originalBabelOptions.presets || []), '@babel/preset-react']
+                    // Use require.resolve() to get absolute path - otherwise Babel looks in target project's node_modules
+                    presets: [...(originalBabelOptions.presets || []), require.resolve('@babel/preset-react')]
                 }
             }
         };
