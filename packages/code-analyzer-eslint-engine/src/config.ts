@@ -73,7 +73,7 @@ export const DEFAULT_CONFIG: ESLintEngineConfig = {
     disable_react_base_config: true,  // Gated for now - will change to false when released
     file_extensions: {
         javascript: ['.js', '.cjs', '.mjs', '.jsx'],
-        typescript: ['.ts'],  // Note: .tsx support planned for next iteration
+        typescript: ['.ts', '.tsx'],
         html: ['.html', '.htm', '.cmp'],
         css: ['.css', '.scss'],
         other: []
