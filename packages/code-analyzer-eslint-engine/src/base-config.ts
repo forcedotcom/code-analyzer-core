@@ -4,6 +4,7 @@ import eslintTs from "typescript-eslint";
 import lwcEslintPluginLwcPlatform from "@lwc/eslint-plugin-lwc-platform";
 import salesforceEslintConfigLwc from "@salesforce/eslint-config-lwc";
 import sldsEslintPlugin from "@salesforce-ux/eslint-plugin-slds";
+import eslintPluginReact from "eslint-plugin-react";
 import {ESLintEngineConfig} from "./config";
 import globals from "globals";
 
@@ -54,19 +55,38 @@ export class BaseConfigFactory {
         if (this.useTsBaseConfig()) {
             configArray.push(...this.createTypescriptConfigArray());
         }
+        // Add React plugin config for JSX files
+        if (this.useReactBaseConfig()) {
+            configArray.push(...this.createReactConfigArray());
+        }
         return configArray;
     }
 
     private createJavascriptPlusLwcConfigArray(): Linter.Config[] {
         let configs: Linter.Config[] = validateAndGetRawLwcConfigArray();
 
-        // TODO: Remove the For the following 2 updates when https://github.com/salesforce/eslint-config-lwc/issues/158 is fixed
-        // 1) Turn off the babel parser's configFile option from the lwc base plugin
-        (configs[0].languageOptions!.parserOptions as Linter.ParserOptions).babelOptions.configFile = false;
-        // 2) For some reason babel doesn't like .cjs files unless we explicitly set this to undefined because I think
-        // ESLint 9 is setting it to "commonjs" automatically when the field doesn't exist in the parserOptions (and for
-        // babel "commonjs" isn't a valid option)
-        (configs[0].languageOptions!.parserOptions as Linter.ParserOptions).sourceType = undefined;
+        // Reconstruct languageOptions to avoid mutating the original shared config from the LWC package
+        // TODO: Remove configFile and sourceType overrides when https://github.com/salesforce/eslint-config-lwc/issues/158 is fixed
+        const originalParserOptions = configs[0].languageOptions!.parserOptions as Linter.ParserOptions;
+        const originalBabelOptions = originalParserOptions.babelOptions || {};
+        configs[0].languageOptions = {
+            ...configs[0].languageOptions,
+            parserOptions: {
+                ...originalParserOptions,
+                // For some reason babel doesn't like .cjs files unless we explicitly set this to undefined
+                // because ESLint 9 is setting it to "commonjs" automatically when the field doesn't exist
+                // in the parserOptions (and for babel "commonjs" isn't a valid option)
+                sourceType: undefined,
+                babelOptions: {
+                    ...originalBabelOptions,
+                    // Turn off the babel parser's configFile option from the lwc base plugin
+                    configFile: false,
+                    // Add @babel/preset-react to enable JSX parsing for React/JSX files
+                    // Use require.resolve() to get absolute path - otherwise Babel looks in target project's node_modules
+                    presets: [...(originalBabelOptions.presets || []), require.resolve('@babel/preset-react')]
+                }
+            }
+        };
 
         // Swap out eslintJs.configs.recommended with eslintJs.configs.all
         configs[1] = eslintJs.configs.all;
@@ -115,7 +135,14 @@ export class BaseConfigFactory {
     private createJavascriptConfigArray(): Linter.Config[] {
         return [{
             ... eslintJs.configs.all,
-            files: this.engineConfig.file_extensions.javascript.map(ext => `**/*${ext}`)
+            files: this.engineConfig.file_extensions.javascript.map(ext => `**/*${ext}`),
+            languageOptions: {
+                parserOptions: {
+                    ecmaFeatures: {
+                        jsx: true  // Enable JSX parsing for React/JSX files
+                    }
+                }
+            }
         }];
     }
 
@@ -160,6 +187,40 @@ export class BaseConfigFactory {
         return configs;
     }
 
+    /**
+     * Creates React plugin config for JavaScript files.
+     * 
+     * React rules are applied to all JS files (.js, .jsx, .cjs, .mjs) - if a file
+     * doesn't contain React code, the rules simply won't report any violations.
+     * 
+     * Note: TypeScript React support (.tsx) is planned for the next iteration.
+     */
+    private createReactConfigArray(): Linter.Config[] {
+        // Apply React rules to all JavaScript files
+        const jsExtensions = this.engineConfig.file_extensions.javascript;
+
+        if (jsExtensions.length === 0) {
+            return [];
+        }
+
+        // Get all rules from eslint-plugin-react's flat config
+        const reactAllConfig = eslintPluginReact.configs.flat.all;
+
+        return [{
+            ...reactAllConfig,
+            files: jsExtensions.map(ext => `**/*${ext}`),
+            settings: {
+                ...reactAllConfig.settings,
+                react: {
+                    // React version - "detect" automatically picks the installed version, falls back to latest
+                    version: 'detect',
+                    // Pragma is the function JSX compiles to (e.g., <div> → React.createElement('div'))
+                    pragma: 'React'
+                }
+            }
+        }];
+    }
+
     private useJsBaseConfig(): boolean {
         return !this.engineConfig.disable_javascript_base_config && this.engineConfig.file_extensions.javascript.length > 0;
     }
@@ -178,6 +239,13 @@ export class BaseConfigFactory {
 
     private useTsBaseConfig(): boolean {
         return !this.engineConfig.disable_typescript_base_config && this.engineConfig.file_extensions.typescript.length > 0;
+    }
+
+    private useReactBaseConfig(): boolean {
+        // React config is independently controlled by disable_react_base_config
+        // React rules apply to all JS files - no harm if file has no React code
+        return !this.engineConfig.disable_react_base_config && 
+               this.engineConfig.file_extensions.javascript.length > 0;
     }
 }
 

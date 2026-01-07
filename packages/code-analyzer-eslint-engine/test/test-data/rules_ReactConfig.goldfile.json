@@ -1,0 +1,1437 @@
+[
+  {
+    "description": "Enforces consistent naming for boolean props",
+    "name": "react/boolean-prop-naming",
+    "resourceUrls": [
+      "https://github.com/jsx-eslint/eslint-plugin-react/tree/master/docs/rules/boolean-prop-naming.md"
+    ],
+    "severityLevel": 4,
+    "tags": [
+      "React",
+      "CodeStyle",
+      "JavaScript",
+      "TypeScript"
+    ]
+  },
+  {
+    "description": "Disallow usage of `button` elements without an explicit `type` attribute",
+    "name": "react/button-has-type",
+    "resourceUrls": [
+      "https://github.com/jsx-eslint/eslint-plugin-react/tree/master/docs/rules/button-has-type.md"
+    ],
+    "severityLevel": 3,
+    "tags": [
+      "React",
+      "ErrorProne",
+      "JavaScript",
+      "TypeScript"
+    ]
+  },
+  {
+    "description": "Enforce using `onChange` or `readonly` attribute when `checked` is used",
+    "name": "react/checked-requires-onchange-or-readonly",
+    "resourceUrls": [
+      "https://github.com/jsx-eslint/eslint-plugin-react/tree/master/docs/rules/checked-requires-onchange-or-readonly.md"
+    ],
+    "severityLevel": 3,
+    "tags": [
+      "React",
+      "BestPractices",
+      "JavaScript",
+      "TypeScript"
+    ]
+  },
+  {
+    "description": "Enforce all defaultProps have a corresponding non-required PropType",
+    "name": "react/default-props-match-prop-types",
+    "resourceUrls": [
+      "https://github.com/jsx-eslint/eslint-plugin-react/tree/master/docs/rules/default-props-match-prop-types.md"
+    ],
+    "severityLevel": 3,
+    "tags": [
+      "React",
+      "ErrorProne",
+      "JavaScript",
+      "TypeScript"
+    ]
+  },
+  {
+    "description": "Enforce consistent usage of destructuring assignment of props, state, and context",
+    "name": "react/destructuring-assignment",
+    "resourceUrls": [
+      "https://github.com/jsx-eslint/eslint-plugin-react/tree/master/docs/rules/destructuring-assignment.md"
+    ],
+    "severityLevel": 4,
+    "tags": [
+      "React",
+      "CodeStyle",
+      "JavaScript",
+      "TypeScript"
+    ]
+  },
+  {
+    "description": "Disallow missing displayName in a React component definition",
+    "name": "react/display-name",
+    "resourceUrls": [
+      "https://github.com/jsx-eslint/eslint-plugin-react/tree/master/docs/rules/display-name.md"
+    ],
+    "severityLevel": 3,
+    "tags": [
+      "Recommended",
+      "React",
+      "BestPractices",
+      "JavaScript",
+      "TypeScript"
+    ]
+  },
+  {
+    "description": "Disallow certain props on components",
+    "name": "react/forbid-component-props",
+    "resourceUrls": [
+      "https://github.com/jsx-eslint/eslint-plugin-react/tree/master/docs/rules/forbid-component-props.md"
+    ],
+    "severityLevel": 3,
+    "tags": [
+      "React",
+      "ErrorProne",
+      "JavaScript",
+      "TypeScript"
+    ]
+  },
+  {
+    "description": "Disallow certain props on DOM Nodes",
+    "name": "react/forbid-dom-props",
+    "resourceUrls": [
+      "https://github.com/jsx-eslint/eslint-plugin-react/tree/master/docs/rules/forbid-dom-props.md"
+    ],
+    "severityLevel": 3,
+    "tags": [
+      "React",
+      "BestPractices",
+      "JavaScript",
+      "TypeScript"
+    ]
+  },
+  {
+    "description": "Disallow certain elements",
+    "name": "react/forbid-elements",
+    "resourceUrls": [
+      "https://github.com/jsx-eslint/eslint-plugin-react/tree/master/docs/rules/forbid-elements.md"
+    ],
+    "severityLevel": 4,
+    "tags": [
+      "React",
+      "CodeStyle",
+      "JavaScript",
+      "TypeScript"
+    ]
+  },
+  {
+    "description": "Disallow using another component's propTypes",
+    "name": "react/forbid-foreign-prop-types",
+    "resourceUrls": [
+      "https://github.com/jsx-eslint/eslint-plugin-react/tree/master/docs/rules/forbid-foreign-prop-types.md"
+    ],
+    "severityLevel": 3,
+    "tags": [
+      "React",
+      "ErrorProne",
+      "JavaScript",
+      "TypeScript"
+    ]
+  },
+  {
+    "description": "Disallow certain propTypes",
+    "name": "react/forbid-prop-types",
+    "resourceUrls": [
+      "https://github.com/jsx-eslint/eslint-plugin-react/tree/master/docs/rules/forbid-prop-types.md"
+    ],
+    "severityLevel": 4,
+    "tags": [
+      "React",
+      "CodeStyle",
+      "JavaScript",
+      "TypeScript"
+    ]
+  },
+  {
+    "description": "Require all forwardRef components include a ref parameter",
+    "name": "react/forward-ref-uses-ref",
+    "resourceUrls": [
+      "https://github.com/jsx-eslint/eslint-plugin-react/tree/master/docs/rules/forward-ref-uses-ref.md"
+    ],
+    "severityLevel": 4,
+    "tags": [
+      "React",
+      "ErrorProne",
+      "JavaScript",
+      "TypeScript"
+    ]
+  },
+  {
+    "description": "Enforce a specific function type for function components",
+    "name": "react/function-component-definition",
+    "resourceUrls": [
+      "https://github.com/jsx-eslint/eslint-plugin-react/tree/master/docs/rules/function-component-definition.md"
+    ],
+    "severityLevel": 4,
+    "tags": [
+      "React",
+      "CodeStyle",
+      "JavaScript",
+      "TypeScript"
+    ]
+  },
+  {
+    "description": "Ensure destructuring and symmetric naming of useState hook value and setter variables",
+    "name": "react/hook-use-state",
+    "resourceUrls": [
+      "https://github.com/jsx-eslint/eslint-plugin-react/tree/master/docs/rules/hook-use-state.md"
+    ],
+    "severityLevel": 3,
+    "tags": [
+      "React",
+      "ErrorProne",
+      "JavaScript",
+      "TypeScript"
+    ]
+  },
+  {
+    "description": "Enforce sandbox attribute on iframe elements",
+    "name": "react/iframe-missing-sandbox",
+    "resourceUrls": [
+      "https://github.com/jsx-eslint/eslint-plugin-react/tree/master/docs/rules/iframe-missing-sandbox.md"
+    ],
+    "severityLevel": 2,
+    "tags": [
+      "React",
+      "Security",
+      "JavaScript",
+      "TypeScript"
+    ]
+  },
+  {
+    "description": "Enforce boolean attributes notation in JSX",
+    "name": "react/jsx-boolean-value",
+    "resourceUrls": [
+      "https://github.com/jsx-eslint/eslint-plugin-react/tree/master/docs/rules/jsx-boolean-value.md"
+    ],
+    "severityLevel": 4,
+    "tags": [
+      "React",
+      "CodeStyle",
+      "JavaScript",
+      "TypeScript"
+    ]
+  },
+  {
+    "description": "Enforce or disallow spaces inside of curly braces in JSX attributes and expressions",
+    "name": "react/jsx-child-element-spacing",
+    "resourceUrls": [
+      "https://github.com/jsx-eslint/eslint-plugin-react/tree/master/docs/rules/jsx-child-element-spacing.md"
+    ],
+    "severityLevel": 4,
+    "tags": [
+      "React",
+      "ErrorProne",
+      "JavaScript",
+      "TypeScript"
+    ]
+  },
+  {
+    "description": "Enforce closing bracket location in JSX",
+    "name": "react/jsx-closing-bracket-location",
+    "resourceUrls": [
+      "https://github.com/jsx-eslint/eslint-plugin-react/tree/master/docs/rules/jsx-closing-bracket-location.md"
+    ],
+    "severityLevel": 4,
+    "tags": [
+      "React",
+      "CodeStyle",
+      "JavaScript",
+      "TypeScript"
+    ]
+  },
+  {
+    "description": "Enforce closing tag location for multiline JSX",
+    "name": "react/jsx-closing-tag-location",
+    "resourceUrls": [
+      "https://github.com/jsx-eslint/eslint-plugin-react/tree/master/docs/rules/jsx-closing-tag-location.md"
+    ],
+    "severityLevel": 4,
+    "tags": [
+      "React",
+      "CodeStyle",
+      "JavaScript",
+      "TypeScript"
+    ]
+  },
+  {
+    "description": "Disallow unnecessary JSX expressions when literals alone are sufficient or enforce JSX expressions on literals in JSX children or attributes",
+    "name": "react/jsx-curly-brace-presence",
+    "resourceUrls": [
+      "https://github.com/jsx-eslint/eslint-plugin-react/tree/master/docs/rules/jsx-curly-brace-presence.md"
+    ],
+    "severityLevel": 4,
+    "tags": [
+      "React",
+      "CodeStyle",
+      "JavaScript",
+      "TypeScript"
+    ]
+  },
+  {
+    "description": "Enforce consistent linebreaks in curly braces in JSX attributes and expressions",
+    "name": "react/jsx-curly-newline",
+    "resourceUrls": [
+      "https://github.com/jsx-eslint/eslint-plugin-react/tree/master/docs/rules/jsx-curly-newline.md"
+    ],
+    "severityLevel": 4,
+    "tags": [
+      "React",
+      "CodeStyle",
+      "JavaScript",
+      "TypeScript"
+    ]
+  },
+  {
+    "description": "Enforce or disallow spaces inside of curly braces in JSX attributes and expressions",
+    "name": "react/jsx-curly-spacing",
+    "resourceUrls": [
+      "https://github.com/jsx-eslint/eslint-plugin-react/tree/master/docs/rules/jsx-curly-spacing.md"
+    ],
+    "severityLevel": 4,
+    "tags": [
+      "React",
+      "CodeStyle",
+      "JavaScript",
+      "TypeScript"
+    ]
+  },
+  {
+    "description": "Enforce or disallow spaces around equal signs in JSX attributes",
+    "name": "react/jsx-equals-spacing",
+    "resourceUrls": [
+      "https://github.com/jsx-eslint/eslint-plugin-react/tree/master/docs/rules/jsx-equals-spacing.md"
+    ],
+    "severityLevel": 4,
+    "tags": [
+      "React",
+      "CodeStyle",
+      "JavaScript",
+      "TypeScript"
+    ]
+  },
+  {
+    "description": "Disallow file extensions that may contain JSX",
+    "name": "react/jsx-filename-extension",
+    "resourceUrls": [
+      "https://github.com/jsx-eslint/eslint-plugin-react/tree/master/docs/rules/jsx-filename-extension.md"
+    ],
+    "severityLevel": 3,
+    "tags": [
+      "React",
+      "BestPractices",
+      "JavaScript",
+      "TypeScript"
+    ]
+  },
+  {
+    "description": "Enforce proper position of the first property in JSX",
+    "name": "react/jsx-first-prop-new-line",
+    "resourceUrls": [
+      "https://github.com/jsx-eslint/eslint-plugin-react/tree/master/docs/rules/jsx-first-prop-new-line.md"
+    ],
+    "severityLevel": 4,
+    "tags": [
+      "React",
+      "CodeStyle",
+      "JavaScript",
+      "TypeScript"
+    ]
+  },
+  {
+    "description": "Enforce shorthand or standard form for React fragments",
+    "name": "react/jsx-fragments",
+    "resourceUrls": [
+      "https://github.com/jsx-eslint/eslint-plugin-react/tree/master/docs/rules/jsx-fragments.md"
+    ],
+    "severityLevel": 4,
+    "tags": [
+      "React",
+      "CodeStyle",
+      "JavaScript",
+      "TypeScript"
+    ]
+  },
+  {
+    "description": "Enforce event handler naming conventions in JSX",
+    "name": "react/jsx-handler-names",
+    "resourceUrls": [
+      "https://github.com/jsx-eslint/eslint-plugin-react/tree/master/docs/rules/jsx-handler-names.md"
+    ],
+    "severityLevel": 4,
+    "tags": [
+      "React",
+      "CodeStyle",
+      "JavaScript",
+      "TypeScript"
+    ]
+  },
+  {
+    "description": "Enforce JSX indentation",
+    "name": "react/jsx-indent",
+    "resourceUrls": [
+      "https://github.com/jsx-eslint/eslint-plugin-react/tree/master/docs/rules/jsx-indent.md"
+    ],
+    "severityLevel": 4,
+    "tags": [
+      "React",
+      "CodeStyle",
+      "JavaScript",
+      "TypeScript"
+    ]
+  },
+  {
+    "description": "Enforce props indentation in JSX",
+    "name": "react/jsx-indent-props",
+    "resourceUrls": [
+      "https://github.com/jsx-eslint/eslint-plugin-react/tree/master/docs/rules/jsx-indent-props.md"
+    ],
+    "severityLevel": 4,
+    "tags": [
+      "React",
+      "CodeStyle",
+      "JavaScript",
+      "TypeScript"
+    ]
+  },
+  {
+    "description": "Disallow missing `key` props in iterators/collection literals",
+    "name": "react/jsx-key",
+    "resourceUrls": [
+      "https://github.com/jsx-eslint/eslint-plugin-react/tree/master/docs/rules/jsx-key.md"
+    ],
+    "severityLevel": 3,
+    "tags": [
+      "Recommended",
+      "React",
+      "BestPractices",
+      "JavaScript",
+      "TypeScript"
+    ]
+  },
+  {
+    "description": "Enforce JSX maximum depth",
+    "name": "react/jsx-max-depth",
+    "resourceUrls": [
+      "https://github.com/jsx-eslint/eslint-plugin-react/tree/master/docs/rules/jsx-max-depth.md"
+    ],
+    "severityLevel": 2,
+    "tags": [
+      "React",
+      "Design",
+      "JavaScript",
+      "TypeScript"
+    ]
+  },
+  {
+    "description": "Enforce maximum of props on a single line in JSX",
+    "name": "react/jsx-max-props-per-line",
+    "resourceUrls": [
+      "https://github.com/jsx-eslint/eslint-plugin-react/tree/master/docs/rules/jsx-max-props-per-line.md"
+    ],
+    "severityLevel": 4,
+    "tags": [
+      "React",
+      "CodeStyle",
+      "JavaScript",
+      "TypeScript"
+    ]
+  },
+  {
+    "description": "Require or prevent a new line after jsx elements and expressions.",
+    "name": "react/jsx-newline",
+    "resourceUrls": [
+      "https://github.com/jsx-eslint/eslint-plugin-react/tree/master/docs/rules/jsx-newline.md"
+    ],
+    "severityLevel": 4,
+    "tags": [
+      "React",
+      "CodeStyle",
+      "JavaScript",
+      "TypeScript"
+    ]
+  },
+  {
+    "description": "Disallow `.bind()` or arrow functions in JSX props",
+    "name": "react/jsx-no-bind",
+    "resourceUrls": [
+      "https://github.com/jsx-eslint/eslint-plugin-react/tree/master/docs/rules/jsx-no-bind.md"
+    ],
+    "severityLevel": 3,
+    "tags": [
+      "React",
+      "Performance",
+      "JavaScript",
+      "TypeScript"
+    ]
+  },
+  {
+    "description": "Disallow comments from being inserted as text nodes",
+    "name": "react/jsx-no-comment-textnodes",
+    "resourceUrls": [
+      "https://github.com/jsx-eslint/eslint-plugin-react/tree/master/docs/rules/jsx-no-comment-textnodes.md"
+    ],
+    "severityLevel": 3,
+    "tags": [
+      "Recommended",
+      "React",
+      "ErrorProne",
+      "JavaScript",
+      "TypeScript"
+    ]
+  },
+  {
+    "description": "Disallows JSX context provider values from taking values that will cause needless rerenders",
+    "name": "react/jsx-no-constructed-context-values",
+    "resourceUrls": [
+      "https://github.com/jsx-eslint/eslint-plugin-react/tree/master/docs/rules/jsx-no-constructed-context-values.md"
+    ],
+    "severityLevel": 2,
+    "tags": [
+      "React",
+      "Performance",
+      "JavaScript",
+      "TypeScript"
+    ]
+  },
+  {
+    "description": "Disallow duplicate properties in JSX",
+    "name": "react/jsx-no-duplicate-props",
+    "resourceUrls": [
+      "https://github.com/jsx-eslint/eslint-plugin-react/tree/master/docs/rules/jsx-no-duplicate-props.md"
+    ],
+    "severityLevel": 2,
+    "tags": [
+      "Recommended",
+      "React",
+      "ErrorProne",
+      "JavaScript",
+      "TypeScript"
+    ]
+  },
+  {
+    "description": "Disallow problematic leaked values from being rendered",
+    "name": "react/jsx-no-leaked-render",
+    "resourceUrls": [
+      "https://github.com/jsx-eslint/eslint-plugin-react/tree/master/docs/rules/jsx-no-leaked-render.md"
+    ],
+    "severityLevel": 3,
+    "tags": [
+      "React",
+      "ErrorProne",
+      "JavaScript",
+      "TypeScript"
+    ]
+  },
+  {
+    "description": "Disallow usage of string literals in JSX",
+    "name": "react/jsx-no-literals",
+    "resourceUrls": [
+      "https://github.com/jsx-eslint/eslint-plugin-react/tree/master/docs/rules/jsx-no-literals.md"
+    ],
+    "severityLevel": 4,
+    "tags": [
+      "React",
+      "CodeStyle",
+      "JavaScript",
+      "TypeScript"
+    ]
+  },
+  {
+    "description": "Disallow usage of `javascript:` URLs",
+    "name": "react/jsx-no-script-url",
+    "resourceUrls": [
+      "https://github.com/jsx-eslint/eslint-plugin-react/tree/master/docs/rules/jsx-no-script-url.md"
+    ],
+    "severityLevel": 2,
+    "tags": [
+      "React",
+      "Security",
+      "JavaScript",
+      "TypeScript"
+    ]
+  },
+  {
+    "description": "Disallow `target=\"_blank\"` attribute without `rel=\"noreferrer\"`",
+    "name": "react/jsx-no-target-blank",
+    "resourceUrls": [
+      "https://github.com/jsx-eslint/eslint-plugin-react/tree/master/docs/rules/jsx-no-target-blank.md"
+    ],
+    "severityLevel": 2,
+    "tags": [
+      "Recommended",
+      "React",
+      "Security",
+      "JavaScript",
+      "TypeScript"
+    ]
+  },
+  {
+    "description": "Disallow undeclared variables in JSX",
+    "name": "react/jsx-no-undef",
+    "resourceUrls": [
+      "https://github.com/jsx-eslint/eslint-plugin-react/tree/master/docs/rules/jsx-no-undef.md"
+    ],
+    "severityLevel": 3,
+    "tags": [
+      "Recommended",
+      "React",
+      "ErrorProne",
+      "JavaScript",
+      "TypeScript"
+    ]
+  },
+  {
+    "description": "Disallow unnecessary fragments",
+    "name": "react/jsx-no-useless-fragment",
+    "resourceUrls": [
+      "https://github.com/jsx-eslint/eslint-plugin-react/tree/master/docs/rules/jsx-no-useless-fragment.md"
+    ],
+    "severityLevel": 4,
+    "tags": [
+      "React",
+      "Design",
+      "JavaScript",
+      "TypeScript"
+    ]
+  },
+  {
+    "description": "Require one JSX element per line",
+    "name": "react/jsx-one-expression-per-line",
+    "resourceUrls": [
+      "https://github.com/jsx-eslint/eslint-plugin-react/tree/master/docs/rules/jsx-one-expression-per-line.md"
+    ],
+    "severityLevel": 4,
+    "tags": [
+      "React",
+      "CodeStyle",
+      "JavaScript",
+      "TypeScript"
+    ]
+  },
+  {
+    "description": "Enforce PascalCase for user-defined JSX components",
+    "name": "react/jsx-pascal-case",
+    "resourceUrls": [
+      "https://github.com/jsx-eslint/eslint-plugin-react/tree/master/docs/rules/jsx-pascal-case.md"
+    ],
+    "severityLevel": 4,
+    "tags": [
+      "React",
+      "CodeStyle",
+      "JavaScript",
+      "TypeScript"
+    ]
+  },
+  {
+    "description": "Disallow multiple spaces between inline JSX props",
+    "name": "react/jsx-props-no-multi-spaces",
+    "resourceUrls": [
+      "https://github.com/jsx-eslint/eslint-plugin-react/tree/master/docs/rules/jsx-props-no-multi-spaces.md"
+    ],
+    "severityLevel": 4,
+    "tags": [
+      "React",
+      "CodeStyle",
+      "JavaScript",
+      "TypeScript"
+    ]
+  },
+  {
+    "description": "Disallow JSX prop spreading the same identifier multiple times",
+    "name": "react/jsx-props-no-spread-multi",
+    "resourceUrls": [
+      "https://github.com/jsx-eslint/eslint-plugin-react/tree/master/docs/rules/jsx-props-no-spread-multi.md"
+    ],
+    "severityLevel": 3,
+    "tags": [
+      "React",
+      "Performance",
+      "JavaScript",
+      "TypeScript"
+    ]
+  },
+  {
+    "description": "Disallow JSX prop spreading",
+    "name": "react/jsx-props-no-spreading",
+    "resourceUrls": [
+      "https://github.com/jsx-eslint/eslint-plugin-react/tree/master/docs/rules/jsx-props-no-spreading.md"
+    ],
+    "severityLevel": 4,
+    "tags": [
+      "React",
+      "CodeStyle",
+      "JavaScript",
+      "TypeScript"
+    ]
+  },
+  {
+    "description": "Enforce props alphabetical sorting",
+    "name": "react/jsx-sort-props",
+    "resourceUrls": [
+      "https://github.com/jsx-eslint/eslint-plugin-react/tree/master/docs/rules/jsx-sort-props.md"
+    ],
+    "severityLevel": 4,
+    "tags": [
+      "React",
+      "CodeStyle",
+      "JavaScript",
+      "TypeScript"
+    ]
+  },
+  {
+    "description": "Enforce whitespace in and around the JSX opening and closing brackets",
+    "name": "react/jsx-tag-spacing",
+    "resourceUrls": [
+      "https://github.com/jsx-eslint/eslint-plugin-react/tree/master/docs/rules/jsx-tag-spacing.md"
+    ],
+    "severityLevel": 4,
+    "tags": [
+      "React",
+      "CodeStyle",
+      "JavaScript",
+      "TypeScript"
+    ]
+  },
+  {
+    "description": "Disallow React to be incorrectly marked as unused",
+    "name": "react/jsx-uses-react",
+    "resourceUrls": [
+      "https://github.com/jsx-eslint/eslint-plugin-react/tree/master/docs/rules/jsx-uses-react.md"
+    ],
+    "severityLevel": 3,
+    "tags": [
+      "Recommended",
+      "React",
+      "Design",
+      "JavaScript",
+      "TypeScript"
+    ]
+  },
+  {
+    "description": "Disallow variables used in JSX to be incorrectly marked as unused",
+    "name": "react/jsx-uses-vars",
+    "resourceUrls": [
+      "https://github.com/jsx-eslint/eslint-plugin-react/tree/master/docs/rules/jsx-uses-vars.md"
+    ],
+    "severityLevel": 4,
+    "tags": [
+      "Recommended",
+      "React",
+      "BestPractices",
+      "JavaScript",
+      "TypeScript"
+    ]
+  },
+  {
+    "description": "Disallow missing parentheses around multiline JSX",
+    "name": "react/jsx-wrap-multilines",
+    "resourceUrls": [
+      "https://github.com/jsx-eslint/eslint-plugin-react/tree/master/docs/rules/jsx-wrap-multilines.md"
+    ],
+    "severityLevel": 4,
+    "tags": [
+      "React",
+      "CodeStyle",
+      "JavaScript",
+      "TypeScript"
+    ]
+  },
+  {
+    "description": "Disallow when this.state is accessed within setState",
+    "name": "react/no-access-state-in-setstate",
+    "resourceUrls": [
+      "https://github.com/jsx-eslint/eslint-plugin-react/tree/master/docs/rules/no-access-state-in-setstate.md"
+    ],
+    "severityLevel": 3,
+    "tags": [
+      "React",
+      "ErrorProne",
+      "JavaScript",
+      "TypeScript"
+    ]
+  },
+  {
+    "description": "Disallow adjacent inline elements not separated by whitespace.",
+    "name": "react/no-adjacent-inline-elements",
+    "resourceUrls": [
+      "https://github.com/jsx-eslint/eslint-plugin-react/tree/master/docs/rules/no-adjacent-inline-elements.md"
+    ],
+    "severityLevel": 4,
+    "tags": [
+      "React",
+      "CodeStyle",
+      "JavaScript",
+      "TypeScript"
+    ]
+  },
+  {
+    "description": "Disallow usage of Array index in keys",
+    "name": "react/no-array-index-key",
+    "resourceUrls": [
+      "https://github.com/jsx-eslint/eslint-plugin-react/tree/master/docs/rules/no-array-index-key.md"
+    ],
+    "severityLevel": 3,
+    "tags": [
+      "React",
+      "Performance",
+      "JavaScript",
+      "TypeScript"
+    ]
+  },
+  {
+    "description": "Lifecycle methods should be methods on the prototype, not class fields",
+    "name": "react/no-arrow-function-lifecycle",
+    "resourceUrls": [
+      "https://github.com/jsx-eslint/eslint-plugin-react/tree/master/docs/rules/no-arrow-function-lifecycle.md"
+    ],
+    "severityLevel": 3,
+    "tags": [
+      "React",
+      "Design",
+      "JavaScript",
+      "TypeScript"
+    ]
+  },
+  {
+    "description": "Disallow passing of children as props",
+    "name": "react/no-children-prop",
+    "resourceUrls": [
+      "https://github.com/jsx-eslint/eslint-plugin-react/tree/master/docs/rules/no-children-prop.md"
+    ],
+    "severityLevel": 3,
+    "tags": [
+      "Recommended",
+      "React",
+      "BestPractices",
+      "JavaScript",
+      "TypeScript"
+    ]
+  },
+  {
+    "description": "Disallow usage of dangerous JSX properties",
+    "name": "react/no-danger",
+    "resourceUrls": [
+      "https://github.com/jsx-eslint/eslint-plugin-react/tree/master/docs/rules/no-danger.md"
+    ],
+    "severityLevel": 2,
+    "tags": [
+      "React",
+      "Security",
+      "JavaScript",
+      "TypeScript"
+    ]
+  },
+  {
+    "description": "Disallow when a DOM element is using both children and dangerouslySetInnerHTML",
+    "name": "react/no-danger-with-children",
+    "resourceUrls": [
+      "https://github.com/jsx-eslint/eslint-plugin-react/tree/master/docs/rules/no-danger-with-children.md"
+    ],
+    "severityLevel": 2,
+    "tags": [
+      "Recommended",
+      "React",
+      "Security",
+      "JavaScript",
+      "TypeScript"
+    ]
+  },
+  {
+    "description": "Disallow usage of deprecated methods",
+    "name": "react/no-deprecated",
+    "resourceUrls": [
+      "https://github.com/jsx-eslint/eslint-plugin-react/tree/master/docs/rules/no-deprecated.md"
+    ],
+    "severityLevel": 4,
+    "tags": [
+      "Recommended",
+      "React",
+      "Design",
+      "JavaScript",
+      "TypeScript"
+    ]
+  },
+  {
+    "description": "Disallow usage of setState in componentDidMount",
+    "name": "react/no-did-mount-set-state",
+    "resourceUrls": [
+      "https://github.com/jsx-eslint/eslint-plugin-react/tree/master/docs/rules/no-did-mount-set-state.md"
+    ],
+    "severityLevel": 3,
+    "tags": [
+      "React",
+      "Performance",
+      "JavaScript",
+      "TypeScript"
+    ]
+  },
+  {
+    "description": "Disallow usage of setState in componentDidUpdate",
+    "name": "react/no-did-update-set-state",
+    "resourceUrls": [
+      "https://github.com/jsx-eslint/eslint-plugin-react/tree/master/docs/rules/no-did-update-set-state.md"
+    ],
+    "severityLevel": 3,
+    "tags": [
+      "React",
+      "Performance",
+      "JavaScript",
+      "TypeScript"
+    ]
+  },
+  {
+    "description": "Disallow direct mutation of this.state",
+    "name": "react/no-direct-mutation-state",
+    "resourceUrls": [
+      "https://github.com/jsx-eslint/eslint-plugin-react/tree/master/docs/rules/no-direct-mutation-state.md"
+    ],
+    "severityLevel": 2,
+    "tags": [
+      "Recommended",
+      "React",
+      "ErrorProne",
+      "JavaScript",
+      "TypeScript"
+    ]
+  },
+  {
+    "description": "Disallow usage of findDOMNode",
+    "name": "react/no-find-dom-node",
+    "resourceUrls": [
+      "https://github.com/jsx-eslint/eslint-plugin-react/tree/master/docs/rules/no-find-dom-node.md"
+    ],
+    "severityLevel": 2,
+    "tags": [
+      "Recommended",
+      "React",
+      "BestPractices",
+      "JavaScript",
+      "TypeScript"
+    ]
+  },
+  {
+    "description": "Disallow usage of invalid attributes",
+    "name": "react/no-invalid-html-attribute",
+    "resourceUrls": [
+      "https://github.com/jsx-eslint/eslint-plugin-react/tree/master/docs/rules/no-invalid-html-attribute.md"
+    ],
+    "severityLevel": 4,
+    "tags": [
+      "React",
+      "ErrorProne",
+      "JavaScript",
+      "TypeScript"
+    ]
+  },
+  {
+    "description": "Disallow usage of isMounted",
+    "name": "react/no-is-mounted",
+    "resourceUrls": [
+      "https://github.com/jsx-eslint/eslint-plugin-react/tree/master/docs/rules/no-is-mounted.md"
+    ],
+    "severityLevel": 2,
+    "tags": [
+      "Recommended",
+      "React",
+      "BestPractices",
+      "JavaScript",
+      "TypeScript"
+    ]
+  },
+  {
+    "description": "Disallow multiple component definition per file",
+    "name": "react/no-multi-comp",
+    "resourceUrls": [
+      "https://github.com/jsx-eslint/eslint-plugin-react/tree/master/docs/rules/no-multi-comp.md"
+    ],
+    "severityLevel": 4,
+    "tags": [
+      "React",
+      "BestPractices",
+      "JavaScript",
+      "TypeScript"
+    ]
+  },
+  {
+    "description": "Enforce that namespaces are not used in React elements",
+    "name": "react/no-namespace",
+    "resourceUrls": [
+      "https://github.com/jsx-eslint/eslint-plugin-react/tree/master/docs/rules/no-namespace.md"
+    ],
+    "severityLevel": 2,
+    "tags": [
+      "React",
+      "ErrorProne",
+      "JavaScript",
+      "TypeScript"
+    ]
+  },
+  {
+    "description": "Disallow usage of referential-type variables as default param in functional component",
+    "name": "react/no-object-type-as-default-prop",
+    "resourceUrls": [
+      "https://github.com/jsx-eslint/eslint-plugin-react/tree/master/docs/rules/no-object-type-as-default-prop.md"
+    ],
+    "severityLevel": 3,
+    "tags": [
+      "React",
+      "Performance",
+      "JavaScript",
+      "TypeScript"
+    ]
+  },
+  {
+    "description": "Disallow usage of shouldComponentUpdate when extending React.PureComponent",
+    "name": "react/no-redundant-should-component-update",
+    "resourceUrls": [
+      "https://github.com/jsx-eslint/eslint-plugin-react/tree/master/docs/rules/no-redundant-should-component-update.md"
+    ],
+    "severityLevel": 4,
+    "tags": [
+      "React",
+      "BestPractices",
+      "JavaScript",
+      "TypeScript"
+    ]
+  },
+  {
+    "description": "Disallow usage of the return value of ReactDOM.render",
+    "name": "react/no-render-return-value",
+    "resourceUrls": [
+      "https://github.com/jsx-eslint/eslint-plugin-react/tree/master/docs/rules/no-render-return-value.md"
+    ],
+    "severityLevel": 3,
+    "tags": [
+      "Recommended",
+      "React",
+      "BestPractices",
+      "JavaScript",
+      "TypeScript"
+    ]
+  },
+  {
+    "description": "Disallow usage of setState",
+    "name": "react/no-set-state",
+    "resourceUrls": [
+      "https://github.com/jsx-eslint/eslint-plugin-react/tree/master/docs/rules/no-set-state.md"
+    ],
+    "severityLevel": 4,
+    "tags": [
+      "React",
+      "Design",
+      "JavaScript",
+      "TypeScript"
+    ]
+  },
+  {
+    "description": "Disallow using string references",
+    "name": "react/no-string-refs",
+    "resourceUrls": [
+      "https://github.com/jsx-eslint/eslint-plugin-react/tree/master/docs/rules/no-string-refs.md"
+    ],
+    "severityLevel": 4,
+    "tags": [
+      "Recommended",
+      "React",
+      "BestPractices",
+      "JavaScript",
+      "TypeScript"
+    ]
+  },
+  {
+    "description": "Disallow `this` from being used in stateless functional components",
+    "name": "react/no-this-in-sfc",
+    "resourceUrls": [
+      "https://github.com/jsx-eslint/eslint-plugin-react/tree/master/docs/rules/no-this-in-sfc.md"
+    ],
+    "severityLevel": 3,
+    "tags": [
+      "React",
+      "ErrorProne",
+      "JavaScript",
+      "TypeScript"
+    ]
+  },
+  {
+    "description": "Disallow common typos",
+    "name": "react/no-typos",
+    "resourceUrls": [
+      "https://github.com/jsx-eslint/eslint-plugin-react/tree/master/docs/rules/no-typos.md"
+    ],
+    "severityLevel": 3,
+    "tags": [
+      "React",
+      "ErrorProne",
+      "JavaScript",
+      "TypeScript"
+    ]
+  },
+  {
+    "description": "Disallow unescaped HTML entities from appearing in markup",
+    "name": "react/no-unescaped-entities",
+    "resourceUrls": [
+      "https://github.com/jsx-eslint/eslint-plugin-react/tree/master/docs/rules/no-unescaped-entities.md"
+    ],
+    "severityLevel": 3,
+    "tags": [
+      "Recommended",
+      "React",
+      "ErrorProne",
+      "JavaScript",
+      "TypeScript"
+    ]
+  },
+  {
+    "description": "Disallow usage of unknown DOM property",
+    "name": "react/no-unknown-property",
+    "resourceUrls": [
+      "https://github.com/jsx-eslint/eslint-plugin-react/tree/master/docs/rules/no-unknown-property.md"
+    ],
+    "severityLevel": 3,
+    "tags": [
+      "Recommended",
+      "React",
+      "ErrorProne",
+      "JavaScript",
+      "TypeScript"
+    ]
+  },
+  {
+    "description": "Disallow usage of unsafe lifecycle methods",
+    "name": "react/no-unsafe",
+    "resourceUrls": [
+      "https://github.com/jsx-eslint/eslint-plugin-react/tree/master/docs/rules/no-unsafe.md"
+    ],
+    "severityLevel": 3,
+    "tags": [
+      "React",
+      "ErrorProne",
+      "JavaScript",
+      "TypeScript"
+    ]
+  },
+  {
+    "description": "Disallow creating unstable components inside components",
+    "name": "react/no-unstable-nested-components",
+    "resourceUrls": [
+      "https://github.com/jsx-eslint/eslint-plugin-react/tree/master/docs/rules/no-unstable-nested-components.md"
+    ],
+    "severityLevel": 4,
+    "tags": [
+      "React",
+      "ErrorProne",
+      "JavaScript",
+      "TypeScript"
+    ]
+  },
+  {
+    "description": "Disallow declaring unused methods of component class",
+    "name": "react/no-unused-class-component-methods",
+    "resourceUrls": [
+      "https://github.com/jsx-eslint/eslint-plugin-react/tree/master/docs/rules/no-unused-class-component-methods.md"
+    ],
+    "severityLevel": 4,
+    "tags": [
+      "React",
+      "Design",
+      "JavaScript",
+      "TypeScript"
+    ]
+  },
+  {
+    "description": "Disallow definitions of unused propTypes",
+    "name": "react/no-unused-prop-types",
+    "resourceUrls": [
+      "https://github.com/jsx-eslint/eslint-plugin-react/tree/master/docs/rules/no-unused-prop-types.md"
+    ],
+    "severityLevel": 4,
+    "tags": [
+      "React",
+      "Design",
+      "JavaScript",
+      "TypeScript"
+    ]
+  },
+  {
+    "description": "Disallow definitions of unused state",
+    "name": "react/no-unused-state",
+    "resourceUrls": [
+      "https://github.com/jsx-eslint/eslint-plugin-react/tree/master/docs/rules/no-unused-state.md"
+    ],
+    "severityLevel": 4,
+    "tags": [
+      "React",
+      "Design",
+      "JavaScript",
+      "TypeScript"
+    ]
+  },
+  {
+    "description": "Disallow usage of setState in componentWillUpdate",
+    "name": "react/no-will-update-set-state",
+    "resourceUrls": [
+      "https://github.com/jsx-eslint/eslint-plugin-react/tree/master/docs/rules/no-will-update-set-state.md"
+    ],
+    "severityLevel": 3,
+    "tags": [
+      "React",
+      "Design",
+      "JavaScript",
+      "TypeScript"
+    ]
+  },
+  {
+    "description": "Enforce ES5 or ES6 class for React Components",
+    "name": "react/prefer-es6-class",
+    "resourceUrls": [
+      "https://github.com/jsx-eslint/eslint-plugin-react/tree/master/docs/rules/prefer-es6-class.md"
+    ],
+    "severityLevel": 3,
+    "tags": [
+      "React",
+      "BestPractices",
+      "JavaScript",
+      "TypeScript"
+    ]
+  },
+  {
+    "description": "Prefer exact proptype definitions",
+    "name": "react/prefer-exact-props",
+    "resourceUrls": [
+      "https://github.com/jsx-eslint/eslint-plugin-react/tree/master/docs/rules/prefer-exact-props.md"
+    ],
+    "severityLevel": 3,
+    "tags": [
+      "React",
+      "ErrorProne",
+      "JavaScript",
+      "TypeScript"
+    ]
+  },
+  {
+    "description": "Enforce that props are read-only",
+    "name": "react/prefer-read-only-props",
+    "resourceUrls": [
+      "https://github.com/jsx-eslint/eslint-plugin-react/tree/master/docs/rules/prefer-read-only-props.md"
+    ],
+    "severityLevel": 3,
+    "tags": [
+      "React",
+      "BestPractices",
+      "JavaScript",
+      "TypeScript"
+    ]
+  },
+  {
+    "description": "Enforce stateless components to be written as a pure function",
+    "name": "react/prefer-stateless-function",
+    "resourceUrls": [
+      "https://github.com/jsx-eslint/eslint-plugin-react/tree/master/docs/rules/prefer-stateless-function.md"
+    ],
+    "severityLevel": 4,
+    "tags": [
+      "React",
+      "BestPractices",
+      "JavaScript",
+      "TypeScript"
+    ]
+  },
+  {
+    "description": "Disallow missing props validation in a React component definition",
+    "name": "react/prop-types",
+    "resourceUrls": [
+      "https://github.com/jsx-eslint/eslint-plugin-react/tree/master/docs/rules/prop-types.md"
+    ],
+    "severityLevel": 3,
+    "tags": [
+      "Recommended",
+      "React",
+      "BestPractices",
+      "JavaScript",
+      "TypeScript"
+    ]
+  },
+  {
+    "description": "Disallow missing React when using JSX",
+    "name": "react/react-in-jsx-scope",
+    "resourceUrls": [
+      "https://github.com/jsx-eslint/eslint-plugin-react/tree/master/docs/rules/react-in-jsx-scope.md"
+    ],
+    "severityLevel": 3,
+    "tags": [
+      "Recommended",
+      "React",
+      "Design",
+      "JavaScript",
+      "TypeScript"
+    ]
+  },
+  {
+    "description": "Enforce a defaultProps definition for every prop that is not a required prop",
+    "name": "react/require-default-props",
+    "resourceUrls": [
+      "https://github.com/jsx-eslint/eslint-plugin-react/tree/master/docs/rules/require-default-props.md"
+    ],
+    "severityLevel": 3,
+    "tags": [
+      "React",
+      "Design",
+      "JavaScript",
+      "TypeScript"
+    ]
+  },
+  {
+    "description": "Enforce React components to have a shouldComponentUpdate method",
+    "name": "react/require-optimization",
+    "resourceUrls": [
+      "https://github.com/jsx-eslint/eslint-plugin-react/tree/master/docs/rules/require-optimization.md"
+    ],
+    "severityLevel": 3,
+    "tags": [
+      "React",
+      "Performance",
+      "JavaScript",
+      "TypeScript"
+    ]
+  },
+  {
+    "description": "Enforce ES5 or ES6 class for returning value in render function",
+    "name": "react/require-render-return",
+    "resourceUrls": [
+      "https://github.com/jsx-eslint/eslint-plugin-react/tree/master/docs/rules/require-render-return.md"
+    ],
+    "severityLevel": 2,
+    "tags": [
+      "Recommended",
+      "React",
+      "ErrorProne",
+      "JavaScript",
+      "TypeScript"
+    ]
+  },
+  {
+    "description": "Disallow extra closing tags for components without children",
+    "name": "react/self-closing-comp",
+    "resourceUrls": [
+      "https://github.com/jsx-eslint/eslint-plugin-react/tree/master/docs/rules/self-closing-comp.md"
+    ],
+    "severityLevel": 4,
+    "tags": [
+      "React",
+      "CodeStyle",
+      "JavaScript",
+      "TypeScript"
+    ]
+  },
+  {
+    "description": "Enforce component methods order",
+    "name": "react/sort-comp",
+    "resourceUrls": [
+      "https://github.com/jsx-eslint/eslint-plugin-react/tree/master/docs/rules/sort-comp.md"
+    ],
+    "severityLevel": 4,
+    "tags": [
+      "React",
+      "CodeStyle",
+      "JavaScript",
+      "TypeScript"
+    ]
+  },
+  {
+    "description": "Enforce defaultProps declarations alphabetical sorting",
+    "name": "react/sort-default-props",
+    "resourceUrls": [
+      "https://github.com/jsx-eslint/eslint-plugin-react/tree/master/docs/rules/sort-default-props.md"
+    ],
+    "severityLevel": 4,
+    "tags": [
+      "React",
+      "CodeStyle",
+      "JavaScript",
+      "TypeScript"
+    ]
+  },
+  {
+    "description": "Enforce propTypes declarations alphabetical sorting",
+    "name": "react/sort-prop-types",
+    "resourceUrls": [
+      "https://github.com/jsx-eslint/eslint-plugin-react/tree/master/docs/rules/sort-prop-types.md"
+    ],
+    "severityLevel": 4,
+    "tags": [
+      "React",
+      "CodeStyle",
+      "JavaScript",
+      "TypeScript"
+    ]
+  },
+  {
+    "description": "Enforce class component state initialization style",
+    "name": "react/state-in-constructor",
+    "resourceUrls": [
+      "https://github.com/jsx-eslint/eslint-plugin-react/tree/master/docs/rules/state-in-constructor.md"
+    ],
+    "severityLevel": 4,
+    "tags": [
+      "React",
+      "CodeStyle",
+      "JavaScript",
+      "TypeScript"
+    ]
+  },
+  {
+    "description": "Enforces where React component static properties should be positioned.",
+    "name": "react/static-property-placement",
+    "resourceUrls": [
+      "https://github.com/jsx-eslint/eslint-plugin-react/tree/master/docs/rules/static-property-placement.md"
+    ],
+    "severityLevel": 4,
+    "tags": [
+      "React",
+      "Design",
+      "JavaScript",
+      "TypeScript"
+    ]
+  },
+  {
+    "description": "Enforce style prop value is an object",
+    "name": "react/style-prop-object",
+    "resourceUrls": [
+      "https://github.com/jsx-eslint/eslint-plugin-react/tree/master/docs/rules/style-prop-object.md"
+    ],
+    "severityLevel": 4,
+    "tags": [
+      "React",
+      "BestPractices",
+      "JavaScript",
+      "TypeScript"
+    ]
+  },
+  {
+    "description": "Disallow void DOM elements (e.g. `<img />`, `<br />`) from receiving children",
+    "name": "react/void-dom-elements-no-children",
+    "resourceUrls": [
+      "https://github.com/jsx-eslint/eslint-plugin-react/tree/master/docs/rules/void-dom-elements-no-children.md"
+    ],
+    "severityLevel": 3,
+    "tags": [
+      "React",
+      "ErrorProne",
+      "JavaScript",
+      "TypeScript"
+    ]
+  }
+]

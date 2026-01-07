@@ -45,6 +45,11 @@ const MESSAGE_CATALOG : { [key: string]: string } = {
         `The base configuration for TypeScript files adds the rules from the "plugin:@typescript-eslint:all" configuration to Code Analyzer.\n` +
         `See https://typescript-eslint.io/rules and https://eslint.org/docs/latest/rules for the lists of rules.`,
 
+    ConfigFieldDescription_disable_react_base_config:
+        `Whether to turn off the default base configuration that supplies the React/JSX rules for .jsx and .tsx files\n` +
+        `The base configuration for React adds the rules from the "eslint-plugin-react" configuration to Code Analyzer.\n` +
+        `See https://www.npmjs.com/package/eslint-plugin-react for the list of rules.`,
+
     ConfigFieldDescription_file_extensions:
         `Extensions of the files in your workspace that will be used to discover rules.\n` +
         `To associate file extensions to the standard ESLint JavaScript rules, LWC rules, or custom JavaScript-based\n` +
