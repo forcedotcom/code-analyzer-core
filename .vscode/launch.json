@@ -37,7 +37,7 @@
       "args": [
         "packages/code-analyzer-eslint-engine/test/engine.test.ts",
         "-t",
-        "When file_extensions.javascript is empty",
+        "When file_extensions is only .tsx, then only react rules are returned",
         "--runInBand",
         "--coverage=false"
       ],

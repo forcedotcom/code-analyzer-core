@@ -299,6 +299,23 @@ describe('Tests for the describeRules method of ESLintEngine', () => {
         expect(ruleDescriptions).toEqual(makeUniqueAndSorted([...TS_CONFIG_RULES, ...SLDS_CONFIG_RULES, ...REACT_CONFIG_RULES]));
     });
 
+
+    it('When file_extensions is only .tsx, then only react rules are returned', async () => {
+        const engine: Engine = await createEngineFromPlugin({...DEFAULT_CONFIG_FOR_TESTING,
+            file_extensions: {
+                ... DEFAULT_CONFIG_FOR_TESTING.file_extensions,
+                javascript: [],
+                typescript: ['.tsx'],
+                html: [],
+                css: [],
+                other: []
+            }
+        });
+        const ruleDescriptions: RuleDescription[] = await engine.describeRules(createDescribeOptions());
+        // React rules included - TSX is a TS extension
+        expect(ruleDescriptions).toEqual(makeUniqueAndSorted([...TS_CONFIG_RULES, ...REACT_CONFIG_RULES]));
+    });
+
     it('When file_extensions.typescript is empty, then typescript rules do not get picked up', async () => {
         const engine: Engine = await createEngineFromPlugin({...DEFAULT_CONFIG_FOR_TESTING,
             file_extensions: {
