@@ -105,10 +105,10 @@ export class BaseConfigFactory {
             '@lwc/lwc-platform/valid-offline-wire': 'off'
         }
 
-        // Restrict these configs to just javascript files, excluding .jsx and .tsx
+        // Restrict these configs to just javascript files, excluding .jsx
         // since those are React files, not LWC components
         const lwcExtensions = this.engineConfig.file_extensions.javascript
-            .filter(ext => ext !== '.jsx' && ext !== '.tsx');
+            .filter(ext => ext !== '.jsx');
         configs = configs.map(config => {
             return {
                 ...config,
