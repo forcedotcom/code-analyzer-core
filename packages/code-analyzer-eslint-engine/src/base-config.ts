@@ -196,10 +196,13 @@ export class BaseConfigFactory {
      * Note: TypeScript React support (.tsx) is planned for the next iteration.
      */
     private createReactConfigArray(): Linter.Config[] {
-        // Apply React rules to all JavaScript files
+        // Apply React rules to all JavaScript and TypeScript files
+        
         const jsExtensions = this.engineConfig.file_extensions.javascript;
+        const tsExtensions = this.engineConfig.file_extensions.typescript;
+        const reactExtensions = [...new Set([...jsExtensions, ...tsExtensions])];
 
-        if (jsExtensions.length === 0) {
+        if (reactExtensions.length === 0) {
             return [];
         }
 
@@ -208,7 +211,7 @@ export class BaseConfigFactory {
 
         return [{
             ...reactAllConfig,
-            files: jsExtensions.map(ext => `**/*${ext}`),
+            files: reactExtensions.map(ext => `**/*${ext}`),
             settings: {
                 ...reactAllConfig.settings,
                 react: {
@@ -243,9 +246,10 @@ export class BaseConfigFactory {
 
     private useReactBaseConfig(): boolean {
         // React config is independently controlled by disable_react_base_config
-        // React rules apply to all JS files - no harm if file has no React code
+        // React rules apply to all JS and TS files - no harm if file has no React code
         return !this.engineConfig.disable_react_base_config && 
-               this.engineConfig.file_extensions.javascript.length > 0;
+               (this.engineConfig.file_extensions.javascript.length > 0 ||
+                this.engineConfig.file_extensions.typescript.length > 0);
     }
 }
 

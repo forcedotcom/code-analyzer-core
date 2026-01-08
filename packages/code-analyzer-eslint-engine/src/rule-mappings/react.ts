@@ -1,8 +1,96 @@
 import {COMMON_TAGS, SeverityLevel} from "@salesforce/code-analyzer-engine-api";
 import { REACT } from './constants';
 
-export const RULE_MAPPINGS_REACT: Record<string, {severity: SeverityLevel, tags: string[]}> = {
-    // =================================================================================================================
+export const RULE_MAPPINGS_REACT_RECOMMENDED: Record<string, {severity: SeverityLevel, tags: string[]}> = {
+    "react/display-name": {
+        severity: SeverityLevel.Moderate,
+        tags: [COMMON_TAGS.RECOMMENDED, REACT, COMMON_TAGS.CATEGORIES.BEST_PRACTICES, COMMON_TAGS.LANGUAGES.JAVASCRIPT, COMMON_TAGS.LANGUAGES.TYPESCRIPT]
+    },
+    "react/jsx-key": {
+        severity: SeverityLevel.Moderate,
+        tags: [COMMON_TAGS.RECOMMENDED, REACT, COMMON_TAGS.CATEGORIES.BEST_PRACTICES, COMMON_TAGS.LANGUAGES.JAVASCRIPT, COMMON_TAGS.LANGUAGES.TYPESCRIPT]
+    },
+    "react/jsx-no-comment-textnodes": {
+        severity: SeverityLevel.Moderate,
+        tags: [COMMON_TAGS.RECOMMENDED, REACT, COMMON_TAGS.CATEGORIES.ERROR_PRONE, COMMON_TAGS.LANGUAGES.JAVASCRIPT, COMMON_TAGS.LANGUAGES.TYPESCRIPT]
+    },
+    "react/jsx-no-duplicate-props": {
+        severity: SeverityLevel.High,
+        tags: [COMMON_TAGS.RECOMMENDED, REACT, COMMON_TAGS.CATEGORIES.ERROR_PRONE, COMMON_TAGS.LANGUAGES.JAVASCRIPT, COMMON_TAGS.LANGUAGES.TYPESCRIPT]
+    },
+    "react/jsx-no-target-blank": {
+        severity: SeverityLevel.High,
+        tags: [COMMON_TAGS.RECOMMENDED, REACT, COMMON_TAGS.CATEGORIES.SECURITY, COMMON_TAGS.LANGUAGES.JAVASCRIPT, COMMON_TAGS.LANGUAGES.TYPESCRIPT]
+    },
+    "react/jsx-no-undef": {
+        severity: SeverityLevel.Moderate,
+        tags: [COMMON_TAGS.RECOMMENDED, REACT, COMMON_TAGS.CATEGORIES.ERROR_PRONE, COMMON_TAGS.LANGUAGES.JAVASCRIPT, COMMON_TAGS.LANGUAGES.TYPESCRIPT]
+    },
+    "react/jsx-uses-react": {
+        // Marks the React import as "used" when JSX is present - needed for classic JSX transform (pre-React 17)
+        severity: SeverityLevel.Moderate,
+        tags: [COMMON_TAGS.RECOMMENDED, REACT, COMMON_TAGS.CATEGORIES.DESIGN, COMMON_TAGS.LANGUAGES.JAVASCRIPT, COMMON_TAGS.LANGUAGES.TYPESCRIPT]
+    },
+    "react/jsx-uses-vars": {
+        // Marks variables used in JSX as "used" - prevents false positives from no-unused-vars
+        severity: SeverityLevel.Low,
+        tags: [COMMON_TAGS.RECOMMENDED, REACT, COMMON_TAGS.CATEGORIES.BEST_PRACTICES, COMMON_TAGS.LANGUAGES.JAVASCRIPT, COMMON_TAGS.LANGUAGES.TYPESCRIPT]
+    },
+    "react/no-children-prop": {
+        severity: SeverityLevel.Moderate,
+        tags: [COMMON_TAGS.RECOMMENDED, REACT, COMMON_TAGS.CATEGORIES.BEST_PRACTICES, COMMON_TAGS.LANGUAGES.JAVASCRIPT, COMMON_TAGS.LANGUAGES.TYPESCRIPT]
+    },
+    "react/no-danger-with-children": {
+        severity: SeverityLevel.High,
+        tags: [COMMON_TAGS.RECOMMENDED, REACT, COMMON_TAGS.CATEGORIES.SECURITY, COMMON_TAGS.LANGUAGES.JAVASCRIPT, COMMON_TAGS.LANGUAGES.TYPESCRIPT]
+    },
+    "react/no-deprecated": {
+        severity: SeverityLevel.Low,
+        tags: [COMMON_TAGS.RECOMMENDED, REACT, COMMON_TAGS.CATEGORIES.DESIGN, COMMON_TAGS.LANGUAGES.JAVASCRIPT, COMMON_TAGS.LANGUAGES.TYPESCRIPT]
+    },
+    "react/no-direct-mutation-state": {
+        severity: SeverityLevel.High,
+        tags: [COMMON_TAGS.RECOMMENDED, REACT, COMMON_TAGS.CATEGORIES.ERROR_PRONE, COMMON_TAGS.LANGUAGES.JAVASCRIPT, COMMON_TAGS.LANGUAGES.TYPESCRIPT]
+    },
+    "react/no-find-dom-node": {
+        severity: SeverityLevel.High,
+        tags: [COMMON_TAGS.RECOMMENDED, REACT, COMMON_TAGS.CATEGORIES.BEST_PRACTICES, COMMON_TAGS.LANGUAGES.JAVASCRIPT, COMMON_TAGS.LANGUAGES.TYPESCRIPT]
+    },
+    "react/no-is-mounted": {
+        severity: SeverityLevel.High,
+        tags: [COMMON_TAGS.RECOMMENDED, REACT, COMMON_TAGS.CATEGORIES.BEST_PRACTICES, COMMON_TAGS.LANGUAGES.JAVASCRIPT, COMMON_TAGS.LANGUAGES.TYPESCRIPT]
+    },
+    "react/no-render-return-value": {
+        severity: SeverityLevel.Moderate,
+        tags: [COMMON_TAGS.RECOMMENDED, REACT, COMMON_TAGS.CATEGORIES.BEST_PRACTICES, COMMON_TAGS.LANGUAGES.JAVASCRIPT, COMMON_TAGS.LANGUAGES.TYPESCRIPT]
+    },
+    "react/no-string-refs": {
+        severity: SeverityLevel.Low,
+        tags: [COMMON_TAGS.RECOMMENDED, REACT, COMMON_TAGS.CATEGORIES.BEST_PRACTICES, COMMON_TAGS.LANGUAGES.JAVASCRIPT, COMMON_TAGS.LANGUAGES.TYPESCRIPT]
+    },
+    "react/no-unescaped-entities": {
+        severity: SeverityLevel.Moderate,
+        tags: [COMMON_TAGS.RECOMMENDED, REACT, COMMON_TAGS.CATEGORIES.ERROR_PRONE, COMMON_TAGS.LANGUAGES.JAVASCRIPT, COMMON_TAGS.LANGUAGES.TYPESCRIPT]
+    },
+    "react/no-unknown-property": {
+        severity: SeverityLevel.Moderate,
+        tags: [COMMON_TAGS.RECOMMENDED, REACT, COMMON_TAGS.CATEGORIES.ERROR_PRONE, COMMON_TAGS.LANGUAGES.JAVASCRIPT, COMMON_TAGS.LANGUAGES.TYPESCRIPT]
+    },
+    "react/prop-types": {
+        severity: SeverityLevel.Moderate,
+        tags: [COMMON_TAGS.RECOMMENDED, REACT, COMMON_TAGS.CATEGORIES.BEST_PRACTICES, COMMON_TAGS.LANGUAGES.JAVASCRIPT, COMMON_TAGS.LANGUAGES.TYPESCRIPT]
+    },
+    "react/react-in-jsx-scope": {
+        severity: SeverityLevel.Moderate,
+        tags: [COMMON_TAGS.RECOMMENDED, REACT, COMMON_TAGS.CATEGORIES.DESIGN, COMMON_TAGS.LANGUAGES.JAVASCRIPT, COMMON_TAGS.LANGUAGES.TYPESCRIPT]
+    },
+    "react/require-render-return": {
+        severity: SeverityLevel.High,
+        tags: [COMMON_TAGS.RECOMMENDED, REACT, COMMON_TAGS.CATEGORIES.ERROR_PRONE, COMMON_TAGS.LANGUAGES.JAVASCRIPT, COMMON_TAGS.LANGUAGES.TYPESCRIPT]
+    },
+
+};
+export const RULE_MAPPINGS_REACT_NOT_RECOMMENDED: Record<string, {severity: SeverityLevel, tags: string[]}> = {
     "react/boolean-prop-naming": {
         severity: SeverityLevel.Low,
         tags: [/* NOT RECOMMENDED */ REACT, COMMON_TAGS.CATEGORIES.CODE_STYLE, COMMON_TAGS.LANGUAGES.JAVASCRIPT, COMMON_TAGS.LANGUAGES.TYPESCRIPT]
@@ -22,10 +110,6 @@ export const RULE_MAPPINGS_REACT: Record<string, {severity: SeverityLevel, tags:
     "react/destructuring-assignment": {
         severity: SeverityLevel.Low,
         tags: [/* NOT RECOMMENDED */ REACT, COMMON_TAGS.CATEGORIES.CODE_STYLE, COMMON_TAGS.LANGUAGES.JAVASCRIPT, COMMON_TAGS.LANGUAGES.TYPESCRIPT]
-    },
-    "react/display-name": {
-        severity: SeverityLevel.Moderate,
-        tags: [COMMON_TAGS.RECOMMENDED, REACT, COMMON_TAGS.CATEGORIES.BEST_PRACTICES, COMMON_TAGS.LANGUAGES.JAVASCRIPT, COMMON_TAGS.LANGUAGES.TYPESCRIPT]
     },
     "react/forbid-component-props": {
         severity: SeverityLevel.Moderate,
@@ -119,10 +203,6 @@ export const RULE_MAPPINGS_REACT: Record<string, {severity: SeverityLevel, tags:
         severity: SeverityLevel.Low,
         tags: [/* NOT RECOMMENDED */ REACT, COMMON_TAGS.CATEGORIES.CODE_STYLE, COMMON_TAGS.LANGUAGES.JAVASCRIPT, COMMON_TAGS.LANGUAGES.TYPESCRIPT]
     },
-    "react/jsx-key": {
-        severity: SeverityLevel.Moderate,
-        tags: [COMMON_TAGS.RECOMMENDED, REACT, COMMON_TAGS.CATEGORIES.BEST_PRACTICES, COMMON_TAGS.LANGUAGES.JAVASCRIPT, COMMON_TAGS.LANGUAGES.TYPESCRIPT]
-    },
     "react/jsx-max-depth": {
         severity: SeverityLevel.High,
         tags: [/* NOT RECOMMENDED */ REACT, COMMON_TAGS.CATEGORIES.DESIGN, COMMON_TAGS.LANGUAGES.JAVASCRIPT, COMMON_TAGS.LANGUAGES.TYPESCRIPT]
@@ -139,17 +219,9 @@ export const RULE_MAPPINGS_REACT: Record<string, {severity: SeverityLevel, tags:
         severity: SeverityLevel.Moderate,
         tags: [/* NOT RECOMMENDED */ REACT, COMMON_TAGS.CATEGORIES.PERFORMANCE, COMMON_TAGS.LANGUAGES.JAVASCRIPT, COMMON_TAGS.LANGUAGES.TYPESCRIPT]
     },
-    "react/jsx-no-comment-textnodes": {
-        severity: SeverityLevel.Moderate,
-        tags: [COMMON_TAGS.RECOMMENDED, REACT, COMMON_TAGS.CATEGORIES.ERROR_PRONE, COMMON_TAGS.LANGUAGES.JAVASCRIPT, COMMON_TAGS.LANGUAGES.TYPESCRIPT]
-    },
     "react/jsx-no-constructed-context-values": {
         severity: SeverityLevel.High,
         tags: [/* NOT RECOMMENDED */ REACT, COMMON_TAGS.CATEGORIES.PERFORMANCE, COMMON_TAGS.LANGUAGES.JAVASCRIPT, COMMON_TAGS.LANGUAGES.TYPESCRIPT]
-    },
-    "react/jsx-no-duplicate-props": {
-        severity: SeverityLevel.High,
-        tags: [COMMON_TAGS.RECOMMENDED, REACT, COMMON_TAGS.CATEGORIES.ERROR_PRONE, COMMON_TAGS.LANGUAGES.JAVASCRIPT, COMMON_TAGS.LANGUAGES.TYPESCRIPT]
     },
     "react/jsx-no-leaked-render": {
         severity: SeverityLevel.Moderate,
@@ -162,14 +234,6 @@ export const RULE_MAPPINGS_REACT: Record<string, {severity: SeverityLevel, tags:
     "react/jsx-no-script-url": {
         severity: SeverityLevel.High,
         tags: [/* NOT RECOMMENDED */ REACT, COMMON_TAGS.CATEGORIES.SECURITY, COMMON_TAGS.LANGUAGES.JAVASCRIPT, COMMON_TAGS.LANGUAGES.TYPESCRIPT]
-    },
-    "react/jsx-no-target-blank": {
-        severity: SeverityLevel.High,
-        tags: [COMMON_TAGS.RECOMMENDED, REACT, COMMON_TAGS.CATEGORIES.SECURITY, COMMON_TAGS.LANGUAGES.JAVASCRIPT, COMMON_TAGS.LANGUAGES.TYPESCRIPT]
-    },
-    "react/jsx-no-undef": {
-        severity: SeverityLevel.Moderate,
-        tags: [COMMON_TAGS.RECOMMENDED, REACT, COMMON_TAGS.CATEGORIES.ERROR_PRONE, COMMON_TAGS.LANGUAGES.JAVASCRIPT, COMMON_TAGS.LANGUAGES.TYPESCRIPT]
     },
     "react/jsx-no-useless-fragment": {
         severity: SeverityLevel.Low,
@@ -203,16 +267,6 @@ export const RULE_MAPPINGS_REACT: Record<string, {severity: SeverityLevel, tags:
         severity: SeverityLevel.Low,
         tags: [/* NOT RECOMMENDED */ REACT, COMMON_TAGS.CATEGORIES.CODE_STYLE, COMMON_TAGS.LANGUAGES.JAVASCRIPT, COMMON_TAGS.LANGUAGES.TYPESCRIPT]
     },
-    "react/jsx-uses-react": {
-        // Marks the React import as "used" when JSX is present - needed for classic JSX transform (pre-React 17)
-        severity: SeverityLevel.Moderate,
-        tags: [COMMON_TAGS.RECOMMENDED, REACT, COMMON_TAGS.CATEGORIES.DESIGN, COMMON_TAGS.LANGUAGES.JAVASCRIPT, COMMON_TAGS.LANGUAGES.TYPESCRIPT]
-    },
-    "react/jsx-uses-vars": {
-        // Marks variables used in JSX as "used" - prevents false positives from no-unused-vars
-        severity: SeverityLevel.Low,
-        tags: [COMMON_TAGS.RECOMMENDED, REACT, COMMON_TAGS.CATEGORIES.BEST_PRACTICES, COMMON_TAGS.LANGUAGES.JAVASCRIPT, COMMON_TAGS.LANGUAGES.TYPESCRIPT]
-    },
     "react/jsx-wrap-multilines": {
         severity: SeverityLevel.Low,
         tags: [/* NOT RECOMMENDED */ REACT, COMMON_TAGS.CATEGORIES.CODE_STYLE, COMMON_TAGS.LANGUAGES.JAVASCRIPT, COMMON_TAGS.LANGUAGES.TYPESCRIPT]
@@ -233,21 +287,9 @@ export const RULE_MAPPINGS_REACT: Record<string, {severity: SeverityLevel, tags:
         severity: SeverityLevel.Moderate,
         tags: [/* NOT RECOMMENDED */ REACT, COMMON_TAGS.CATEGORIES.DESIGN, COMMON_TAGS.LANGUAGES.JAVASCRIPT, COMMON_TAGS.LANGUAGES.TYPESCRIPT]
     },
-    "react/no-children-prop": {
-        severity: SeverityLevel.Moderate,
-        tags: [COMMON_TAGS.RECOMMENDED, REACT, COMMON_TAGS.CATEGORIES.BEST_PRACTICES, COMMON_TAGS.LANGUAGES.JAVASCRIPT, COMMON_TAGS.LANGUAGES.TYPESCRIPT]
-    },
     "react/no-danger": {
         severity: SeverityLevel.High,
         tags: [/* NOT RECOMMENDED */ REACT, COMMON_TAGS.CATEGORIES.SECURITY, COMMON_TAGS.LANGUAGES.JAVASCRIPT, COMMON_TAGS.LANGUAGES.TYPESCRIPT]
-    },
-    "react/no-danger-with-children": {
-        severity: SeverityLevel.High,
-        tags: [COMMON_TAGS.RECOMMENDED, REACT, COMMON_TAGS.CATEGORIES.SECURITY, COMMON_TAGS.LANGUAGES.JAVASCRIPT, COMMON_TAGS.LANGUAGES.TYPESCRIPT]
-    },
-    "react/no-deprecated": {
-        severity: SeverityLevel.Low,
-        tags: [COMMON_TAGS.RECOMMENDED, REACT, COMMON_TAGS.CATEGORIES.DESIGN, COMMON_TAGS.LANGUAGES.JAVASCRIPT, COMMON_TAGS.LANGUAGES.TYPESCRIPT]
     },
     "react/no-did-mount-set-state": {
         severity: SeverityLevel.Moderate,
@@ -257,21 +299,9 @@ export const RULE_MAPPINGS_REACT: Record<string, {severity: SeverityLevel, tags:
         severity: SeverityLevel.Moderate,
         tags: [/* NOT RECOMMENDED */ REACT, COMMON_TAGS.CATEGORIES.PERFORMANCE, COMMON_TAGS.LANGUAGES.JAVASCRIPT, COMMON_TAGS.LANGUAGES.TYPESCRIPT]
     },
-    "react/no-direct-mutation-state": {
-        severity: SeverityLevel.High,
-        tags: [COMMON_TAGS.RECOMMENDED, REACT, COMMON_TAGS.CATEGORIES.ERROR_PRONE, COMMON_TAGS.LANGUAGES.JAVASCRIPT, COMMON_TAGS.LANGUAGES.TYPESCRIPT]
-    },
-    "react/no-find-dom-node": {
-        severity: SeverityLevel.High,
-        tags: [COMMON_TAGS.RECOMMENDED, REACT, COMMON_TAGS.CATEGORIES.BEST_PRACTICES, COMMON_TAGS.LANGUAGES.JAVASCRIPT, COMMON_TAGS.LANGUAGES.TYPESCRIPT]
-    },
     "react/no-invalid-html-attribute": {
         severity: SeverityLevel.Low,
         tags: [/* NOT RECOMMENDED */ REACT, COMMON_TAGS.CATEGORIES.ERROR_PRONE, COMMON_TAGS.LANGUAGES.JAVASCRIPT, COMMON_TAGS.LANGUAGES.TYPESCRIPT]
-    },
-    "react/no-is-mounted": {
-        severity: SeverityLevel.High,
-        tags: [COMMON_TAGS.RECOMMENDED, REACT, COMMON_TAGS.CATEGORIES.BEST_PRACTICES, COMMON_TAGS.LANGUAGES.JAVASCRIPT, COMMON_TAGS.LANGUAGES.TYPESCRIPT]
     },
     "react/no-multi-comp": {
         severity: SeverityLevel.Low,
@@ -289,17 +319,9 @@ export const RULE_MAPPINGS_REACT: Record<string, {severity: SeverityLevel, tags:
         severity: SeverityLevel.Low,
         tags: [/* NOT RECOMMENDED */ REACT, COMMON_TAGS.CATEGORIES.BEST_PRACTICES, COMMON_TAGS.LANGUAGES.JAVASCRIPT, COMMON_TAGS.LANGUAGES.TYPESCRIPT]
     },
-    "react/no-render-return-value": {
-        severity: SeverityLevel.Moderate,
-        tags: [COMMON_TAGS.RECOMMENDED, REACT, COMMON_TAGS.CATEGORIES.BEST_PRACTICES, COMMON_TAGS.LANGUAGES.JAVASCRIPT, COMMON_TAGS.LANGUAGES.TYPESCRIPT]
-    },
     "react/no-set-state": {
         severity: SeverityLevel.Low,
         tags: [/* NOT RECOMMENDED */ REACT, COMMON_TAGS.CATEGORIES.DESIGN, COMMON_TAGS.LANGUAGES.JAVASCRIPT, COMMON_TAGS.LANGUAGES.TYPESCRIPT]
-    },
-    "react/no-string-refs": {
-        severity: SeverityLevel.Low,
-        tags: [COMMON_TAGS.RECOMMENDED, REACT, COMMON_TAGS.CATEGORIES.BEST_PRACTICES, COMMON_TAGS.LANGUAGES.JAVASCRIPT, COMMON_TAGS.LANGUAGES.TYPESCRIPT]
     },
     "react/no-this-in-sfc": {
         severity: SeverityLevel.Moderate,
@@ -308,14 +330,6 @@ export const RULE_MAPPINGS_REACT: Record<string, {severity: SeverityLevel, tags:
     "react/no-typos": {
         severity: SeverityLevel.Moderate,
         tags: [/* NOT RECOMMENDED */ REACT, COMMON_TAGS.CATEGORIES.ERROR_PRONE, COMMON_TAGS.LANGUAGES.JAVASCRIPT, COMMON_TAGS.LANGUAGES.TYPESCRIPT]
-    },
-    "react/no-unescaped-entities": {
-        severity: SeverityLevel.Moderate,
-        tags: [COMMON_TAGS.RECOMMENDED, REACT, COMMON_TAGS.CATEGORIES.ERROR_PRONE, COMMON_TAGS.LANGUAGES.JAVASCRIPT, COMMON_TAGS.LANGUAGES.TYPESCRIPT]
-    },
-    "react/no-unknown-property": {
-        severity: SeverityLevel.Moderate,
-        tags: [COMMON_TAGS.RECOMMENDED, REACT, COMMON_TAGS.CATEGORIES.ERROR_PRONE, COMMON_TAGS.LANGUAGES.JAVASCRIPT, COMMON_TAGS.LANGUAGES.TYPESCRIPT]
     },
     "react/no-unsafe": {
         severity: SeverityLevel.Moderate,
@@ -357,14 +371,6 @@ export const RULE_MAPPINGS_REACT: Record<string, {severity: SeverityLevel, tags:
         severity: SeverityLevel.Low,
         tags: [/* NOT RECOMMENDED */ REACT, COMMON_TAGS.CATEGORIES.BEST_PRACTICES, COMMON_TAGS.LANGUAGES.JAVASCRIPT, COMMON_TAGS.LANGUAGES.TYPESCRIPT]
     },
-    "react/prop-types": {
-        severity: SeverityLevel.Moderate,
-        tags: [COMMON_TAGS.RECOMMENDED, REACT, COMMON_TAGS.CATEGORIES.BEST_PRACTICES, COMMON_TAGS.LANGUAGES.JAVASCRIPT, COMMON_TAGS.LANGUAGES.TYPESCRIPT]
-    },
-    "react/react-in-jsx-scope": {
-        severity: SeverityLevel.Moderate,
-        tags: [COMMON_TAGS.RECOMMENDED, REACT, COMMON_TAGS.CATEGORIES.DESIGN, COMMON_TAGS.LANGUAGES.JAVASCRIPT, COMMON_TAGS.LANGUAGES.TYPESCRIPT]
-    },
     "react/require-default-props": {
         severity: SeverityLevel.Moderate,
         tags: [/* NOT RECOMMENDED */ REACT, COMMON_TAGS.CATEGORIES.DESIGN, COMMON_TAGS.LANGUAGES.JAVASCRIPT, COMMON_TAGS.LANGUAGES.TYPESCRIPT]
@@ -372,10 +378,6 @@ export const RULE_MAPPINGS_REACT: Record<string, {severity: SeverityLevel, tags:
     "react/require-optimization": {
         severity: SeverityLevel.Moderate,
         tags: [/* NOT RECOMMENDED */ REACT, COMMON_TAGS.CATEGORIES.PERFORMANCE, COMMON_TAGS.LANGUAGES.JAVASCRIPT, COMMON_TAGS.LANGUAGES.TYPESCRIPT]
-    },
-    "react/require-render-return": {
-        severity: SeverityLevel.High,
-        tags: [COMMON_TAGS.RECOMMENDED, REACT, COMMON_TAGS.CATEGORIES.ERROR_PRONE, COMMON_TAGS.LANGUAGES.JAVASCRIPT, COMMON_TAGS.LANGUAGES.TYPESCRIPT]
     },
     "react/self-closing-comp": {
         severity: SeverityLevel.Low,
@@ -409,5 +411,10 @@ export const RULE_MAPPINGS_REACT: Record<string, {severity: SeverityLevel, tags:
         severity: SeverityLevel.Moderate,
         tags: [/* NOT RECOMMENDED */ REACT, COMMON_TAGS.CATEGORIES.ERROR_PRONE, COMMON_TAGS.LANGUAGES.JAVASCRIPT, COMMON_TAGS.LANGUAGES.TYPESCRIPT]
     },
-}
 
+};
+
+export const RULE_MAPPINGS_REACT: Record<string, {severity: SeverityLevel, tags: string[]}> = {
+    ...RULE_MAPPINGS_REACT_RECOMMENDED,
+    ...RULE_MAPPINGS_REACT_NOT_RECOMMENDED
+};
