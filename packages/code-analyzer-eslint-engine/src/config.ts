@@ -36,7 +36,7 @@ export type ESLintEngineConfig = {
     // Default: false
     disable_typescript_base_config: boolean
 
-    // If true then the base configuration that supplies the React/JSX rules will not be applied.
+    // If true then the base configuration that supplies the React/JSX rules (including React Hooks) will not be applied.
     // Default: true (React support is currently gated; will change to false when released)
     disable_react_base_config: boolean
 

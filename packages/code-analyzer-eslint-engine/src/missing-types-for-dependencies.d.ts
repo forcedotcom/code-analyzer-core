@@ -60,13 +60,25 @@ declare module 'eslint-plugin-react' {
     const plugin: ESLint.Plugin & {
         readonly rules: Record<string, RuleDefinition>;
         readonly configs: {
-            readonly recommended: Linter.Config;
-            readonly all: Linter.Config;
-            readonly "jsx-runtime": Linter.Config;
+            readonly flat: {
+                readonly all: Linter.Config;
+            };
+        };
+    };
+    export = plugin;
+}
+
+// This declaration adds in the missing types for "eslint-plugin-react-hooks"
+// We use configs.flat.recommended but override rules to only enable rules-of-hooks and exhaustive-deps
+declare module 'eslint-plugin-react-hooks' {
+    import type { ESLint, Linter } from 'eslint';
+    import type { RuleDefinition } from "@eslint/core";
+
+    const plugin: ESLint.Plugin & {
+        readonly rules: Record<string, RuleDefinition>;
+        readonly configs: {
             readonly flat: {
                 readonly recommended: Linter.Config;
-                readonly all: Linter.Config;
-                readonly "jsx-runtime": Linter.Config;
             };
         };
     };

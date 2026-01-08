@@ -2103,4 +2103,15 @@ export const RULE_MAPPINGS: Record<string, {severity: SeverityLevel, tags: strin
         severity: SeverityLevel.Moderate,
         tags: [/* NOT RECOMMENDED */ REACT, COMMON_TAGS.CATEGORIES.ERROR_PRONE, COMMON_TAGS.LANGUAGES.JAVASCRIPT, COMMON_TAGS.LANGUAGES.TYPESCRIPT]
     },
+
+    //   REACT HOOKS PLUGIN RULES (eslint-plugin-react-hooks)
+    //   See https://github.com/facebook/react/tree/main/packages/eslint-plugin-react-hooks
+    "react-hooks/rules-of-hooks": {
+        severity: SeverityLevel.High,
+        tags: [COMMON_TAGS.RECOMMENDED, REACT, COMMON_TAGS.CATEGORIES.DESIGN, COMMON_TAGS.LANGUAGES.JAVASCRIPT, COMMON_TAGS.LANGUAGES.TYPESCRIPT]
+    },
+    "react-hooks/exhaustive-deps": {
+        severity: SeverityLevel.Moderate,
+        tags: [COMMON_TAGS.RECOMMENDED, REACT, COMMON_TAGS.CATEGORIES.DESIGN, COMMON_TAGS.LANGUAGES.JAVASCRIPT, COMMON_TAGS.LANGUAGES.TYPESCRIPT]
+    },
 }

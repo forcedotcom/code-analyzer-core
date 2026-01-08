@@ -5,6 +5,7 @@ import lwcEslintPluginLwcPlatform from "@lwc/eslint-plugin-lwc-platform";
 import salesforceEslintConfigLwc from "@salesforce/eslint-config-lwc";
 import sldsEslintPlugin from "@salesforce-ux/eslint-plugin-slds";
 import eslintPluginReact from "eslint-plugin-react";
+import eslintPluginReactHooks from "eslint-plugin-react-hooks";
 import {ESLintEngineConfig} from "./config";
 import globals from "globals";
 
@@ -55,7 +56,7 @@ export class BaseConfigFactory {
         if (this.useTsBaseConfig()) {
             configArray.push(...this.createTypescriptConfigArray());
         }
-        // Add React plugin config for JSX files
+        // Add React plugin config (including React Hooks) for JSX files
         if (this.useReactBaseConfig()) {
             configArray.push(...this.createReactConfigArray());
         }
@@ -190,35 +191,54 @@ export class BaseConfigFactory {
     /**
      * Creates React plugin config for JavaScript files.
      * 
+     * Includes both eslint-plugin-react (all rules) and eslint-plugin-react-hooks:
+     * - react/*: All React rules for JSX and component patterns
+     * - react-hooks/rules-of-hooks: Enforces the Rules of Hooks
+     * - react-hooks/exhaustive-deps: Verifies the list of dependencies for Hooks
+     * 
      * React rules are applied to all JS files (.js, .jsx, .cjs, .mjs) - if a file
      * doesn't contain React code, the rules simply won't report any violations.
      * 
      * Note: TypeScript React support (.tsx) is planned for the next iteration.
      */
     private createReactConfigArray(): Linter.Config[] {
-        // Apply React rules to all JavaScript files
         const jsExtensions = this.engineConfig.file_extensions.javascript;
 
         if (jsExtensions.length === 0) {
             return [];
         }
 
+        const filePatterns = jsExtensions.map(ext => `**/*${ext}`);
+
         // Get all rules from eslint-plugin-react's flat config
         const reactAllConfig = eslintPluginReact.configs.flat.all;
 
-        return [{
-            ...reactAllConfig,
-            files: jsExtensions.map(ext => `**/*${ext}`),
-            settings: {
-                ...reactAllConfig.settings,
-                react: {
-                    // React version - "detect" automatically picks the installed version, falls back to latest
-                    version: 'detect',
-                    // Pragma is the function JSX compiles to (e.g., <div> → React.createElement('div'))
-                    pragma: 'React'
+        return [
+            // React plugin config
+            {
+                ...reactAllConfig,
+                files: filePatterns,
+                settings: {
+                    ...reactAllConfig.settings,
+                    react: {
+                        // React version - "detect" automatically picks the installed version, falls back to latest
+                        version: 'detect',
+                        // Pragma is the function JSX compiles to (e.g., <div> → React.createElement('div'))
+                        pragma: 'React'
+                    }
+                }
+            },
+            // React Hooks plugin config - use flat.recommended but only enable the 2 classic rules
+            // (v7.x includes many React Compiler rules that we filter out)
+            {
+                ...eslintPluginReactHooks.configs.flat.recommended,
+                files: filePatterns,
+                rules: {
+                    'react-hooks/rules-of-hooks': 'error',
+                    'react-hooks/exhaustive-deps': 'warn'
                 }
             }
-        }];
+        ];
     }
 
     private useJsBaseConfig(): boolean {
