@@ -5,6 +5,7 @@ import lwcEslintPluginLwcPlatform from "@lwc/eslint-plugin-lwc-platform";
 import salesforceEslintConfigLwc from "@salesforce/eslint-config-lwc";
 import sldsEslintPlugin from "@salesforce-ux/eslint-plugin-slds";
 import eslintPluginReact from "eslint-plugin-react";
+import eslintPluginReactHooks from "eslint-plugin-react-hooks";
 import {ESLintEngineConfig} from "./config";
 import globals from "globals";
 
@@ -88,8 +89,17 @@ export class BaseConfigFactory {
             }
         };
 
-        // Swap out eslintJs.configs.recommended with eslintJs.configs.all
-        configs[1] = eslintJs.configs.all;
+        // File patterns for different config types
+        const allJsExtensions = this.engineConfig.file_extensions.javascript;
+        const lwcExtensions = allJsExtensions.filter(ext => ext !== '.jsx');
+        const allJsFilePatterns = allJsExtensions.map(ext => `**/*${ext}`);
+        const lwcFilePatterns = lwcExtensions.map(ext => `**/*${ext}`);
+
+        // Base JS rules (eslintJs.configs.all) - applies to ALL JS files including .jsx
+        const baseJsConfig: Linter.Config = {
+            ...eslintJs.configs.all,
+            files: allJsFilePatterns
+        };
 
         // This one rule makes eslint throw an exception if the user doesn't have jest installed (which should be
         // optional), so we turn it off for now. See https://github.com/salesforce/eslint-config-lwc/issues/161
@@ -105,18 +115,15 @@ export class BaseConfigFactory {
             '@lwc/lwc-platform/valid-offline-wire': 'off'
         }
 
-        // Restrict these configs to just javascript files, excluding .jsx
-        // since those are React files, not LWC components
-        const lwcExtensions = this.engineConfig.file_extensions.javascript
-            .filter(ext => ext !== '.jsx');
-        configs = configs.map(config => {
-            return {
-                ...config,
-                files: lwcExtensions.map(ext => `**/*${ext}`)
-            }
-        });
+        // Apply LWC file patterns to LWC-specific configs (excludes .jsx - React files aren't LWC)
+        // Then insert the base JS config at position 1
+        const lwcConfigs: Linter.Config[] = configs.map(config => ({
+            ...config,
+            files: lwcFilePatterns
+        }));
+        lwcConfigs[1] = baseJsConfig;
 
-        return configs;
+        return lwcConfigs;
     }
 
     private createLwcConfigArray(): Linter.Config[] {
@@ -191,16 +198,17 @@ export class BaseConfigFactory {
     }
 
     /**
-     * Creates React plugin config for JavaScript files.
+     * Creates React plugin config for JavaScript and TypeScript files.
      * 
-     * React rules are applied to all JS files (.js, .jsx, .cjs, .mjs) - if a file
-     * doesn't contain React code, the rules simply won't report any violations.
+     * Includes both eslint-plugin-react and eslint-plugin-react-hooks:
+     * - react/*: All React rules for JSX/TSX and component patterns
+     * - react-hooks/rules-of-hooks: Enforces the Rules of Hooks
+     * - react-hooks/exhaustive-deps: Verifies the list of dependencies for Hooks
      * 
-     * Note: TypeScript React support (.tsx) is planned for the next iteration.
+     * React rules are applied to all JS/TS files - if a file doesn't contain React code, 
+     * the rules simply won't report any violations.
      */
     private createReactConfigArray(): Linter.Config[] {
-        // Apply React rules to all JavaScript and TypeScript files
-        
         const jsExtensions = this.engineConfig.file_extensions.javascript;
         const tsExtensions = this.engineConfig.file_extensions.typescript;
         const reactExtensions = [...new Set([...jsExtensions, ...tsExtensions])];
@@ -209,22 +217,46 @@ export class BaseConfigFactory {
             return [];
         }
 
+        const filePatterns = reactExtensions.map(ext => `**/*${ext}`);
+
         // Get all rules from eslint-plugin-react's flat config
         const reactAllConfig = eslintPluginReact.configs.flat.all;
 
-        return [{
-            ...reactAllConfig,
-            files: reactExtensions.map(ext => `**/*${ext}`),
-            settings: {
-                ...reactAllConfig.settings,
-                react: {
-                    // React version - "detect" automatically picks the installed version, falls back to latest
-                    version: 'detect',
-                    // Pragma is the function JSX compiles to (e.g., <div> → React.createElement('div'))
-                    pragma: 'React'
+        // Get jsx-runtime config to disable outdated rules (react-in-jsx-scope, jsx-uses-react)
+        // These rules are not needed for React 17+ which is now the standard (released Oct 2020)
+        const jsxRuntimeConfig = eslintPluginReact.configs.flat['jsx-runtime'];
+
+        return [
+            // React all rules config
+            {
+                ...reactAllConfig,
+                files: filePatterns,
+                settings: {
+                    ...reactAllConfig.settings,
+                    react: {
+                        // React version - "detect" automatically picks the installed version, falls back to latest
+                        version: 'detect',
+                        // Pragma is the function JSX compiles to (e.g., <div> → React.createElement('div'))
+                        pragma: 'React'
+                    }
+                }
+            },
+            // jsx-runtime config disables outdated rules for React 17+
+            {
+                ...jsxRuntimeConfig,
+                files: filePatterns
+            },
+            // React Hooks plugin config - use flat.recommended but only enable the 2 classic rules
+            // (v7.x includes many React Compiler rules that we filter out)
+            {
+                ...eslintPluginReactHooks.configs.flat.recommended,
+                files: filePatterns,
+                rules: {
+                    'react-hooks/rules-of-hooks': 'error',
+                    'react-hooks/exhaustive-deps': 'warn'
                 }
             }
-        }];
+        ];
     }
 
     private useJsBaseConfig(): boolean {

@@ -65,7 +65,7 @@ describe('Tests for the describeRules method of ESLintEngine', () => {
     const HTML_CONFIG_RULES: RuleDescription[] = loadRuleDescriptions('rules_OnlySldsHtmlBaseConfig.goldfile.json');
     const REACT_CONFIG_RULES: RuleDescription[] = loadRuleDescriptions('rules_ReactConfig.goldfile.json');
     const SLDS_CONFIG_RULES: RuleDescription[] = makeUniqueAndSorted([...CSS_CONFIG_RULES, ...HTML_CONFIG_RULES]);
-    // React rules apply to all JS files (not just .jsx) - if no React code, rules simply don't report violations
+    // React rules (including React Hooks) apply to all JS files - if no React code, rules simply don't report violations
     const DEFAULT_RULES: RuleDescription[] = makeUniqueAndSorted([...LWC_CONFIG_RULES, ...JS_CONFIG_RULES, ...TS_CONFIG_RULES, ...SLDS_CONFIG_RULES, ...REACT_CONFIG_RULES]);
     const CUSTOM_RULES: RuleDescription[] = loadRuleDescriptions('rules_OnlyCustomConfigWithNewRules.goldfile.json');
 
@@ -150,7 +150,7 @@ describe('Tests for the describeRules method of ESLintEngine', () => {
         const ruleDescriptions: RuleDescription[] = await engine.describeRules(createDescribeOptions(new Workspace('id', [
                 path.join(workspaceWithNoCustomConfig, 'dummy1.js'),
                 path.join(workspaceWithNoCustomConfig, 'dummy3.txt')])));
-        // React rules included - applies to .js files
+        // React rules (including React Hooks) included - applies to .js files
         expect(ruleDescriptions).toEqual(makeUniqueAndSorted([...LWC_CONFIG_RULES, ...JS_CONFIG_RULES, ...REACT_CONFIG_RULES]));
     });
 
@@ -172,7 +172,7 @@ describe('Tests for the describeRules method of ESLintEngine', () => {
             disable_javascript_base_config: true
         });
         const ruleDescriptions: RuleDescription[] = await engine.describeRules(createDescribeOptions());
-        // React rules included - no workspace provided means placeholder files used (includes .jsx)
+        // React rules (including React Hooks) included - no workspace provided means placeholder files used (includes .jsx)
         expect(ruleDescriptions).toEqual(makeUniqueAndSorted([...LWC_CONFIG_RULES, ...TS_CONFIG_RULES, ...SLDS_CONFIG_RULES, ...REACT_CONFIG_RULES]));
     });
 
@@ -181,7 +181,7 @@ describe('Tests for the describeRules method of ESLintEngine', () => {
             disable_lwc_base_config: true
         });
         const ruleDescriptions: RuleDescription[] = await engine.describeRules(createDescribeOptions());
-        // React rules included - no workspace provided means placeholder files used (includes .jsx)
+        // React rules (including React Hooks) included - no workspace provided means placeholder files used (includes .jsx)
         expect(ruleDescriptions).toEqual(makeUniqueAndSorted([...JS_CONFIG_RULES, ...TS_CONFIG_RULES, ...SLDS_CONFIG_RULES, ...REACT_CONFIG_RULES]));
     });
 
@@ -190,7 +190,7 @@ describe('Tests for the describeRules method of ESLintEngine', () => {
             disable_slds_base_config: true
         });
         const ruleDescriptions: RuleDescription[] = await engine.describeRules(createDescribeOptions());
-        // React rules included - no workspace provided means placeholder files used (includes .jsx)
+        // React rules (including React Hooks) included - no workspace provided means placeholder files used (includes .jsx)
         expect(ruleDescriptions).toEqual(makeUniqueAndSorted([...LWC_CONFIG_RULES, ...JS_CONFIG_RULES, ...TS_CONFIG_RULES, ...REACT_CONFIG_RULES]));
     });
 
@@ -210,7 +210,7 @@ describe('Tests for the describeRules method of ESLintEngine', () => {
             disable_slds_base_config: true
         });
         const ruleDescriptions: RuleDescription[] = await engine.describeRules(createDescribeOptions());
-        // React rules included - no workspace provided means placeholder files used (includes .jsx)
+        // React rules (including React Hooks) included - no workspace provided means placeholder files used (includes .jsx)
         expect(ruleDescriptions).toEqual(makeUniqueAndSorted([...JS_CONFIG_RULES, ...REACT_CONFIG_RULES]));
     });
 
@@ -847,6 +847,83 @@ describe('Typical tests for the runRules method of ESLintEngine', () => {
         const jsxViolations = results.violations.filter(v => 
             v.codeLocations[0].file.endsWith('.jsx'));
         expect(jsxViolations.length).toBeGreaterThan(0);
+    });
+
+    it('When runRules is called with react-hooks rules, then violations are detected in HooksViolations.jsx', async () => {
+        const engine: Engine = await createEngineFromPlugin(DEFAULT_CONFIG_FOR_TESTING);
+        const runOptions: RunOptions = createRunOptions(new Workspace('id', [workspaceWithReactFiles]));
+        const results: EngineRunResults = await engine.runRules(['react-hooks/rules-of-hooks', 'react-hooks/exhaustive-deps'], runOptions);
+
+        // HooksViolations.jsx has multiple violations for both rules
+        expect(results.violations.length).toBeGreaterThan(0);
+        
+        // Should have violations for rules-of-hooks (hooks called conditionally/in loops)
+        const rulesOfHooksViolations = results.violations.filter(v => v.ruleName === 'react-hooks/rules-of-hooks');
+        expect(rulesOfHooksViolations.length).toBeGreaterThan(0);
+        
+        // Should have violations for exhaustive-deps (missing dependencies)
+        const exhaustiveDepsViolations = results.violations.filter(v => v.ruleName === 'react-hooks/exhaustive-deps');
+        expect(exhaustiveDepsViolations.length).toBeGreaterThan(0);
+        
+        // All violations should be in HooksViolations.jsx
+        const hooksViolationsFile = results.violations.filter(v => 
+            v.codeLocations[0].file.endsWith('HooksViolations.jsx'));
+        expect(hooksViolationsFile.length).toBeGreaterThan(0);
+    });
+
+    it('When runRules is called with base JS rules on .jsx files, then violations are reported', async () => {
+        // This test verifies that base JavaScript rules (not just React-specific rules) are applied to .jsx files
+        // This is a regression test - previously .jsx files were excluded from base JS rules when both JS+LWC configs were enabled
+        const engine: Engine = await createEngineFromPlugin(DEFAULT_CONFIG_FOR_TESTING);
+        const runOptions: RunOptions = createRunOptions(new Workspace('id', [workspaceWithReactFiles]));
+        
+        // Use 'id-length' - a base JS rule that triggers on short variable names like 'i' in for loops
+        const results: EngineRunResults = await engine.runRules(['id-length'], runOptions);
+
+        // Should have violations in .jsx files (HooksViolations.jsx has 'i' variable in for loop)
+        const jsxViolations = results.violations.filter(v => 
+            v.codeLocations[0].file.endsWith('.jsx'));
+        expect(jsxViolations.length).toBeGreaterThan(0);
+        
+        // Verify the rule is a base JS rule, not a React rule
+        expect(jsxViolations.every(v => v.ruleName === 'id-length')).toBe(true);
+    });
+
+    it('When runRules is called with LWC rules, then no violations are reported for .jsx files', async () => {
+        // This test verifies that LWC-specific rules are NOT applied to .jsx files
+        // .jsx files are React files, not LWC components, so LWC rules should not apply
+        // HooksViolations.jsx contains innerHTML usage (ComponentWithInnerHTML) that WOULD
+        // trigger @lwc/lwc/no-inner-html if LWC rules were applied, but they shouldn't be.
+        const engine: Engine = await createEngineFromPlugin(DEFAULT_CONFIG_FOR_TESTING);
+        const runOptions: RunOptions = createRunOptions(new Workspace('id', [workspaceWithReactFiles]));
+        
+        // Run '@lwc/lwc/no-inner-html' - HooksViolations.jsx has innerHTML usage that would trigger this
+        const results: EngineRunResults = await engine.runRules(['@lwc/lwc/no-inner-html'], runOptions);
+
+        // Should NOT have any violations in .jsx files (LWC rules don't apply to React files)
+        const jsxViolations = results.violations.filter(v => 
+            v.codeLocations[0].file.endsWith('.jsx'));
+        expect(jsxViolations.length).toBe(0);
+    });
+});
+
+describe('Tests for React Hooks rules', () => {
+    it('React Hooks rules are included in describeRules output', async () => {
+        const engine: Engine = await createEngineFromPlugin(DEFAULT_CONFIG_FOR_TESTING);
+        
+        const ruleDescriptions = await engine.describeRules(createDescribeOptions(
+            new Workspace('id', [workspaceWithReactFiles])));
+        
+        // Both react-hooks rules should be present
+        const rulesOfHooks = ruleDescriptions.find(r => r.name === 'react-hooks/rules-of-hooks');
+        expect(rulesOfHooks).toBeDefined();
+        expect(rulesOfHooks!.tags).toContain('Recommended');
+        expect(rulesOfHooks!.tags).toContain('React');
+        
+        const exhaustiveDeps = ruleDescriptions.find(r => r.name === 'react-hooks/exhaustive-deps');
+        expect(exhaustiveDeps).toBeDefined();
+        expect(exhaustiveDeps!.tags).toContain('Recommended');
+        expect(exhaustiveDeps!.tags).toContain('React');
     });
 });
 
