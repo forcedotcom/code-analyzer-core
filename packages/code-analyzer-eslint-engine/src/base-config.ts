@@ -64,7 +64,7 @@ export class BaseConfigFactory {
     }
 
     private createJavascriptPlusLwcConfigArray(): Linter.Config[] {
-        let configs: Linter.Config[] = validateAndGetRawLwcConfigArray();
+        const configs: Linter.Config[] = validateAndGetRawLwcConfigArray();
 
         // Reconstruct languageOptions to avoid mutating the original shared config from the LWC package
         // TODO: Remove configFile and sourceType overrides when https://github.com/salesforce/eslint-config-lwc/issues/158 is fixed
