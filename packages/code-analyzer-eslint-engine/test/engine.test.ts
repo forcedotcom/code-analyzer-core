@@ -142,7 +142,7 @@ describe('Tests for the describeRules method of ESLintEngine', () => {
                 path.join(workspaceWithNoCustomConfig, 'dummy2.ts')
             ])));
         // No JS files means no JS rules and no React rules (React applies to JS files for now, we will add TS support in next iteration)
-        expect(ruleDescriptions).toEqual(TS_CONFIG_RULES);
+        expect(ruleDescriptions).toEqual(makeUniqueAndSorted([...TS_CONFIG_RULES, ...REACT_CONFIG_RULES]));
     });
 
     it('When describing rules from a workspace with no typescript files, then no typescript rules should returned', async () => {
@@ -296,7 +296,24 @@ describe('Tests for the describeRules method of ESLintEngine', () => {
         });
         const ruleDescriptions: RuleDescription[] = await engine.describeRules(createDescribeOptions());
         // React rules NOT included - React only applies to .jsx which is a JS extension
-        expect(ruleDescriptions).toEqual(makeUniqueAndSorted([...TS_CONFIG_RULES, ...SLDS_CONFIG_RULES]));
+        expect(ruleDescriptions).toEqual(makeUniqueAndSorted([...TS_CONFIG_RULES, ...SLDS_CONFIG_RULES, ...REACT_CONFIG_RULES]));
+    });
+
+
+    it('When file_extensions is only .tsx, then only react rules are returned', async () => {
+        const engine: Engine = await createEngineFromPlugin({...DEFAULT_CONFIG_FOR_TESTING,
+            file_extensions: {
+                ... DEFAULT_CONFIG_FOR_TESTING.file_extensions,
+                javascript: [],
+                typescript: ['.tsx'],
+                html: [],
+                css: [],
+                other: []
+            }
+        });
+        const ruleDescriptions: RuleDescription[] = await engine.describeRules(createDescribeOptions());
+        // React rules included - TSX is a TS extension
+        expect(ruleDescriptions).toEqual(makeUniqueAndSorted([...TS_CONFIG_RULES, ...REACT_CONFIG_RULES]));
     });
 
     it('When file_extensions.typescript is empty, then typescript rules do not get picked up', async () => {
@@ -456,7 +473,7 @@ describe('Tests for the describeRules method of ESLintEngine', () => {
         const ruleDescriptions: RuleDescription[] = await engine.describeRules(createDescribeOptions(
             new Workspace('id', [path.join(testDataFolder, 'workspaceWithFlatConfigJs')])));
         // No JS files after ignores means no JS rules and no React rules (React applies to JS files)
-        expect(ruleDescriptions).toEqual(makeUniqueAndSorted([...TS_CONFIG_RULES, ...SLDS_CONFIG_RULES]));
+        expect(ruleDescriptions).toEqual(makeUniqueAndSorted([...TS_CONFIG_RULES, ...SLDS_CONFIG_RULES, ...REACT_CONFIG_RULES]));
     });
 
     it('When a .eslintignore file is auto discovered and a flat eslint config file is specified, then we warn that we ignore it', async () => {
@@ -879,8 +896,8 @@ describe('Tests for emitting events', () => {
         await engine.describeRules(createDescribeOptions());
         // TODO: We should make our DescribeRulesProgressEvents more refined while calculating the eslint context information
         // Note: These percentages depend on the number of file extensions configured (includes .jsx)
-        expect(describeRulesProgressEvents.map(e => e.percentComplete)).toEqual(
-            [0, 10, 14, 18, 24, 30, 36, 42, 48, 54, 60, 66, 72, 78, 82, 86, 90, 95, 100]);
+        expect(describeRulesProgressEvents.map(e => Math.round(e.percentComplete))).toEqual(
+            [0, 10, 14, 18,  23, 29, 34, 40, 45, 51, 56, 62, 67, 73, 78, 82, 86, 90, 95, 100]);
     });
 
     it('When runRules is called, then it emits correct progress events', async () => {
