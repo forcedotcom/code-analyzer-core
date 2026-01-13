@@ -1,5 +1,35 @@
 [
   {
+    "description": "verifies the list of dependencies for Hooks like useEffect and similar",
+    "name": "react-hooks/exhaustive-deps",
+    "resourceUrls": [
+      "https://github.com/facebook/react/issues/14920"
+    ],
+    "severityLevel": 3,
+    "tags": [
+      "Recommended",
+      "React",
+      "Design",
+      "JavaScript",
+      "TypeScript"
+    ]
+  },
+  {
+    "description": "enforces the Rules of Hooks",
+    "name": "react-hooks/rules-of-hooks",
+    "resourceUrls": [
+      "https://react.dev/reference/rules/rules-of-hooks"
+    ],
+    "severityLevel": 2,
+    "tags": [
+      "Recommended",
+      "React",
+      "Design",
+      "JavaScript",
+      "TypeScript"
+    ]
+  },
+  {
     "description": "Enforces consistent naming for boolean props",
     "name": "react/boolean-prop-naming",
     "resourceUrls": [
@@ -706,21 +736,6 @@
     ]
   },
   {
-    "description": "Disallow React to be incorrectly marked as unused",
-    "name": "react/jsx-uses-react",
-    "resourceUrls": [
-      "https://github.com/jsx-eslint/eslint-plugin-react/tree/master/docs/rules/jsx-uses-react.md"
-    ],
-    "severityLevel": 3,
-    "tags": [
-      "Recommended",
-      "React",
-      "Design",
-      "JavaScript",
-      "TypeScript"
-    ]
-  },
-  {
     "description": "Disallow variables used in JSX to be incorrectly marked as unused",
     "name": "react/jsx-uses-vars",
     "resourceUrls": [
@@ -1260,21 +1275,6 @@
       "Recommended",
       "React",
       "BestPractices",
-      "JavaScript",
-      "TypeScript"
-    ]
-  },
-  {
-    "description": "Disallow missing React when using JSX",
-    "name": "react/react-in-jsx-scope",
-    "resourceUrls": [
-      "https://github.com/jsx-eslint/eslint-plugin-react/tree/master/docs/rules/react-in-jsx-scope.md"
-    ],
-    "severityLevel": 3,
-    "tags": [
-      "Recommended",
-      "React",
-      "Design",
       "JavaScript",
       "TypeScript"
     ]

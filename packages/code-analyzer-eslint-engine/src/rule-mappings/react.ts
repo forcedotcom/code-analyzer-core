@@ -26,11 +26,7 @@ export const RULE_MAPPINGS_REACT_RECOMMENDED: Record<string, {severity: Severity
         severity: SeverityLevel.Moderate,
         tags: [COMMON_TAGS.RECOMMENDED, REACT, COMMON_TAGS.CATEGORIES.ERROR_PRONE, COMMON_TAGS.LANGUAGES.JAVASCRIPT, COMMON_TAGS.LANGUAGES.TYPESCRIPT]
     },
-    "react/jsx-uses-react": {
-        // Marks the React import as "used" when JSX is present - needed for classic JSX transform (pre-React 17)
-        severity: SeverityLevel.Moderate,
-        tags: [COMMON_TAGS.RECOMMENDED, REACT, COMMON_TAGS.CATEGORIES.DESIGN, COMMON_TAGS.LANGUAGES.JAVASCRIPT, COMMON_TAGS.LANGUAGES.TYPESCRIPT]
-    },
+    // Note: react/jsx-uses-react is disabled by jsx-runtime config (not needed for React 17+)
     "react/jsx-uses-vars": {
         // Marks variables used in JSX as "used" - prevents false positives from no-unused-vars
         severity: SeverityLevel.Low,
@@ -80,10 +76,7 @@ export const RULE_MAPPINGS_REACT_RECOMMENDED: Record<string, {severity: Severity
         severity: SeverityLevel.Moderate,
         tags: [COMMON_TAGS.RECOMMENDED, REACT, COMMON_TAGS.CATEGORIES.BEST_PRACTICES, COMMON_TAGS.LANGUAGES.JAVASCRIPT, COMMON_TAGS.LANGUAGES.TYPESCRIPT]
     },
-    "react/react-in-jsx-scope": {
-        severity: SeverityLevel.Moderate,
-        tags: [COMMON_TAGS.RECOMMENDED, REACT, COMMON_TAGS.CATEGORIES.DESIGN, COMMON_TAGS.LANGUAGES.JAVASCRIPT, COMMON_TAGS.LANGUAGES.TYPESCRIPT]
-    },
+    // Note: react/react-in-jsx-scope is disabled by jsx-runtime config (not needed for React 17+)
     "react/require-render-return": {
         severity: SeverityLevel.High,
         tags: [COMMON_TAGS.RECOMMENDED, REACT, COMMON_TAGS.CATEGORIES.ERROR_PRONE, COMMON_TAGS.LANGUAGES.JAVASCRIPT, COMMON_TAGS.LANGUAGES.TYPESCRIPT]
@@ -414,7 +407,21 @@ export const RULE_MAPPINGS_REACT_NOT_RECOMMENDED: Record<string, {severity: Seve
 
 };
 
+// REACT HOOKS PLUGIN RULES (eslint-plugin-react-hooks)
+// See https://github.com/facebook/react/tree/main/packages/eslint-plugin-react-hooks
+export const RULE_MAPPINGS_REACT_HOOKS: Record<string, {severity: SeverityLevel, tags: string[]}> = {
+    "react-hooks/rules-of-hooks": {
+        severity: SeverityLevel.High,
+        tags: [COMMON_TAGS.RECOMMENDED, REACT, COMMON_TAGS.CATEGORIES.DESIGN, COMMON_TAGS.LANGUAGES.JAVASCRIPT, COMMON_TAGS.LANGUAGES.TYPESCRIPT]
+    },
+    "react-hooks/exhaustive-deps": {
+        severity: SeverityLevel.Moderate,
+        tags: [COMMON_TAGS.RECOMMENDED, REACT, COMMON_TAGS.CATEGORIES.DESIGN, COMMON_TAGS.LANGUAGES.JAVASCRIPT, COMMON_TAGS.LANGUAGES.TYPESCRIPT]
+    },
+};
+
 export const RULE_MAPPINGS_REACT: Record<string, {severity: SeverityLevel, tags: string[]}> = {
     ...RULE_MAPPINGS_REACT_RECOMMENDED,
-    ...RULE_MAPPINGS_REACT_NOT_RECOMMENDED
+    ...RULE_MAPPINGS_REACT_NOT_RECOMMENDED,
+    ...RULE_MAPPINGS_REACT_HOOKS
 };
