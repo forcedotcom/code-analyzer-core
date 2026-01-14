@@ -70,7 +70,7 @@ export const DEFAULT_CONFIG: ESLintEngineConfig = {
     disable_lwc_base_config: false,
     disable_slds_base_config: false,
     disable_typescript_base_config: false,
-    disable_react_base_config: true,  // Gated for now - will change to false when released
+    disable_react_base_config: false,  // Gated for now - will change to false when released
     file_extensions: {
         javascript: ['.js', '.cjs', '.mjs', '.jsx'],
         typescript: ['.ts', '.tsx'],
@@ -162,7 +162,7 @@ export function validateAndNormalizeConfig(configValueExtractor: ConfigValueExtr
         disable_typescript_base_config: eslintConfigValueExtractor.extractBooleanValue('disable_typescript_base_config'),
         // React support is gated - always force to true regardless of customer config
         // TODO: Change to eslintConfigValueExtractor.extractBooleanValue('disable_react_base_config') when released
-        disable_react_base_config: true,
+        disable_react_base_config: false,
         file_extensions:  eslintConfigValueExtractor.extractFileExtensionsValue(),
     };
 }
