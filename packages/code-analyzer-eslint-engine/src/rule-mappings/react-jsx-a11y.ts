@@ -1,5 +1,5 @@
 import {COMMON_TAGS, SeverityLevel} from "@salesforce/code-analyzer-engine-api";
-import { REACT, A11Y } from './constants';
+import { REACT } from './constants';
 
 // Recommended rules (enabled in the plugin's recommended config)
 export const RULE_MAPPINGS_REACT_A11Y_RECOMMENDED: Record<string, {severity: SeverityLevel, tags: string[]}> = {
