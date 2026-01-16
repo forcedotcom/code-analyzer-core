@@ -1,0 +1,467 @@
+[
+  {
+    "description": "Enforce all elements that require alternative text have meaningful information to relay back to end user.",
+    "name": "jsx-a11y/alt-text",
+    "resourceUrls": [
+      "https://github.com/jsx-eslint/eslint-plugin-jsx-a11y/tree/HEAD/docs/rules/alt-text.md"
+    ],
+    "severityLevel": 2,
+    "tags": [
+      "Recommended",
+      "React",
+      "BestPractices",
+      "JavaScript",
+      "TypeScript"
+    ]
+  },
+  {
+    "description": "Enforce all anchors to contain accessible content.",
+    "name": "jsx-a11y/anchor-has-content",
+    "resourceUrls": [
+      "https://github.com/jsx-eslint/eslint-plugin-jsx-a11y/tree/HEAD/docs/rules/anchor-has-content.md"
+    ],
+    "severityLevel": 3,
+    "tags": [
+      "Recommended",
+      "React",
+      "BestPractices",
+      "JavaScript",
+      "TypeScript"
+    ]
+  },
+  {
+    "description": "Enforce all anchors are valid, navigable elements.",
+    "name": "jsx-a11y/anchor-is-valid",
+    "resourceUrls": [
+      "https://github.com/jsx-eslint/eslint-plugin-jsx-a11y/tree/HEAD/docs/rules/anchor-is-valid.md"
+    ],
+    "severityLevel": 2,
+    "tags": [
+      "Recommended",
+      "React",
+      "BestPractices",
+      "JavaScript",
+      "TypeScript"
+    ]
+  },
+  {
+    "description": "Enforce elements with aria-activedescendant are tabbable.",
+    "name": "jsx-a11y/aria-activedescendant-has-tabindex",
+    "resourceUrls": [
+      "https://github.com/jsx-eslint/eslint-plugin-jsx-a11y/tree/HEAD/docs/rules/aria-activedescendant-has-tabindex.md"
+    ],
+    "severityLevel": 3,
+    "tags": [
+      "Recommended",
+      "React",
+      "BestPractices",
+      "JavaScript",
+      "TypeScript"
+    ]
+  },
+  {
+    "description": "Enforce all `aria-*` props are valid.",
+    "name": "jsx-a11y/aria-props",
+    "resourceUrls": [
+      "https://github.com/jsx-eslint/eslint-plugin-jsx-a11y/tree/HEAD/docs/rules/aria-props.md"
+    ],
+    "severityLevel": 3,
+    "tags": [
+      "Recommended",
+      "React",
+      "BestPractices",
+      "JavaScript",
+      "TypeScript"
+    ]
+  },
+  {
+    "description": "Enforce ARIA state and property values are valid.",
+    "name": "jsx-a11y/aria-proptypes",
+    "resourceUrls": [
+      "https://github.com/jsx-eslint/eslint-plugin-jsx-a11y/tree/HEAD/docs/rules/aria-proptypes.md"
+    ],
+    "severityLevel": 3,
+    "tags": [
+      "Recommended",
+      "React",
+      "BestPractices",
+      "JavaScript",
+      "TypeScript"
+    ]
+  },
+  {
+    "description": "Enforce that elements with ARIA roles must use a valid, non-abstract ARIA role.",
+    "name": "jsx-a11y/aria-role",
+    "resourceUrls": [
+      "https://github.com/jsx-eslint/eslint-plugin-jsx-a11y/tree/HEAD/docs/rules/aria-role.md"
+    ],
+    "severityLevel": 3,
+    "tags": [
+      "Recommended",
+      "React",
+      "BestPractices",
+      "JavaScript",
+      "TypeScript"
+    ]
+  },
+  {
+    "description": "Enforce that elements that do not support ARIA roles, states, and properties do not have those attributes.",
+    "name": "jsx-a11y/aria-unsupported-elements",
+    "resourceUrls": [
+      "https://github.com/jsx-eslint/eslint-plugin-jsx-a11y/tree/HEAD/docs/rules/aria-unsupported-elements.md"
+    ],
+    "severityLevel": 3,
+    "tags": [
+      "Recommended",
+      "React",
+      "BestPractices",
+      "JavaScript",
+      "TypeScript"
+    ]
+  },
+  {
+    "description": "Enforce that autocomplete attributes are used correctly.",
+    "name": "jsx-a11y/autocomplete-valid",
+    "resourceUrls": [
+      "https://github.com/jsx-eslint/eslint-plugin-jsx-a11y/tree/HEAD/docs/rules/autocomplete-valid.md"
+    ],
+    "severityLevel": 3,
+    "tags": [
+      "Recommended",
+      "React",
+      "BestPractices",
+      "JavaScript",
+      "TypeScript"
+    ]
+  },
+  {
+    "description": "Enforce a clickable non-interactive element has at least one keyboard event listener.",
+    "name": "jsx-a11y/click-events-have-key-events",
+    "resourceUrls": [
+      "https://github.com/jsx-eslint/eslint-plugin-jsx-a11y/tree/HEAD/docs/rules/click-events-have-key-events.md"
+    ],
+    "severityLevel": 2,
+    "tags": [
+      "Recommended",
+      "React",
+      "BestPractices",
+      "JavaScript",
+      "TypeScript"
+    ]
+  },
+  {
+    "description": "Enforce heading (`h1`, `h2`, etc) elements contain accessible content.",
+    "name": "jsx-a11y/heading-has-content",
+    "resourceUrls": [
+      "https://github.com/jsx-eslint/eslint-plugin-jsx-a11y/tree/HEAD/docs/rules/heading-has-content.md"
+    ],
+    "severityLevel": 2,
+    "tags": [
+      "Recommended",
+      "React",
+      "BestPractices",
+      "JavaScript",
+      "TypeScript"
+    ]
+  },
+  {
+    "description": "Enforce `<html>` element has `lang` prop.",
+    "name": "jsx-a11y/html-has-lang",
+    "resourceUrls": [
+      "https://github.com/jsx-eslint/eslint-plugin-jsx-a11y/tree/HEAD/docs/rules/html-has-lang.md"
+    ],
+    "severityLevel": 3,
+    "tags": [
+      "Recommended",
+      "React",
+      "BestPractices",
+      "JavaScript",
+      "TypeScript"
+    ]
+  },
+  {
+    "description": "Enforce iframe elements have a title attribute.",
+    "name": "jsx-a11y/iframe-has-title",
+    "resourceUrls": [
+      "https://github.com/jsx-eslint/eslint-plugin-jsx-a11y/tree/HEAD/docs/rules/iframe-has-title.md"
+    ],
+    "severityLevel": 3,
+    "tags": [
+      "Recommended",
+      "React",
+      "BestPractices",
+      "JavaScript",
+      "TypeScript"
+    ]
+  },
+  {
+    "description": "Enforce `<img>` alt prop does not contain the word \"image\", \"picture\", or \"photo\".",
+    "name": "jsx-a11y/img-redundant-alt",
+    "resourceUrls": [
+      "https://github.com/jsx-eslint/eslint-plugin-jsx-a11y/tree/HEAD/docs/rules/img-redundant-alt.md"
+    ],
+    "severityLevel": 2,
+    "tags": [
+      "Recommended",
+      "React",
+      "BestPractices",
+      "JavaScript",
+      "TypeScript"
+    ]
+  },
+  {
+    "description": "Enforce that elements with interactive handlers like `onClick` must be focusable.",
+    "name": "jsx-a11y/interactive-supports-focus",
+    "resourceUrls": [
+      "https://github.com/jsx-eslint/eslint-plugin-jsx-a11y/tree/HEAD/docs/rules/interactive-supports-focus.md"
+    ],
+    "severityLevel": 3,
+    "tags": [
+      "Recommended",
+      "React",
+      "BestPractices",
+      "JavaScript",
+      "TypeScript"
+    ]
+  },
+  {
+    "description": "Enforce that a `label` tag has a text label and an associated control.",
+    "name": "jsx-a11y/label-has-associated-control",
+    "resourceUrls": [
+      "https://github.com/jsx-eslint/eslint-plugin-jsx-a11y/blob/main/docs/rules/label-has-associated-control.md"
+    ],
+    "severityLevel": 3,
+    "tags": [
+      "Recommended",
+      "React",
+      "BestPractices",
+      "JavaScript",
+      "TypeScript"
+    ]
+  },
+  {
+    "description": "Enforces that `<audio>` and `<video>` elements must have a `<track>` for captions.",
+    "name": "jsx-a11y/media-has-caption",
+    "resourceUrls": [
+      "https://github.com/jsx-eslint/eslint-plugin-jsx-a11y/tree/HEAD/docs/rules/media-has-caption.md"
+    ],
+    "severityLevel": 2,
+    "tags": [
+      "Recommended",
+      "React",
+      "BestPractices",
+      "JavaScript",
+      "TypeScript"
+    ]
+  },
+  {
+    "description": "Enforce that `onMouseOver`/`onMouseOut` are accompanied by `onFocus`/`onBlur` for keyboard-only users.",
+    "name": "jsx-a11y/mouse-events-have-key-events",
+    "resourceUrls": [
+      "https://github.com/jsx-eslint/eslint-plugin-jsx-a11y/tree/HEAD/docs/rules/mouse-events-have-key-events.md"
+    ],
+    "severityLevel": 2,
+    "tags": [
+      "Recommended",
+      "React",
+      "BestPractices",
+      "JavaScript",
+      "TypeScript"
+    ]
+  },
+  {
+    "description": "Enforce that the `accessKey` prop is not used on any element to avoid complications with keyboard commands used by a screen reader.",
+    "name": "jsx-a11y/no-access-key",
+    "resourceUrls": [
+      "https://github.com/jsx-eslint/eslint-plugin-jsx-a11y/tree/HEAD/docs/rules/no-access-key.md"
+    ],
+    "severityLevel": 2,
+    "tags": [
+      "Recommended",
+      "React",
+      "BestPractices",
+      "JavaScript",
+      "TypeScript"
+    ]
+  },
+  {
+    "description": "Enforce autoFocus prop is not used.",
+    "name": "jsx-a11y/no-autofocus",
+    "resourceUrls": [
+      "https://github.com/jsx-eslint/eslint-plugin-jsx-a11y/tree/HEAD/docs/rules/no-autofocus.md"
+    ],
+    "severityLevel": 2,
+    "tags": [
+      "Recommended",
+      "React",
+      "BestPractices",
+      "JavaScript",
+      "TypeScript"
+    ]
+  },
+  {
+    "description": "Enforce distracting elements are not used.",
+    "name": "jsx-a11y/no-distracting-elements",
+    "resourceUrls": [
+      "https://github.com/jsx-eslint/eslint-plugin-jsx-a11y/tree/HEAD/docs/rules/no-distracting-elements.md"
+    ],
+    "severityLevel": 2,
+    "tags": [
+      "Recommended",
+      "React",
+      "BestPractices",
+      "JavaScript",
+      "TypeScript"
+    ]
+  },
+  {
+    "description": "Interactive elements should not be assigned non-interactive roles.",
+    "name": "jsx-a11y/no-interactive-element-to-noninteractive-role",
+    "resourceUrls": [
+      "https://github.com/jsx-eslint/eslint-plugin-jsx-a11y/tree/HEAD/docs/rules/no-interactive-element-to-noninteractive-role.md"
+    ],
+    "severityLevel": 3,
+    "tags": [
+      "Recommended",
+      "React",
+      "BestPractices",
+      "JavaScript",
+      "TypeScript"
+    ]
+  },
+  {
+    "description": "Non-interactive elements should not be assigned mouse or keyboard event listeners.",
+    "name": "jsx-a11y/no-noninteractive-element-interactions",
+    "resourceUrls": [
+      "https://github.com/jsx-eslint/eslint-plugin-jsx-a11y/tree/HEAD/docs/rules/no-noninteractive-element-interactions.md"
+    ],
+    "severityLevel": 3,
+    "tags": [
+      "Recommended",
+      "React",
+      "BestPractices",
+      "JavaScript",
+      "TypeScript"
+    ]
+  },
+  {
+    "description": "Non-interactive elements should not be assigned interactive roles.",
+    "name": "jsx-a11y/no-noninteractive-element-to-interactive-role",
+    "resourceUrls": [
+      "https://github.com/jsx-eslint/eslint-plugin-jsx-a11y/tree/HEAD/docs/rules/no-noninteractive-element-to-interactive-role.md"
+    ],
+    "severityLevel": 3,
+    "tags": [
+      "Recommended",
+      "React",
+      "BestPractices",
+      "JavaScript",
+      "TypeScript"
+    ]
+  },
+  {
+    "description": "`tabIndex` should only be declared on interactive elements.",
+    "name": "jsx-a11y/no-noninteractive-tabindex",
+    "resourceUrls": [
+      "https://github.com/jsx-eslint/eslint-plugin-jsx-a11y/tree/HEAD/docs/rules/no-noninteractive-tabindex.md"
+    ],
+    "severityLevel": 3,
+    "tags": [
+      "Recommended",
+      "React",
+      "BestPractices",
+      "JavaScript",
+      "TypeScript"
+    ]
+  },
+  {
+    "description": "Enforce explicit role property is not the same as implicit/default role property on element.",
+    "name": "jsx-a11y/no-redundant-roles",
+    "resourceUrls": [
+      "https://github.com/jsx-eslint/eslint-plugin-jsx-a11y/tree/HEAD/docs/rules/no-redundant-roles.md"
+    ],
+    "severityLevel": 3,
+    "tags": [
+      "Recommended",
+      "React",
+      "BestPractices",
+      "JavaScript",
+      "TypeScript"
+    ]
+  },
+  {
+    "description": "Enforce that non-interactive, visible elements (such as `<div>`) that have click handlers use the role attribute.",
+    "name": "jsx-a11y/no-static-element-interactions",
+    "resourceUrls": [
+      "https://github.com/jsx-eslint/eslint-plugin-jsx-a11y/tree/HEAD/docs/rules/no-static-element-interactions.md"
+    ],
+    "severityLevel": 3,
+    "tags": [
+      "Recommended",
+      "React",
+      "BestPractices",
+      "JavaScript",
+      "TypeScript"
+    ]
+  },
+  {
+    "description": "Enforce that elements with ARIA roles must have all required attributes for that role.",
+    "name": "jsx-a11y/role-has-required-aria-props",
+    "resourceUrls": [
+      "https://github.com/jsx-eslint/eslint-plugin-jsx-a11y/tree/HEAD/docs/rules/role-has-required-aria-props.md"
+    ],
+    "severityLevel": 3,
+    "tags": [
+      "Recommended",
+      "React",
+      "BestPractices",
+      "JavaScript",
+      "TypeScript"
+    ]
+  },
+  {
+    "description": "Enforce that elements with explicit or implicit roles defined contain only `aria-*` properties supported by that `role`.",
+    "name": "jsx-a11y/role-supports-aria-props",
+    "resourceUrls": [
+      "https://github.com/jsx-eslint/eslint-plugin-jsx-a11y/tree/HEAD/docs/rules/role-supports-aria-props.md"
+    ],
+    "severityLevel": 3,
+    "tags": [
+      "Recommended",
+      "React",
+      "BestPractices",
+      "JavaScript",
+      "TypeScript"
+    ]
+  },
+  {
+    "description": "Enforce `scope` prop is only used on `<th>` elements.",
+    "name": "jsx-a11y/scope",
+    "resourceUrls": [
+      "https://github.com/jsx-eslint/eslint-plugin-jsx-a11y/tree/HEAD/docs/rules/scope.md"
+    ],
+    "severityLevel": 3,
+    "tags": [
+      "Recommended",
+      "React",
+      "BestPractices",
+      "JavaScript",
+      "TypeScript"
+    ]
+  },
+  {
+    "description": "Enforce `tabIndex` value is not greater than zero.",
+    "name": "jsx-a11y/tabindex-no-positive",
+    "resourceUrls": [
+      "https://github.com/jsx-eslint/eslint-plugin-jsx-a11y/tree/HEAD/docs/rules/tabindex-no-positive.md"
+    ],
+    "severityLevel": 2,
+    "tags": [
+      "Recommended",
+      "React",
+      "BestPractices",
+      "JavaScript",
+      "TypeScript"
+    ]
+  }
+]

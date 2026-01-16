@@ -215,38 +215,7 @@ export const RULE_MAPPINGS_REACT_A11Y_RECOMMENDED: Record<string, {severity: Sev
 
 // All remaining rules not in the recommended config
 export const RULE_MAPPINGS_REACT_A11Y_NOT_RECOMMENDED: Record<string, {severity: SeverityLevel, tags: string[]}> = {
-    "jsx-a11y/accessible-emoji": { // DEPRECATED
-        severity: SeverityLevel.Low,
-        tags: [ REACT, COMMON_TAGS.CATEGORIES.BEST_PRACTICES, COMMON_TAGS.LANGUAGES.JAVASCRIPT, COMMON_TAGS.LANGUAGES.TYPESCRIPT]
-    },
-    "jsx-a11y/anchor-ambiguous-text": {
-        severity: SeverityLevel.Moderate,
-        tags: [ REACT, COMMON_TAGS.CATEGORIES.BEST_PRACTICES, COMMON_TAGS.LANGUAGES.JAVASCRIPT, COMMON_TAGS.LANGUAGES.TYPESCRIPT]
-    },
-    "jsx-a11y/control-has-associated-label": {
-        severity: SeverityLevel.Low,
-        tags: [ REACT, COMMON_TAGS.CATEGORIES.BEST_PRACTICES, COMMON_TAGS.LANGUAGES.JAVASCRIPT, COMMON_TAGS.LANGUAGES.TYPESCRIPT]
-    },
-    "jsx-a11y/label-has-for": { // DEPRECATED
-        severity: SeverityLevel.Low,
-        tags: [ REACT, COMMON_TAGS.CATEGORIES.BEST_PRACTICES, COMMON_TAGS.LANGUAGES.JAVASCRIPT, COMMON_TAGS.LANGUAGES.TYPESCRIPT]
-    },
-    "jsx-a11y/lang": {
-        severity: SeverityLevel.Moderate,
-        tags: [ REACT, COMMON_TAGS.CATEGORIES.BEST_PRACTICES, COMMON_TAGS.LANGUAGES.JAVASCRIPT, COMMON_TAGS.LANGUAGES.TYPESCRIPT]
-    },
-    "jsx-a11y/no-aria-hidden-on-focusable": {
-        severity: SeverityLevel.Moderate,
-        tags: [ REACT, COMMON_TAGS.CATEGORIES.BEST_PRACTICES, COMMON_TAGS.LANGUAGES.JAVASCRIPT, COMMON_TAGS.LANGUAGES.TYPESCRIPT]
-    },
-    "jsx-a11y/no-onchange": { // DEPRECATED
-        severity: SeverityLevel.Low,
-        tags: [ REACT, COMMON_TAGS.CATEGORIES.BEST_PRACTICES, COMMON_TAGS.LANGUAGES.JAVASCRIPT, COMMON_TAGS.LANGUAGES.TYPESCRIPT]
-    },
-    "jsx-a11y/prefer-tag-over-role": {
-        severity: SeverityLevel.Low,
-        tags: [ REACT, COMMON_TAGS.CATEGORIES.BEST_PRACTICES, COMMON_TAGS.LANGUAGES.JAVASCRIPT, COMMON_TAGS.LANGUAGES.TYPESCRIPT]
-    },
+    
 };
 
 export const RULE_MAPPINGS_REACT_A11Y: Record<string, {severity: SeverityLevel, tags: string[]}> = {

@@ -261,8 +261,7 @@ export class BaseConfigFactory {
             },
             // jsx-a11y plugin config
             {
-                ...(((eslintPluginJsxA11y as unknown) as { flatConfigs?: any, configs?: any }).flatConfigs?.recommended
-                    ?? ((eslintPluginJsxA11y as unknown) as { flatConfigs?: any, configs?: any }).configs?.['flat/recommended']),
+                ...eslintPluginJsxA11y.flatConfigs?.strict,
                 files: filePatterns
             }
         ];

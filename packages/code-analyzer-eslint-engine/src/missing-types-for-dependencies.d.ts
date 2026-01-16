@@ -15,6 +15,34 @@ declare module '@lwc/eslint-plugin-lwc-platform' {
     export = plugin;
 }
 
+// This declaration adds in the missing types for "eslint-plugin-jsx-a11y"
+declare module 'eslint-plugin-jsx-a11y' {
+    import type { ESLint, Linter } from 'eslint';
+    import type { RuleDefinition } from '@eslint/core';
+
+    const plugin: ESLint.Plugin & {
+        readonly rules: Record<string, RuleDefinition>;
+
+        // Newer flat API (some versions)
+        readonly configs?: {
+            readonly flat?: {
+                readonly recommended: Linter.Config;
+                readonly strict: Linter.Config;
+            };
+            // Some versions expose this key instead
+            readonly 'flat/recommended'?: Linter.Config;
+            readonly 'flat/strict'?: Linter.Config;
+        };
+
+        // Some versions expose flat configs here
+        readonly flatConfigs?: {
+            readonly recommended: Linter.Config;
+            readonly strict: Linter.Config;
+        };
+    };
+    export = plugin;
+}
+
 // This declaration adds in the missing types for "@salesforce/eslint-config-lwc" whose package.json file's main field points to:
 //     node_modules/@salesforce/eslint-config-lwc/index.js
 declare module '@salesforce/eslint-config-lwc' {
