@@ -10,7 +10,8 @@ import {createDescribeOptions} from "./test-helpers";
  * Run:
  *   npm run test-typescript -- packages/code-analyzer-eslint-engine/test/generate-react-a11y-goldfile.test.ts
  */
-describe('GENERATE React A11y goldfile (one-off)', () => {
+const RUN_GENERATOR = process.env.GENERATE_REACT_A11Y === 'true';
+(RUN_GENERATOR ? describe : describe.skip)('GENERATE React A11y goldfile (one-off)', () => {
     it('writes test/test-data/rules_ReactA11yConfig.goldfile.json', async () => {
         const config: ESLintEngineConfig = {
             ...DEFAULT_CONFIG,
