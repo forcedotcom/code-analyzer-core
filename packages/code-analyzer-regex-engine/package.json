@@ -15,7 +15,7 @@
   "dependencies": {
     "@salesforce/code-analyzer-engine-api": "0.34.0-SNAPSHOT",
     "@types/node": "^20.0.0",
-    "isbinaryfile": "^6.0.0",
+    "isbinaryfile": "^5.0.0",
     "p-limit": "^3.1.0"
   },
   "devDependencies": {
@@ -38,7 +38,7 @@
   ],
   "scripts": {
     "build": "tsc --build tsconfig.build.json --verbose",
-    "test": "tsc --build tsconfig.json && NODE_OPTIONS='--experimental-vm-modules' jest --coverage",
+    "test": "tsc --build tsconfig.json && jest --coverage",
     "lint": "eslint src/**/*.ts",
     "package": "npm pack",
     "all": "npm run build && npm run lint && npm run test && npm run package",

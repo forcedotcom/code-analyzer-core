@@ -1,16 +1,7 @@
 import fs from "node:fs";
 import path from "node:path";
+import {isBinaryFileSync} from "isbinaryfile";
 import {getMessage} from "./messages";
-
-// Dynamic import for ESM-only isbinaryfile package
-let isBinaryFile: typeof import('isbinaryfile').isBinaryFile;
-const loadIsBinaryFile = async () => {
-    if (!isBinaryFile) {
-        const mod = await import('isbinaryfile');
-        isBinaryFile = mod.isBinaryFile;
-    }
-    return isBinaryFile;
-};
 /**
  * Attempts to create a symlink, and if that fails, attempts to create a link, and if that fails, just copies the file
  * @param srcFile Source file
@@ -54,9 +45,9 @@ export function isZipFile(file: string) {
  * Determines if a file is a non-binary text file
  * @param file a file path or the Buffer of its contents
  */
-export async function isTextFile(file: string | Buffer): Promise<boolean> {
-    const isBinaryFileFn = await loadIsBinaryFile();
-    return !(await isBinaryFileFn(file));
+/* TODO: Make this function async */
+export function isTextFile(file: string | Buffer): boolean {
+    return !isBinaryFileSync(file);
 }
 
 /**
