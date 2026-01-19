@@ -12,8 +12,17 @@ import path from "node:path";
 import fs from "node:fs";
 import * as fsp from 'node:fs/promises';
 import {RegexRule, RegexRules} from "./config";
-import {isBinaryFile} from "isbinaryfile";
 import {convertToRegex, PromiseExecutionLimiter} from "./utils";
+
+// Dynamic import for ESM-only isbinaryfile package
+let isBinaryFile: typeof import('isbinaryfile').isBinaryFile;
+const loadIsBinaryFile = async () => {
+    if (!isBinaryFile) {
+        const mod = await import('isbinaryfile');
+        isBinaryFile = mod.isBinaryFile;
+    }
+    return isBinaryFile;
+};
 
 const TEXT_BASED_FILE_EXTS = new Set<string>(
     [
@@ -218,7 +227,8 @@ function contextuallyDeriveEolString(contents: string): string {
 
 async function isTextFile(fileName: string): Promise<boolean> {
     const ext: string = path.extname(fileName).toLowerCase();
-    return TEXT_BASED_FILE_EXTS.has(ext) || !(await isBinaryFile(fileName));
+    const isBinaryFileFn = await loadIsBinaryFile();
+    return TEXT_BASED_FILE_EXTS.has(ext) || !(await isBinaryFileFn(fileName));
 }
 
 type AsyncFilterFnc<T> = (value: T) => Promise<boolean>;
