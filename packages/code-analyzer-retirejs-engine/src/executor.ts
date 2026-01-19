@@ -159,7 +159,7 @@ export class AdvancedRetireJsExecutor implements RetireJsExecutor {
      * Note that this execute function assumes that only files are passed in.
      */
     async execute(targetFiles: string[], workingFolder: string): Promise<Finding[]> {
-        const { textFiles, zipFiles } = await separateTextAndZipFiles(targetFiles);
+        const { textFiles, zipFiles } = separateTextAndZipFiles(targetFiles);
         if (textFiles.length + zipFiles.length === 0) {
             return []; // Quick return
         }
@@ -256,11 +256,11 @@ export class AdvancedRetireJsExecutor implements RetireJsExecutor {
     }
 }
 
-async function separateTextAndZipFiles(files: string[]): Promise<{textFiles: string[], zipFiles: string[]}> {
+function separateTextAndZipFiles(files: string[]): {textFiles: string[], zipFiles: string[]} {
     const textFiles: string[] = [];
     const zipFiles: string[] = [];
     for (const file of files) {
-        if (file.toLowerCase().endsWith(".js") || (await utils.isTextFile(file))) {
+        if (file.toLowerCase().endsWith(".js") || utils.isTextFile(file)) {
             textFiles.push(file);
         } else if (utils.isZipFile(file)) {
             zipFiles.push(file);
