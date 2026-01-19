@@ -224,7 +224,7 @@ export class AdvancedRetireJsExecutor implements RetireJsExecutor {
         const zip: DecoratedStreamZip = new DecoratedStreamZip({file: zipFile, storeEntries: true});
         const entries = await zip.entries();
         for (const entry of Object.values(entries)) {
-            if (entry.isDirectory || !(await utils.isTextFile(await zip.entryData(entry.name)))) {
+            if (entry.isDirectory || !utils.isTextFile(await zip.entryData(entry.name))) {
                 continue; // Skip directories and non-text files.
             }
             const zippedFileInfo: path.ParsedPath = path.parse(entry.name);
