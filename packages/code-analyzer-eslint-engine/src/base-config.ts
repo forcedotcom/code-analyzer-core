@@ -6,6 +6,7 @@ import salesforceEslintConfigLwc from "@salesforce/eslint-config-lwc";
 import sldsEslintPlugin from "@salesforce-ux/eslint-plugin-slds";
 import eslintPluginReact from "eslint-plugin-react";
 import eslintPluginReactHooks from "eslint-plugin-react-hooks";
+import eslintPluginJsxA11y from "eslint-plugin-jsx-a11y";
 import {ESLintEngineConfig} from "./config";
 import globals from "globals";
 
@@ -230,6 +231,8 @@ export class BaseConfigFactory {
         // These rules are not needed for React 17+ which is now the standard (released Oct 2020)
         const jsxRuntimeConfig = eslintPluginReact.configs.flat['jsx-runtime'];
 
+
+
         return [
             // React all rules config
             {
@@ -259,6 +262,11 @@ export class BaseConfigFactory {
                     'react-hooks/rules-of-hooks': 'error',
                     'react-hooks/exhaustive-deps': 'warn'
                 }
+            },
+            // jsx-a11y plugin config
+            {
+                ...eslintPluginJsxA11y.flatConfigs?.strict,
+                files: filePatterns
             }
         ];
     }
