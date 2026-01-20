@@ -70,16 +70,18 @@ const RUN = process.env.ESLINT_ENGINE_PERF === 'true';
         }, 50);
 
         // Measure wall time of describeRules (rule discovery).
+        const mem0 = process.memoryUsage().rss;
         const t0 = performance.now();
         const rules: RuleDescription[] = await engine.describeRules(createDescribeOptions(ws));
         const t1 = performance.now();
+        const mem1 = process.memoryUsage().rss;
         clearInterval(sampler);
 
         // eslint-disable-next-line no-console
         console.log(JSON.stringify({
             rule_count: rules.length,
             describe_ms: Math.round(t1 - t0),
-            peak_rss_mb: Math.round(peak.rss / (1024 * 1024))
+            peak_rss_mb: Math.round(Math.max(peak.rss, mem0, mem1) / (1024 * 1024))
         }, null, 2));
 
         expect(rules.length).toBeGreaterThan(0);
