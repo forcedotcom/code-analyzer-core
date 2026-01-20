@@ -97,9 +97,13 @@ export class BaseConfigFactory {
         const lwcFilePatterns = lwcExtensions.map(ext => `**/*${ext}`);
 
         // Base JS rules (eslintJs.configs.all) - applies to ALL JS files including .jsx
+        // Includes Babel parser with @babel/preset-react to enable JSX parsing for .jsx files
         const baseJsConfig: Linter.Config = {
             ...eslintJs.configs.all,
-            files: allJsFilePatterns
+            files: allJsFilePatterns,
+            languageOptions: {
+                ...configs[0].languageOptions  // Reuses Babel parser with @babel/preset-react
+            }
         };
 
         // This one rule makes eslint throw an exception if the user doesn't have jest installed (which should be

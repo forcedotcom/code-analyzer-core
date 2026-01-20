@@ -486,6 +486,10 @@ export const RULE_MAPPINGS_TYPESCRIPT_ESLINT: Record<string, {severity: Severity
         severity: SeverityLevel.Moderate,
         tags: [/* NOT RECOMMENDED */    COMMON_TAGS.CATEGORIES.BEST_PRACTICES, COMMON_TAGS.LANGUAGES.TYPESCRIPT]
     },
+    "@typescript-eslint/strict-void-return": {
+        severity: SeverityLevel.High,
+        tags: [/* NOT RECOMMENDED */    COMMON_TAGS.CATEGORIES.ERROR_PRONE,    COMMON_TAGS.LANGUAGES.TYPESCRIPT]
+    },
     "@typescript-eslint/switch-exhaustiveness-check": {
         severity: SeverityLevel.Moderate,
         tags: [/* NOT RECOMMENDED */    COMMON_TAGS.CATEGORIES.BEST_PRACTICES, COMMON_TAGS.LANGUAGES.TYPESCRIPT]

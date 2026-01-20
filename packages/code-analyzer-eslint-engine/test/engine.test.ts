@@ -906,6 +906,31 @@ describe('Typical tests for the runRules method of ESLintEngine', () => {
             v.codeLocations[0].file.endsWith('.jsx'));
         expect(jsxViolations.length).toBe(0);
     });
+
+    it('When runRules is called on .jsx files with LWC+JS configs enabled but React disabled, JSX parsing still works', async () => {
+        // This is a regression test for the bug where .jsx files failed to parse with "Unexpected token <"
+        // when both LWC and JS base configs were enabled. The issue was that .jsx files were excluded from
+        // the LWC config patterns, so they didn't get the Babel preset-react parser.
+        const configWithoutReact: ESLintEngineConfig = {
+            ...DEFAULT_CONFIG,
+            config_root: __dirname,
+            disable_lwc_base_config: false,
+            disable_javascript_base_config: false,
+            disable_react_base_config: true  // React rules disabled, but JSX parsing should still work
+        };
+        const engine: Engine = await createEngineFromPlugin(configWithoutReact);
+        const runOptions: RunOptions = createRunOptions(new Workspace('id', [workspaceWithReactFiles]));
+        
+        // Run a base JS rule on .jsx files - if JSX parsing fails, this will throw an error
+        const results: EngineRunResults = await engine.runRules(['no-console'], runOptions);
+
+        // Should have violations from .jsx files (App.jsx has console.log)
+        // If JSX parsing failed, we'd get errors instead of violations
+        const jsxViolations = results.violations.filter(v => 
+            v.codeLocations[0].file.endsWith('.jsx'));
+        expect(jsxViolations.length).toBeGreaterThan(0);
+        expect(jsxViolations.every(v => v.ruleName === 'no-console')).toBe(true);
+    });
 });
 
 describe('Tests for React Hooks rules', () => {

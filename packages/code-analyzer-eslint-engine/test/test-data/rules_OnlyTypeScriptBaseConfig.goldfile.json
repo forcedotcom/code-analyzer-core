@@ -1471,6 +1471,18 @@
     ]
   },
   {
+    "description": "Disallow passing a value-returning function in a position accepting a void function",
+    "name": "@typescript-eslint/strict-void-return",
+    "resourceUrls": [
+      "https://typescript-eslint.io/rules/strict-void-return"
+    ],
+    "severityLevel": 2,
+    "tags": [
+      "ErrorProne",
+      "TypeScript"
+    ]
+  },
+  {
     "description": "Require switch-case statements to be exhaustive",
     "name": "@typescript-eslint/switch-exhaustiveness-check",
     "resourceUrls": [
