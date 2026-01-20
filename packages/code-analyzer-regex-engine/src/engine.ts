@@ -11,8 +11,8 @@ import {
 import path from "node:path";
 import fs from "node:fs";
 import * as fsp from 'node:fs/promises';
+import {isBinaryFile} from 'isbinaryfile';
 import {RegexRule, RegexRules} from "./config";
-import {isBinaryFile} from "isbinaryfile";
 import {convertToRegex, PromiseExecutionLimiter} from "./utils";
 
 const TEXT_BASED_FILE_EXTS = new Set<string>(
