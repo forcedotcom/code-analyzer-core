@@ -2,3 +2,4 @@
 export const LWC = "LWC";
 export const SLDS = "SLDS";
 export const REACT = "React";
+export const A11Y = "A11y";

@@ -64,9 +64,10 @@ describe('Tests for the describeRules method of ESLintEngine', () => {
     const CSS_CONFIG_RULES: RuleDescription[] = loadRuleDescriptions('rules_OnlySldsCssBaseConfig.goldfile.json');
     const HTML_CONFIG_RULES: RuleDescription[] = loadRuleDescriptions('rules_OnlySldsHtmlBaseConfig.goldfile.json');
     const REACT_CONFIG_RULES: RuleDescription[] = loadRuleDescriptions('rules_ReactConfig.goldfile.json');
+    const REACT_A11Y_CONFIG_RULES: RuleDescription[] = loadRuleDescriptions('rules_ReactA11yConfig.goldfile.json');
     const SLDS_CONFIG_RULES: RuleDescription[] = makeUniqueAndSorted([...CSS_CONFIG_RULES, ...HTML_CONFIG_RULES]);
     // React rules (including React Hooks) apply to all JS files - if no React code, rules simply don't report violations
-    const DEFAULT_RULES: RuleDescription[] = makeUniqueAndSorted([...LWC_CONFIG_RULES, ...JS_CONFIG_RULES, ...TS_CONFIG_RULES, ...SLDS_CONFIG_RULES, ...REACT_CONFIG_RULES]);
+    const DEFAULT_RULES: RuleDescription[] = makeUniqueAndSorted([...LWC_CONFIG_RULES, ...JS_CONFIG_RULES, ...TS_CONFIG_RULES, ...SLDS_CONFIG_RULES, ...REACT_CONFIG_RULES, ...REACT_A11Y_CONFIG_RULES]);
     const CUSTOM_RULES: RuleDescription[] = loadRuleDescriptions('rules_OnlyCustomConfigWithNewRules.goldfile.json');
 
     // The config for workspaceThatHasCustomConfigModifyingExistingRules modifies some rule properties. This does not
@@ -142,7 +143,7 @@ describe('Tests for the describeRules method of ESLintEngine', () => {
                 path.join(workspaceWithNoCustomConfig, 'dummy2.ts')
             ])));
         // No JS files means no JS rules and no React rules (React applies to JS files for now, we will add TS support in next iteration)
-        expect(ruleDescriptions).toEqual(makeUniqueAndSorted([...TS_CONFIG_RULES, ...REACT_CONFIG_RULES]));
+        expect(ruleDescriptions).toEqual(makeUniqueAndSorted([...TS_CONFIG_RULES, ...REACT_CONFIG_RULES, ...REACT_A11Y_CONFIG_RULES]));
     });
 
     it('When describing rules from a workspace with no typescript files, then no typescript rules should returned', async () => {
@@ -151,7 +152,7 @@ describe('Tests for the describeRules method of ESLintEngine', () => {
                 path.join(workspaceWithNoCustomConfig, 'dummy1.js'),
                 path.join(workspaceWithNoCustomConfig, 'dummy3.txt')])));
         // React rules (including React Hooks) included - applies to .js files
-        expect(ruleDescriptions).toEqual(makeUniqueAndSorted([...LWC_CONFIG_RULES, ...JS_CONFIG_RULES, ...REACT_CONFIG_RULES]));
+        expect(ruleDescriptions).toEqual(makeUniqueAndSorted([...LWC_CONFIG_RULES, ...JS_CONFIG_RULES, ...REACT_CONFIG_RULES, ...REACT_A11Y_CONFIG_RULES]));
     });
 
     it('When describing rules from a workspace with no javascript or typescript files, then no rules should return', async () => {
@@ -173,7 +174,7 @@ describe('Tests for the describeRules method of ESLintEngine', () => {
         });
         const ruleDescriptions: RuleDescription[] = await engine.describeRules(createDescribeOptions());
         // React rules (including React Hooks) included - no workspace provided means placeholder files used (includes .jsx)
-        expect(ruleDescriptions).toEqual(makeUniqueAndSorted([...LWC_CONFIG_RULES, ...TS_CONFIG_RULES, ...SLDS_CONFIG_RULES, ...REACT_CONFIG_RULES]));
+        expect(ruleDescriptions).toEqual(makeUniqueAndSorted([...LWC_CONFIG_RULES, ...TS_CONFIG_RULES, ...SLDS_CONFIG_RULES, ...REACT_CONFIG_RULES, ...REACT_A11Y_CONFIG_RULES]));
     });
 
     it('When disable_lwc_base_config=true, then the lwc rules are removed but javascript rules remain', async() => {
@@ -182,7 +183,7 @@ describe('Tests for the describeRules method of ESLintEngine', () => {
         });
         const ruleDescriptions: RuleDescription[] = await engine.describeRules(createDescribeOptions());
         // React rules (including React Hooks) included - no workspace provided means placeholder files used (includes .jsx)
-        expect(ruleDescriptions).toEqual(makeUniqueAndSorted([...JS_CONFIG_RULES, ...TS_CONFIG_RULES, ...SLDS_CONFIG_RULES, ...REACT_CONFIG_RULES]));
+        expect(ruleDescriptions).toEqual(makeUniqueAndSorted([...JS_CONFIG_RULES, ...TS_CONFIG_RULES, ...SLDS_CONFIG_RULES, ...REACT_CONFIG_RULES, ...REACT_A11Y_CONFIG_RULES]));
     });
 
     it('When disable_slds_base_config=true, then the slds rules are removed but other rules remain', async() => {
@@ -191,7 +192,7 @@ describe('Tests for the describeRules method of ESLintEngine', () => {
         });
         const ruleDescriptions: RuleDescription[] = await engine.describeRules(createDescribeOptions());
         // React rules (including React Hooks) included - no workspace provided means placeholder files used (includes .jsx)
-        expect(ruleDescriptions).toEqual(makeUniqueAndSorted([...LWC_CONFIG_RULES, ...JS_CONFIG_RULES, ...TS_CONFIG_RULES, ...REACT_CONFIG_RULES]));
+        expect(ruleDescriptions).toEqual(makeUniqueAndSorted([...LWC_CONFIG_RULES, ...JS_CONFIG_RULES, ...TS_CONFIG_RULES, ...REACT_CONFIG_RULES, ...REACT_A11Y_CONFIG_RULES]));
     });
 
     it('When disable_typescript_base_config=true, then the typescript rules are removed', async() => {
@@ -200,7 +201,7 @@ describe('Tests for the describeRules method of ESLintEngine', () => {
         });
         const ruleDescriptions: RuleDescription[] = await engine.describeRules(createDescribeOptions());
         // React rules included - no workspace provided means placeholder files used (includes .jsx)
-        expect(ruleDescriptions).toEqual(makeUniqueAndSorted([...LWC_CONFIG_RULES, ...JS_CONFIG_RULES, ...SLDS_CONFIG_RULES, ...REACT_CONFIG_RULES]));
+        expect(ruleDescriptions).toEqual(makeUniqueAndSorted([...LWC_CONFIG_RULES, ...JS_CONFIG_RULES, ...SLDS_CONFIG_RULES, ...REACT_CONFIG_RULES, ...REACT_A11Y_CONFIG_RULES]));
     });
 
     it('When disable_lwc_base_config=true, disable_typescript_base_config=true, and disable_slds_base_config=true, then only base javascript and react rules remain', async() => {
@@ -211,7 +212,7 @@ describe('Tests for the describeRules method of ESLintEngine', () => {
         });
         const ruleDescriptions: RuleDescription[] = await engine.describeRules(createDescribeOptions());
         // React rules (including React Hooks) included - no workspace provided means placeholder files used (includes .jsx)
-        expect(ruleDescriptions).toEqual(makeUniqueAndSorted([...JS_CONFIG_RULES, ...REACT_CONFIG_RULES]));
+        expect(ruleDescriptions).toEqual(makeUniqueAndSorted([...JS_CONFIG_RULES, ...REACT_CONFIG_RULES, ...REACT_A11Y_CONFIG_RULES]));
     });
 
     it('When disable_javascript_base_config=true, disable_lwc_base_config=true, and disable_slds_base_config=true, then typescript and react rules remain', async() => {
@@ -222,7 +223,7 @@ describe('Tests for the describeRules method of ESLintEngine', () => {
         });
         const ruleDescriptions: RuleDescription[] = await engine.describeRules(createDescribeOptions());
         // React rules included - React is independently controlled, not dependent on JS/LWC config
-        expect(ruleDescriptions).toEqual(makeUniqueAndSorted([...TS_CONFIG_RULES, ...REACT_CONFIG_RULES]));
+        expect(ruleDescriptions).toEqual(makeUniqueAndSorted([...TS_CONFIG_RULES, ...REACT_CONFIG_RULES, ...REACT_A11Y_CONFIG_RULES]));
     });
 
     it('When disable_javascript_base_config=true, disable_typescript_base_config=true, and and disable_slds_base_config=true, then only base lwc and react rules remain', async() => {
@@ -233,7 +234,7 @@ describe('Tests for the describeRules method of ESLintEngine', () => {
         });
         const ruleDescriptions: RuleDescription[] = await engine.describeRules(createDescribeOptions());
         // React rules included - no workspace provided means placeholder files used (includes .jsx)
-        expect(ruleDescriptions).toEqual(makeUniqueAndSorted([...LWC_CONFIG_RULES, ...REACT_CONFIG_RULES]));
+        expect(ruleDescriptions).toEqual(makeUniqueAndSorted([...LWC_CONFIG_RULES, ...REACT_CONFIG_RULES, ...REACT_A11Y_CONFIG_RULES]));
     });
 
     it('When disable_react_base_config=true, then the react rules are removed but other rules remain', async() => {
@@ -249,7 +250,7 @@ describe('Tests for the describeRules method of ESLintEngine', () => {
         const ruleDescriptions: RuleDescription[] = await engine.describeRules(createDescribeOptions(
             new Workspace('id', [workspaceWithReactFiles])));
         // Should include LWC, JS, and React rules (for .js and .jsx files)
-        expect(ruleDescriptions).toEqual(makeUniqueAndSorted([...LWC_CONFIG_RULES, ...JS_CONFIG_RULES, ...REACT_CONFIG_RULES]));
+        expect(ruleDescriptions).toEqual(makeUniqueAndSorted([...LWC_CONFIG_RULES, ...JS_CONFIG_RULES, ...REACT_CONFIG_RULES, ...REACT_A11Y_CONFIG_RULES]));
     });
 
     it('When all base configs except react are disabled, then only react rules remain', async() => {
@@ -261,7 +262,7 @@ describe('Tests for the describeRules method of ESLintEngine', () => {
         });
         const ruleDescriptions: RuleDescription[] = await engine.describeRules(createDescribeOptions());
         // React rules included - React is independently controlled
-        expect(ruleDescriptions).toEqual(REACT_CONFIG_RULES);
+        expect(ruleDescriptions).toEqual(makeUniqueAndSorted([...REACT_CONFIG_RULES, ...REACT_A11Y_CONFIG_RULES]));
     });
 
     it('When disable_javascript_base_config=true, disable_typescript_base_config=true, and and disable_lwc_base_config=true, then only slds and react rules remain', async() => {
@@ -272,7 +273,7 @@ describe('Tests for the describeRules method of ESLintEngine', () => {
         });
         const ruleDescriptions: RuleDescription[] = await engine.describeRules(createDescribeOptions());
         // React rules included - React is independently controlled
-        expect(ruleDescriptions).toEqual(makeUniqueAndSorted([...SLDS_CONFIG_RULES, ...REACT_CONFIG_RULES]));
+        expect(ruleDescriptions).toEqual(makeUniqueAndSorted([...SLDS_CONFIG_RULES, ...REACT_CONFIG_RULES, ...REACT_A11Y_CONFIG_RULES]));
     });
 
     it('When all *_base_config equal true and no custom config exists, then no rules should exist', async() => {
@@ -296,7 +297,7 @@ describe('Tests for the describeRules method of ESLintEngine', () => {
         });
         const ruleDescriptions: RuleDescription[] = await engine.describeRules(createDescribeOptions());
         // React rules NOT included - React only applies to .jsx which is a JS extension
-        expect(ruleDescriptions).toEqual(makeUniqueAndSorted([...TS_CONFIG_RULES, ...SLDS_CONFIG_RULES, ...REACT_CONFIG_RULES]));
+        expect(ruleDescriptions).toEqual(makeUniqueAndSorted([...TS_CONFIG_RULES, ...SLDS_CONFIG_RULES, ...REACT_CONFIG_RULES, ...REACT_A11Y_CONFIG_RULES]));
     });
 
 
@@ -313,7 +314,7 @@ describe('Tests for the describeRules method of ESLintEngine', () => {
         });
         const ruleDescriptions: RuleDescription[] = await engine.describeRules(createDescribeOptions());
         // React rules included - TSX is a TS extension
-        expect(ruleDescriptions).toEqual(makeUniqueAndSorted([...TS_CONFIG_RULES, ...REACT_CONFIG_RULES]));
+        expect(ruleDescriptions).toEqual(makeUniqueAndSorted([...TS_CONFIG_RULES, ...REACT_CONFIG_RULES, ...REACT_A11Y_CONFIG_RULES]));
     });
 
     it('When file_extensions.typescript is empty, then typescript rules do not get picked up', async () => {
@@ -325,7 +326,7 @@ describe('Tests for the describeRules method of ESLintEngine', () => {
         });
         const ruleDescriptions: RuleDescription[] = await engine.describeRules(createDescribeOptions());
         // React rules included - no workspace provided means placeholder files used (includes .jsx)
-        expect(ruleDescriptions).toEqual(makeUniqueAndSorted([...LWC_CONFIG_RULES, ...JS_CONFIG_RULES, ...SLDS_CONFIG_RULES, ...REACT_CONFIG_RULES]));
+        expect(ruleDescriptions).toEqual(makeUniqueAndSorted([...LWC_CONFIG_RULES, ...JS_CONFIG_RULES, ...SLDS_CONFIG_RULES, ...REACT_CONFIG_RULES, ...REACT_A11Y_CONFIG_RULES]));
     });
 
     it('When file_extensions.html is empty, then html rules do not get picked up', async () => {
@@ -337,7 +338,7 @@ describe('Tests for the describeRules method of ESLintEngine', () => {
         });
         const ruleDescriptions: RuleDescription[] = await engine.describeRules(createDescribeOptions());
         // React rules included - no workspace provided means placeholder files used (includes .jsx)
-        expect(ruleDescriptions).toEqual(makeUniqueAndSorted([...LWC_CONFIG_RULES, ...JS_CONFIG_RULES, ...TS_CONFIG_RULES, ...CSS_CONFIG_RULES, ...REACT_CONFIG_RULES]));
+        expect(ruleDescriptions).toEqual(makeUniqueAndSorted([...LWC_CONFIG_RULES, ...JS_CONFIG_RULES, ...TS_CONFIG_RULES, ...CSS_CONFIG_RULES, ...REACT_CONFIG_RULES, ...REACT_A11Y_CONFIG_RULES]));
     });
 
     it('When file_extensions.css is empty, then css rules do not get picked up', async () => {
@@ -349,7 +350,7 @@ describe('Tests for the describeRules method of ESLintEngine', () => {
         });
         const ruleDescriptions: RuleDescription[] = await engine.describeRules(createDescribeOptions());
         // React rules included - no workspace provided means placeholder files used (includes .jsx)
-        expect(ruleDescriptions).toEqual(makeUniqueAndSorted([...LWC_CONFIG_RULES, ...JS_CONFIG_RULES, ...TS_CONFIG_RULES, ...HTML_CONFIG_RULES, ...REACT_CONFIG_RULES]));
+        expect(ruleDescriptions).toEqual(makeUniqueAndSorted([...LWC_CONFIG_RULES, ...JS_CONFIG_RULES, ...TS_CONFIG_RULES, ...HTML_CONFIG_RULES, ...REACT_CONFIG_RULES, ...REACT_A11Y_CONFIG_RULES]));
     });
 
     it('When file_extensions are all empty, then no rules are returned', async () => {
@@ -473,7 +474,7 @@ describe('Tests for the describeRules method of ESLintEngine', () => {
         const ruleDescriptions: RuleDescription[] = await engine.describeRules(createDescribeOptions(
             new Workspace('id', [path.join(testDataFolder, 'workspaceWithFlatConfigJs')])));
         // No JS files after ignores means no JS rules and no React rules (React applies to JS files)
-        expect(ruleDescriptions).toEqual(makeUniqueAndSorted([...TS_CONFIG_RULES, ...SLDS_CONFIG_RULES, ...REACT_CONFIG_RULES]));
+        expect(ruleDescriptions).toEqual(makeUniqueAndSorted([...TS_CONFIG_RULES, ...SLDS_CONFIG_RULES, ...REACT_CONFIG_RULES, ...REACT_A11Y_CONFIG_RULES]));
     });
 
     it('When a .eslintignore file is auto discovered and a flat eslint config file is specified, then we warn that we ignore it', async () => {
