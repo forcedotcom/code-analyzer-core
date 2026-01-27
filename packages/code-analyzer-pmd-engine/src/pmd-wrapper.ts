@@ -48,6 +48,7 @@ export type PmdProcessingError = {
 
 const STDOUT_PROGRESS_MARKER = '[Progress]';
 const STDOUT_ERROR_MARKER = '[Error] ';
+const STDOUT_WARNING_MARKER = '[Warning] ';
 
 export class PmdWrapperInvoker {
     private readonly javaCommandExecutor: JavaCommandExecutor;
@@ -77,7 +78,11 @@ export class PmdWrapperInvoker {
             if (stdOutMsg.startsWith(STDOUT_ERROR_MARKER)) {
                 const errorMessage: string = stdOutMsg.slice(STDOUT_ERROR_MARKER.length).replaceAll('{NEWLINE}','\n');
                 throw new Error(errorMessage);
-            } else {
+            } else if (stdOutMsg.startsWith(STDOUT_WARNING_MARKER)) {
+                const warningMessage: string = stdOutMsg.slice(STDOUT_WARNING_MARKER.length).replaceAll('{NEWLINE}','\n');
+                this.emitLogEvent(LogLevel.Warn, `[JAVA StdOut]: ${warningMessage}`);
+            }
+            else {
                 this.emitLogEvent(LogLevel.Fine, `[JAVA StdOut]: ${stdOutMsg}`)
             }
         });
