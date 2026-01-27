@@ -169,13 +169,20 @@ class PmdErrorListener implements PmdReporter {
             }
             throw new RuntimeException("PMD threw an unexpected exception:\n" + message, throwable);
         } else if (level == Level.WARN && s != null){
+            // PMD sometimes logs deprecation notices as WARN without a Throwable.
+            // Example: "Discontinue using Rule category/... as it is scheduled for removal..."
+            // We surface these to stdout with a [Warning] marker so callers can display them,
+            // but we do not fail the operation.
             String message = MessageFormat.format(s, objects);
             if (message.contains("Discontinue using Rule ")) {
                 System.out.println("[Warning] " + message.replaceAll("\n","{NEWLINE}"));
             } else {
+                // Any other WARN without a Throwable is unexpected in our workflows; treat as fatal
+                // so configuration/environment issues are not silently ignored.
                 throw new RuntimeException("PMD threw an unexpected exception:\n" + message);
             }
-        }else if (s != null) {
+        } else if (s != null) {
+            // Non-WARN messages without a Throwable are unexpected; fail fast to aid diagnosis.
             String message = MessageFormat.format(s, objects);
             throw new RuntimeException("PMD threw an unexpected exception:\n" + message);
         }
