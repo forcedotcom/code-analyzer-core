@@ -170,7 +170,11 @@ class PmdErrorListener implements PmdReporter {
             throw new RuntimeException("PMD threw an unexpected exception:\n" + message, throwable);
         } else if (level == Level.WARN && s != null){
             String message = MessageFormat.format(s, objects);
-            System.out.println("[Warning] " + message.replaceAll("\n","{NEWLINE}"));
+            if (message.contains("Discontinue using Rule ")) {
+                System.out.println("[Warning] " + message.replaceAll("\n","{NEWLINE}"));
+            } else {
+                throw new RuntimeException("PMD threw an unexpected exception:\n" + message);
+            }
         }else if (s != null) {
             String message = MessageFormat.format(s, objects);
             throw new RuntimeException("PMD threw an unexpected exception:\n" + message);
