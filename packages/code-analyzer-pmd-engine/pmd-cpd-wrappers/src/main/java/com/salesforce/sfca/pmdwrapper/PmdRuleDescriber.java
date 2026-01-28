@@ -151,29 +151,65 @@ class PmdRuleDescriber {
 class PmdErrorListener implements PmdReporter {
     @Override
     public void logEx(Level level, @Nullable String s, Object[] objects, @Nullable Throwable throwable) {
+        // Unified handling for PMD log events:
+        //  - If a Throwable is present, decide whether to surface it as a specific ruleset load error
+        //    (more actionable message) or as a generic unexpected PMD exception.
+        //  - If there is no Throwable:
+        //      * A WARN containing a deprecation notice ("Discontinue using Rule ...") is surfaced
+        //        as a non-fatal [Warning] to stdout so callers can display it.
+        //      * Any other message is unexpected for our flows; fail fast with a RuntimeException
+        //        so configuration/environment issues are not silently ignored.
         if (throwable != null) {
-            String message = throwable.getMessage();
-            if (throwable instanceof RuleSetLoadException && message.contains("Cannot load ruleset ")) {
-                Pattern pattern = Pattern.compile("Cannot load ruleset (.+?): ");
-                Matcher matcher = pattern.matcher(message);
-                if (matcher.find()) {
-                    String ruleset = matcher.group(1).trim();
-                    String errorMessage = "PMD errored when attempting to load a custom ruleset \"" + ruleset + "\". " +
-                            "Make sure the resource is a valid ruleset file on disk or on the Java classpath.\n\n" +
-                            "PMD Exception: \n" + message.lines().map(l -> "  | " + l).collect(Collectors.joining("n"));
-
-                    // The typescript side can more easily handle error messages that come from stdout with "[Error] " marker
-                    System.out.println("[Error] " + errorMessage.replaceAll("\n","{NEWLINE}"));
-                    throw new RuntimeException(errorMessage, throwable);
-                }
-            }
-            throw new RuntimeException("PMD threw an unexpected exception:\n" + message, throwable);
-        } else if (s != null) {
-            String message = MessageFormat.format(s, objects);
-            throw new RuntimeException("PMD threw an unexpected exception:\n" + message);
+            handleThrowable(throwable);
+            return;
         }
+        if (s == null) {
+            return; // nothing to report
+        }
+        final String message = MessageFormat.format(s, objects);
+        if (level == Level.WARN && isDeprecationWarning(message)) {
+            // Non-fatal deprecation: make it easy to capture and display without failing the operation
+            printStdout("Warning", message);
+            return;
+        }
+        // Any other logged message without a throwable is unexpected → fail fast
+        throw new RuntimeException("PMD threw an unexpected exception:\n" + message);
     }
 
+    /**
+     * Handles PMD throwables emitted through the reporter.
+     * - For RuleSetLoadException we extract the ruleset reference and provide a clearer message.
+     * - Otherwise we surface a generic unexpected PMD exception.
+     */
+    private static void handleThrowable(Throwable t) {
+        final String msg = t.getMessage();
+        if (t instanceof RuleSetLoadException && msg != null && msg.contains("Cannot load ruleset ")) {
+            final String ruleset = extractRuleset(msg);
+            final String formatted = "PMD errored when attempting to load a custom ruleset \"" + ruleset + "\". " +
+                    "Make sure the resource is a valid ruleset file on disk or on the Java classpath.\n\n" +
+                    "PMD Exception: \n" + msg.lines().map(l -> "  | " + l).collect(Collectors.joining("n"));
+            // The TypeScript side can more easily handle error messages that come from stdout with "[Error]" marker.
+            printStdout("Error", formatted);
+            throw new RuntimeException(formatted, t);
+        }
+        throw new RuntimeException("PMD threw an unexpected exception:\n" + msg, t);
+    }
+
+    /** Returns true if this is a deprecation warning PMD emits for legacy rule references. */
+    private static boolean isDeprecationWarning(String msg) {
+        return msg.contains("Discontinue using Rule ");
+    }
+
+    /** Extracts the ruleset path from PMD's "Cannot load ruleset ..." message. */
+    private static String extractRuleset(String msg) {
+        Matcher m = Pattern.compile("Cannot load ruleset (.+?): ").matcher(msg);
+        return m.find() ? m.group(1).trim() : "<unknown>";
+    }
+
+    /** Prints a tagged message to stdout, replacing newlines for easy single-line capture. */
+    private static void printStdout(String kind, String msg) {
+        System.out.println("[" + kind + "] " + msg.replaceAll("\n","{NEWLINE}"));
+    }
     // These methods aren't needed or used, but they are required to be implemented (since the interface does not give them default implementations)
     @Override
     public boolean isLoggable(Level level) {
