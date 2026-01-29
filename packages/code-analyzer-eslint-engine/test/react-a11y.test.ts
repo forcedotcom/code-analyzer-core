@@ -8,8 +8,6 @@ describe('jsx-a11y plugin integration', () => {
     it('exposes core jsx-a11y rules with React tagging', async () => {
         const config: ESLintEngineConfig = {
             ...DEFAULT_CONFIG,
-            // Enable React base config for tests
-            disable_react_base_config: false,
             config_root: __dirname
         };
         const enginePlugin: ESLintEnginePlugin = new ESLintEnginePlugin();
@@ -34,7 +32,6 @@ describe('jsx-a11y plugin integration', () => {
     it('includes all A11y-tagged rules from rule-mappings', async () => {
         const config: ESLintEngineConfig = {
             ...DEFAULT_CONFIG,
-            disable_react_base_config: false,
             config_root: __dirname
         };
         const engine: Engine = await new ESLintEnginePlugin().createEngine('eslint', config);

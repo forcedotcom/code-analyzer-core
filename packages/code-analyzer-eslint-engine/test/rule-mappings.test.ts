@@ -7,10 +7,8 @@ import { createDescribeOptions } from "./test-helpers";
 describe('Tests for the rule-mappings', () => {
     it('Test that the list of all bundled rules matches our RULE_MAPPINGS list', async () => {
         const enginePlugin: ESLintEnginePlugin = new ESLintEnginePlugin();
-        // React is gated in production (default: true). For testing, enable it (eventual default: false)
         const engine: Engine = await enginePlugin.createEngine('eslint', {
-            ...DEFAULT_CONFIG,
-            disable_react_base_config: false
+            ...DEFAULT_CONFIG
         });
         const ruleDescriptions: RuleDescription[] = await engine.describeRules(createDescribeOptions());
         const actualRuleNames: Set<string> = new Set(ruleDescriptions.map(rd => rd.name));

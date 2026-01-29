@@ -37,7 +37,7 @@ export type ESLintEngineConfig = {
     disable_typescript_base_config: boolean
 
     // If true then the base configuration that supplies the React/JSX rules will not be applied.
-    // Default: true (React support is currently gated; will change to false when released)
+    // Default: false
     disable_react_base_config: boolean
 
     // Extensions of the files in your workspace that will be used to discover rules.
@@ -70,7 +70,7 @@ export const DEFAULT_CONFIG: ESLintEngineConfig = {
     disable_lwc_base_config: false,
     disable_slds_base_config: false,
     disable_typescript_base_config: false,
-    disable_react_base_config: true,  // Gated for now - will change to false when released
+    disable_react_base_config: false,
     file_extensions: {
         javascript: ['.js', '.cjs', '.mjs', '.jsx'],
         typescript: ['.ts', '.tsx'],
@@ -119,8 +119,11 @@ export const ESLINT_ENGINE_CONFIG_DESCRIPTION: ConfigDescription = {
             valueType: "boolean",
             defaultValue: DEFAULT_CONFIG.disable_typescript_base_config
         },
-        // Note: disable_react_base_config is gated and not user-configurable yet
-        // TODO: Add to fieldDescriptions when React support is released
+        disable_react_base_config: {
+            descriptionText: getMessage('ConfigFieldDescription_disable_react_base_config'),
+            valueType: "boolean",
+            defaultValue: DEFAULT_CONFIG.disable_react_base_config
+        },
         file_extensions: {
             descriptionText: getMessage('ConfigFieldDescription_file_extensions'),
             valueType: "object",
@@ -143,12 +146,9 @@ export const LEGACY_ESLINT_IGNORE_FILE: string = '.eslintignore';
 
 
 export function validateAndNormalizeConfig(configValueExtractor: ConfigValueExtractor): ESLintEngineConfig {
-    // disable_react_base_config bypasses validation - React support is gated but we need it for internal testing
-    // TODO: Move 'disable_react_base_config' to validateContainsOnlySpecifiedKeys when React support is released
-    configValueExtractor.addKeysThatBypassValidation(['disable_react_base_config']);
     configValueExtractor.validateContainsOnlySpecifiedKeys(['eslint_config_file', 'eslint_ignore_file',
         'auto_discover_eslint_config', 'disable_javascript_base_config', 'disable_lwc_base_config',
-        'disable_slds_base_config', 'disable_typescript_base_config', 'file_extensions']);
+        'disable_slds_base_config', 'disable_typescript_base_config', 'disable_react_base_config', 'file_extensions']);
 
     const eslintConfigValueExtractor: ESLintEngineConfigValueExtractor = new ESLintEngineConfigValueExtractor(configValueExtractor);
     return {
@@ -160,9 +160,7 @@ export function validateAndNormalizeConfig(configValueExtractor: ConfigValueExtr
         disable_lwc_base_config: eslintConfigValueExtractor.extractBooleanValue('disable_lwc_base_config'),
         disable_slds_base_config: eslintConfigValueExtractor.extractBooleanValue('disable_slds_base_config'),
         disable_typescript_base_config: eslintConfigValueExtractor.extractBooleanValue('disable_typescript_base_config'),
-        // React support is gated - always force to true regardless of customer config
-        // TODO: Change to eslintConfigValueExtractor.extractBooleanValue('disable_react_base_config') when released
-        disable_react_base_config: true,
+        disable_react_base_config: eslintConfigValueExtractor.extractBooleanValue('disable_react_base_config'),
         file_extensions:  eslintConfigValueExtractor.extractFileExtensionsValue(),
     };
 }
