@@ -15,9 +15,7 @@ const RUN_GENERATOR = process.env.GENERATE_REACT_A11Y === 'true';
     it('writes test/test-data/rules_ReactA11yConfig.goldfile.json', async () => {
         const config: ESLintEngineConfig = {
             ...DEFAULT_CONFIG,
-            config_root: __dirname,
-            // Ensure React stack is enabled during generation
-            disable_react_base_config: false
+            config_root: __dirname
         };
         const enginePlugin = new ESLintEnginePlugin();
         const engine: Engine = await enginePlugin.createEngine('eslint', config);

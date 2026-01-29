@@ -47,10 +47,9 @@ describe('Tests for the ESLintEnginePlugin', () => {
     it('When createEngineConfig is called with an object containing an invalid key, then we error', async () => {
         const userProvidedOverrides: ConfigObject = {dummy: 3};
         await expect(callCreateEngineConfig(plugin, userProvidedOverrides)).rejects.toThrow(
-            // Note: disable_react_base_config is intentionally excluded - React support is gated
             getMessageFromCatalog(SHARED_MESSAGE_CATALOG, 'ConfigObjectContainsInvalidKey', 'engines.eslint', 'dummy',
                 '["auto_discover_eslint_config","disable_javascript_base_config","disable_lwc_base_config",' +
-                '"disable_slds_base_config","disable_typescript_base_config",' +
+                '"disable_react_base_config","disable_slds_base_config","disable_typescript_base_config",' +
                 '"eslint_config_file","eslint_ignore_file","file_extensions"]'));
     });
 
