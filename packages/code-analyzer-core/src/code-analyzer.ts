@@ -24,7 +24,7 @@ import * as engApi from "@salesforce/code-analyzer-engine-api"
 import {Clock, RealClock} from '@salesforce/code-analyzer-engine-api/utils';
 import {Selector, toSelector} from "./selectors";
 import {EventEmitter} from "node:events";
-import {CodeAnalyzerConfig, ConfigDescription, EngineOverrides, FIELDS, RuleOverride} from "./config";
+import {CodeAnalyzerConfig, ConfigDescription, EngineOverrides, FIELDS, Ignores, RuleOverride} from "./config";
 import {
     EngineProgressAggregator,
     FileSystem,
@@ -36,6 +36,7 @@ import {
 } from "./utils";
 import fs from "node:fs";
 import path from 'node:path';
+import {Minimatch} from 'minimatch';
 
 /**
  * Interface for workspaces
@@ -157,6 +158,8 @@ export class CodeAnalyzer {
      * analyze the few files that you are targeting. If a targets array is not specified, then the entire list of
      * workspaces files and folders will be targeted.
      *
+     * Files matching patterns specified in the ignores.files configuration will be excluded from the workspace.
+     *
      * @param workspaceFilesAndFolders string array of files and/or folders to include in the workspace
      * @param targets optional string array of files and/or folders
      */
@@ -174,7 +177,11 @@ export class CodeAnalyzer {
             validatedTargets = (await Promise.all(targetPromises)).flat();
         }
 
-        const workspace: Workspace = new WorkspaceImpl(workspaceId, validatedWorkspaceFilesAndFolders, validatedTargets);
+        // Get ignore patterns from config
+        const ignores: Ignores = this.config.getIgnores();
+        const ignorePatterns: string[] = ignores.files;
+
+        const workspace: Workspace = new WorkspaceImpl(workspaceId, validatedWorkspaceFilesAndFolders, validatedTargets, ignorePatterns);
 
         // It appears that each of the engines is calling these methods all at the same time and so if we had N engines
         // each creating N promises, the cache hasn't been populated, and so we are doing the work N times. If we
@@ -646,8 +653,13 @@ export class CodeAnalyzer {
  */
 class WorkspaceImpl implements Workspace {
     private readonly delegate: engApi.Workspace;
-    constructor(workspaceId: string, absWorkspaceFilesAndFolders: string[], absTargets?: string[]) {
+    private readonly ignorePatterns: string[];
+    private cachedFilteredWorkspaceFiles?: string[];
+    private cachedFilteredTargetedFiles?: string[];
+
+    constructor(workspaceId: string, absWorkspaceFilesAndFolders: string[], absTargets?: string[], ignorePatterns: string[] = []) {
         this.delegate = new engApi.Workspace(workspaceId, absWorkspaceFilesAndFolders, absTargets);
+        this.ignorePatterns = ignorePatterns;
     }
 
     getWorkspaceId(): string {
@@ -662,16 +674,75 @@ class WorkspaceImpl implements Workspace {
         return this.delegate.getRawTargets();
     }
 
-    getWorkspaceFiles(): Promise<string[]> {
-        return this.delegate.getWorkspaceFiles();
+    async getWorkspaceFiles(): Promise<string[]> {
+        if (!this.cachedFilteredWorkspaceFiles) {
+            const files = await this.delegate.getWorkspaceFiles();
+            this.cachedFilteredWorkspaceFiles = this.filterIgnoredFiles(files);
+        }
+        return this.cachedFilteredWorkspaceFiles;
     }
 
-    getTargetedFiles(): Promise<string[]> {
-        return this.delegate.getTargetedFiles();
+    async getTargetedFiles(): Promise<string[]> {
+        if (!this.cachedFilteredTargetedFiles) {
+            const files = await this.delegate.getTargetedFiles();
+            this.cachedFilteredTargetedFiles = this.filterIgnoredFiles(files);
+        }
+        return this.cachedFilteredTargetedFiles;
+    }
+
+    /**
+     * Filters out files that match any of the ignore patterns.
+     * Patterns are matched against the file path relative to the workspace root,
+     * or the full path if no workspace root exists.
+     */
+    private filterIgnoredFiles(files: string[]): string[] {
+        if (this.ignorePatterns.length === 0) {
+            return files;
+        }
+
+        // Pre-compile the patterns for performance
+        const matchers = this.ignorePatterns.map(pattern => new Minimatch(pattern, { dot: true, matchBase: true }));
+
+        const workspaceRoot = this.delegate.getWorkspaceRoot();
+        return files.filter(file => {
+            // Get the path to match against - use relative path if workspace root exists
+            const pathToMatch = workspaceRoot ? file.slice(workspaceRoot.length + 1) : file;
+
+            // Check if the file matches any ignore pattern
+            const shouldIgnore = matchers.some(matcher => matcher.match(pathToMatch));
+            return !shouldIgnore;
+        });
     }
 
     _toEngApiWorkspace(): engApi.Workspace {
-        return this.delegate;
+        // Return a workspace that applies filtering while preserving original raw values.
+        // We use inheritance here because:
+        // 1. getRawFilesAndFolders() must return original folders (not expanded/filtered files)
+        // 2. getWorkspaceFiles() must return filtered files
+        // Composition alone can't preserve both semantics.
+        return new FilteredEngApiWorkspace(this.delegate, this);
+    }
+}
+
+/**
+ * Wrapper around engApi.Workspace that returns filtered file lists while preserving
+ * original raw files/folders. This ensures engines receive filtered files but can
+ * still access the original workspace structure if needed.
+ */
+class FilteredEngApiWorkspace extends engApi.Workspace {
+    private readonly workspaceImpl: WorkspaceImpl;
+
+    constructor(delegate: engApi.Workspace, workspaceImpl: WorkspaceImpl) {
+        super(delegate.getWorkspaceId(), delegate.getRawFilesAndFolders(), delegate.getRawTargets());
+        this.workspaceImpl = workspaceImpl;
+    }
+
+    override async getWorkspaceFiles(): Promise<string[]> {
+        return this.workspaceImpl.getWorkspaceFiles();
+    }
+
+    override async getTargetedFiles(): Promise<string[]> {
+        return this.workspaceImpl.getTargetedFiles();
     }
 }
 

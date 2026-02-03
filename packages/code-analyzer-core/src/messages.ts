@@ -47,6 +47,22 @@ const MESSAGE_CATALOG : MessageCatalog = {
         `  {property_name} is the name of a property that you would like to override.\n` +
         `Each engine may have its own set of properties available to help customize that particular engine's behavior.`,
 
+    ConfigFieldDescription_ignores:
+        `Configuration for ignoring files during scanning. Contains the following field:\n` +
+        `  'files' - [Optional] An array of file paths, folder paths, or glob patterns specifying which files to skip during analysis.\n` +
+        `            Patterns support standard glob syntax:\n` +
+        `              * matches any characters within a single directory level\n` +
+        `              ** matches any characters across multiple directory levels\n` +
+        `              ? matches exactly one character\n` +
+        `---- [Example usage]: ---------------------\n` +
+        `ignores:\n` +
+        `  files:\n` +
+        `    - "src/*.cls"           # All .cls files directly in src/\n` +
+        `    - "test/*/data.json"    # data.json in any immediate subdirectory of test/\n` +
+        `    - "**/*.test.js"        # All .test.js files anywhere\n` +
+        `    - "**/node_modules/**"  # Anything inside any node_modules folder\n` +
+        `-------------------------------------------`,
+
     GenericEngineConfigOverview:
         `%s ENGINE CONFIGURATION`,
 

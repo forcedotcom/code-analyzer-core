@@ -1,4 +1,4 @@
-import {CodeAnalyzerConfig, SeverityLevel} from "../src";
+import {CodeAnalyzerConfig, Ignores, SeverityLevel} from "../src";
 import * as os from "node:os";
 import * as path from "node:path";
 import {getMessageFromCatalog, LogLevel, SHARED_MESSAGE_CATALOG} from "@salesforce/code-analyzer-engine-api";
@@ -25,6 +25,7 @@ describe("Tests for creating and accessing configuration values", () => {
         expect(conf.getEngineOverridesFor("stubEngine1")).toEqual({});
         expect(conf.getRuleOverridesFor("stubEngine2")).toEqual({});
         expect(conf.getEngineOverridesFor("stubEngine2")).toEqual({});
+        expect(conf.getIgnores()).toEqual({ files: [] });
     });
 
     it("When configuration file does not exist, then throw an error", () => {
@@ -177,7 +178,7 @@ describe("Tests for creating and accessing configuration values", () => {
     it("When top level config has an unknown key, then we error", () => {
         expect(() => CodeAnalyzerConfig.fromObject({doesNotExist: 3})).toThrow(
             getMessageFromCatalog(SHARED_MESSAGE_CATALOG,'ConfigObjectContainsInvalidKey','<TopLevel>', 'doesNotExist',
-                '["config_root","engines","log_folder","log_level","rules"]'));
+                '["config_root","engines","ignores","log_folder","log_level","rules"]'));
     });
 
     it("When engines value is not an object then we throw an error", () => {
@@ -393,6 +394,12 @@ describe("Tests for creating and accessing configuration values", () => {
                 valueType: 'object',
                 defaultValue: {},
                 wasSuppliedByUser: false
+            },
+            ignores: {
+                descriptionText: getMessage('ConfigFieldDescription_ignores'),
+                valueType: 'object',
+                defaultValue: { files: [] },
+                wasSuppliedByUser: false
             }
         });
     });
@@ -414,5 +421,82 @@ describe("Tests for creating and accessing configuration values", () => {
         ).getConfigDescription();
         expect(configDescription.fieldDescriptions.rules.wasSuppliedByUser).toEqual(false);
         expect(configDescription.fieldDescriptions.engines.wasSuppliedByUser).toEqual(false);
+    });
+});
+
+describe("Tests for ignores configuration", () => {
+    it("When constructing config withDefaults then ignores has empty files array", () => {
+        const conf: CodeAnalyzerConfig = CodeAnalyzerConfig.withDefaults();
+        const ignores: Ignores = conf.getIgnores();
+        expect(ignores).toEqual({ files: [] });
+    });
+
+    it("When constructing config with ignores.files array, then values are parsed correctly", () => {
+        const conf: CodeAnalyzerConfig = CodeAnalyzerConfig.fromYamlString(`
+ignores:
+  files:
+    - "src/*.cls"
+    - "**/*.test.js"
+    - "**/node_modules/**"
+`);
+        const ignores: Ignores = conf.getIgnores();
+        expect(ignores.files).toEqual([
+            "src/*.cls",
+            "**/*.test.js",
+            "**/node_modules/**"
+        ]);
+    });
+
+    it("When constructing config with empty ignores object, then files defaults to empty array", () => {
+        const conf: CodeAnalyzerConfig = CodeAnalyzerConfig.fromYamlString(`
+ignores: {}
+`);
+        const ignores: Ignores = conf.getIgnores();
+        expect(ignores).toEqual({ files: [] });
+    });
+
+    it("When constructing config with ignores.files as null, then files defaults to empty array", () => {
+        const conf: CodeAnalyzerConfig = CodeAnalyzerConfig.fromYamlString(`
+ignores:
+  files: null
+`);
+        const ignores: Ignores = conf.getIgnores();
+        expect(ignores).toEqual({ files: [] });
+    });
+
+    it("When ignores is not an object then we throw an error", () => {
+        expect(() => CodeAnalyzerConfig.fromObject({ignores: "invalid"})).toThrow(
+            getMessageFromCatalog(SHARED_MESSAGE_CATALOG, 'ConfigValueMustBeOfType', 'ignores', 'object', 'string'));
+    });
+
+    it("When ignores.files is not an array then we throw an error", () => {
+        expect(() => CodeAnalyzerConfig.fromObject({ignores: {files: "invalid"}})).toThrow(
+            getMessageFromCatalog(SHARED_MESSAGE_CATALOG, 'ConfigValueMustBeOfType', 'ignores.files', 'array', 'string'));
+    });
+
+    it("When ignores.files contains non-string values then we throw an error", () => {
+        expect(() => CodeAnalyzerConfig.fromObject({ignores: {files: ["valid", 123]}})).toThrow(
+            getMessageFromCatalog(SHARED_MESSAGE_CATALOG, 'ConfigValueMustBeOfType', 'ignores.files[1]', 'string', 'number'));
+    });
+
+    it("When ignores contains unknown keys then we throw an error", () => {
+        expect(() => CodeAnalyzerConfig.fromObject({ignores: {files: [], unknownKey: "value"}})).toThrow(
+            getMessageFromCatalog(SHARED_MESSAGE_CATALOG, 'ConfigObjectContainsInvalidKey', 'ignores', 'unknownKey', '["files"]'));
+    });
+
+    it("When getConfigDescription is called, then ignores field is included", () => {
+        const configDescription: ConfigDescription = CodeAnalyzerConfig.withDefaults().getConfigDescription();
+        expect(configDescription.fieldDescriptions.ignores).toBeDefined();
+        expect(configDescription.fieldDescriptions.ignores.valueType).toEqual('object');
+        expect(configDescription.fieldDescriptions.ignores.defaultValue).toEqual({ files: [] });
+        expect(configDescription.fieldDescriptions.ignores.wasSuppliedByUser).toEqual(false);
+    });
+
+    it("When getConfigDescription is called with ignores supplied, then wasSuppliedByUser is true", () => {
+        const conf: CodeAnalyzerConfig = CodeAnalyzerConfig.fromObject({
+            ignores: { files: ["**/*.test.js"] }
+        });
+        const configDescription: ConfigDescription = conf.getConfigDescription();
+        expect(configDescription.fieldDescriptions.ignores.wasSuppliedByUser).toEqual(true);
     });
 });

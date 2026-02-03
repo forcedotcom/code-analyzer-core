@@ -20,7 +20,9 @@ export const FIELDS = {
     ENGINES: 'engines',
     SEVERITY: 'severity',
     TAGS: 'tags',
-    DISABLE_ENGINE: 'disable_engine'
+    DISABLE_ENGINE: 'disable_engine',
+    IGNORES: 'ignores',
+    FILES: 'files'
 } as const;
 
 /**
@@ -37,12 +39,20 @@ export type RuleOverride = {
     tags?: string[]
 }
 
+/**
+ * Object containing the user specified ignores configuration for files to skip during scanning
+ */
+export type Ignores = {
+    files: string[]
+}
+
 type TopLevelConfig = {
     config_root: string
     log_folder: string
     log_level: LogLevel
     rules: Record<string, RuleOverrides>
     engines: Record<string, EngineOverrides>
+    ignores: Ignores
     root_working_folder: string, // INTERNAL USE ONLY
     preserve_all_working_folders: boolean // INTERNAL USE ONLY
     custom_engine_plugin_modules: string[] // INTERNAL USE ONLY
@@ -55,6 +65,7 @@ export const DEFAULT_CONFIG: TopLevelConfig = {
     log_level: LogLevel.Debug,
     rules: {},
     engines: {},
+    ignores: { files: [] },
     root_working_folder: os.tmpdir(), // INTERNAL USE ONLY
     preserve_all_working_folders: false, // INTERNAL USE ONLY
     custom_engine_plugin_modules: [], // INTERNAL USE ONLY
@@ -143,7 +154,7 @@ export class CodeAnalyzerConfig {
             validateAbsoluteFolder(rawConfig.config_root, FIELDS.CONFIG_ROOT);
         const configExtractor: engApi.ConfigValueExtractor = new engApi.ConfigValueExtractor(rawConfig, '', configRoot);
         configExtractor.addKeysThatBypassValidation([FIELDS.CUSTOM_ENGINE_PLUGIN_MODULES, FIELDS.PRESERVE_ALL_WORKING_FOLDERS, FIELDS.ROOT_WORKING_FOLDER]); // Hidden fields bypass validation
-        configExtractor.validateContainsOnlySpecifiedKeys([FIELDS.CONFIG_ROOT, FIELDS.LOG_FOLDER, FIELDS.LOG_LEVEL ,FIELDS.RULES, FIELDS.ENGINES]);
+        configExtractor.validateContainsOnlySpecifiedKeys([FIELDS.CONFIG_ROOT, FIELDS.LOG_FOLDER, FIELDS.LOG_LEVEL, FIELDS.RULES, FIELDS.ENGINES, FIELDS.IGNORES]);
         const config: TopLevelConfig = {
             config_root: configRoot,
             log_folder: configExtractor.extractFolder(FIELDS.LOG_FOLDER, DEFAULT_CONFIG.log_folder)!,
@@ -154,7 +165,8 @@ export class CodeAnalyzerConfig {
             root_working_folder: configExtractor.extractFolder(FIELDS.ROOT_WORKING_FOLDER, DEFAULT_CONFIG.root_working_folder)!,
             preserve_all_working_folders: configExtractor.extractBoolean(FIELDS.PRESERVE_ALL_WORKING_FOLDERS, DEFAULT_CONFIG.preserve_all_working_folders)!,
             rules: extractRulesValue(configExtractor),
-            engines: extractEnginesValue(configExtractor)
+            engines: extractEnginesValue(configExtractor),
+            ignores: extractIgnoresValue(configExtractor)
         }
         return new CodeAnalyzerConfig(config);
     }
@@ -195,6 +207,12 @@ export class CodeAnalyzerConfig {
                     valueType: 'object',
                     defaultValue: {},
                     wasSuppliedByUser: !deepEquals(this.config.engines, DEFAULT_CONFIG.engines)
+                },
+                ignores: {
+                    descriptionText: getMessage('ConfigFieldDescription_ignores'),
+                    valueType: 'object',
+                    defaultValue: { files: [] },
+                    wasSuppliedByUser: !deepEquals(this.config.ignores, DEFAULT_CONFIG.ignores)
                 }
             }
         };
@@ -276,6 +294,14 @@ export class CodeAnalyzerConfig {
     public getEngineOverridesFor(engineName: string): EngineOverrides {
         return engApi.getValueUsingCaseInsensitiveKey(this.config.engines, engineName) as EngineOverrides || {};
     }
+
+    /**
+     * Returns a {@link Ignores} instance containing the user specified file patterns to ignore during scanning.
+     * The patterns can be file paths, folder paths, or glob patterns.
+     */
+    public getIgnores(): Ignores {
+        return this.config.ignores;
+    }
 }
 
 function extractLogLevel(configExtractor: engApi.ConfigValueExtractor): LogLevel {
@@ -320,6 +346,13 @@ function extractEnginesValue(configExtractor: engApi.ConfigValueExtractor): Reco
         enginesExtractor.extractRequiredObjectAsExtractor(engineName).extractBoolean(FIELDS.DISABLE_ENGINE);
     }
     return enginesExtractor.getObject() as Record<string, EngineOverrides>;
+}
+
+function extractIgnoresValue(configExtractor: engApi.ConfigValueExtractor): Ignores {
+    const ignoresExtractor: engApi.ConfigValueExtractor = configExtractor.extractObjectAsExtractor(FIELDS.IGNORES, DEFAULT_CONFIG.ignores);
+    ignoresExtractor.validateContainsOnlySpecifiedKeys([FIELDS.FILES]);
+    const files: string[] = ignoresExtractor.extractArray(FIELDS.FILES, engApi.ValueValidator.validateString, DEFAULT_CONFIG.ignores.files) || [];
+    return { files };
 }
 
 function parseAndValidate(parseFcn: () => unknown): object {
