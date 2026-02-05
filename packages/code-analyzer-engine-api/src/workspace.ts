@@ -1,5 +1,6 @@
 import fs from "node:fs";
 import path from "node:path";
+import {Minimatch} from "minimatch";
 import {calculateLongestCommonParentFolderOf} from "./utils";
 
 const NON_DOT_FOLDERS_TO_EXCLUDE: string[] = ['node_modules'];
@@ -15,6 +16,7 @@ export class Workspace {
     private readonly workspaceId: string;
     private readonly rawAbsFilesAndFolders: string[];
     private readonly rawAbsTargets?: string[];
+    private readonly ignorePatterns: string[];
 
     private cachedRawFilesAndFolders?: string[];
     private cachedRawTargets?: string[];
@@ -23,6 +25,7 @@ export class Workspace {
     private cachedTargetedFiles?: string[];
 
     private workspaceRoot?: string | null;
+    private cachedIgnoreMatchers?: Minimatch[];
 
     /**
      * Creates a {@link Workspace} instance associated with a specified list of files and folders.
@@ -40,11 +43,13 @@ export class Workspace {
      * @param workspaceId Optional workspace identifier
      * @param absFilesAndFolders Absolute file and folder paths that make up the workspace
      * @param absTargets optional string array of files and/or folders
+     * @param ignorePatterns optional array of glob patterns for files to ignore during scanning
      */
-    constructor(workspaceId: string, absFilesAndFolders: string[], absTargets?: string[]) {
+    constructor(workspaceId: string, absFilesAndFolders: string[], absTargets?: string[], ignorePatterns: string[] = []) {
         this.workspaceId = workspaceId;
         this.rawAbsFilesAndFolders = absFilesAndFolders;
         this.rawAbsTargets = absTargets;
+        this.ignorePatterns = ignorePatterns;
     }
 
     /**
@@ -156,7 +161,33 @@ export class Workspace {
      *   they choose to do so.
      */
     private shouldExclude(fileOrFolder: string): boolean {
+        // Check user-specified ignore patterns first
+        if (this.matchesIgnorePattern(fileOrFolder)) {
+            return true;
+        }
+        // Then check built-in exclusions (node_modules, dot files, etc.)
         return this.isExcludeCandidate(fileOrFolder) && !this.excludeCandidateWasExplicitlyProvided(fileOrFolder);
+    }
+
+    /**
+     * Returns whether a file matches any of the user-specified ignore patterns.
+     * Patterns are matched against the file path relative to the workspace root.
+     */
+    private matchesIgnorePattern(fileOrFolder: string): boolean {
+        if (this.ignorePatterns.length === 0) {
+            return false;
+        }
+        // Lazily compile matchers for performance
+        if (!this.cachedIgnoreMatchers) {
+            this.cachedIgnoreMatchers = this.ignorePatterns.map(
+                pattern => new Minimatch(pattern, { dot: true, matchBase: true })
+            );
+        }
+        // Get relative path for matching (without leading separator)
+        const relativePath = this.makeRelativeToWorkspaceRoot(fileOrFolder);
+        const pathToMatch = relativePath.startsWith(path.sep) ? relativePath.slice(1) : relativePath;
+        
+        return this.cachedIgnoreMatchers.some(matcher => matcher.match(pathToMatch));
     }
     private isExcludeCandidate(fileOrFolder: string): boolean {
         const relativeFileOrFolder: string = this.makeRelativeToWorkspaceRoot(fileOrFolder);
