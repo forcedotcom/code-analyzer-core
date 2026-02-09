@@ -351,8 +351,72 @@ function extractEnginesValue(configExtractor: engApi.ConfigValueExtractor): Reco
 function extractIgnoresValue(configExtractor: engApi.ConfigValueExtractor): Ignores {
     const ignoresExtractor: engApi.ConfigValueExtractor = configExtractor.extractObjectAsExtractor(FIELDS.IGNORES, DEFAULT_CONFIG.ignores);
     ignoresExtractor.validateContainsOnlySpecifiedKeys([FIELDS.FILES]);
-    const files: string[] = ignoresExtractor.extractArray(FIELDS.FILES, engApi.ValueValidator.validateString, DEFAULT_CONFIG.ignores.files) || [];
+    const files: string[] = ignoresExtractor.extractArray(FIELDS.FILES, validateGlobPattern, DEFAULT_CONFIG.ignores.files) || [];
     return { files };
+}
+
+/**
+ * Validates that a value is a string and is a valid glob pattern.
+ * Throws an error if the pattern is empty or has unbalanced brackets/braces/parentheses.
+ */
+function validateGlobPattern(value: unknown, fieldPath: string): string {
+    // First validate it's a string
+    const pattern = engApi.ValueValidator.validateString(value, fieldPath);
+    
+    // Check for empty pattern
+    if (pattern.length === 0) {
+        throw new Error(getMessage('InvalidGlobPatternEmpty', fieldPath));
+    }
+    
+    // Check for unbalanced special characters
+    const validationResult = validateGlobPatternSyntax(pattern);
+    if (!validationResult.valid) {
+        throw new Error(getMessage('InvalidGlobPattern', fieldPath, pattern, validationResult.issue!));
+    }
+    
+    return pattern;
+}
+
+/**
+ * Validates glob pattern syntax for common issues like unbalanced brackets.
+ */
+function validateGlobPatternSyntax(pattern: string): { valid: boolean; issue?: string } {
+    let bracketDepth = 0;
+    let braceDepth = 0;
+    let parenDepth = 0;
+    let escaped = false;
+    
+    for (const char of pattern) {
+        if (escaped) {
+            escaped = false;
+            continue;
+        }
+        if (char === '\\') {
+            escaped = true;
+            continue;
+        }
+        
+        switch (char) {
+            case '[': bracketDepth++; break;
+            case ']': bracketDepth--; break;
+            case '{': braceDepth++; break;
+            case '}': braceDepth--; break;
+            case '(': parenDepth++; break;
+            case ')': parenDepth--; break;
+        }
+        
+        // Check for negative depth (closing without opening)
+        if (bracketDepth < 0) return { valid: false, issue: 'unmatched closing bracket ]' };
+        if (braceDepth < 0) return { valid: false, issue: 'unmatched closing brace }' };
+        if (parenDepth < 0) return { valid: false, issue: 'unmatched closing parenthesis )' };
+    }
+    
+    // Check for unclosed brackets
+    if (bracketDepth !== 0) return { valid: false, issue: 'unclosed bracket [' };
+    if (braceDepth !== 0) return { valid: false, issue: 'unclosed brace {' };
+    if (parenDepth !== 0) return { valid: false, issue: 'unclosed parenthesis (' };
+    
+    return { valid: true };
 }
 
 function parseAndValidate(parseFcn: () => unknown): object {

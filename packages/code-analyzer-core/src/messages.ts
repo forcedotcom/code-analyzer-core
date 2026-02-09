@@ -48,19 +48,13 @@ const MESSAGE_CATALOG : MessageCatalog = {
         `Each engine may have its own set of properties available to help customize that particular engine's behavior.`,
 
     ConfigFieldDescription_ignores:
-        `Configuration for ignoring files during scanning. Contains the following field:\n` +
-        `  'files' - [Optional] An array of file paths, folder paths, or glob patterns specifying which files to skip during analysis.\n` +
-        `            Patterns support standard glob syntax:\n` +
-        `              * matches any characters within a single directory level\n` +
-        `              ** matches any characters across multiple directory levels\n` +
-        `              ? matches exactly one character\n` +
+        `Configuration for ignoring files during analysis.\n` +
+        `  files: An array of glob patterns specifying files to exclude from scanning.\n` +
         `---- [Example usage]: ---------------------\n` +
         `ignores:\n` +
         `  files:\n` +
-        `    - "src/*.cls"           # All .cls files directly in src/\n` +
-        `    - "test/*/data.json"    # data.json in any immediate subdirectory of test/\n` +
-        `    - "**/*.test.js"        # All .test.js files anywhere\n` +
-        `    - "**/node_modules/**"  # Anything inside any node_modules folder\n` +
+        `    - "**/node_modules/**"\n` +
+        `    - "**/*.test.js"\n` +
         `-------------------------------------------`,
 
     GenericEngineConfigOverview:
@@ -139,6 +133,12 @@ const MESSAGE_CATALOG : MessageCatalog = {
 
     ConfigContentNotAnObject:
         `The configuration content is invalid since it is of type %s instead of type object.`,
+
+    InvalidGlobPatternEmpty:
+        `The configuration field '%s' contains an empty glob pattern. Glob patterns must not be empty strings.`,
+
+    InvalidGlobPattern:
+        `The configuration field '%s' contains an invalid glob pattern '%s': %s`,
 
     RulePropertyOverridden:
         `The %s value of rule '%s' of engine '%s' was overridden according to the specified configuration. The old value '%s' was replaced with the new value '%s'.`,

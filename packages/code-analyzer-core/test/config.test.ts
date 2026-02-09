@@ -479,6 +479,12 @@ ignores:
             getMessageFromCatalog(SHARED_MESSAGE_CATALOG, 'ConfigValueMustBeOfType', 'ignores.files[1]', 'string', 'number'));
     });
 
+    it("When ignores.files contains null value, then we throw an error", () => {
+        // In YAML, a bare dash (- ) becomes null
+        expect(() => CodeAnalyzerConfig.fromObject({ignores: {files: [null, "valid.js"]}})).toThrow(
+            getMessageFromCatalog(SHARED_MESSAGE_CATALOG, 'ConfigValueMustBeOfType', 'ignores.files[0]', 'string', 'null'));
+    });
+
     it("When ignores contains unknown keys then we throw an error", () => {
         expect(() => CodeAnalyzerConfig.fromObject({ignores: {files: [], unknownKey: "value"}})).toThrow(
             getMessageFromCatalog(SHARED_MESSAGE_CATALOG, 'ConfigObjectContainsInvalidKey', 'ignores', 'unknownKey', '["files"]'));
@@ -498,5 +504,78 @@ ignores:
         });
         const configDescription: ConfigDescription = conf.getConfigDescription();
         expect(configDescription.fieldDescriptions.ignores.wasSuppliedByUser).toEqual(true);
+    });
+});
+
+describe("Tests for glob pattern validation in ignores", () => {
+    it("When ignores.files contains an empty string, then we throw an error", () => {
+        expect(() => CodeAnalyzerConfig.fromObject({ignores: {files: [""]}})).toThrow(
+            getMessage('InvalidGlobPatternEmpty', 'ignores.files[0]'));
+    });
+
+    it("When ignores.files contains a pattern with unclosed bracket, then we throw an error", () => {
+        expect(() => CodeAnalyzerConfig.fromObject({ignores: {files: ["**/[abc"]}})).toThrow(
+            getMessage('InvalidGlobPattern', 'ignores.files[0]', '**/[abc', 'unclosed bracket ['));
+    });
+
+    it("When ignores.files contains a pattern with unmatched closing bracket, then we throw an error", () => {
+        expect(() => CodeAnalyzerConfig.fromObject({ignores: {files: ["**/*.js]"]}})).toThrow(
+            getMessage('InvalidGlobPattern', 'ignores.files[0]', '**/*.js]', 'unmatched closing bracket ]'));
+    });
+
+    it("When ignores.files contains a pattern with unclosed brace, then we throw an error", () => {
+        expect(() => CodeAnalyzerConfig.fromObject({ignores: {files: ["**/*.{js,ts"]}})).toThrow(
+            getMessage('InvalidGlobPattern', 'ignores.files[0]', '**/*.{js,ts', 'unclosed brace {'));
+    });
+
+    it("When ignores.files contains a pattern with unmatched closing brace, then we throw an error", () => {
+        expect(() => CodeAnalyzerConfig.fromObject({ignores: {files: ["**/*.js}"]}})).toThrow(
+            getMessage('InvalidGlobPattern', 'ignores.files[0]', '**/*.js}', 'unmatched closing brace }'));
+    });
+
+    it("When ignores.files contains a pattern with unclosed parenthesis, then we throw an error", () => {
+        expect(() => CodeAnalyzerConfig.fromObject({ignores: {files: ["**/!(test"]}})).toThrow(
+            getMessage('InvalidGlobPattern', 'ignores.files[0]', '**/!(test', 'unclosed parenthesis ('));
+    });
+
+    it("When ignores.files contains a pattern with unmatched closing parenthesis, then we throw an error", () => {
+        expect(() => CodeAnalyzerConfig.fromObject({ignores: {files: ["**/*.js)"]}})).toThrow(
+            getMessage('InvalidGlobPattern', 'ignores.files[0]', '**/*.js)', 'unmatched closing parenthesis )'));
+    });
+
+    it("When ignores.files contains escaped brackets, they are not counted as unbalanced", () => {
+        const conf: CodeAnalyzerConfig = CodeAnalyzerConfig.fromObject({
+            ignores: { files: ["**/\\[special\\].js"] }
+        });
+        expect(conf.getIgnores().files).toEqual(["**/\\[special\\].js"]);
+    });
+
+    it("When ignores.files contains valid nested braces, they are accepted", () => {
+        const conf: CodeAnalyzerConfig = CodeAnalyzerConfig.fromObject({
+            ignores: { files: ["**/*.{js,{ts,tsx}}"] }
+        });
+        expect(conf.getIgnores().files).toEqual(["**/*.{js,{ts,tsx}}"]);
+    });
+
+    it("When ignores.files contains valid glob patterns, no error is thrown", () => {
+        const validPatterns = [
+            "src/*.cls",
+            "**/*.test.js",
+            "**/node_modules/**",
+            "packages/*/dist/**",
+            "**/*.{js,ts}",
+            "**/[abc]*.js",
+            "!(test)/**"
+        ];
+        const conf: CodeAnalyzerConfig = CodeAnalyzerConfig.fromObject({
+            ignores: { files: validPatterns }
+        });
+        expect(conf.getIgnores().files).toEqual(validPatterns);
+    });
+
+    it("When the invalid pattern is in the middle of the array, the error reports correct index", () => {
+        expect(() => CodeAnalyzerConfig.fromObject({
+            ignores: { files: ["valid/*.js", "also-valid/**", "**/invalid{pattern"] }
+        })).toThrow(getMessage('InvalidGlobPattern', 'ignores.files[2]', '**/invalid{pattern', 'unclosed brace {'));
     });
 });
