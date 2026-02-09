@@ -68,6 +68,13 @@ export class SfgeEngine extends Engine {
             return { violations: [] };
         }
 
+        // Get targeted files and return early if empty - prevents SFGE from analyzing all workspace files
+        const targetedFiles: string[] = await runOptions.workspace.getTargetedFiles();
+        if (targetedFiles.length === 0) {
+            this.emitRunRulesProgressEvent(100);
+            return { violations: [] };
+        }
+
         await this.validateWorkspaceCompleteness(runOptions.workspace);
 
         const allRulesInfoList: SfgeRuleInfo[] = await this.getSfgeRuleInfoList(
@@ -95,7 +102,7 @@ export class SfgeEngine extends Engine {
 
         const sfgeResults: SfgeRunResult[] = await this.sfgeWrapper.invokeRunCommand(
             selectedRuleInfoList,
-            await runOptions.workspace.getTargetedFiles(),
+            targetedFiles,
             relevantWorkspaceFiles,
             sfgeRunOptions,
             runOptions.workingFolder,
