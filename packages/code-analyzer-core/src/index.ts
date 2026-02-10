@@ -6,6 +6,7 @@ export type {
     ConfigDescription,
     ConfigFieldDescription,
     EngineOverrides,
+    Ignores,
     RuleOverrides,
     RuleOverride
 } from "./config"

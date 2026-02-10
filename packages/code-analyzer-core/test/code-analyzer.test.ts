@@ -179,6 +179,130 @@ describe("Tests for the createWorkspace method", () => {
     });
 });
 
+describe("Tests for ignores configuration in createWorkspace", () => {
+    it("When ignores.files contains glob patterns, then workspace files are NOT filtered (for complete graph building)", async () => {
+        const config = CodeAnalyzerConfig.fromObject({
+            ignores: {
+                files: ["**/*.cls"]
+            }
+        });
+        const codeAnalyzerWithIgnores = new CodeAnalyzer(config, new FakeFileSystem());
+
+        const workspace: Workspace = await codeAnalyzerWithIgnores.createWorkspace([SAMPLE_WORKSPACE_FOLDER]);
+
+        const workspaceFiles = await workspace.getWorkspaceFiles();
+        // Workspace files should NOT be filtered by ignore patterns (allows engines like SFGE to build complete graphs)
+        expect(workspaceFiles).toContain(path.join(SAMPLE_WORKSPACE_FOLDER, 'someFile.cls'));
+        expect(workspaceFiles).toContain(path.join(SAMPLE_WORKSPACE_FOLDER, 'sub1', 'sub3', 'someFileInSub3.cls'));
+        expect(workspaceFiles).toContain(path.join(SAMPLE_WORKSPACE_FOLDER, 'sub1', 'someFileInSub1.txt'));
+        expect(workspaceFiles).toContain(path.join(SAMPLE_WORKSPACE_FOLDER, 'folderWithExt.cls', 'placeholder.txt'));
+    });
+
+    it("When ignores.files contains glob patterns, then matching files are excluded from targeted files", async () => {
+        const config = CodeAnalyzerConfig.fromObject({
+            ignores: {
+                files: ["**/*.txt"]
+            }
+        });
+        const codeAnalyzerWithIgnores = new CodeAnalyzer(config, new FakeFileSystem());
+
+        const workspace: Workspace = await codeAnalyzerWithIgnores.createWorkspace([SAMPLE_WORKSPACE_FOLDER]);
+
+        const targetedFiles = await workspace.getTargetedFiles();
+        // All .txt files should be excluded from targeted files
+        expect(targetedFiles).not.toContain(path.join(SAMPLE_WORKSPACE_FOLDER, 'sub1', 'someFileInSub1.txt'));
+        expect(targetedFiles).not.toContain(path.join(SAMPLE_WORKSPACE_FOLDER, 'sub1', 'sub2', 'someFile1InSub2.txt'));
+        expect(targetedFiles).not.toContain(path.join(SAMPLE_WORKSPACE_FOLDER, 'folderWithExt.cls', 'placeholder.txt'));
+        // .cls files should still be included
+        expect(targetedFiles).toContain(path.join(SAMPLE_WORKSPACE_FOLDER, 'someFile.cls'));
+        expect(targetedFiles).toContain(path.join(SAMPLE_WORKSPACE_FOLDER, 'sub1', 'sub3', 'someFileInSub3.cls'));
+    });
+
+    it("When ignores.files contains specific file patterns, then only those targeted files are excluded", async () => {
+        const config = CodeAnalyzerConfig.fromObject({
+            ignores: {
+                files: ["someFile.cls"]
+            }
+        });
+        const codeAnalyzerWithIgnores = new CodeAnalyzer(config, new FakeFileSystem());
+
+        const workspace: Workspace = await codeAnalyzerWithIgnores.createWorkspace([SAMPLE_WORKSPACE_FOLDER]);
+
+        const targetedFiles = await workspace.getTargetedFiles();
+        expect(targetedFiles).not.toContain(path.join(SAMPLE_WORKSPACE_FOLDER, 'someFile.cls'));
+        // Other .cls files should still be included since pattern doesn't have **
+        expect(targetedFiles).toContain(path.join(SAMPLE_WORKSPACE_FOLDER, 'sub1', 'sub3', 'someFileInSub3.cls'));
+    });
+
+    it("When ignores.files contains folder patterns, then targeted files in matching folders are excluded", async () => {
+        const config = CodeAnalyzerConfig.fromObject({
+            ignores: {
+                files: ["sub1/sub2/**"]
+            }
+        });
+        const codeAnalyzerWithIgnores = new CodeAnalyzer(config, new FakeFileSystem());
+
+        const workspace: Workspace = await codeAnalyzerWithIgnores.createWorkspace([SAMPLE_WORKSPACE_FOLDER]);
+
+        const targetedFiles = await workspace.getTargetedFiles();
+        // Files in sub2 folder should be excluded from targeted files
+        expect(targetedFiles).not.toContain(path.join(SAMPLE_WORKSPACE_FOLDER, 'sub1', 'sub2', 'someFile1InSub2.txt'));
+        expect(targetedFiles).not.toContain(path.join(SAMPLE_WORKSPACE_FOLDER, 'sub1', 'sub2', 'someFile2InSub2.txt'));
+        // Files in other folders should still be included
+        expect(targetedFiles).toContain(path.join(SAMPLE_WORKSPACE_FOLDER, 'sub1', 'someFileInSub1.txt'));
+        expect(targetedFiles).toContain(path.join(SAMPLE_WORKSPACE_FOLDER, 'sub1', 'sub3', 'someFileInSub3.cls'));
+    });
+
+    it("When ignores.files contains multiple patterns, then all matching targeted files are excluded", async () => {
+        const config = CodeAnalyzerConfig.fromObject({
+            ignores: {
+                files: ["**/*.cls", "**/*InSub2*"]
+            }
+        });
+        const codeAnalyzerWithIgnores = new CodeAnalyzer(config, new FakeFileSystem());
+
+        const workspace: Workspace = await codeAnalyzerWithIgnores.createWorkspace([SAMPLE_WORKSPACE_FOLDER]);
+
+        const targetedFiles = await workspace.getTargetedFiles();
+        // All .cls files should be excluded from targeted files
+        expect(targetedFiles).not.toContain(path.join(SAMPLE_WORKSPACE_FOLDER, 'someFile.cls'));
+        expect(targetedFiles).not.toContain(path.join(SAMPLE_WORKSPACE_FOLDER, 'sub1', 'sub3', 'someFileInSub3.cls'));
+        // Files matching *InSub2* should be excluded
+        expect(targetedFiles).not.toContain(path.join(SAMPLE_WORKSPACE_FOLDER, 'sub1', 'sub2', 'someFile1InSub2.txt'));
+        expect(targetedFiles).not.toContain(path.join(SAMPLE_WORKSPACE_FOLDER, 'sub1', 'sub2', 'someFile2InSub2.txt'));
+        // Other files should still be included
+        expect(targetedFiles).toContain(path.join(SAMPLE_WORKSPACE_FOLDER, 'sub1', 'someFileInSub1.txt'));
+        expect(targetedFiles).toContain(path.join(SAMPLE_WORKSPACE_FOLDER, 'folderWithExt.cls', 'placeholder.txt'));
+    });
+
+    it("When ignores.files is empty, then no files are excluded", async () => {
+        const config = CodeAnalyzerConfig.fromObject({
+            ignores: {
+                files: []
+            }
+        });
+        const codeAnalyzerWithIgnores = new CodeAnalyzer(config, new FakeFileSystem());
+
+        const workspace: Workspace = await codeAnalyzerWithIgnores.createWorkspace([SAMPLE_WORKSPACE_FOLDER]);
+
+        const workspaceFiles = await workspace.getWorkspaceFiles();
+        // All files should be present (except those normally excluded by the engine API like node_modules and .dotfiles)
+        expect(workspaceFiles).toContain(path.join(SAMPLE_WORKSPACE_FOLDER, 'someFile.cls'));
+        expect(workspaceFiles).toContain(path.join(SAMPLE_WORKSPACE_FOLDER, 'sub1', 'someFileInSub1.txt'));
+        expect(workspaceFiles).toContain(path.join(SAMPLE_WORKSPACE_FOLDER, 'sub1', 'sub3', 'someFileInSub3.cls'));
+    });
+
+    it("When no ignores config is provided, then default behavior is used (no extra exclusions)", async () => {
+        const codeAnalyzerDefault = new CodeAnalyzer(CodeAnalyzerConfig.withDefaults(), new FakeFileSystem());
+
+        const workspace: Workspace = await codeAnalyzerDefault.createWorkspace([SAMPLE_WORKSPACE_FOLDER]);
+
+        const workspaceFiles = await workspace.getWorkspaceFiles();
+        expect(workspaceFiles).toContain(path.join(SAMPLE_WORKSPACE_FOLDER, 'someFile.cls'));
+        expect(workspaceFiles).toContain(path.join(SAMPLE_WORKSPACE_FOLDER, 'sub1', 'someFileInSub1.txt'));
+    });
+});
+
 describe("Tests for the run method of CodeAnalyzer", () => {
     let sampleRunOptions: RunOptions;
     let fileSystem: FakeFileSystem;

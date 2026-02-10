@@ -47,6 +47,16 @@ const MESSAGE_CATALOG : MessageCatalog = {
         `  {property_name} is the name of a property that you would like to override.\n` +
         `Each engine may have its own set of properties available to help customize that particular engine's behavior.`,
 
+    ConfigFieldDescription_ignores:
+        `Configuration for ignoring files during analysis.\n` +
+        `  files: An array of glob patterns specifying files to exclude from scanning.\n` +
+        `---- [Example usage]: ---------------------\n` +
+        `ignores:\n` +
+        `  files:\n` +
+        `    - "**/node_modules/**"\n` +
+        `    - "**/*.test.js"\n` +
+        `-------------------------------------------`,
+
     GenericEngineConfigOverview:
         `%s ENGINE CONFIGURATION`,
 
@@ -123,6 +133,12 @@ const MESSAGE_CATALOG : MessageCatalog = {
 
     ConfigContentNotAnObject:
         `The configuration content is invalid since it is of type %s instead of type object.`,
+
+    InvalidGlobPatternEmpty:
+        `The configuration field '%s' contains an empty glob pattern. Glob patterns must not be empty strings.`,
+
+    InvalidGlobPattern:
+        `The configuration field '%s' contains an invalid glob pattern '%s': %s`,
 
     RulePropertyOverridden:
         `The %s value of rule '%s' of engine '%s' was overridden according to the specified configuration. The old value '%s' was replaced with the new value '%s'.`,
