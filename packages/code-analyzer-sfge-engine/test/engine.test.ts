@@ -133,6 +133,37 @@ describe('SfgeEngine', () => {
             expect(progressEvents.map(e => e.percentComplete)).toEqual([2, 100]);
         });
 
+        it('When targets are empty, no violations are returned and SFGE is not invoked', async () => {
+            // This test verifies that when the workspace contains .cls files but targets are empty
+            // (e.g., after being filtered out by ignores), SFGE returns early without invoking
+            // the Java process. This prevents SFGE from scanning all workspace files when
+            // no targets are provided.
+            const engine: SfgeEngine = new SfgeEngine(DEFAULT_SFGE_ENGINE_CONFIG, fixedClock);
+            // Workspace folder has .cls files, but we pass empty targets
+            const workspace: Workspace = new Workspace(
+                'id',
+                [path.join(TEST_DATA_FOLDER, 'sampleRelevantWorkspace')],
+                [] // Empty targets - simulates all targets being filtered out by ignores
+            );
+            const logEvents: LogEvent[] = [];
+            engine.onEvent(EventType.LogEvent, (e: LogEvent) => logEvents.push(e));
+            const progressEvents: RunRulesProgressEvent[] = [];
+            engine.onEvent(EventType.RunRulesProgressEvent, (e: RunRulesProgressEvent) => progressEvents.push(e));
+            const ruleNames: string[] = ['ApexFlsViolation'];
+
+            // ====== TESTED BEHAVIOR ======
+            const results: EngineRunResults = await engine.runRules(ruleNames, createRunOptions(workspace));
+
+            // ====== ASSERTIONS ======
+            // No violations should be returned
+            expect(results.violations).toHaveLength(0);
+            // SFGE should not be invoked, so no log events about calling Java commands
+            expect(logEvents).toHaveLength(0);
+            // The progress events should skip from the very first one (2%) to the very last one (100%)
+            // This confirms we returned early without running SFGE
+            expect(progressEvents.map(e => e.percentComplete)).toEqual([2, 100]);
+        });
+
         it.each([
             {case: 'a folder with relevant files that do not violate the selected rules', workspacePaths: [path.join(TEST_DATA_FOLDER, 'sampleRelevantWorkspace')]},
             {
