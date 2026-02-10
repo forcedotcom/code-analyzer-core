@@ -199,7 +199,11 @@ export class Workspace {
         }
         // Get relative path for matching (without leading separator)
         const relativePath = this.makeRelativeToWorkspaceRoot(fileOrFolder);
-        const pathToMatch = relativePath.startsWith(path.sep) ? relativePath.slice(1) : relativePath;
+        let pathToMatch = relativePath.startsWith(path.sep) ? relativePath.slice(1) : relativePath;
+        // Normalize to POSIX separators for cross-platform compatibility
+        if (path.sep !== '/') {
+            pathToMatch = pathToMatch.split(path.sep).join('/');
+        }
         
         return this.cachedIgnoreMatchers.some(matcher => matcher.match(pathToMatch));
     }

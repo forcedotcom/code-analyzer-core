@@ -486,6 +486,24 @@ describe('Tests for the Workspace class', () => {
             // Targeted files should be empty (all filtered by ignore pattern)
             expect(targetedFiles).toEqual([]);
         });
+
+        it('When running on Windows (simulated), ignore patterns still work with backslash paths', async () => {
+            // Mock path.sep to simulate Windows - jest.replaceProperty auto-restores after test
+            jest.replaceProperty(path, 'sep', '\\');
+            
+            // Create a workspace - note: actual file paths on disk still use native separators
+            // but this tests that our normalization logic handles backslashes correctly
+            const workspace: Workspace = new Workspace('id', [SAMPLE_WORKSPACE_FOLDER], undefined, ['**/someFile.cls']);
+            
+            // The pattern uses forward slashes (standard glob syntax)
+            // On Windows, file paths would have backslashes
+            // Our fix should normalize them before matching
+            const targetedFiles = await workspace.getTargetedFiles();
+            
+            // someFile.cls should be excluded even with Windows path separators
+            // Note: On non-Windows, this test verifies the normalization code path doesn't break anything
+            expect(targetedFiles).not.toContain(path.join(SAMPLE_WORKSPACE_FOLDER, 'someFile.cls'));
+        });
     });
 });
 
