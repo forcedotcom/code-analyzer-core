@@ -209,7 +209,7 @@ describe("Tests for creating and accessing configuration values", () => {
     it("When rules.someEngine.someRule contains an unknown key then we throw an error", () => {
         expect(() => CodeAnalyzerConfig.fromObject({rules: {someEngine: {someRule: {oops: 3, tags: []}}}})).toThrow(
             getMessageFromCatalog(SHARED_MESSAGE_CATALOG,'ConfigObjectContainsInvalidKey','rules.someEngine.someRule', 'oops',
-                '["severity","tags"]'));
+                '["disabled","severity","tags"]'));
     });
 
     it("When the severity of a rule not a valid value then we throw an error", () => {
@@ -244,6 +244,53 @@ describe("Tests for creating and accessing configuration values", () => {
         };
         const conf: CodeAnalyzerConfig = CodeAnalyzerConfig.fromObject({rules: {someEngine: someRuleOverrides}});
         expect(conf.getRuleOverridesFor('someEngine')).toEqual(someRuleOverrides);
+    });
+
+    it("When disabled is set to true for a rule, then we correctly store the disabled property", () => {
+        const conf: CodeAnalyzerConfig = CodeAnalyzerConfig.fromObject({rules: {someEngine: {
+            someRule1: {disabled: true},
+            someRule2: {disabled: false},
+            someRule3: {severity: 3} // No disabled property
+        }}});
+        expect(conf.getRuleOverrideFor('someEngine', 'someRule1')).toEqual({disabled: true});
+        expect(conf.getRuleOverrideFor('someEngine', 'someRule2')).toEqual({disabled: false});
+        expect(conf.getRuleOverrideFor('someEngine', 'someRule3')).toEqual({severity: SeverityLevel.Moderate});
+    });
+
+    it("When disabled is combined with other rule properties, then all properties are correctly stored", () => {
+        const conf: CodeAnalyzerConfig = CodeAnalyzerConfig.fromObject({rules: {someEngine: {
+            someRule: {
+                disabled: true,
+                severity: 2,
+                tags: ['Security', 'Custom']
+            }
+        }}});
+        expect(conf.getRuleOverrideFor('someEngine', 'someRule')).toEqual({
+            disabled: true,
+            severity: SeverityLevel.High,
+            tags: ['Security', 'Custom']
+        });
+    });
+
+    it("When disabled is not a boolean value, then we throw an error", () => {
+        expect(() => CodeAnalyzerConfig.fromObject({rules: {someEngine: {
+            someRule: {disabled: 'yes'}
+        }}})).toThrow(
+            getMessageFromCatalog(SHARED_MESSAGE_CATALOG,'ConfigValueMustBeOfType','rules.someEngine.someRule.disabled', 'boolean', 'string'));
+
+        expect(() => CodeAnalyzerConfig.fromObject({rules: {someEngine: {
+            someRule: {disabled: 1}
+        }}})).toThrow(
+            getMessageFromCatalog(SHARED_MESSAGE_CATALOG,'ConfigValueMustBeOfType','rules.someEngine.someRule.disabled', 'boolean', 'number'));
+    });
+
+    it("When loading config from yaml file with disabled rules, then disabled property is parsed correctly", () => {
+        const conf: CodeAnalyzerConfig = CodeAnalyzerConfig.fromFile(path.join(TEST_DATA_DIR, 'sample-config-with-disabled-rule.yaml'));
+        expect(conf.getRuleOverrideFor('stubEngine1', 'stub1RuleC')).toEqual({disabled: true});
+        expect(conf.getRuleOverrideFor('stubEngine2', 'stub2RuleA')).toEqual({
+            disabled: true,
+            tags: ['Security', 'SomeNewTag']
+        });
     });
 
     it("When log_folder does not exist, then throw an error", () => {

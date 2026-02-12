@@ -33,12 +33,16 @@ const MESSAGE_CATALOG : MessageCatalog = {
         `    'severity' - [Optional] The severity level value that you want to use to override the default severity level for the rule\n` +
         `                 Possible values: 1 or 'Critical', 2 or 'High', 3 or 'Moderate', 4 or 'Low', 5 or 'Info'\n` +
         `    'tags'     - [Optional] The string array of tag values that you want to use to override the default tags for the rule\n` +
+        `    'disabled' - [Optional] Boolean value to disable the rule for all files. When set to true, the rule will not run during analysis\n` +
         `---- [Example usage]: ---------------------\n` +
         `rules:\n` +
         `  eslint:\n` +
         `    sort-vars:\n` +
         `      severity: "Info"\n` +
         `      tags: ["Recommended", "Suggestion"]\n` +
+        `  regex:\n` +
+        `    NoTrailingWhiteSpace:\n` +
+        `      disabled: true\n` +
         `-------------------------------------------`,
 
     ConfigFieldDescription_engines:
@@ -142,6 +146,9 @@ const MESSAGE_CATALOG : MessageCatalog = {
 
     RulePropertyOverridden:
         `The %s value of rule '%s' of engine '%s' was overridden according to the specified configuration. The old value '%s' was replaced with the new value '%s'.`,
+
+    RuleDisabledInConfig:
+        `Rule '%s' from engine '%s' was disabled according to the specified configuration and will not be included in the rule selection.`,
 
     ConfigPathValueMustBeAbsolute:
         `The '%s' configuration value must be provided as an absolute path location. Update the value '%s' to instead be '%s'.`,

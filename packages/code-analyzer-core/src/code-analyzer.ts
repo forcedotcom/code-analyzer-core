@@ -301,9 +301,19 @@ export class CodeAnalyzer {
 
         const ruleSelection: RuleSelectionImpl = new RuleSelectionImpl();
         for (const rule of allRules) {
-            if (selectorObjects.some(o => rule.matchesRuleSelector(o))) {
-                ruleSelection.addRule(rule);
+            // Skip rules that don't match any selector
+            if (!selectorObjects.some(o => rule.matchesRuleSelector(o))) {
+                continue;
             }
+
+            // Skip rules that are disabled in the config
+            const ruleOverride = this.config.getRuleOverrideFor(rule.getEngineName(), rule.getName());
+            if (ruleOverride.disabled === true) {
+                this.emitLogEvent(LogLevel.Info, getMessage('RuleDisabledInConfig', rule.getName(), rule.getEngineName()));
+                continue;
+            }
+
+            ruleSelection.addRule(rule);
         }
 
         this.emitEvent({type: EventType.RuleSelectionProgressEvent, timestamp: this.clock.now(), percentComplete: 100});
