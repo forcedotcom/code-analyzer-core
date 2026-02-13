@@ -38,6 +38,7 @@ export type RuleOverrides = Record<string, RuleOverride>;
 export type RuleOverride = {
     severity?: SeverityLevel
     tags?: string[]
+    disabled?: boolean
 }
 
 /**
