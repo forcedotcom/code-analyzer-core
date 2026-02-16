@@ -17,11 +17,11 @@ To submit issues, enhancement requests, and discuss ideas, create an issue on th
 -  If you find a bug, search for it in the [Issues](https://github.com/forcedotcom/code-analyzer-core/issues), and if it isn't already tracked,
    [create a new issue](https://github.com/forcedotcom/code-analyzer-core/issues/new). Fill out the "Bug Report" section of the issue template. Even if an issue is closed, feel free to comment and add details, it will still be reviewed.
 -  Issues that have been confirmed as a bug will be labelled `bug`.
--  If you want to submit a bug fix, [create a pull request](#creating_a_pull_request) and mention the issue number.
+-  If you want to submit a bug fix, [create a pull request](#creating-a-pull-request) and mention the issue number.
 -  In your bug fix pull request, include tests that isolate the bug and verify that it's fixed.
 
 ### New Features
--  To add new functionality, describe the problem you want to solve - or the enhancement you identifed - in a [new issue](https://github.com/forcedotcom/code-analyzer-core/issues/new).
+-  To add new functionality, describe the problem you want to solve - or the enhancement you identified - in a [new issue](https://github.com/forcedotcom/code-analyzer-core/issues/new).
 -  Issues that are identified as a feature request are labelled `enhancement`.
 -  Before writing the code for your newly requested feature, first wait for feedback from the project maintainers. In some cases, requested `enhancements` don't align well with the current project objectives.
 
@@ -30,7 +30,7 @@ To submit issues, enhancement requests, and discuss ideas, create an issue on th
     - improving tests
     - clarifying documentation
     - requesting alternative implementations
--  If it's a trivial change, go ahead and [create a pull request](#creating_a_pull_request) with the changes you have in mind.
+-  If it's a trivial change, go ahead and [create a pull request](#creating-a-pull-request) with the changes you have in mind.
 -  If your request is larger in size, [open an issue](https://github.com/forcedotcom/code-analyzer-core/issues/new) to get feedback on your idea.
 
 # Contribution Checklist
@@ -41,7 +41,7 @@ To submit issues, enhancement requests, and discuss ideas, create an issue on th
     - Module-level & function-level comments
     - Comments on complex blocks of code or algorithms (include references to sources)
 - [x] Tests
-    - Complete, passing test suite test suite (if provided)
+    - Complete, passing test suite (if provided)
     - Maintain or increase code coverage percentages
 - [x] Dependencies
     - Minimize number of dependencies
@@ -73,14 +73,15 @@ npm run test
 # Creating a Pull Request
 
 1. **Ensure the bug or feature wasn't already reported** by searching on GitHub under Issues.  If none exists, create a new issue so that other contributors can keep track of what you are trying to add or fix and offer suggestions, or let you know if there is already an effort in progress.
+2. **Fork** the repo on GitHub.
 3. **Clone** the forked repo to your machine.
 4. **Create** a new branch to contain your work. Example: `git br fix-issue-11`
-4. **Commit** changes to your own branch.
-5. **Push** your work back up to your fork. Example: `git push fix-issue-11`
-6. **Submit** a pull request against the `main` branch and refer to the issue you're fixing. Keep your pull request simple and small to avoid any unintended changes.
-7. **Sign** the Salesforce Contributor License Agreement (CLA). You will be prompted to do so when submitting your pull request.
+5. **Commit** changes to your own branch.
+6. **Push** your work back up to your fork. Example: `git push fix-issue-11`
+7. **Submit** a pull request against the `main` branch and refer to the issue you're fixing. Keep your pull request simple and small to avoid any unintended changes.
+8. **Sign** the Salesforce Contributor License Agreement (CLA). You will be prompted to do so when submitting your pull request.
 
-> **NOTE**: Be sure to [sync your fork](https://help.github.com/articles/syncing-a-fork/) before making a pull request.
+> **NOTE**: Be sure to [sync your fork](https://docs.github.com/en/pull-requests/collaborating-with-pull-requests/working-with-forks/syncing-a-fork) before making a pull request.
 
 
 # Code of Conduct
