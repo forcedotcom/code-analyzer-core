@@ -75,10 +75,10 @@ npm run test
 1. **Ensure the bug or feature wasn't already reported** by searching on GitHub under Issues.  If none exists, create a new issue so that other contributors can keep track of what you are trying to add or fix and offer suggestions, or let you know if there is already an effort in progress.
 2. **Fork** the repo on GitHub.
 3. **Clone** the forked repo to your machine.
-4. **Create** a new branch to contain your work. Example: `git br fix-issue-11`
+4. **Create** a new branch to contain your work. Example: `git checkout -b fix-issue-11`
 5. **Commit** changes to your own branch.
-6. **Push** your work back up to your fork. Example: `git push fix-issue-11`
-7. **Submit** a pull request against the `main` branch and refer to the issue you're fixing. Keep your pull request simple and small to avoid any unintended changes.
+6. **Push** your work back up to your fork. Example: `git push origin fix-issue-11`
+7. **Submit** a pull request against the `dev` branch and refer to the issue you're fixing. Keep your pull request simple and small to avoid any unintended changes.
 8. **Sign** the Salesforce Contributor License Agreement (CLA). You will be prompted to do so when submitting your pull request.
 
 > **NOTE**: Be sure to [sync your fork](https://docs.github.com/en/pull-requests/collaborating-with-pull-requests/working-with-forks/syncing-a-fork) before making a pull request.
