@@ -20,6 +20,7 @@ export const FIELDS = {
     ENGINES: 'engines',
     SEVERITY: 'severity',
     TAGS: 'tags',
+    DISABLED: 'disabled',
     DISABLE_ENGINE: 'disable_engine',
     IGNORES: 'ignores',
     FILES: 'files'
@@ -37,6 +38,7 @@ export type RuleOverrides = Record<string, RuleOverride>;
 export type RuleOverride = {
     severity?: SeverityLevel
     tags?: string[]
+    disabled?: boolean
 }
 
 /**
@@ -331,11 +333,12 @@ function extractRuleOverridesFrom(engineRuleOverridesExtractor: engApi.ConfigVal
 }
 
 function extractRuleOverrideFrom(ruleOverrideExtractor: engApi.ConfigValueExtractor): RuleOverride {
-    ruleOverrideExtractor.validateContainsOnlySpecifiedKeys([FIELDS.SEVERITY, FIELDS.TAGS]);
+    ruleOverrideExtractor.validateContainsOnlySpecifiedKeys([FIELDS.SEVERITY, FIELDS.TAGS, FIELDS.DISABLED]);
     const engSeverity: engApi.SeverityLevel | undefined = ruleOverrideExtractor.extractSeverityLevel(FIELDS.SEVERITY);
     return {
         tags: ruleOverrideExtractor.extractArray(FIELDS.TAGS, engApi.ValueValidator.validateString),
-        severity: engSeverity === undefined ? undefined : engSeverity as SeverityLevel
+        severity: engSeverity === undefined ? undefined : engSeverity as SeverityLevel,
+        disabled: ruleOverrideExtractor.extractBoolean(FIELDS.DISABLED)
     }
 }
 
