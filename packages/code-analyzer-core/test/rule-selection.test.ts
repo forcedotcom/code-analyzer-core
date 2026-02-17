@@ -526,7 +526,7 @@ describe('Tests for selecting rules', () => {
         expect(ruleNamesFor(selection, 'stubEngine1')).toEqual(['stub1RuleA', 'stub1RuleC']);
     });
 
-    it('When disabled rule is excluded, an info log message is emitted', async () => {
+    it('When disabled rules are excluded, a single info log message is emitted with all disabled rules', async () => {
         await setupCodeAnalyzerWithStubPlugin(CodeAnalyzerConfig.fromObject({
             rules: {
                 stubEngine1: {
@@ -540,14 +540,46 @@ describe('Tests for selecting rules', () => {
 
         await codeAnalyzer.selectRules(['Recommended']);
 
-        // Should have an info log message about the disabled rule
+        // Should have a single info log message about all disabled rules
         const disabledRuleLogEvents = logEvents.filter(e =>
             e.logLevel === LogLevel.Info &&
-            e.message.includes('stub1RuleB') &&
+            e.message.includes('disabled') &&
+            e.message.includes('stubEngine1:stub1RuleB')
+        );
+        expect(disabledRuleLogEvents.length).toBe(1);
+        expect(disabledRuleLogEvents[0].message).toEqual(getMessage('RulesDisabledInConfig', 1, 'stubEngine1:stub1RuleB'));
+    });
+
+    it('When multiple disabled rules are excluded, they are all listed in a single log message', async () => {
+        await setupCodeAnalyzerWithStubPlugin(CodeAnalyzerConfig.fromObject({
+            rules: {
+                stubEngine1: {
+                    stub1RuleA: { disabled: true },
+                    stub1RuleB: { disabled: true }
+                },
+                stubEngine2: {
+                    stub2RuleA: { disabled: true }
+                }
+            }
+        }));
+
+        const logEvents: LogEvent[] = [];
+        codeAnalyzer.onEvent(EventType.LogEvent, (event: LogEvent) => logEvents.push(event));
+
+        await codeAnalyzer.selectRules(['Recommended']);
+
+        // Should have a single info log message listing all 3 disabled rules
+        const disabledRuleLogEvents = logEvents.filter(e =>
+            e.logLevel === LogLevel.Info &&
             e.message.includes('disabled')
         );
-        expect(disabledRuleLogEvents.length).toBeGreaterThan(0);
-        expect(disabledRuleLogEvents[0].message).toEqual(getMessage('RuleDisabledInConfig', 'stub1RuleB', 'stubEngine1'));
+        expect(disabledRuleLogEvents.length).toBe(1);
+
+        const message = disabledRuleLogEvents[0].message;
+        expect(message).toContain('3 rule(s)');
+        expect(message).toContain('stubEngine1:stub1RuleA');
+        expect(message).toContain('stubEngine1:stub1RuleB');
+        expect(message).toContain('stubEngine2:stub2RuleA');
     });
 
     it('When loading config from yaml file with disabled rules, disabled rules are excluded from selection', async () => {

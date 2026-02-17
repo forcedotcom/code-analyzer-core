@@ -300,6 +300,8 @@ export class CodeAnalyzer {
         const allRules: RuleImpl[] = await this.getAllRules(selectOptions?.workspace);
 
         const ruleSelection: RuleSelectionImpl = new RuleSelectionImpl();
+        const disabledRules: {ruleName: string, engineName: string}[] = [];
+
         for (const rule of allRules) {
             // Skip rules that don't match any selector
             if (!selectorObjects.some(o => rule.matchesRuleSelector(o))) {
@@ -309,11 +311,18 @@ export class CodeAnalyzer {
             // Skip rules that are disabled in the config
             const ruleOverride = this.config.getRuleOverrideFor(rule.getEngineName(), rule.getName());
             if (ruleOverride.disabled === true) {
-                this.emitLogEvent(LogLevel.Info, getMessage('RuleDisabledInConfig', rule.getName(), rule.getEngineName()));
+                disabledRules.push({ruleName: rule.getName(), engineName: rule.getEngineName()});
                 continue;
             }
 
             ruleSelection.addRule(rule);
+        }
+
+        // Log all disabled rules at once
+        if (disabledRules.length > 0) {
+            this.emitLogEvent(LogLevel.Info, getMessage('RulesDisabledInConfig',
+                disabledRules.length,
+                disabledRules.map(r => `${r.engineName}:${r.ruleName}`).join(', ')));
         }
 
         this.emitEvent({type: EventType.RuleSelectionProgressEvent, timestamp: this.clock.now(), percentComplete: 100});

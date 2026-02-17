@@ -147,8 +147,8 @@ const MESSAGE_CATALOG : MessageCatalog = {
     RulePropertyOverridden:
         `The %s value of rule '%s' of engine '%s' was overridden according to the specified configuration. The old value '%s' was replaced with the new value '%s'.`,
 
-    RuleDisabledInConfig:
-        `Rule '%s' from engine '%s' was disabled according to the specified configuration and will not be included in the rule selection.`,
+    RulesDisabledInConfig:
+        `%d rule(s) were disabled according to the specified configuration and will not be included in the rule selection: %s`,
 
     ConfigPathValueMustBeAbsolute:
         `The '%s' configuration value must be provided as an absolute path location. Update the value '%s' to instead be '%s'.`,
