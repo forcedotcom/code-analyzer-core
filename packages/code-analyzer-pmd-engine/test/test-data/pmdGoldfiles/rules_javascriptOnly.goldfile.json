@@ -103,7 +103,7 @@
       "BestPractices",
       "JavaScript"
     ],
-    "description": "This rule helps to avoid using accidently global variables by simply missing the \"var\" declaration. Global variables can lead to side-effects that are hard to debug.",
+    "description": "This rule helps to avoid using accidentally global variables by simply missing the \"var\" declaration. Global variables can lead to side-effects that are hard to debug.",
     "resourceUrls": [
       "https://docs.pmd-code.org/pmd-doc-{{PMD_VERSION}}/pmd_rules_ecmascript_bestpractices.html#globalvariable"
     ]
@@ -175,7 +175,7 @@
       "CodeStyle",
       "JavaScript"
     ],
-    "description": "An unnecessary Block is present. Such Blocks are often used in other languages to introduce a new variable scope. Blocks do not behave like this in ECMAScipt, and using them can be misleading. Considering removing this unnecessary Block.",
+    "description": "An unnecessary Block is present. Such Blocks are often used in other languages to introduce a new variable scope. Blocks do not behave like this in ECMAScript, and using them can be misleading. Considering removing this unnecessary Block.",
     "resourceUrls": [
       "https://docs.pmd-code.org/pmd-doc-{{PMD_VERSION}}/pmd_rules_ecmascript_codestyle.html#unnecessaryblock"
     ]
