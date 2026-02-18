@@ -149,7 +149,7 @@
       "Security",
       "Apex"
     ],
-    "description": "Detects hardcoded credentials used in requests to an endpoint. You should refrain from hardcoding credentials: * They are hard to mantain by being mixed in application code * Particularly hard to update them when used from different classes * Granting a developer access to the codebase means granting knowledge of credentials, keeping a two-level access is not possible. * Using different... Learn more: https://docs.pmd-code.org/pmd-doc-{{PMD_VERSION}}/pmd_rules_apex_security.html#apexsuggestusingnamedcred",
+    "description": "Detects hardcoded credentials used in requests to an endpoint. You should refrain from hardcoding credentials: * They are hard to maintain by being mixed in application code * Particularly hard to update them when used from different classes * Granting a developer access to the codebase means granting knowledge of credentials, keeping a two-level access is not possible. * Using... Learn more: https://docs.pmd-code.org/pmd-doc-{{PMD_VERSION}}/pmd_rules_apex_security.html#apexsuggestusingnamedcred",
     "resourceUrls": [
       "https://docs.pmd-code.org/pmd-doc-{{PMD_VERSION}}/pmd_rules_apex_security.html#apexsuggestusingnamedcred"
     ]
@@ -188,7 +188,7 @@
       "BestPractices",
       "Apex"
     ],
-    "description": "Apex test methods should have `@isTest` annotation instead of the `testMethod` keyword, as `testMethod` is deprecated. Salesforce advices to use @isTest annotation for test classes and methods.",
+    "description": "Apex test methods should have `@isTest` annotation instead of the `testMethod` keyword, as `testMethod` is deprecated. Salesforce advises to use @isTest annotation for test classes and methods.",
     "resourceUrls": [
       "https://docs.pmd-code.org/pmd-doc-{{PMD_VERSION}}/pmd_rules_apex_bestpractices.html#apexunittestmethodshouldhaveistestannotation"
     ]
@@ -720,7 +720,7 @@
       "CodeStyle",
       "Apex"
     ],
-    "description": "Field declarations should appear before method declarations within a class.",
+    "description": "Field declarations should appear before method declarations within a class. Note: Since PMD 7.21.0, properties are ignored. This means that fields can appear before or after properties (or fields and properties can be mixed) as long as all fields are placed before the first method declaration.",
     "resourceUrls": [
       "https://docs.pmd-code.org/pmd-doc-{{PMD_VERSION}}/pmd_rules_apex_codestyle.html#fielddeclarationsshouldbeatstart"
     ]
