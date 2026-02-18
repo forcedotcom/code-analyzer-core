@@ -225,7 +225,7 @@ abstract class SharedConfigValueExtractor {
             await this.validateJavaCommandContainsValidVersion(javaCommand);
         } catch (err) {
             throw new Error(getMessage('InvalidUserSpecifiedJavaCommand',
-                this.configValueExtractor.getFieldPath('java_command'), (err as Error).message));
+                this.configValueExtractor.getFieldPath('java_command'), (err as Error).message), { cause: err });
         }
         return javaCommand;
     }
@@ -266,7 +266,7 @@ abstract class SharedConfigValueExtractor {
         } catch (err) {
             /* istanbul ignore next */
             const errMsg: string = err instanceof Error ? err.message : String(err);
-            throw new Error(getMessage('JavaVersionCheckProducedError', javaCommand, indent(errMsg, '  | ')));
+            throw new Error(getMessage('JavaVersionCheckProducedError', javaCommand, indent(errMsg, '  | ')), { cause: err });
         }
         if (!version) {
             throw new Error(getMessage('UnrecognizableJavaVersion', javaCommand));
