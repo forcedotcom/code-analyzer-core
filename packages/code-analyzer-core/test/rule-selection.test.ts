@@ -403,6 +403,195 @@ describe('Tests for selecting rules', () => {
         expect(ruleNamesFor(selection, 'stubEngine2')).toEqual([]);
     });
 
+    it('When config contains disabled:true for a rule, then that rule is not selected', async () => {
+        await setupCodeAnalyzerWithStubPlugin(CodeAnalyzerConfig.fromObject({
+            rules: {
+                stubEngine1: {
+                    stub1RuleB: { disabled: true }
+                }
+            }
+        }));
+
+        const selection: RuleSelection = await codeAnalyzer.selectRules(['Recommended']);
+
+        // stub1RuleB should be excluded even though it's Recommended
+        expect(ruleNamesFor(selection, 'stubEngine1')).toEqual(['stub1RuleA', 'stub1RuleC']);
+        expect(ruleNamesFor(selection, 'stubEngine2')).toEqual(['stub2RuleA', 'stub2RuleC']);
+    });
+
+    it('When config contains disabled:false for a rule, then that rule is still selected normally', async () => {
+        await setupCodeAnalyzerWithStubPlugin(CodeAnalyzerConfig.fromObject({
+            rules: {
+                stubEngine1: {
+                    stub1RuleB: { disabled: false }
+                }
+            }
+        }));
+
+        const selection: RuleSelection = await codeAnalyzer.selectRules(['Recommended']);
+
+        // stub1RuleB should be included since disabled is explicitly false
+        expect(ruleNamesFor(selection, 'stubEngine1')).toEqual(['stub1RuleA', 'stub1RuleB', 'stub1RuleC']);
+        expect(ruleNamesFor(selection, 'stubEngine2')).toEqual(['stub2RuleA', 'stub2RuleC']);
+    });
+
+    it('When multiple rules are disabled via config, then all disabled rules are excluded from selection', async () => {
+        await setupCodeAnalyzerWithStubPlugin(CodeAnalyzerConfig.fromObject({
+            rules: {
+                stubEngine1: {
+                    stub1RuleA: { disabled: true },
+                    stub1RuleB: { disabled: true },
+                    stub1RuleC: { disabled: true }
+                },
+                stubEngine2: {
+                    stub2RuleA: { disabled: true }
+                }
+            }
+        }));
+
+        const selection: RuleSelection = await codeAnalyzer.selectRules(['Recommended']);
+
+        // All disabled rules should be excluded
+        expect(ruleNamesFor(selection, 'stubEngine1')).toEqual([]);
+        expect(ruleNamesFor(selection, 'stubEngine2')).toEqual(['stub2RuleC']);
+        expect(ruleNamesFor(selection, 'stubEngine3')).toEqual(['stub3RuleA']);
+    });
+
+    it('When disabled rule is explicitly selected by name, it is still excluded', async () => {
+        await setupCodeAnalyzerWithStubPlugin(CodeAnalyzerConfig.fromObject({
+            rules: {
+                stubEngine1: {
+                    stub1RuleB: { disabled: true }
+                }
+            }
+        }));
+
+        const selection: RuleSelection = await codeAnalyzer.selectRules(['stub1RuleB']);
+
+        // Even though we explicitly selected stub1RuleB, it should be excluded because it's disabled
+        expect(ruleNamesFor(selection, 'stubEngine1')).toEqual([]);
+    });
+
+    it('When disabled rule is selected via engine name, it is still excluded', async () => {
+        await setupCodeAnalyzerWithStubPlugin(CodeAnalyzerConfig.fromObject({
+            rules: {
+                stubEngine1: {
+                    stub1RuleB: { disabled: true },
+                    stub1RuleD: { disabled: true }
+                }
+            }
+        }));
+
+        const selection: RuleSelection = await codeAnalyzer.selectRules(['stubEngine1']);
+
+        // When selecting all rules from stubEngine1, disabled rules should be excluded
+        expect(ruleNamesFor(selection, 'stubEngine1')).toEqual(['stub1RuleA', 'stub1RuleC', 'stub1RuleE']);
+    });
+
+    it('When disabled rule is selected via all selector, it is still excluded', async () => {
+        await setupCodeAnalyzerWithStubPlugin(CodeAnalyzerConfig.fromObject({
+            rules: {
+                stubEngine1: {
+                    stub1RuleB: { disabled: true }
+                },
+                stubEngine2: {
+                    stub2RuleA: { disabled: true }
+                }
+            }
+        }));
+
+        const selection: RuleSelection = await codeAnalyzer.selectRules(['all']);
+
+        // When selecting all rules, disabled rules should be excluded
+        expect(ruleNamesFor(selection, 'stubEngine1')).toEqual(['stub1RuleA', 'stub1RuleC', 'stub1RuleD', 'stub1RuleE']);
+        expect(ruleNamesFor(selection, 'stubEngine2')).toEqual(['stub2RuleB', 'stub2RuleC']);
+    });
+
+    it('When disabled is combined with other property overrides, the rule is still excluded', async () => {
+        await setupCodeAnalyzerWithStubPlugin(CodeAnalyzerConfig.fromObject({
+            rules: {
+                stubEngine1: {
+                    stub1RuleB: {
+                        disabled: true,
+                        severity: 1,  // Changed to Critical
+                        tags: ['NewTag']
+                    }
+                }
+            }
+        }));
+
+        const selection: RuleSelection = await codeAnalyzer.selectRules(['Recommended']);
+
+        // stub1RuleB should be excluded despite having other property overrides
+        expect(ruleNamesFor(selection, 'stubEngine1')).toEqual(['stub1RuleA', 'stub1RuleC']);
+    });
+
+    it('When disabled rules are excluded, a single info log message is emitted with all disabled rules', async () => {
+        await setupCodeAnalyzerWithStubPlugin(CodeAnalyzerConfig.fromObject({
+            rules: {
+                stubEngine1: {
+                    stub1RuleB: { disabled: true }
+                }
+            }
+        }));
+
+        const logEvents: LogEvent[] = [];
+        codeAnalyzer.onEvent(EventType.LogEvent, (event: LogEvent) => logEvents.push(event));
+
+        await codeAnalyzer.selectRules(['Recommended']);
+
+        // Should have a single info log message about all disabled rules
+        const disabledRuleLogEvents = logEvents.filter(e =>
+            e.logLevel === LogLevel.Info &&
+            e.message.includes('disabled') &&
+            e.message.includes('stubEngine1:stub1RuleB')
+        );
+        expect(disabledRuleLogEvents.length).toBe(1);
+        expect(disabledRuleLogEvents[0].message).toEqual(getMessage('RulesDisabledInConfig', 1, 'stubEngine1:stub1RuleB'));
+    });
+
+    it('When multiple disabled rules are excluded, they are all listed in a single log message', async () => {
+        await setupCodeAnalyzerWithStubPlugin(CodeAnalyzerConfig.fromObject({
+            rules: {
+                stubEngine1: {
+                    stub1RuleA: { disabled: true },
+                    stub1RuleB: { disabled: true }
+                },
+                stubEngine2: {
+                    stub2RuleA: { disabled: true }
+                }
+            }
+        }));
+
+        const logEvents: LogEvent[] = [];
+        codeAnalyzer.onEvent(EventType.LogEvent, (event: LogEvent) => logEvents.push(event));
+
+        await codeAnalyzer.selectRules(['Recommended']);
+
+        // Should have a single info log message listing all 3 disabled rules
+        const disabledRuleLogEvents = logEvents.filter(e =>
+            e.logLevel === LogLevel.Info &&
+            e.message.includes('disabled')
+        );
+        expect(disabledRuleLogEvents.length).toBe(1);
+
+        const message = disabledRuleLogEvents[0].message;
+        expect(message).toContain('3 rule(s)');
+        expect(message).toContain('stubEngine1:stub1RuleA');
+        expect(message).toContain('stubEngine1:stub1RuleB');
+        expect(message).toContain('stubEngine2:stub2RuleA');
+    });
+
+    it('When loading config from yaml file with disabled rules, disabled rules are excluded from selection', async () => {
+        await setupCodeAnalyzerWithStubPlugin(CodeAnalyzerConfig.fromFile(path.resolve(__dirname, "test-data", "sample-config-with-disabled-rule.yaml")));
+
+        const selection: RuleSelection = await codeAnalyzer.selectRules(['all']);
+
+        // stub1RuleC and stub2RuleA should be excluded because they're disabled in the config file
+        expect(ruleNamesFor(selection, 'stubEngine1')).toEqual(['stub1RuleA', 'stub1RuleB', 'stub1RuleD', 'stub1RuleE']);
+        expect(ruleNamesFor(selection, 'stubEngine2')).toEqual(['stub2RuleB', 'stub2RuleC']);
+    });
+
     it('When an engine fails to return its rules, an error is logged and empty results are returned', async () => {
         // ====== TEST SETUP ======
         codeAnalyzer = createCodeAnalyzer();

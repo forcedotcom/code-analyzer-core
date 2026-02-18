@@ -444,6 +444,67 @@ describe('Tests for the Workspace class', () => {
             ].sort());
         });
     });
+
+    describe('Tests for ignorePatterns behavior', () => {
+        it('When ignorePatterns are provided, workspace files are NOT filtered by them', async () => {
+            // This allows engines like SFGE to build complete graphs
+            const workspace: Workspace = new Workspace('id', [SAMPLE_WORKSPACE_FOLDER], undefined, ['**/someFile.cls']);
+            const workspaceFiles = await workspace.getWorkspaceFiles();
+            // someFile.cls should still be included in workspace files (ignore patterns don't apply to workspace files)
+            expect(workspaceFiles).toContain(path.join(SAMPLE_WORKSPACE_FOLDER, 'someFile.cls'));
+            // Other .cls files should also be included
+            expect(workspaceFiles).toContain(path.join(SAMPLE_WORKSPACE_FOLDER, 'sub1', 'sub3', 'someFileInSub3.cls'));
+        });
+
+        it('When ignorePatterns are provided with explicit targets, targeted files ARE filtered by them', async () => {
+            const workspace: Workspace = new Workspace('id', [SAMPLE_WORKSPACE_FOLDER], [SAMPLE_WORKSPACE_FOLDER], ['**/someFile.cls']);
+            const targetedFiles = await workspace.getTargetedFiles();
+            // someFile.cls should be excluded from targeted files
+            expect(targetedFiles).not.toContain(path.join(SAMPLE_WORKSPACE_FOLDER, 'someFile.cls'));
+            // Other .cls files should still be included
+            expect(targetedFiles).toContain(path.join(SAMPLE_WORKSPACE_FOLDER, 'sub1', 'sub3', 'someFileInSub3.cls'));
+            expect(targetedFiles).toContain(path.join(SAMPLE_WORKSPACE_FOLDER, 'sub1', 'someFileInSub1.cls'));
+        });
+
+        it('When ignorePatterns are provided without explicit targets, targeted files ARE filtered by them', async () => {
+            // When no targets provided, getTargetedFiles returns workspace files filtered by ignore patterns
+            const workspace: Workspace = new Workspace('id', [SAMPLE_WORKSPACE_FOLDER], undefined, ['**/someFile.cls']);
+            const targetedFiles = await workspace.getTargetedFiles();
+            // someFile.cls should be excluded from targeted files
+            expect(targetedFiles).not.toContain(path.join(SAMPLE_WORKSPACE_FOLDER, 'someFile.cls'));
+            // Other .cls files should still be included
+            expect(targetedFiles).toContain(path.join(SAMPLE_WORKSPACE_FOLDER, 'sub1', 'sub3', 'someFileInSub3.cls'));
+            expect(targetedFiles).toContain(path.join(SAMPLE_WORKSPACE_FOLDER, 'sub1', 'someFileInSub1.cls'));
+        });
+
+        it('When ignorePatterns match all files, targeted files is empty but workspace files is not', async () => {
+            const workspace: Workspace = new Workspace('id', [SAMPLE_WORKSPACE_FOLDER], undefined, ['**/*']);
+            const workspaceFiles = await workspace.getWorkspaceFiles();
+            const targetedFiles = await workspace.getTargetedFiles();
+            // Workspace files should not be empty
+            expect(workspaceFiles.length).toBeGreaterThan(0);
+            // Targeted files should be empty (all filtered by ignore pattern)
+            expect(targetedFiles).toEqual([]);
+        });
+
+        it('When running on Windows (simulated), ignore patterns still work with backslash paths', async () => {
+            // Mock path.sep to simulate Windows - jest.replaceProperty auto-restores after test
+            jest.replaceProperty(path, 'sep', '\\');
+            
+            // Create a workspace - note: actual file paths on disk still use native separators
+            // but this tests that our normalization logic handles backslashes correctly
+            const workspace: Workspace = new Workspace('id', [SAMPLE_WORKSPACE_FOLDER], undefined, ['**/someFile.cls']);
+            
+            // The pattern uses forward slashes (standard glob syntax)
+            // On Windows, file paths would have backslashes
+            // Our fix should normalize them before matching
+            const targetedFiles = await workspace.getTargetedFiles();
+            
+            // someFile.cls should be excluded even with Windows path separators
+            // Note: On non-Windows, this test verifies the normalization code path doesn't break anything
+            expect(targetedFiles).not.toContain(path.join(SAMPLE_WORKSPACE_FOLDER, 'someFile.cls'));
+        });
+    });
 });
 
 function getAbsoluteRootFolder(): string {

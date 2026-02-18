@@ -1,0 +1,16 @@
+log_folder: sampleLogFolder
+
+rules:
+  stubEngine1:
+    stub1RuleB:
+      severity: 1
+    stub1RuleC:
+      disabled: true
+    stub1RuleD:
+      severity: "Info"
+      tags: ["Recommended", "CodeStyle"]
+
+  stubEngine2:
+    stub2RuleA:
+      disabled: true
+      tags: ["Security", "SomeNewTag"]

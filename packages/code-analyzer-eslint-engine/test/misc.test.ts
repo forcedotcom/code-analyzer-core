@@ -8,9 +8,7 @@ import {ESLintWorkspace} from "../src/workspace";
 
 const DEFAULT_CONFIG_FOR_TESTING: ESLintEngineConfig = {
     ...DEFAULT_CONFIG,
-    config_root: __dirname,
-    // React is gated in production (default: true). For testing, enable it (eventual default: false)
-    disable_react_base_config: false
+    config_root: __dirname
 }
 const testDataFolder: string = path.join(__dirname, 'test-data');
 

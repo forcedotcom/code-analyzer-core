@@ -24,7 +24,7 @@ import * as engApi from "@salesforce/code-analyzer-engine-api"
 import {Clock, RealClock} from '@salesforce/code-analyzer-engine-api/utils';
 import {Selector, toSelector} from "./selectors";
 import {EventEmitter} from "node:events";
-import {CodeAnalyzerConfig, ConfigDescription, EngineOverrides, FIELDS, RuleOverride} from "./config";
+import {CodeAnalyzerConfig, ConfigDescription, EngineOverrides, FIELDS, Ignores, RuleOverride} from "./config";
 import {
     EngineProgressAggregator,
     FileSystem,
@@ -157,6 +157,8 @@ export class CodeAnalyzer {
      * analyze the few files that you are targeting. If a targets array is not specified, then the entire list of
      * workspaces files and folders will be targeted.
      *
+     * Files matching patterns specified in the ignores.files configuration will be excluded from the workspace.
+     *
      * @param workspaceFilesAndFolders string array of files and/or folders to include in the workspace
      * @param targets optional string array of files and/or folders
      */
@@ -174,7 +176,11 @@ export class CodeAnalyzer {
             validatedTargets = (await Promise.all(targetPromises)).flat();
         }
 
-        const workspace: Workspace = new WorkspaceImpl(workspaceId, validatedWorkspaceFilesAndFolders, validatedTargets);
+        // Get ignore patterns from config
+        const ignores: Ignores = this.config.getIgnores();
+        const ignorePatterns: string[] = ignores.files;
+
+        const workspace: Workspace = new WorkspaceImpl(workspaceId, validatedWorkspaceFilesAndFolders, validatedTargets, ignorePatterns);
 
         // It appears that each of the engines is calling these methods all at the same time and so if we had N engines
         // each creating N promises, the cache hasn't been populated, and so we are doing the work N times. If we
@@ -294,10 +300,29 @@ export class CodeAnalyzer {
         const allRules: RuleImpl[] = await this.getAllRules(selectOptions?.workspace);
 
         const ruleSelection: RuleSelectionImpl = new RuleSelectionImpl();
+        const disabledRules: {ruleName: string, engineName: string}[] = [];
+
         for (const rule of allRules) {
-            if (selectorObjects.some(o => rule.matchesRuleSelector(o))) {
-                ruleSelection.addRule(rule);
+            // Skip rules that don't match any selector
+            if (!selectorObjects.some(o => rule.matchesRuleSelector(o))) {
+                continue;
             }
+
+            // Skip rules that are disabled in the config
+            const ruleOverride = this.config.getRuleOverrideFor(rule.getEngineName(), rule.getName());
+            if (ruleOverride.disabled === true) {
+                disabledRules.push({ruleName: rule.getName(), engineName: rule.getEngineName()});
+                continue;
+            }
+
+            ruleSelection.addRule(rule);
+        }
+
+        // Log all disabled rules at once
+        if (disabledRules.length > 0) {
+            this.emitLogEvent(LogLevel.Info, getMessage('RulesDisabledInConfig',
+                disabledRules.length,
+                disabledRules.map(r => `${r.engineName}:${r.ruleName}`).join(', ')));
         }
 
         this.emitEvent({type: EventType.RuleSelectionProgressEvent, timestamp: this.clock.now(), percentComplete: 100});
@@ -646,8 +671,10 @@ export class CodeAnalyzer {
  */
 class WorkspaceImpl implements Workspace {
     private readonly delegate: engApi.Workspace;
-    constructor(workspaceId: string, absWorkspaceFilesAndFolders: string[], absTargets?: string[]) {
-        this.delegate = new engApi.Workspace(workspaceId, absWorkspaceFilesAndFolders, absTargets);
+
+    constructor(workspaceId: string, absWorkspaceFilesAndFolders: string[], absTargets?: string[], ignorePatterns: string[] = []) {
+        // Pass ignore patterns directly to engApi.Workspace which handles filtering internally
+        this.delegate = new engApi.Workspace(workspaceId, absWorkspaceFilesAndFolders, absTargets, ignorePatterns);
     }
 
     getWorkspaceId(): string {
@@ -662,11 +689,11 @@ class WorkspaceImpl implements Workspace {
         return this.delegate.getRawTargets();
     }
 
-    getWorkspaceFiles(): Promise<string[]> {
+    async getWorkspaceFiles(): Promise<string[]> {
         return this.delegate.getWorkspaceFiles();
     }
 
-    getTargetedFiles(): Promise<string[]> {
+    async getTargetedFiles(): Promise<string[]> {
         return this.delegate.getTargetedFiles();
     }
 

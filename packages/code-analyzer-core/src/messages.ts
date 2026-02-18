@@ -33,12 +33,16 @@ const MESSAGE_CATALOG : MessageCatalog = {
         `    'severity' - [Optional] The severity level value that you want to use to override the default severity level for the rule\n` +
         `                 Possible values: 1 or 'Critical', 2 or 'High', 3 or 'Moderate', 4 or 'Low', 5 or 'Info'\n` +
         `    'tags'     - [Optional] The string array of tag values that you want to use to override the default tags for the rule\n` +
+        `    'disabled' - [Optional] Boolean value to disable the rule for all files. When set to true, the rule will not run during analysis\n` +
         `---- [Example usage]: ---------------------\n` +
         `rules:\n` +
         `  eslint:\n` +
         `    sort-vars:\n` +
         `      severity: "Info"\n` +
         `      tags: ["Recommended", "Suggestion"]\n` +
+        `  regex:\n` +
+        `    NoTrailingWhiteSpace:\n` +
+        `      disabled: true\n` +
         `-------------------------------------------`,
 
     ConfigFieldDescription_engines:
@@ -46,6 +50,16 @@ const MESSAGE_CATALOG : MessageCatalog = {
         `  {engine_name} is the name of the engine containing the setting that you want to override.\n` +
         `  {property_name} is the name of a property that you would like to override.\n` +
         `Each engine may have its own set of properties available to help customize that particular engine's behavior.`,
+
+    ConfigFieldDescription_ignores:
+        `Configuration for ignoring files during analysis.\n` +
+        `  files: An array of glob patterns specifying files to exclude from scanning.\n` +
+        `---- [Example usage]: ---------------------\n` +
+        `ignores:\n` +
+        `  files:\n` +
+        `    - "**/node_modules/**"\n` +
+        `    - "**/*.test.js"\n` +
+        `-------------------------------------------`,
 
     GenericEngineConfigOverview:
         `%s ENGINE CONFIGURATION`,
@@ -124,8 +138,17 @@ const MESSAGE_CATALOG : MessageCatalog = {
     ConfigContentNotAnObject:
         `The configuration content is invalid since it is of type %s instead of type object.`,
 
+    InvalidGlobPatternEmpty:
+        `The configuration field '%s' contains an empty glob pattern. Glob patterns must not be empty strings.`,
+
+    InvalidGlobPattern:
+        `The configuration field '%s' contains an invalid glob pattern '%s': %s`,
+
     RulePropertyOverridden:
         `The %s value of rule '%s' of engine '%s' was overridden according to the specified configuration. The old value '%s' was replaced with the new value '%s'.`,
+
+    RulesDisabledInConfig:
+        `%d rule(s) were disabled according to the specified configuration and will not be included in the rule selection: %s`,
 
     ConfigPathValueMustBeAbsolute:
         `The '%s' configuration value must be provided as an absolute path location. Update the value '%s' to instead be '%s'.`,

@@ -126,6 +126,70 @@ class PmdWrapperTest {
     }
 
     @Test
+    void whenCallingMainWithDescribeWithNcssCountRuleset_thenRuleAppearsInDescribe(@TempDir Path tempDir) throws Exception {
+        // Create a minimal ruleset that references Apex NcssCount (metrics)
+        String rulesetXml = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" +
+                "<ruleset name=\"Ruleset for NcssCount\"\n" +
+                "    xmlns=\"http://pmd.sourceforge.net/ruleset/2.0.0\"\n" +
+                "    xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"\n" +
+                "    xsi:schemaLocation=\"http://pmd.sourceforge.net/ruleset/2.0.0 https://pmd.sourceforge.io/ruleset_2_0_0.xsd\">\n" +
+                "    <description>Include Apex NcssCount</description>\n" +
+                "    <rule ref=\"category/apex/design.xml/NcssCount\" />\n" +
+                "</ruleset>";
+        Path ncssRuleset = tempDir.resolve("ncss-ruleset.xml");
+        Files.write(ncssRuleset, rulesetXml.getBytes());
+
+        // Prepare describe args with a custom rulesets list file
+        Path outputFile = tempDir.resolve("describe-output.json");
+        Path rulesetsList = tempDir.resolve("customRulesetsList.txt");
+        Files.write(rulesetsList, (ncssRuleset.toAbsolutePath().toString() + "\n").getBytes());
+
+        String[] args = {"describe", outputFile.toAbsolutePath().toString(),
+                rulesetsList.toAbsolutePath().toString(), "apex"};
+        callPmdWrapper(args);
+
+        // Parse output and assert NcssCount is present and references our ruleset file
+        String fileContents = Files.readString(outputFile);
+        Gson gson = new Gson();
+        Type pmdRuleInfoListType = new TypeToken<List<PmdRuleInfo>>(){}.getType();
+        List<PmdRuleInfo> pmdRuleInfoList = gson.fromJson(fileContents, pmdRuleInfoListType);
+        PmdRuleInfo ruleInfo = assertContainsOneRuleWithNameAndLanguage(pmdRuleInfoList, "NcssCount", "apex");
+        assertThat(ruleInfo.ruleSetFile, is(ncssRuleset.toAbsolutePath().toString()));
+    }
+
+    @Test
+    void whenCallingMainWithDescribeWithExcessiveClassLengthRuleset_thenRuleAppearsInDescribe(@TempDir Path tempDir) throws Exception {
+        // Create a minimal ruleset that references Apex ExcessiveClassLength (design)
+        String rulesetXml = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" +
+                "<ruleset name=\"Ruleset for ExcessiveClassLength\"\n" +
+                "    xmlns=\"http://pmd.sourceforge.net/ruleset/2.0.0\"\n" +
+                "    xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"\n" +
+                "    xsi:schemaLocation=\"http://pmd.sourceforge.net/ruleset/2.0.0 https://pmd.sourceforge.io/ruleset_2_0_0.xsd\">\n" +
+                "    <description>Include Apex ExcessiveClassLength</description>\n" +
+                "    <rule ref=\"category/apex/design.xml/ExcessiveClassLength\" />\n" +
+                "</ruleset>";
+        Path excessiveClassLengthRuleset = tempDir.resolve("excessive-class-length-ruleset.xml");
+        Files.write(excessiveClassLengthRuleset, rulesetXml.getBytes());
+
+        // Prepare describe args with a custom rulesets list file
+        Path outputFile = tempDir.resolve("describe-output.json");
+        Path rulesetsList = tempDir.resolve("customRulesetsList.txt");
+        Files.write(rulesetsList, (excessiveClassLengthRuleset.toAbsolutePath().toString() + "\n").getBytes());
+
+        String[] args = {"describe", outputFile.toAbsolutePath().toString(),
+                rulesetsList.toAbsolutePath().toString(), "apex"};
+        callPmdWrapper(args);
+
+        // Parse output and assert ExcessiveClassLength is present and references our ruleset file
+        String fileContents = Files.readString(outputFile);
+        Gson gson = new Gson();
+        Type pmdRuleInfoListType = new TypeToken<List<PmdRuleInfo>>(){}.getType();
+        List<PmdRuleInfo> pmdRuleInfoList = gson.fromJson(fileContents, pmdRuleInfoListType);
+        PmdRuleInfo ruleInfo = assertContainsOneRuleWithNameAndLanguage(pmdRuleInfoList, "ExcessiveClassLength", "apex");
+        assertThat(ruleInfo.ruleSetFile, is(excessiveClassLengthRuleset.toAbsolutePath().toString()));
+    }
+
+    @Test
     void whenCallingMainWithRunAndTwoFewArgs_thenError() {
         String[] args = {"run", "notEnough"};
         Exception thrown = assertThrows(Exception.class, () -> callPmdWrapper(args));
@@ -371,6 +435,97 @@ class PmdWrapperTest {
         
         assertThat(resultsJsonString, containsString("{\"violations\":[{\"rule\":\"OperationWithLimitsInLoop\"")); // Contains the violation for the valid file
         assertThat(resultsJsonString, containsString("\"processingErrors\":[{\"file\":")); // Contains the processing error for the invalid file
+    }
+
+    @Test
+    void whenRunningWithNcssCountRule_thenReportsOrExecutesSuccessfully(@TempDir Path tempDir) throws Exception {
+        // Create a minimal ruleset that references the Apex NcssCount rule with a very low threshold
+        String rulesetXml = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" +
+                "<ruleset name=\"Ruleset for NcssCount\"\n" +
+                "    xmlns=\"http://pmd.sourceforge.net/ruleset/2.0.0\"\n" +
+                "    xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"\n" +
+                "    xsi:schemaLocation=\"http://pmd.sourceforge.net/ruleset/2.0.0 https://pmd.sourceforge.io/ruleset_2_0_0.xsd\">\n" +
+                "    <description>Run Apex NcssCount</description>\n" +
+                "    <rule ref=\"category/apex/design.xml/NcssCount\">\n" +
+                "      <properties>\n" +
+                "        <property name=\"minimum\" value=\"1\"/>\n" +
+                "      </properties>\n" +
+                "    </rule>\n" +
+                "</ruleset>";
+        String rulesetFile = createTempFile(tempDir, "ncss-ruleset.xml", rulesetXml);
+
+        // Create a simple Apex file with a few statements; the low threshold should trigger a violation
+        String apexCode = "public class ManyStatements {\n" +
+                "  public static void foo(){\n" +
+                "    Integer a = 1; Integer b = 2; Integer c = 3; // multiple statements\n" +
+                "  }\n" +
+                "}\n";
+        String apexFile = createTempFile(tempDir, "ManyStatements.cls", apexCode);
+
+        String inputJson = "{\n" +
+                "  \"ruleSetInputFile\":\"" + makePathJsonSafe(rulesetFile) + "\",\n" +
+                "  \"runDataPerLanguage\": {\n" +
+                "    \"apex\": {\n" +
+                "      \"filesToScan\": [\"" + makePathJsonSafe(apexFile) + "\"]\n" +
+                "    }\n" +
+                "  }\n" +
+                "}";
+        String inputFile = createTempFile(tempDir, "input.json", inputJson);
+
+        String resultsOutputFile = tempDir.resolve("results.json").toAbsolutePath().toString();
+        String[] args = {"run", inputFile, resultsOutputFile};
+        callPmdWrapper(args); // Should not error
+
+        String resultsJsonString = new String(Files.readAllBytes(Paths.get(resultsOutputFile)));
+        JsonElement element = JsonParser.parseString(resultsJsonString); // Should not error
+        assertThat(element.isJsonObject(), is(true));
+    }
+
+    @Test
+    void whenRunningWithDeprecatedExcessiveClassLengthRule_thenExecutesSuccessfully(@TempDir Path tempDir) throws Exception {
+        // Create a minimal ruleset referencing the Apex ExcessiveClassLength rule with a low threshold
+        String rulesetXml = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" +
+                "<ruleset name=\"Ruleset for ExcessiveClassLength\"\n" +
+                "    xmlns=\"http://pmd.sourceforge.net/ruleset/2.0.0\"\n" +
+                "    xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"\n" +
+                "    xsi:schemaLocation=\"http://pmd.sourceforge.net/ruleset/2.0.0 https://pmd.sourceforge.io/ruleset_2_0_0.xsd\">\n" +
+                "    <description>Run Apex ExcessiveClassLength</description>\n" +
+                "    <rule ref=\"category/apex/design.xml/ExcessiveClassLength\">\n" +
+                "      <properties>\n" +
+                "        <property name=\"minimum\" value=\"5\"/>\n" +
+                "      </properties>\n" +
+                "    </rule>\n" +
+                "</ruleset>";
+        String rulesetFile = createTempFile(tempDir, "excessive-class-length.xml", rulesetXml);
+
+        // Create an Apex class with enough lines to exceed the small threshold
+        StringBuilder apexBuilder = new StringBuilder();
+        apexBuilder.append("public class LargeClass {\n");
+        apexBuilder.append("  public static void m0(){ Integer x0 = 0; }\n");
+        apexBuilder.append("  public static void m1(){ Integer x1 = 1; }\n");
+        apexBuilder.append("  public static void m2(){ Integer x2 = 2; }\n");
+        apexBuilder.append("  public static void m3(){ Integer x3 = 3; }\n");
+        apexBuilder.append("  public static void m4(){ Integer x4 = 4; }\n");
+        apexBuilder.append("}\n");
+        String apexFile = createTempFile(tempDir, "LargeClass.cls", apexBuilder.toString());
+
+        String inputJson = "{\n" +
+                "  \"ruleSetInputFile\":\"" + makePathJsonSafe(rulesetFile) + "\",\n" +
+                "  \"runDataPerLanguage\": {\n" +
+                "    \"apex\": {\n" +
+                "      \"filesToScan\": [\"" + makePathJsonSafe(apexFile) + "\"]\n" +
+                "    }\n" +
+                "  }\n" +
+                "}";
+        String inputFile = createTempFile(tempDir, "input-excessive-class-length.json", inputJson);
+
+        String resultsOutputFile = tempDir.resolve("results-excessive-class-length.json").toAbsolutePath().toString();
+        String[] args = {"run", inputFile, resultsOutputFile};
+        callPmdWrapper(args); // Should not error
+
+        String resultsJsonString = new String(Files.readAllBytes(Paths.get(resultsOutputFile)));
+        JsonElement element = JsonParser.parseString(resultsJsonString); // Should not error
+        assertThat(element.isJsonObject(), is(true));
     }
 
 

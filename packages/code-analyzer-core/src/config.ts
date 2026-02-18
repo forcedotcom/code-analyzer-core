@@ -20,7 +20,10 @@ export const FIELDS = {
     ENGINES: 'engines',
     SEVERITY: 'severity',
     TAGS: 'tags',
-    DISABLE_ENGINE: 'disable_engine'
+    DISABLED: 'disabled',
+    DISABLE_ENGINE: 'disable_engine',
+    IGNORES: 'ignores',
+    FILES: 'files'
 } as const;
 
 /**
@@ -35,6 +38,14 @@ export type RuleOverrides = Record<string, RuleOverride>;
 export type RuleOverride = {
     severity?: SeverityLevel
     tags?: string[]
+    disabled?: boolean
+}
+
+/**
+ * Object containing the user specified ignores configuration for files to skip during scanning
+ */
+export type Ignores = {
+    files: string[]
 }
 
 type TopLevelConfig = {
@@ -43,6 +54,7 @@ type TopLevelConfig = {
     log_level: LogLevel
     rules: Record<string, RuleOverrides>
     engines: Record<string, EngineOverrides>
+    ignores: Ignores
     root_working_folder: string, // INTERNAL USE ONLY
     preserve_all_working_folders: boolean // INTERNAL USE ONLY
     custom_engine_plugin_modules: string[] // INTERNAL USE ONLY
@@ -55,6 +67,7 @@ export const DEFAULT_CONFIG: TopLevelConfig = {
     log_level: LogLevel.Debug,
     rules: {},
     engines: {},
+    ignores: { files: [] },
     root_working_folder: os.tmpdir(), // INTERNAL USE ONLY
     preserve_all_working_folders: false, // INTERNAL USE ONLY
     custom_engine_plugin_modules: [], // INTERNAL USE ONLY
@@ -143,7 +156,7 @@ export class CodeAnalyzerConfig {
             validateAbsoluteFolder(rawConfig.config_root, FIELDS.CONFIG_ROOT);
         const configExtractor: engApi.ConfigValueExtractor = new engApi.ConfigValueExtractor(rawConfig, '', configRoot);
         configExtractor.addKeysThatBypassValidation([FIELDS.CUSTOM_ENGINE_PLUGIN_MODULES, FIELDS.PRESERVE_ALL_WORKING_FOLDERS, FIELDS.ROOT_WORKING_FOLDER]); // Hidden fields bypass validation
-        configExtractor.validateContainsOnlySpecifiedKeys([FIELDS.CONFIG_ROOT, FIELDS.LOG_FOLDER, FIELDS.LOG_LEVEL ,FIELDS.RULES, FIELDS.ENGINES]);
+        configExtractor.validateContainsOnlySpecifiedKeys([FIELDS.CONFIG_ROOT, FIELDS.LOG_FOLDER, FIELDS.LOG_LEVEL, FIELDS.RULES, FIELDS.ENGINES, FIELDS.IGNORES]);
         const config: TopLevelConfig = {
             config_root: configRoot,
             log_folder: configExtractor.extractFolder(FIELDS.LOG_FOLDER, DEFAULT_CONFIG.log_folder)!,
@@ -154,7 +167,8 @@ export class CodeAnalyzerConfig {
             root_working_folder: configExtractor.extractFolder(FIELDS.ROOT_WORKING_FOLDER, DEFAULT_CONFIG.root_working_folder)!,
             preserve_all_working_folders: configExtractor.extractBoolean(FIELDS.PRESERVE_ALL_WORKING_FOLDERS, DEFAULT_CONFIG.preserve_all_working_folders)!,
             rules: extractRulesValue(configExtractor),
-            engines: extractEnginesValue(configExtractor)
+            engines: extractEnginesValue(configExtractor),
+            ignores: extractIgnoresValue(configExtractor)
         }
         return new CodeAnalyzerConfig(config);
     }
@@ -195,6 +209,12 @@ export class CodeAnalyzerConfig {
                     valueType: 'object',
                     defaultValue: {},
                     wasSuppliedByUser: !deepEquals(this.config.engines, DEFAULT_CONFIG.engines)
+                },
+                ignores: {
+                    descriptionText: getMessage('ConfigFieldDescription_ignores'),
+                    valueType: 'object',
+                    defaultValue: { files: [] },
+                    wasSuppliedByUser: !deepEquals(this.config.ignores, DEFAULT_CONFIG.ignores)
                 }
             }
         };
@@ -276,6 +296,14 @@ export class CodeAnalyzerConfig {
     public getEngineOverridesFor(engineName: string): EngineOverrides {
         return engApi.getValueUsingCaseInsensitiveKey(this.config.engines, engineName) as EngineOverrides || {};
     }
+
+    /**
+     * Returns a {@link Ignores} instance containing the user specified file patterns to ignore during scanning.
+     * The patterns can be file paths, folder paths, or glob patterns.
+     */
+    public getIgnores(): Ignores {
+        return this.config.ignores;
+    }
 }
 
 function extractLogLevel(configExtractor: engApi.ConfigValueExtractor): LogLevel {
@@ -305,11 +333,12 @@ function extractRuleOverridesFrom(engineRuleOverridesExtractor: engApi.ConfigVal
 }
 
 function extractRuleOverrideFrom(ruleOverrideExtractor: engApi.ConfigValueExtractor): RuleOverride {
-    ruleOverrideExtractor.validateContainsOnlySpecifiedKeys([FIELDS.SEVERITY, FIELDS.TAGS]);
+    ruleOverrideExtractor.validateContainsOnlySpecifiedKeys([FIELDS.SEVERITY, FIELDS.TAGS, FIELDS.DISABLED]);
     const engSeverity: engApi.SeverityLevel | undefined = ruleOverrideExtractor.extractSeverityLevel(FIELDS.SEVERITY);
     return {
         tags: ruleOverrideExtractor.extractArray(FIELDS.TAGS, engApi.ValueValidator.validateString),
-        severity: engSeverity === undefined ? undefined : engSeverity as SeverityLevel
+        severity: engSeverity === undefined ? undefined : engSeverity as SeverityLevel,
+        disabled: ruleOverrideExtractor.extractBoolean(FIELDS.DISABLED)
     }
 }
 
@@ -320,6 +349,77 @@ function extractEnginesValue(configExtractor: engApi.ConfigValueExtractor): Reco
         enginesExtractor.extractRequiredObjectAsExtractor(engineName).extractBoolean(FIELDS.DISABLE_ENGINE);
     }
     return enginesExtractor.getObject() as Record<string, EngineOverrides>;
+}
+
+function extractIgnoresValue(configExtractor: engApi.ConfigValueExtractor): Ignores {
+    const ignoresExtractor: engApi.ConfigValueExtractor = configExtractor.extractObjectAsExtractor(FIELDS.IGNORES, DEFAULT_CONFIG.ignores);
+    ignoresExtractor.validateContainsOnlySpecifiedKeys([FIELDS.FILES]);
+    const files: string[] = ignoresExtractor.extractArray(FIELDS.FILES, validateGlobPattern, DEFAULT_CONFIG.ignores.files) || [];
+    return { files };
+}
+
+/**
+ * Validates that a value is a string and is a valid glob pattern.
+ * Throws an error if the pattern is empty or has unbalanced brackets/braces/parentheses.
+ */
+function validateGlobPattern(value: unknown, fieldPath: string): string {
+    // First validate it's a string
+    const pattern = engApi.ValueValidator.validateString(value, fieldPath);
+    
+    // Check for empty pattern
+    if (pattern.length === 0) {
+        throw new Error(getMessage('InvalidGlobPatternEmpty', fieldPath));
+    }
+    
+    // Check for unbalanced special characters
+    const validationResult = validateGlobPatternSyntax(pattern);
+    if (!validationResult.valid) {
+        throw new Error(getMessage('InvalidGlobPattern', fieldPath, pattern, validationResult.issue!));
+    }
+    
+    return pattern;
+}
+
+/**
+ * Validates glob pattern syntax for common issues like unbalanced brackets.
+ */
+function validateGlobPatternSyntax(pattern: string): { valid: boolean; issue?: string } {
+    let bracketDepth = 0;
+    let braceDepth = 0;
+    let parenDepth = 0;
+    let escaped = false;
+    
+    for (const char of pattern) {
+        if (escaped) {
+            escaped = false;
+            continue;
+        }
+        if (char === '\\') {
+            escaped = true;
+            continue;
+        }
+        
+        switch (char) {
+            case '[': bracketDepth++; break;
+            case ']': bracketDepth--; break;
+            case '{': braceDepth++; break;
+            case '}': braceDepth--; break;
+            case '(': parenDepth++; break;
+            case ')': parenDepth--; break;
+        }
+        
+        // Check for negative depth (closing without opening)
+        if (bracketDepth < 0) return { valid: false, issue: 'unmatched closing bracket ]' };
+        if (braceDepth < 0) return { valid: false, issue: 'unmatched closing brace }' };
+        if (parenDepth < 0) return { valid: false, issue: 'unmatched closing parenthesis )' };
+    }
+    
+    // Check for unclosed brackets
+    if (bracketDepth !== 0) return { valid: false, issue: 'unclosed bracket [' };
+    if (braceDepth !== 0) return { valid: false, issue: 'unclosed brace {' };
+    if (parenDepth !== 0) return { valid: false, issue: 'unclosed parenthesis (' };
+    
+    return { valid: true };
 }
 
 function parseAndValidate(parseFcn: () => unknown): object {
