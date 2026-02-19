@@ -292,6 +292,18 @@ describe('Tests for runRules', () => {
                     endColumn: 1
                 }]
             },
+            {
+                ruleName: "NoTrailingWhitespace",
+                message: getMessage('TrailingWhitespaceRuleMessage'),
+                primaryLocationIndex: 0,
+                codeLocations: [{
+                    file: path.resolve(__dirname, "test-data", "apexClassWhitespace", "4_multipleEmptyLines", "EmptyLinesWithWhitespace.cls"),
+                    startLine: 6,
+                    startColumn: 1,
+                    endLine: 7,
+                    endColumn: 1
+                }]
+            },
 
         ];
 
@@ -330,6 +342,18 @@ describe('Tests for runRules', () => {
                     endLine: 8,
                     endColumn: 1
                 }]
+            },
+            {
+                ruleName: "NoTrailingWhitespace",
+                message: getMessage('TrailingWhitespaceRuleMessage'),
+                primaryLocationIndex: 0,
+                codeLocations: [{
+                    file: path.resolve(__dirname, "test-data", "apexClassWhitespace", "4_multipleEmptyLines", "EmptyLinesWithWhitespace.cls"),
+                    startLine: 6,
+                    startColumn: 1,
+                    endLine: 7,
+                    endColumn: 1
+                }]
             }
         ];
 
@@ -345,6 +369,32 @@ describe('Tests for runRules', () => {
         const runResults: EngineRunResults = await engine.runRules(["NoTrailingWhitespace"], runOptions);
 
         expect(runResults.violations).toHaveLength(0);
+    });
+
+    it("NoTrailingWhitespace rule should flag multiple empty lines that contain only whitespace", async () => {
+        const runOptions: RunOptions = createRunOptions(
+            new Workspace('id', [path.resolve(__dirname, "test-data", "apexClassWhitespace", "4_multipleEmptyLines", "EmptyLinesWithWhitespace.cls")]));
+        const runResults: EngineRunResults = await engine.runRules(["NoTrailingWhitespace"], runOptions);
+
+        const expectedViolations: Violation[] = [
+            {
+                ruleName: "NoTrailingWhitespace",
+                message: getMessage('TrailingWhitespaceRuleMessage'),
+                primaryLocationIndex: 0,
+                codeLocations: [{
+                    file: path.resolve(__dirname, "test-data", "apexClassWhitespace", "4_multipleEmptyLines", "EmptyLinesWithWhitespace.cls"),
+                    startLine: 6,
+                    startColumn: 1,
+                    endLine: 7,
+                    endColumn: 1
+                }]
+            }
+        ];
+
+        expect(runResults.violations).toHaveLength(expectedViolations.length);
+        for (const expectedViolation of expectedViolations) {
+            expect(runResults.violations).toContainEqual(expectedViolation);
+        }
     });
 
     it("Ensure runRules when called on a directory of Apex classes with getHeapSize in a loop, it properly emits violations", async () => {
