@@ -1,4 +1,7 @@
-import {deepEquals} from "../src/utils";
+import {deepEquals, RealFileSystem, TempFolder} from "../src/utils";
+import * as fs from "node:fs";
+import * as os from "node:os";
+import * as path from "node:path";
 
 describe('deepEquals function tests', () => {
     describe('primitive type comparison tests', () => {
@@ -150,5 +153,31 @@ describe('deepEquals function tests', () => {
             const obj2 = {a: {b: {c: 4}}};
             expect(deepEquals(obj1, obj2)).toBe(false);
         });
+    });
+});
+
+describe('file system and temp folder utilities', () => {
+    it('RealFileSystem.rmSync removes a directory recursively (covers rmSync)', () => {
+        const realFs = new RealFileSystem();
+        const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'ca-core-rmSync-'));
+        const nested = path.join(dir, 'nested');
+        fs.mkdirSync(nested);
+        fs.writeFileSync(path.join(nested, 'file.txt'), 'x');
+        expect(fs.existsSync(dir)).toBe(true);
+
+        realFs.rmSync(dir, {recursive: true, force: true});
+        expect(fs.existsSync(dir)).toBe(false);
+    });
+
+    it('TempFolder.removeSyncIfNotKept removes root when not marked to keep (covers removeSyncIfNotKept)', async () => {
+        const temp = new TempFolder(); // uses RealFileSystem internally
+        const subPath = await temp.getPath('sub');
+        const root = path.dirname(subPath);
+        fs.mkdirSync(subPath, {recursive: true});
+        fs.writeFileSync(path.join(subPath, 'a.txt'), 'content');
+        expect(fs.existsSync(root)).toBe(true);
+
+        temp.removeSyncIfNotKept();
+        expect(fs.existsSync(root)).toBe(false);
     });
 });

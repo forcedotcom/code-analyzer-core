@@ -114,3 +114,72 @@ describe('Tests for the makeStringifiable utility function', () => {
         expect(makeStringifiable(obj)).toEqual({"date": {}, "regex": {}});
     });
 });
+
+describe('utils: makeUnique deduplication and makeStringifiable serialization', () => {
+    describe('makeUnique removes duplicates and preserves order', () => {
+        it('removes duplicates while preserving order', () => {
+            expect(makeUnique(['a','b','a','c','b','d'])).toEqual(['a','b','c','d']);
+            expect(makeUnique([])).toEqual([]);
+        });
+    });
+
+    describe('makeStringifiable handles edge cases and tracks paths', () => {
+        it('passes through primitives', () => {
+            expect(makeStringifiable('str')).toBe('str');
+            expect(makeStringifiable(42)).toBe(42);
+            expect(makeStringifiable(true)).toBe(true);
+            expect(makeStringifiable(null)).toBe(null);
+        });
+
+        it('stringifies functions and symbols/bigints safely', () => {
+            expect(makeStringifiable(() => 1)).toBe('[Function]');
+            // BigInt and Symbol should stringify to String(value)
+            // Using toString form because equality to Symbol(...) is not supported
+            expect(makeStringifiable(BigInt(10))).toBe('10');
+            const s = Symbol('x');
+            expect(makeStringifiable(s)).toBe(String(s));
+        });
+
+        it('handles arrays with self references', () => {
+            const a: unknown[] = ['x'];
+            a.push(a); // self reference
+            const res = makeStringifiable(a) as unknown[];
+            expect(res[0]).toBe('x');
+            // second element becomes a marker with the first path where it was seen
+            expect(typeof res[1]).toBe('string');
+            expect((res[1] as string)).toContain('[Exact same array as: <val>'); // path marker
+        });
+
+        it('handles objects with self references', () => {
+            const o: Record<string, unknown> = {a: 1};
+            o.self = o; // cycle
+            const res = makeStringifiable(o) as Record<string, unknown>;
+            expect(res.a).toBe(1);
+            expect(typeof res.self).toBe('string');
+            expect((res.self as string)).toContain('[Exact same object as: <val>'); // path marker
+        });
+
+        it('marks unserializable property access with placeholder', () => {
+            const o = Object.create(null) as { ok: number; bad: unknown };
+            Object.defineProperty(o, 'ok', { value: 1, enumerable: true });
+            Object.defineProperty(o, 'bad', {
+                enumerable: true,
+                get() { throw new Error('boom'); }
+            });
+            const res = makeStringifiable(o) as Record<string, unknown>;
+            expect(res.ok).toBe(1);
+            expect(res.bad).toBe('[Unserializable]');
+        });
+
+        it('applies replacer with correct path propagation', () => {
+            const paths: string[] = [];
+            const v = { foo: { bar: [1,2] } };
+            const out = makeStringifiable(v, (_val, p) => { paths.push(p); return _val; });
+            expect(paths).toEqual(expect.arrayContaining([
+                '<val>', '<val>.foo', '<val>.foo.bar', '<val>.foo.bar[0]', '<val>.foo.bar[1]'
+            ]));
+            // structure preserved
+            expect((out as any).foo.bar[0]).toBe(1);
+        });
+    });
+});
