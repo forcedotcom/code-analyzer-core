@@ -72,7 +72,7 @@ function validateEngineName(engineName: string) {
 export function createBaseRegexRules(now: Date): RegexRules {
     return {
         NoTrailingWhitespace: {
-            regex: (/(?<target>[ \t]+)((\r?\n)|$)/g).toString(),
+            regex: (/(?<target>((?<=\S.*)[ \t]+(?=\r?\n|$))|((?<=([ \t]*\r?\n)([ \t]*\r?\n))[ \t]*\r?\n))/g).toString(),
             file_extensions: ['.cls', '.trigger'], // Currently restricted to apex files only... but we might want to extend where this rule applies in the future
             description: getMessage('TrailingWhitespaceRuleDescription'),
             violation_message: getMessage('TrailingWhitespaceRuleMessage'),

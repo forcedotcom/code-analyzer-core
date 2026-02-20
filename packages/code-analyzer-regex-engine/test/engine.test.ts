@@ -268,7 +268,127 @@ describe('Tests for runRules', () => {
                     endColumn: 21
                 }]
             },
+            {
+                ruleName: "NoTrailingWhitespace",
+                message: getMessage('TrailingWhitespaceRuleMessage'),
+                primaryLocationIndex: 0,
+                codeLocations: [{
+                    file: path.resolve(__dirname, "test-data", "apexClassWhitespace", "4_multipleEmptyLines", "EmptyLinesAtEof.cls"),
+                    startLine: 7,
+                    startColumn: 1,
+                    endLine: 8,
+                    endColumn: 1
+                }]
+            },
+            {
+                ruleName: "NoTrailingWhitespace",
+                message: getMessage('TrailingWhitespaceRuleMessage'),
+                primaryLocationIndex: 0,
+                codeLocations: [{
+                    file: path.resolve(__dirname, "test-data", "apexClassWhitespace", "4_multipleEmptyLines", "MultipleEmptyLines.cls"),
+                    startLine: 6,
+                    startColumn: 1,
+                    endLine: 7,
+                    endColumn: 1
+                }]
+            },
+            {
+                ruleName: "NoTrailingWhitespace",
+                message: getMessage('TrailingWhitespaceRuleMessage'),
+                primaryLocationIndex: 0,
+                codeLocations: [{
+                    file: path.resolve(__dirname, "test-data", "apexClassWhitespace", "4_multipleEmptyLines", "EmptyLinesWithWhitespace.cls"),
+                    startLine: 6,
+                    startColumn: 1,
+                    endLine: 7,
+                    endColumn: 1
+                }]
+            },
 
+        ];
+
+        expect(runResults.violations).toHaveLength(expectedViolations.length);
+        for (const expectedViolation of expectedViolations) {
+            expect(runResults.violations).toContainEqual(expectedViolation);
+        }
+    });
+
+    it("NoTrailingWhitespace rule should flag multiple consecutive empty lines", async () => {
+        const runOptions: RunOptions = createRunOptions(
+            new Workspace('id', [path.resolve(__dirname, "test-data", "apexClassWhitespace", "4_multipleEmptyLines")]));
+        const runResults: EngineRunResults = await engine.runRules(["NoTrailingWhitespace"], runOptions);
+
+        const expectedViolations: Violation[] = [
+            {
+                ruleName: "NoTrailingWhitespace",
+                message: getMessage('TrailingWhitespaceRuleMessage'),
+                primaryLocationIndex: 0,
+                codeLocations: [{
+                    file: path.resolve(__dirname, "test-data", "apexClassWhitespace", "4_multipleEmptyLines", "MultipleEmptyLines.cls"),
+                    startLine: 6,
+                    startColumn: 1,
+                    endLine: 7,
+                    endColumn: 1
+                }]
+            },
+            {
+                ruleName: "NoTrailingWhitespace",
+                message: getMessage('TrailingWhitespaceRuleMessage'),
+                primaryLocationIndex: 0,
+                codeLocations: [{
+                    file: path.resolve(__dirname, "test-data", "apexClassWhitespace", "4_multipleEmptyLines", "EmptyLinesAtEof.cls"),
+                    startLine: 7,
+                    startColumn: 1,
+                    endLine: 8,
+                    endColumn: 1
+                }]
+            },
+            {
+                ruleName: "NoTrailingWhitespace",
+                message: getMessage('TrailingWhitespaceRuleMessage'),
+                primaryLocationIndex: 0,
+                codeLocations: [{
+                    file: path.resolve(__dirname, "test-data", "apexClassWhitespace", "4_multipleEmptyLines", "EmptyLinesWithWhitespace.cls"),
+                    startLine: 6,
+                    startColumn: 1,
+                    endLine: 7,
+                    endColumn: 1
+                }]
+            }
+        ];
+
+        expect(runResults.violations).toHaveLength(expectedViolations.length);
+        for (const expectedViolation of expectedViolations) {
+            expect(runResults.violations).toContainEqual(expectedViolation);
+        }
+    });
+
+    it("NoTrailingWhitespace rule should NOT flag single empty lines between code", async () => {
+        const runOptions: RunOptions = createRunOptions(
+            new Workspace('id', [path.resolve(__dirname, "test-data", "apexClassWhitespace", "5_singleEmptyLinesValid")]));
+        const runResults: EngineRunResults = await engine.runRules(["NoTrailingWhitespace"], runOptions);
+
+        expect(runResults.violations).toHaveLength(0);
+    });
+
+    it("NoTrailingWhitespace rule should flag multiple empty lines that contain only whitespace", async () => {
+        const runOptions: RunOptions = createRunOptions(
+            new Workspace('id', [path.resolve(__dirname, "test-data", "apexClassWhitespace", "4_multipleEmptyLines", "EmptyLinesWithWhitespace.cls")]));
+        const runResults: EngineRunResults = await engine.runRules(["NoTrailingWhitespace"], runOptions);
+
+        const expectedViolations: Violation[] = [
+            {
+                ruleName: "NoTrailingWhitespace",
+                message: getMessage('TrailingWhitespaceRuleMessage'),
+                primaryLocationIndex: 0,
+                codeLocations: [{
+                    file: path.resolve(__dirname, "test-data", "apexClassWhitespace", "4_multipleEmptyLines", "EmptyLinesWithWhitespace.cls"),
+                    startLine: 6,
+                    startColumn: 1,
+                    endLine: 7,
+                    endColumn: 1
+                }]
+            }
         ];
 
         expect(runResults.violations).toHaveLength(expectedViolations.length);
