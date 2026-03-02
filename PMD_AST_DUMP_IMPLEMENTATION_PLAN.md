@@ -1,5 +1,9 @@
 # PMD AST Dump Implementation Plan
 
+> **Status**: Java layer implementation completed ✅
+> **Updated**: 2026-02-27 - Document updated to reflect actual working implementation using PMD's `TreeExporter` API
+> **Branch**: `feature/pmd-ast-dump-java-layer` (ready to merge into `feature/pmd-ast-dump`)
+
 ## 1. Overview
 
 This document outlines the implementation plan for integrating PMD's AST dump functionality directly into the code-analyzer-core PMD engine, eliminating the need for users to install PMD CLI separately.
@@ -90,17 +94,16 @@ public PmdAstDumpResults dump(PmdAstDumpInputData inputData)
 **Internal Implementation Details**:
 1. **Language Resolution**:
    - Use `LanguageRegistry.PMD.getLanguageById(languageId)`
-   - Get the language processor
    - Validate language is supported
 
-2. **Single File Processing**:
-   - Read file content using specified encoding
-   - Create `TextDocument` from file content
-   - Parse file to get `RootNode` (AST root)
-   - Render AST using XML renderer
+2. **AST Export Configuration**:
+   - Use `TreeExportConfiguration` to configure the export
+   - Set language, format (XML), and file path
+   - Create `TreeExporter` with this configuration
 
 3. **AST Rendering**:
-   - **XML Format Only**: Use `net.sourceforge.pmd.util.treeexport.XmlTreeRenderer`
+   - **XML Format Only**: `TreeExporter` outputs XML to System.out
+   - Redirect System.out to ByteArrayOutputStream to capture output
    - Text format is not supported in v1
 
 4. **Error Handling**:
@@ -111,47 +114,57 @@ public PmdAstDumpResults dump(PmdAstDumpInputData inputData)
 **Key PMD APIs Used**:
 ```java
 - net.sourceforge.pmd.lang.LanguageRegistry
-- net.sourceforge.pmd.lang.LanguageProcessor
-- net.sourceforge.pmd.lang.document.TextDocument
-- net.sourceforge.pmd.lang.ast.RootNode
-- net.sourceforge.pmd.util.treeexport.XmlTreeRenderer
-- net.sourceforge.pmd.util.treeexport.TreeRenderer
+- net.sourceforge.pmd.lang.Language
+- net.sourceforge.pmd.util.treeexport.TreeExporter
+- net.sourceforge.pmd.util.treeexport.TreeExportConfiguration
 ```
 
-**Pseudo-code**:
+**Actual Implementation** (using TreeExporter):
 ```java
 public PmdAstDumpResults dump(PmdAstDumpInputData inputData) {
-    validate(inputData);
+    validateInputData(inputData);
 
     PmdAstDumpResults results = new PmdAstDumpResults();
     results.file = inputData.fileToDump;
 
     try {
-        // Get language and processor
+        // Verify file exists
+        Path filePath = Paths.get(inputData.fileToDump);
+        readFileContent(filePath, inputData.encoding);
+
+        // Get language
         Language language = LanguageRegistry.PMD.getLanguageById(inputData.language);
         if (language == null) {
             throw new RuntimeException("Language not supported: " + inputData.language);
         }
 
-        LanguageProcessor processor = language.createProcessor(
-            LanguageProcessor.processorConfiguration()
-        );
+        // Create TreeExportConfiguration
+        TreeExportConfiguration config = new TreeExportConfiguration();
+        config.setLanguage(language);
+        config.setFormat("xml"); // Always XML format for v1
+        config.setFile(filePath);
 
-        // Read file
-        String content = readFile(inputData.fileToDump, inputData.encoding);
+        // Capture output to string
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        PrintStream ps = new PrintStream(baos, true, StandardCharsets.UTF_8);
+        PrintStream originalOut = System.out;
 
-        // Create document
-        TextDocument doc = TextDocument.readOnlyString(content,
-            Paths.get(inputData.fileToDump).getFileName().toString());
+        try {
+            // Redirect System.out to capture XML output
+            System.setOut(ps);
 
-        // Parse to AST
-        RootNode ast = processor.parse(doc);
+            // Create and export AST (TreeExporter writes to System.out)
+            TreeExporter exporter = new TreeExporter(config);
+            exporter.export();
 
-        // Render AST as XML
-        StringWriter writer = new StringWriter();
-        XmlTreeRenderer renderer = new XmlTreeRenderer();
-        renderer.renderSubtree(ast, writer);
-        results.ast = writer.toString();
+            // Get the XML output
+            results.ast = baos.toString(StandardCharsets.UTF_8);
+
+        } finally {
+            // Restore original System.out
+            System.setOut(originalOut);
+            ps.close();
+        }
 
     } catch (Exception e) {
         // Store processing error
@@ -391,12 +404,11 @@ All required PMD APIs are already available in your current dependencies:
 From `pmd-core-7.21.0`:
 - `net.sourceforge.pmd.lang.LanguageRegistry` - Get language by ID
 - `net.sourceforge.pmd.lang.Language` - Language definition
-- `net.sourceforge.pmd.lang.LanguageProcessor` - Parse files for specific language
-- `net.sourceforge.pmd.lang.document.TextDocument` - Document representation
-- `net.sourceforge.pmd.lang.ast.RootNode` - Root of the AST
-- `net.sourceforge.pmd.util.treeexport.XmlTreeRenderer` - Render AST as XML
-- `net.sourceforge.pmd.util.treeexport.TreeRenderer` - Base renderer interface
-- `java.io.StringWriter` - Capture XML output
+- `net.sourceforge.pmd.util.treeexport.TreeExporter` - Main class that exports AST to XML
+- `net.sourceforge.pmd.util.treeexport.TreeExportConfiguration` - Configuration for TreeExporter
+- `java.io.ByteArrayOutputStream` - Capture XML output from System.out
+- `java.io.PrintStream` - Redirect System.out
+- `java.nio.charset.StandardCharsets` - UTF-8 encoding
 - `java.nio.file.Files` - File reading
 - `java.nio.file.Paths` - Path handling
 
@@ -581,7 +593,7 @@ for (const file of files) {
 ### A. Unit Tests to Create
 
 #### Java Tests:
-**File**: `PmdAstDumperTest.java`
+**File**: `PmdAstDumpTest.java`
 
 Test cases:
 ```java
@@ -749,16 +761,16 @@ After implementation:
 ## 16. Summary
 
 ### Files to Create:
-1. `PmdAstDumpInputData.java` (Input structure)
-2. `PmdAstDumpResults.java` (Output structure)
-3. `PmdAstDumper.java` (Core implementation)
-4. `PmdAstDumperTest.java` (Unit tests)
-5. `pmd-ast-dump.test.ts` (Integration tests)
+1. `PmdAstDumpInputData.java` (Input structure) ✅
+2. `PmdAstDumpResults.java` (Output structure) ✅
+3. `PmdAstDumper.java` (Core implementation using TreeExporter) ✅
+4. `PmdAstDumpTest.java` (Unit tests - 8 comprehensive tests) ✅
+5. `pmd-ast-dump.test.ts` (Integration tests - NOT YET IMPLEMENTED)
 
 ### Files to Modify:
-1. `PmdWrapper.java` (Add ast-dump command)
-2. `pmd-wrapper.ts` (Add TypeScript types and method)
-3. `pmd-engine.ts` (Optional: Add high-level API)
+1. `PmdWrapper.java` (Add ast-dump command) ✅ DONE
+2. `pmd-wrapper.ts` (Add TypeScript types and method) ⏳ PENDING
+3. `pmd-engine.ts` (Optional: Add high-level API) ⏳ PENDING
 
 ### Dependencies:
 - ✅ No new dependencies required (all APIs in pmd-core)
