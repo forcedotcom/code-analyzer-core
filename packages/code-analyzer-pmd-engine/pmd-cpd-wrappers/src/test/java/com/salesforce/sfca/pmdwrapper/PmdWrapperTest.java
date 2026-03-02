@@ -35,7 +35,7 @@ class PmdWrapperTest {
     void whenCallingMainWithUnsupportedCommand_thenError() {
         String[] args = {"oops", "abc"};
         Exception thrown = assertThrows(Exception.class, () -> callPmdWrapper(args));
-        assertThat(thrown.getMessage(), is("Bad first argument to PmdWrapper. Expected \"describe\" or \"run\". Received: \"oops\""));
+        assertThat(thrown.getMessage(), is("Bad first argument to PmdWrapper. Expected \"describe\", \"run\", or \"ast-dump\". Received: \"oops\""));
     }
 
     @Test
@@ -527,7 +527,6 @@ class PmdWrapperTest {
         JsonElement element = JsonParser.parseString(resultsJsonString); // Should not error
         assertThat(element.isJsonObject(), is(true));
     }
-
 
     private static String createSampleRulesetFile(Path tempDir) throws Exception {
         String ruleSetContents = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" +
