@@ -14,6 +14,7 @@ import {indent, JavaCommandExecutor} from '@salesforce/code-analyzer-engine-api/
 import {toExtensionsToLanguageMap, WorkspaceLiaison} from "./utils";
 import path from "node:path";
 import * as fs from 'node:fs/promises';
+import * as os from 'node:os';
 import {
     Language,
     PMD_ENGINE_NAME,
@@ -21,7 +22,9 @@ import {
     SHARED_RULE_NAMES
 } from "./constants";
 import {
+    GenerateAstOptions,
     LanguageSpecificPmdRunData,
+    PmdAstDumpResults,
     PmdResults,
     PmdRuleInfo,
     PmdViolation,
@@ -119,6 +122,45 @@ export class PmdEngine extends Engine {
         return {
             violations: violations
         };
+    }
+
+    /**
+     * Generates Abstract Syntax Tree (AST) representation for a source file
+     * @param language - Language identifier (apex, visualforce, xml, html, javascript)
+     * @param file - Absolute path to the file to analyze
+     * @param options - Optional configuration (encoding, workingFolder)
+     * @returns PmdAstDumpResults containing AST XML or error information
+     */
+    async generateAst(language: string, file: string, options?: GenerateAstOptions): Promise<PmdAstDumpResults> {
+        const encoding = options?.encoding || 'UTF-8';
+        const workingFolder = options?.workingFolder || await fs.mkdtemp(path.join(os.tmpdir(), 'pmd-ast-dump-'));
+
+        this.emitLogEvent(LogLevel.Fine, `Generating AST for file: ${file} (language: ${language})`);
+
+        try {
+            const results = await this.pmdWrapperInvoker.invokeAstDumpCommand(
+                language,
+                file,
+                workingFolder,
+                encoding,
+                () => {} // No progress reporting at engine level
+            );
+
+            if (results.error) {
+                this.emitLogEvent(LogLevel.Error, `Failed to generate AST for ${file}: ${results.error.message}`);
+            } else {
+                this.emitLogEvent(LogLevel.Fine, `Successfully generated AST for ${file}`);
+            }
+
+            return results;
+        } finally {
+            // Clean up temporary working folder if we created it
+            if (!options?.workingFolder) {
+                await fs.rm(workingFolder, {recursive: true, force: true}).catch(() => {
+                    // Ignore cleanup errors
+                });
+            }
+        }
     }
 
     private async getPmdRuleInfoList(workspaceLiaison: WorkspaceLiaison, workingFolder: string,

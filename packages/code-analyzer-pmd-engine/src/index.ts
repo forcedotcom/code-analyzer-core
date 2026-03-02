@@ -8,3 +8,8 @@ function createEnginePlugin(): EnginePlugin {
 // Each code analyzer engine plugin module should export its plugin (so that it can be constructed manually) and
 // a createEnginePlugin function that creates the plugin (so that it can be dynamically loaded).
 export { createEnginePlugin, PmdCpdEnginesPlugin }
+
+// Export types for AST dump functionality
+export type { PmdAstDumpResults, GenerateAstOptions, PmdProcessingError } from "./pmd-wrapper"
+export { PmdEngine } from "./pmd-engine"
+export { CpdEngine } from "./cpd-engine"
