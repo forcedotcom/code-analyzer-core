@@ -15,6 +15,7 @@ import {
 } from "@salesforce/code-analyzer-engine-api";
 import {PmdEngine} from "../src/pmd-engine";
 import fs from "node:fs";
+import * as fsPromises from "node:fs/promises";
 import path from "node:path";
 import {Language, PMD_VERSION} from "../src/constants";
 import {DEFAULT_PMD_ENGINE_CONFIG, PMD_AVAILABLE_LANGUAGES, PmdEngineConfig} from "../src/config";
@@ -646,6 +647,107 @@ describe('Tests for the getEngineVersion method of PmdEngine', () => {
         const version: string = await engine.getEngineVersion();
 
         expect(version).toMatch(/\d+\.\d+\.\d+.*/);
+    });
+});
+
+describe('Tests for the generateAst method of PmdEngine', () => {
+    it('When calling generateAst with valid Apex file, then AST is returned', async () => {
+        const engine: PmdEngine = new PmdEngine(DEFAULT_PMD_ENGINE_CONFIG);
+        const apexFile = path.join(TEST_DATA_FOLDER, 'samplePmdWorkspace', 'sampleViolations', 'AvoidDebugStatements.cls');
+
+        const logEvents: LogEvent[] = [];
+        engine.onEvent(EventType.LogEvent, (e: LogEvent) => logEvents.push(e));
+
+        const results = await engine.generateAst('apex', apexFile);
+
+        expect(results.file).toBe(apexFile);
+        expect(results.ast).toBeDefined();
+        expect(results.ast).not.toBeNull();
+        expect(results.ast!).toContain('<?xml version');
+        expect(results.ast!).toContain('<ApexFile');
+        expect(results.error).toBeUndefined();
+
+        // Check log events
+        const fineLogEvents = logEvents.filter(e => e.logLevel === LogLevel.Fine);
+        expect(fineLogEvents.some(e => e.message.includes('Generating AST'))).toBe(true);
+        expect(fineLogEvents.some(e => e.message.includes('Successfully generated AST'))).toBe(true);
+    });
+
+    it('When calling generateAst with valid Visualforce file, then AST is returned', async () => {
+        const engine: PmdEngine = new PmdEngine(DEFAULT_PMD_ENGINE_CONFIG);
+        const vfFile = path.join(TEST_DATA_FOLDER, 'samplePmdWorkspace', 'sampleViolations', 'VfUnescapeEl.page');
+
+        const results = await engine.generateAst('visualforce', vfFile);
+
+        expect(results.file).toBe(vfFile);
+        expect(results.ast).toBeDefined();
+        expect(results.ast).not.toBeNull();
+        expect(results.ast!).toContain('<?xml version');
+        expect(results.error).toBeUndefined();
+    });
+
+    it('When calling generateAst with non-existent file, then error is returned', async () => {
+        const engine: PmdEngine = new PmdEngine(DEFAULT_PMD_ENGINE_CONFIG);
+        const nonExistentFile = path.join(TEST_DATA_FOLDER, 'DoesNotExist.cls');
+
+        const logEvents: LogEvent[] = [];
+        engine.onEvent(EventType.LogEvent, (e: LogEvent) => logEvents.push(e));
+
+        const results = await engine.generateAst('apex', nonExistentFile);
+
+        expect(results.file).toBe(nonExistentFile);
+        expect(results.ast).toBeFalsy();
+        expect(results.error).toBeDefined();
+        expect(results.error!.message).toContain('File not found');
+
+        // Check error log event
+        const errorLogEvents = logEvents.filter(e => e.logLevel === LogLevel.Error);
+        expect(errorLogEvents.length).toBeGreaterThan(0);
+        expect(errorLogEvents.some(e => e.message.includes('Failed to generate AST'))).toBe(true);
+    });
+
+    it('When calling generateAst with invalid language, then error is returned', async () => {
+        const engine: PmdEngine = new PmdEngine(DEFAULT_PMD_ENGINE_CONFIG);
+        const apexFile = path.join(TEST_DATA_FOLDER, 'samplePmdWorkspace', 'sampleViolations', 'AvoidDebugStatements.cls');
+
+        const results = await engine.generateAst('invalid_language', apexFile);
+
+        expect(results.file).toBe(apexFile);
+        expect(results.ast).toBeFalsy();
+        expect(results.error).toBeDefined();
+        expect(results.error!.message).toContain('Language not supported');
+    });
+
+    it('When calling generateAst with custom encoding, then AST is generated', async () => {
+        const engine: PmdEngine = new PmdEngine(DEFAULT_PMD_ENGINE_CONFIG);
+        const apexFile = path.join(TEST_DATA_FOLDER, 'samplePmdWorkspace', 'sampleViolations', 'AvoidDebugStatements.cls');
+
+        const results = await engine.generateAst('apex', apexFile, { encoding: 'UTF-8' });
+
+        expect(results.file).toBe(apexFile);
+        expect(results.ast).toBeDefined();
+        expect(results.ast).not.toBeNull();
+        expect(results.error).toBeUndefined();
+    });
+
+    it('When calling generateAst with custom workingFolder, then working folder is not cleaned up', async () => {
+        const engine: PmdEngine = new PmdEngine(DEFAULT_PMD_ENGINE_CONFIG);
+        const apexFile = path.join(TEST_DATA_FOLDER, 'samplePmdWorkspace', 'sampleViolations', 'AvoidDebugStatements.cls');
+        const customWorkingFolder = await fsPromises.mkdtemp(path.join(TEST_DATA_FOLDER, 'temp-ast-'));
+
+        try {
+            const results = await engine.generateAst('apex', apexFile, { workingFolder: customWorkingFolder });
+
+            expect(results.ast).toBeDefined();
+            // Working folder should still exist since we provided it
+            expect(await fsPromises.access(customWorkingFolder).then(() => true).catch(() => false)).toBe(true);
+            // Output file should exist
+            const outputFile = path.join(customWorkingFolder, 'astDumpResults.json');
+            expect(await fsPromises.access(outputFile).then(() => true).catch(() => false)).toBe(true);
+        } finally {
+            // Clean up
+            await fsPromises.rm(customWorkingFolder, { recursive: true, force: true });
+        }
     });
 });
 

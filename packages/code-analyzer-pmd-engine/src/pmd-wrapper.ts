@@ -58,6 +58,11 @@ export type PmdAstDumpResults = {
     error: PmdProcessingError | null
 }
 
+export type GenerateAstOptions = {
+    encoding?: string
+    workingFolder?: string
+}
+
 const STDOUT_PROGRESS_MARKER = '[Progress]';
 const STDOUT_ERROR_MARKER = '[Error] ';
 const STDOUT_WARNING_MARKER = '[Warning] ';
