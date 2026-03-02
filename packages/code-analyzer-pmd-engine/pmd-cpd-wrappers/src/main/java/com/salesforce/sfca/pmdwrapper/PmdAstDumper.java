@@ -1,25 +1,22 @@
 package com.salesforce.sfca.pmdwrapper;
 
 import com.salesforce.sfca.shared.ProcessingError;
+import net.sourceforge.pmd.lang.Language;
+import net.sourceforge.pmd.lang.LanguageRegistry;
+import net.sourceforge.pmd.util.treeexport.TreeExportConfiguration;
+import net.sourceforge.pmd.util.treeexport.TreeExporter;
 
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.io.PrintStream;
 import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
 /**
- * Core class that performs AST dumping using PMD APIs
- *
- * NOTE: This is a temporary stub implementation. The PMD 7.21.0 API for accessing
- * AST without rules has significant differences from earlier versions. Further
- * investigation is needed to find the correct API approach.
- *
- * Potential approaches to explore:
- * 1. Create a custom XPath rule that always fires to capture AST
- * 2. Use reflection to access internal PMD file cache
- * 3. Extend PMD's LanguageProcessor directly
- * 4. Contact PMD maintainers for guidance on PMD 7 AST access
+ * Core class that performs AST dumping using PMD's TreeExporter API
  */
 public class PmdAstDumper {
 
@@ -36,20 +33,47 @@ public class PmdAstDumper {
         results.file = inputData.fileToDump;
 
         try {
-            System.out.println("Attempting to generate AST for file '" + inputData.fileToDump + "' with language '" + inputData.language + "'");
+            System.out.println("Generating AST for file '" + inputData.fileToDump + "' with language '" + inputData.language + "'");
 
             // Verify file exists
             Path filePath = Paths.get(inputData.fileToDump);
             readFileContent(filePath, inputData.encoding);
 
-            // TODO: Implement AST dump using correct PMD 7.21.0 APIs
-            // Current blocker: FileAnalysisListener interface methods don't match PMD 7 API
-            throw new UnsupportedOperationException(
-                "AST dump feature is not yet fully implemented for PMD 7.21.0. " +
-                "The PMD 7 API for accessing AST without rules has significant changes from PMD 6. " +
-                "This feature requires further investigation of the correct PMD 7 APIs. " +
-                "File validated: " + filePath
-            );
+            // Get language
+            Language language = LanguageRegistry.PMD.getLanguageById(inputData.language);
+            if (language == null) {
+                throw new RuntimeException("Language not supported: " + inputData.language);
+            }
+
+            // Create TreeExportConfiguration
+            TreeExportConfiguration config = new TreeExportConfiguration();
+            config.setLanguage(language);
+            config.setFormat("xml"); // Always XML format for v1
+            config.setFile(filePath);
+
+            // Capture output to string
+            ByteArrayOutputStream baos = new ByteArrayOutputStream();
+            PrintStream ps = new PrintStream(baos, true, StandardCharsets.UTF_8);
+            PrintStream originalOut = System.out;
+
+            try {
+                // Redirect System.out to capture XML output
+                System.setOut(ps);
+
+                // Create and export AST (TreeExporter writes to System.out)
+                TreeExporter exporter = new TreeExporter(config);
+                exporter.export();
+
+                // Get the XML output
+                results.ast = baos.toString(StandardCharsets.UTF_8);
+
+            } finally {
+                // Restore original System.out
+                System.setOut(originalOut);
+                ps.close();
+            }
+
+            System.out.println("Successfully generated AST for file '" + inputData.fileToDump + "'");
 
         } catch (Exception e) {
             // Store processing error
