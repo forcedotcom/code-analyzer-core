@@ -157,14 +157,26 @@ export class BaseConfigFactory {
             // .js files might have LWC decorators - use Babel parser with decorator support
             const lwcConfig = validateAndGetRawLwcConfigArray()[0];
             const babelParser = lwcConfig.languageOptions?.parser;
-            const babelParserOptions = lwcConfig.languageOptions?.parserOptions;
+            const originalParserOptions = lwcConfig.languageOptions?.parserOptions as Linter.ParserOptions;
+            const originalBabelOptions = originalParserOptions.babelOptions || {};
+
+            // Add @babel/preset-react to support JSX in React files alongside LWC files
+            const enhancedParserOptions = {
+                ...originalParserOptions,
+                babelOptions: {
+                    ...originalBabelOptions,
+                    configFile: false,
+                    // Add React preset for JSX support (.jsx files and React in .js files)
+                    presets: [...(originalBabelOptions.presets || []), require.resolve('@babel/preset-react')]
+                }
+            };
 
             return [{
                 ... eslintJs.configs.all,
                 files: this.engineConfig.file_extensions.javascript.map(ext => `**/*${ext}`),
                 languageOptions: {
                     parser: babelParser,
-                    parserOptions: babelParserOptions
+                    parserOptions: enhancedParserOptions
                 }
             }];
         } else {
