@@ -148,17 +148,39 @@ export class BaseConfigFactory {
     }
 
     private createJavascriptConfigArray(): Linter.Config[] {
-        return [{
-            ... eslintJs.configs.all,
-            files: this.engineConfig.file_extensions.javascript.map(ext => `**/*${ext}`),
-            languageOptions: {
-                parserOptions: {
-                    ecmaFeatures: {
-                        jsx: true  // Enable JSX parsing for React/JSX files
+        // Smart parser selection based on file extensions:
+        // - .js files may contain LWC decorators (@api, @track, @wire) → need Babel
+        // - .jsx, .mjs, .cjs are typically React or modules without decorators → can use Espree (faster)
+        const hasJsExtension = this.engineConfig.file_extensions.javascript.includes('.js');
+
+        if (hasJsExtension) {
+            // .js files might have LWC decorators - use Babel parser with decorator support
+            const lwcConfig = validateAndGetRawLwcConfigArray()[0];
+            const babelParser = lwcConfig.languageOptions?.parser;
+            const babelParserOptions = lwcConfig.languageOptions?.parserOptions;
+
+            return [{
+                ... eslintJs.configs.all,
+                files: this.engineConfig.file_extensions.javascript.map(ext => `**/*${ext}`),
+                languageOptions: {
+                    parser: babelParser,
+                    parserOptions: babelParserOptions
+                }
+            }];
+        } else {
+            // Only .jsx, .mjs, .cjs (no .js) - use Espree for better performance
+            return [{
+                ... eslintJs.configs.all,
+                files: this.engineConfig.file_extensions.javascript.map(ext => `**/*${ext}`),
+                languageOptions: {
+                    parserOptions: {
+                        ecmaFeatures: {
+                            jsx: true  // Enable JSX parsing for React/JSX files
+                        }
                     }
                 }
-            }
-        }];
+            }];
+        }
     }
 
     private createSldsHTMLConfigArray(): Linter.Config[] {
