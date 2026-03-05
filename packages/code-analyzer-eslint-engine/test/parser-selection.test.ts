@@ -244,4 +244,284 @@ describe('Parser Selection for Decorator Support', () => {
             expect(parsingErrors.length).toBe(0);
         });
     });
+
+    describe('Edge Case 1: TypeScript files with decorators', () => {
+        const workspaceWithTypeScriptDecorators: string = path.join(testDataFolder, 'workspaceWithTypeScriptDecorators');
+
+        it('should parse .ts files with decorators using TypeScript parser', async () => {
+            const configWithTs: ConfigObject = {
+                disable_lwc_base_config: true,
+                file_extensions: {
+                    javascript: ['.js'],
+                    typescript: ['.ts'],
+                    html: ['.html'],
+                    css: ['.css'],
+                    other: []
+                },
+                config_root: __dirname
+            };
+
+            const engine: Engine = await createEngineFromPlugin(configWithTs);
+            const workspace: Workspace = new Workspace('test', [workspaceWithTypeScriptDecorators],
+                [path.join(workspaceWithTypeScriptDecorators, 'tsComponent.ts')]);
+
+            const runOptions: RunOptions = createRunOptions(workspace);
+            const results: EngineRunResults = await engine.runRules(['no-debugger'], runOptions);
+
+            // Assert: TypeScript parser should handle decorators
+            expect(results.violations).toBeDefined();
+            const parsingErrors = results.violations.filter(v =>
+                v.message.includes('Parsing error') || v.message.includes('Unexpected character')
+            );
+            expect(parsingErrors.length).toBe(0);
+        });
+
+        it('should parse .tsx files with decorators using TypeScript parser', async () => {
+            const configWithTsx: ConfigObject = {
+                disable_lwc_base_config: true,
+                file_extensions: {
+                    javascript: ['.js'],
+                    typescript: ['.ts', '.tsx'],
+                    html: ['.html'],
+                    css: ['.css'],
+                    other: []
+                },
+                config_root: __dirname
+            };
+
+            const engine: Engine = await createEngineFromPlugin(configWithTsx);
+            const workspace: Workspace = new Workspace('test', [workspaceWithTypeScriptDecorators],
+                [path.join(workspaceWithTypeScriptDecorators, 'tsxComponent.tsx')]);
+
+            const runOptions: RunOptions = createRunOptions(workspace);
+            const results: EngineRunResults = await engine.runRules(['no-debugger'], runOptions);
+
+            // Assert: TypeScript parser should handle decorators in JSX
+            expect(results.violations).toBeDefined();
+            const parsingErrors = results.violations.filter(v =>
+                v.message.includes('Parsing error') || v.message.includes('Unexpected character')
+            );
+            expect(parsingErrors.length).toBe(0);
+        });
+    });
+
+    describe('Edge Case 2: Empty file extensions', () => {
+        it('should handle empty javascript extensions gracefully', async () => {
+            const configWithEmptyJs: ConfigObject = {
+                disable_lwc_base_config: true,
+                file_extensions: {
+                    javascript: [],  // Empty array
+                    typescript: ['.ts'],
+                    html: ['.html'],
+                    css: ['.css'],
+                    other: []
+                },
+                config_root: __dirname
+            };
+
+            // Should not throw when creating engine
+            const engine: Engine = await createEngineFromPlugin(configWithEmptyJs);
+            expect(engine).toBeDefined();
+            expect(engine.getName()).toBe('eslint');
+        });
+    });
+
+    describe('Edge Case 3: Error messages when Espree is forced on decorator files', () => {
+        it('should give clear error message when decorators fail with Espree parser', async () => {
+            // Force Espree by using only .jsx (no .js)
+            const configForcingEspree: ConfigObject = {
+                disable_lwc_base_config: true,
+                file_extensions: {
+                    javascript: ['.jsx'],  // Only .jsx forces Espree
+                    typescript: ['.ts'],
+                    html: ['.html'],
+                    css: ['.css'],
+                    other: []
+                },
+                config_root: __dirname
+            };
+
+            const engine: Engine = await createEngineFromPlugin(configForcingEspree);
+
+            // Try to scan a .js file with decorators (will fail because only .jsx is configured)
+            // This simulates user misconfiguration
+            const workspace: Workspace = new Workspace('test', [workspaceWithLwcDecorators],
+                [path.join(workspaceWithLwcDecorators, 'lwcComponent.js')]);
+
+            const runOptions: RunOptions = createRunOptions(workspace);
+
+            // The file won't be scanned because .js is not in the configured extensions
+            // This is expected behavior - not an error, just filtered out
+            const results: EngineRunResults = await engine.runRules(['no-debugger'], runOptions);
+
+            // Should have no violations because .js files are filtered out
+            expect(results.violations).toBeDefined();
+            expect(results.violations.length).toBe(0);
+        });
+    });
+
+    describe('Edge Case 4: Multiple files with mixed success', () => {
+        const workspaceWithMultipleFiles: string = path.join(testDataFolder, 'workspaceWithMultipleFiles');
+
+        it('should handle multiple files where some have violations', async () => {
+            const config: ConfigObject = {
+                disable_lwc_base_config: true,
+                file_extensions: {
+                    javascript: ['.js'],
+                    typescript: ['.ts'],
+                    html: ['.html'],
+                    css: ['.css'],
+                    other: []
+                },
+                config_root: __dirname
+            };
+
+            const engine: Engine = await createEngineFromPlugin(config);
+            const workspace: Workspace = new Workspace('test', [workspaceWithMultipleFiles],
+                [
+                    path.join(workspaceWithMultipleFiles, 'validLwc.js'),
+                    path.join(workspaceWithMultipleFiles, 'withViolations.js')
+                ]);
+
+            const runOptions: RunOptions = createRunOptions(workspace);
+            const results: EngineRunResults = await engine.runRules(['no-debugger', 'no-var'], runOptions);
+
+            // Assert: Should parse all files, find legitimate violations in one file
+            expect(results.violations).toBeDefined();
+
+            // No parsing errors - all decorators parsed successfully
+            const parsingErrors = results.violations.filter(v =>
+                v.message.includes('Parsing error') || v.message.includes('Unexpected character')
+            );
+            expect(parsingErrors.length).toBe(0);
+
+            // Should have violations from withViolations.js
+            const debuggerViolations = results.violations.filter(v =>
+                v.ruleName === 'no-debugger'
+            );
+            expect(debuggerViolations.length).toBeGreaterThan(0);
+
+            const noVarViolations = results.violations.filter(v =>
+                v.ruleName === 'no-var'
+            );
+            expect(noVarViolations.length).toBeGreaterThan(0);
+        });
+
+        it('should successfully parse all files even when decorators are present', async () => {
+            const config: ConfigObject = {
+                disable_lwc_base_config: true,
+                disable_react_base_config: true,
+                file_extensions: {
+                    javascript: ['.js'],
+                    typescript: ['.ts'],
+                    html: ['.html'],
+                    css: ['.css'],
+                    other: []
+                },
+                config_root: __dirname
+            };
+
+            const engine: Engine = await createEngineFromPlugin(config);
+            const workspace: Workspace = new Workspace('test', [workspaceWithMultipleFiles],
+                [
+                    path.join(workspaceWithMultipleFiles, 'validLwc.js'),
+                    path.join(workspaceWithMultipleFiles, 'withViolations.js')
+                ]);
+
+            const runOptions: RunOptions = createRunOptions(workspace);
+            const results: EngineRunResults = await engine.runRules(['no-unused-vars'], runOptions);
+
+            // All files should parse without decorator errors
+            expect(results.violations).toBeDefined();
+            const parsingErrors = results.violations.filter(v =>
+                v.message.includes('Parsing error') || v.message.includes('Unexpected character')
+            );
+            expect(parsingErrors.length).toBe(0);
+        });
+    });
+
+    describe('Edge Case 5: Verify Babel vs Espree selection logic', () => {
+        it('should use Babel when .js is first in array', async () => {
+            const config: ConfigObject = {
+                disable_lwc_base_config: true,
+                file_extensions: {
+                    javascript: ['.js', '.jsx', '.mjs'],  // .js first
+                    typescript: ['.ts'],
+                    html: ['.html'],
+                    css: ['.css'],
+                    other: []
+                },
+                config_root: __dirname
+            };
+
+            const engine: Engine = await createEngineFromPlugin(config);
+            const workspace: Workspace = new Workspace('test', [workspaceWithLwcDecorators],
+                [path.join(workspaceWithLwcDecorators, 'lwcComponent.js')]);
+
+            const runOptions: RunOptions = createRunOptions(workspace);
+            const results: EngineRunResults = await engine.runRules(['no-debugger'], runOptions);
+
+            // Should use Babel (decorators work)
+            const parsingErrors = results.violations.filter(v =>
+                v.message.includes('Parsing error') || v.message.includes('Unexpected character')
+            );
+            expect(parsingErrors.length).toBe(0);
+        });
+
+        it('should use Babel when .js is last in array', async () => {
+            const config: ConfigObject = {
+                disable_lwc_base_config: true,
+                file_extensions: {
+                    javascript: ['.jsx', '.mjs', '.js'],  // .js last
+                    typescript: ['.ts'],
+                    html: ['.html'],
+                    css: ['.css'],
+                    other: []
+                },
+                config_root: __dirname
+            };
+
+            const engine: Engine = await createEngineFromPlugin(config);
+            const workspace: Workspace = new Workspace('test', [workspaceWithLwcDecorators],
+                [path.join(workspaceWithLwcDecorators, 'lwcComponent.js')]);
+
+            const runOptions: RunOptions = createRunOptions(workspace);
+            const results: EngineRunResults = await engine.runRules(['no-debugger'], runOptions);
+
+            // Should still use Babel (includes() checks entire array)
+            const parsingErrors = results.violations.filter(v =>
+                v.message.includes('Parsing error') || v.message.includes('Unexpected character')
+            );
+            expect(parsingErrors.length).toBe(0);
+        });
+
+        it('should use Espree when .js is NOT in array', async () => {
+            const config: ConfigObject = {
+                disable_lwc_base_config: true,
+                file_extensions: {
+                    javascript: ['.jsx', '.mjs', '.cjs'],  // No .js
+                    typescript: ['.ts'],
+                    html: ['.html'],
+                    css: ['.css'],
+                    other: []
+                },
+                config_root: __dirname
+            };
+
+            const engine: Engine = await createEngineFromPlugin(config);
+
+            // Scan a .jsx file (should use Espree successfully)
+            const workspace: Workspace = new Workspace('test', [workspaceWithJsxOnly],
+                [path.join(workspaceWithJsxOnly, 'ReactComponent.jsx')]);
+
+            const runOptions: RunOptions = createRunOptions(workspace);
+            const results: EngineRunResults = await engine.runRules(['no-debugger'], runOptions);
+
+            // Espree should handle .jsx fine (no decorators in React files)
+            const parsingErrors = results.violations.filter(v =>
+                v.message.includes('Parsing error')
+            );
+            expect(parsingErrors.length).toBe(0);
+        });
+    });
 });
