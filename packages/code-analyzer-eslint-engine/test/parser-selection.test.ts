@@ -698,4 +698,67 @@ describe('Parser Selection for Decorator Support', () => {
             expect(engine).toBeDefined();
         });
     });
+
+    describe('TypeScript with disable_typescript_base_config: Bug Check', () => {
+        const workspaceWithTsDecorators: string = path.join(testDataFolder, 'workspaceWithTsDecorators');
+
+        it('should parse .ts files with decorators when disable_typescript_base_config is true', async () => {
+            // This test checks if we have the same bug with TypeScript as we had with JavaScript
+            // When disable_typescript_base_config: true, is a TypeScript parser still configured?
+            const configWithTsDisabled: ConfigObject = {
+                disable_typescript_base_config: true,
+                file_extensions: {
+                    javascript: ['.js'],
+                    typescript: ['.ts'],
+                    html: ['.html'],
+                    css: ['.css'],
+                    other: []
+                },
+                config_root: __dirname
+            };
+
+            const engine: Engine = await createEngineFromPlugin(configWithTsDisabled);
+            const workspace: Workspace = new Workspace('test', [workspaceWithTsDecorators],
+                [path.join(workspaceWithTsDecorators, 'tsComponent.ts')]);
+
+            const runOptions: RunOptions = createRunOptions(workspace);
+            const results: EngineRunResults = await engine.runRules(['no-debugger'], runOptions);
+
+            // Assert: Should parse TypeScript decorators successfully
+            expect(results.violations).toBeDefined();
+            const parsingErrors = results.violations.filter(v =>
+                v.message.includes('Parsing error') || v.message.includes('Unexpected character')
+            );
+            expect(parsingErrors.length).toBe(0);
+        });
+
+        it('should parse .tsx files with JSX when disable_typescript_base_config is true', async () => {
+            const workspaceWithTsx: string = path.join(testDataFolder, 'workspaceWithTsx');
+            const configWithTsDisabled: ConfigObject = {
+                disable_typescript_base_config: true,
+                file_extensions: {
+                    javascript: ['.js'],
+                    typescript: ['.tsx'],
+                    html: ['.html'],
+                    css: ['.css'],
+                    other: []
+                },
+                config_root: __dirname
+            };
+
+            const engine: Engine = await createEngineFromPlugin(configWithTsDisabled);
+            const workspace: Workspace = new Workspace('test', [workspaceWithTsx],
+                [path.join(workspaceWithTsx, 'ReactTsComponent.tsx')]);
+
+            const runOptions: RunOptions = createRunOptions(workspace);
+            const results: EngineRunResults = await engine.runRules(['no-debugger'], runOptions);
+
+            // Assert: Should parse TSX (TypeScript + JSX) successfully
+            expect(results.violations).toBeDefined();
+            const parsingErrors = results.violations.filter(v =>
+                v.message.includes('Parsing error')
+            );
+            expect(parsingErrors.length).toBe(0);
+        });
+    });
 });

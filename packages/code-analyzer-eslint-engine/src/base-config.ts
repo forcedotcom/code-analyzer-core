@@ -60,6 +60,10 @@ export class BaseConfigFactory {
         }
         if (this.useTsBaseConfig()) {
             configArray.push(...this.createTypescriptConfigArray());
+        } else if (this.engineConfig.file_extensions.typescript.length > 0) {
+            // When TS base config is disabled, we still need to configure a parser for TypeScript files
+            // to avoid ESLint falling back to a parser that can't handle TypeScript syntax
+            configArray.push(...this.createMinimalTypescriptParserConfig());
         }
         // Add React plugin config for JSX files
         if (this.useReactBaseConfig()) {
@@ -244,6 +248,29 @@ export class BaseConfigFactory {
                 }
             }];
         }
+    }
+
+    private createMinimalTypescriptParserConfig(): Linter.Config[] {
+        // When disable_typescript_base_config is true, we still need to configure a parser
+        // for TypeScript files to avoid ESLint falling back to Espree which can't parse
+        // TypeScript syntax. This method configures ONLY the parser, without applying base rules.
+        //
+        // Note: We intentionally do NOT set projectService here. The projectService option
+        // is used for type-aware linting, but it requires files to be in a tsconfig.json project.
+        // Without projectService, the TypeScript parser can still parse TypeScript syntax
+        // (decorators, type annotations, etc.) for non-type-aware rules.
+
+        // Get the first TypeScript config which contains the parser setup
+        const tsConfig = (eslintTs.configs.all as Linter.Config[])[0];
+
+        return [{
+            files: this.engineConfig.file_extensions.typescript.map(ext => `**/*${ext}`),
+            languageOptions: {
+                ...(tsConfig.languageOptions ?? {})
+                // Explicitly omit parserOptions.projectService to allow parsing files
+                // that aren't part of a TypeScript project
+            }
+        }];
     }
 
     private createSldsHTMLConfigArray(): Linter.Config[] {
