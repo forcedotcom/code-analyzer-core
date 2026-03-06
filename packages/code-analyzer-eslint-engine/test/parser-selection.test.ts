@@ -524,4 +524,178 @@ describe('Parser Selection for Decorator Support', () => {
             expect(parsingErrors.length).toBe(0);
         });
     });
+
+    describe('Critical Bug Fix: Both disable_javascript_base_config and disable_lwc_base_config set to true', () => {
+        it('should parse .js files with decorators when both JS and LWC base configs are disabled', async () => {
+            // This was the bug: when BOTH disable_javascript_base_config AND disable_lwc_base_config
+            // were true, no parser was configured, causing Espree fallback which can't parse decorators
+            const configWithBothJsAndLwcDisabled: ConfigObject = {
+                disable_javascript_base_config: true,
+                disable_lwc_base_config: true,
+                file_extensions: {
+                    javascript: ['.js'],
+                    typescript: ['.ts'],
+                    html: ['.html'],
+                    css: ['.css'],
+                    other: []
+                },
+                config_root: __dirname
+            };
+
+            const engine: Engine = await createEngineFromPlugin(configWithBothJsAndLwcDisabled);
+            const workspace: Workspace = new Workspace('test', [workspaceWithLwcDecorators],
+                [path.join(workspaceWithLwcDecorators, 'lwcComponent.js')]);
+
+            const runOptions: RunOptions = createRunOptions(workspace);
+            const results: EngineRunResults = await engine.runRules(['no-debugger'], runOptions);
+
+            // Assert: Should parse decorators successfully (minimal parser config with Babel)
+            expect(results.violations).toBeDefined();
+            const parsingErrors = results.violations.filter(v =>
+                v.message.includes('Parsing error') || v.message.includes('Unexpected character')
+            );
+            expect(parsingErrors.length).toBe(0);
+        });
+
+        it('should parse .jsx files when both JS and LWC base configs are disabled with only .jsx extension', async () => {
+            const configWithBothDisabledJsxOnly: ConfigObject = {
+                disable_javascript_base_config: true,
+                disable_lwc_base_config: true,
+                file_extensions: {
+                    javascript: ['.jsx'],  // Only .jsx, no .js
+                    typescript: ['.ts'],
+                    html: ['.html'],
+                    css: ['.css'],
+                    other: []
+                },
+                config_root: __dirname
+            };
+
+            const engine: Engine = await createEngineFromPlugin(configWithBothDisabledJsxOnly);
+            const workspace: Workspace = new Workspace('test', [workspaceWithJsxOnly],
+                [path.join(workspaceWithJsxOnly, 'ReactComponent.jsx')]);
+
+            const runOptions: RunOptions = createRunOptions(workspace);
+            const results: EngineRunResults = await engine.runRules(['no-debugger'], runOptions);
+
+            // Assert: Should parse JSX successfully with Espree
+            expect(results.violations).toBeDefined();
+            const parsingErrors = results.violations.filter(v =>
+                v.message.includes('Parsing error')
+            );
+            expect(parsingErrors.length).toBe(0);
+        });
+
+        it('should parse .mjs and .cjs files when both JS and LWC base configs are disabled', async () => {
+            const workspaceWithModuleFiles: string = path.join(testDataFolder, 'workspaceWithModuleFiles');
+            const configWithBothDisabledModules: ConfigObject = {
+                disable_javascript_base_config: true,
+                disable_lwc_base_config: true,
+                file_extensions: {
+                    javascript: ['.mjs', '.cjs'],
+                    typescript: ['.ts'],
+                    html: ['.html'],
+                    css: ['.css'],
+                    other: []
+                },
+                config_root: __dirname
+            };
+
+            const engine: Engine = await createEngineFromPlugin(configWithBothDisabledModules);
+            const workspace: Workspace = new Workspace('test', [workspaceWithModuleFiles],
+                [path.join(workspaceWithModuleFiles, 'module.mjs')]);
+
+            const runOptions: RunOptions = createRunOptions(workspace);
+            const results: EngineRunResults = await engine.runRules(['no-debugger'], runOptions);
+
+            // Assert: Should parse module files successfully with Espree
+            expect(results.violations).toBeDefined();
+            const parsingErrors = results.violations.filter(v =>
+                v.message.includes('Parsing error')
+            );
+            expect(parsingErrors.length).toBe(0);
+        });
+
+        it('should parse mixed .js and .jsx files when both JS and LWC base configs are disabled', async () => {
+            const configWithBothDisabledMixed: ConfigObject = {
+                disable_javascript_base_config: true,
+                disable_lwc_base_config: true,
+                file_extensions: {
+                    javascript: ['.js', '.jsx'],
+                    typescript: ['.ts'],
+                    html: ['.html'],
+                    css: ['.css'],
+                    other: []
+                },
+                config_root: __dirname
+            };
+
+            const engine: Engine = await createEngineFromPlugin(configWithBothDisabledMixed);
+            const workspace: Workspace = new Workspace('test', [workspaceWithMixedJsJsx],
+                [
+                    path.join(workspaceWithMixedJsJsx, 'lwcFile.js'),
+                    path.join(workspaceWithMixedJsJsx, 'reactFile.jsx')
+                ]);
+
+            const runOptions: RunOptions = createRunOptions(workspace);
+            const results: EngineRunResults = await engine.runRules(['no-debugger'], runOptions);
+
+            // Assert: Both .js (with decorators) and .jsx (React) should parse successfully
+            expect(results.violations).toBeDefined();
+            const parsingErrors = results.violations.filter(v =>
+                v.message.includes('Parsing error') || v.message.includes('Unexpected character')
+            );
+            expect(parsingErrors.length).toBe(0);
+        });
+
+        it('should work when all three base configs (JS, LWC, React) are disabled', async () => {
+            const configWithAllThreeDisabled: ConfigObject = {
+                disable_javascript_base_config: true,
+                disable_lwc_base_config: true,
+                disable_react_base_config: true,
+                file_extensions: {
+                    javascript: ['.js'],
+                    typescript: ['.ts'],
+                    html: ['.html'],
+                    css: ['.css'],
+                    other: []
+                },
+                config_root: __dirname
+            };
+
+            const engine: Engine = await createEngineFromPlugin(configWithAllThreeDisabled);
+            const workspace: Workspace = new Workspace('test', [workspaceWithLwcDecorators],
+                [path.join(workspaceWithLwcDecorators, 'lwcComponent.js')]);
+
+            const runOptions: RunOptions = createRunOptions(workspace);
+            const results: EngineRunResults = await engine.runRules(['no-debugger'], runOptions);
+
+            // Assert: Should still parse with minimal parser config
+            expect(results.violations).toBeDefined();
+            const parsingErrors = results.violations.filter(v =>
+                v.message.includes('Parsing error') || v.message.includes('Unexpected character')
+            );
+            expect(parsingErrors.length).toBe(0);
+        });
+
+        it('should not configure parser when no JavaScript extensions are present', async () => {
+            const configWithNoJsExtensions: ConfigObject = {
+                disable_javascript_base_config: true,
+                disable_lwc_base_config: true,
+                file_extensions: {
+                    javascript: [],  // No JavaScript extensions
+                    typescript: ['.ts'],
+                    html: ['.html'],
+                    css: ['.css'],
+                    other: []
+                },
+                config_root: __dirname
+            };
+
+            const engine: Engine = await createEngineFromPlugin(configWithNoJsExtensions);
+
+            // Just verify engine creation succeeds without JavaScript config
+            expect(engine).toBeDefined();
+        });
+    });
 });

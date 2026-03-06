@@ -47,6 +47,10 @@ export class BaseConfigFactory {
             configArray.push(...this.createJavascriptConfigArray());
         } else if (this.useLwcBaseConfig()) {
             configArray.push(...this.createLwcConfigArray());
+        } else if (this.engineConfig.file_extensions.javascript.length > 0) {
+            // When both base configs are disabled, we still need to configure a parser for JavaScript files
+            // to avoid ESLint falling back to Espree which can't parse decorators
+            configArray.push(...this.createMinimalJavascriptParserConfig());
         }
         if (this.useSldsCSSBaseConfig()) {
             configArray.push(...this.createSldsCSSConfigArray());
@@ -183,6 +187,53 @@ export class BaseConfigFactory {
             // Only .jsx, .mjs, .cjs (no .js) - use Espree for better performance
             return [{
                 ... eslintJs.configs.all,
+                files: this.engineConfig.file_extensions.javascript.map(ext => `**/*${ext}`),
+                languageOptions: {
+                    parserOptions: {
+                        ecmaFeatures: {
+                            jsx: true  // Enable JSX parsing for React/JSX files
+                        }
+                    }
+                }
+            }];
+        }
+    }
+
+    private createMinimalJavascriptParserConfig(): Linter.Config[] {
+        // When both disable_javascript_base_config and disable_lwc_base_config are true,
+        // we still need to configure a parser for JavaScript files to avoid ESLint falling
+        // back to Espree which can't parse decorators. This method configures ONLY the parser,
+        // without applying any base JavaScript or LWC rules.
+        const hasJsExtension = this.engineConfig.file_extensions.javascript.includes('.js');
+
+        if (hasJsExtension) {
+            // .js files might have LWC decorators - use Babel parser with decorator support
+            const lwcConfig = validateAndGetRawLwcConfigArray()[0];
+            const babelParser = lwcConfig.languageOptions?.parser;
+            const originalParserOptions = lwcConfig.languageOptions?.parserOptions as Linter.ParserOptions;
+            const originalBabelOptions = originalParserOptions.babelOptions || {};
+
+            // Add @babel/preset-react to support JSX in React files alongside LWC files
+            const enhancedParserOptions = {
+                ...originalParserOptions,
+                babelOptions: {
+                    ...originalBabelOptions,
+                    configFile: false,
+                    // Add React preset for JSX support (.jsx files and React in .js files)
+                    presets: [...(originalBabelOptions.presets || []), require.resolve('@babel/preset-react')]
+                }
+            };
+
+            return [{
+                files: this.engineConfig.file_extensions.javascript.map(ext => `**/*${ext}`),
+                languageOptions: {
+                    parser: babelParser,
+                    parserOptions: enhancedParserOptions
+                }
+            }];
+        } else {
+            // Only .jsx, .mjs, .cjs (no .js) - use Espree for better performance
+            return [{
                 files: this.engineConfig.file_extensions.javascript.map(ext => `**/*${ext}`),
                 languageOptions: {
                     parserOptions: {
