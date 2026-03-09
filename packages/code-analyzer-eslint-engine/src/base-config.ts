@@ -10,6 +10,48 @@ import eslintPluginJsxA11y from "eslint-plugin-jsx-a11y";
 import {ESLintEngineConfig} from "./config";
 import globals from "globals";
 
+/**
+ * BaseConfigFactory creates ESLint configurations based on user preferences and file types.
+ *
+ * Parser Selection Strategy:
+ * ==========================
+ *
+ * JavaScript Files (.js, .jsx, .mjs, .cjs):
+ * -----------------------------------------
+ * 1. Both JS + LWC enabled     → Full LWC config with Babel parser and all JS/LWC rules
+ * 2. Only JS enabled           → JavaScript config with smart parser selection:
+ *                                 - .js files: Babel (supports decorators + JSX)
+ *                                 - .jsx/.mjs/.cjs: Espree (better performance)
+ * 3. Only LWC enabled          → LWC config with Babel parser (no base JS rules)
+ * 4. Both JS + LWC disabled    → Minimal parser config only (NO rules applied):
+ *                                 - .js files: Babel for decorator support
+ *                                 - .jsx/.mjs/.cjs: Espree with JSX support
+ *
+ * TypeScript Files (.ts, .tsx, .mts, .cts):
+ * ------------------------------------------
+ * 1. TS enabled                → Full TypeScript config with typescript-eslint parser,
+ *                                 all TS rules, and projectService for type-aware linting
+ * 2. TS disabled               → Minimal TypeScript parser config (NO rules applied):
+ *                                 - Parser can handle TS syntax (decorators, types)
+ *                                 - No projectService (allows files outside tsconfig.json)
+ *                                 - Only non-type-aware rules can run
+ *
+ * React Files (JSX/TSX):
+ * ----------------------
+ * 1. React enabled             → All React rules + react-hooks rules
+ * 2. React disabled            → No React rules, but JSX parsing still works via
+ *                                 JS/TS parser configs above
+ *
+ * SLDS (CSS/HTML):
+ * ----------------
+ * Separate concern - applies SLDS-specific linting to CSS/HTML files when enabled.
+ *
+ * Key Design Principle:
+ * ---------------------
+ * When users disable base configs (disable_javascript_base_config, disable_lwc_base_config,
+ * disable_typescript_base_config), they disable the BASE RULES but NOT parsing capability.
+ * We always configure parsers to ensure files can be analyzed, even with minimal rule sets.
+ */
 export class BaseConfigFactory {
     private readonly engineConfig: ESLintEngineConfig;
 
@@ -255,10 +297,21 @@ export class BaseConfigFactory {
         // for TypeScript files to avoid ESLint falling back to Espree which can't parse
         // TypeScript syntax. This method configures ONLY the parser, without applying base rules.
         //
-        // Note: We intentionally do NOT set projectService here. The projectService option
+        // IMPORTANT LIMITATION - Type-Aware Rules:
+        // =========================================
+        // We intentionally do NOT set projectService here. The projectService option
         // is used for type-aware linting, but it requires files to be in a tsconfig.json project.
         // Without projectService, the TypeScript parser can still parse TypeScript syntax
-        // (decorators, type annotations, etc.) for non-type-aware rules.
+        // (decorators, type annotations, etc.) but ONLY non-type-aware rules can run.
+        //
+        // Type-aware rules (e.g., @typescript-eslint/await-thenable) will NOT work with this
+        // minimal config. If users need type-aware rules, they should enable the TypeScript
+        // base config (disable_typescript_base_config: false).
+        //
+        // This trade-off allows users to:
+        // ✓ Parse TypeScript files without a tsconfig.json
+        // ✓ Run basic ESLint rules on TypeScript code
+        // ✗ Cannot use type-aware TypeScript rules
 
         // Get the first TypeScript config which contains the parser setup
         const tsConfig = (eslintTs.configs.all as Linter.Config[])[0];

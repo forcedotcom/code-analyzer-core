@@ -766,8 +766,8 @@ describe('Parser Selection for Decorator Support', () => {
         const workspaceWithReactViolations: string = path.join(testDataFolder, 'workspaceWithReactViolations');
         const workspaceWithLwcViolations: string = path.join(testDataFolder, 'workspaceWithLwcViolations');
 
-        it('should parse React JSX files even when disable_react_base_config is true', async () => {
-            // When React base config is disabled, we only disable React RULES, not parsing
+        it('should parse React JSX files using minimal parser fallback when all base configs disabled', async () => {
+            // When all base configs are disabled, the minimal parser fallback activates
             // JSX should still parse correctly (uses Espree with JSX support)
             const configWithReactDisabled: ConfigObject = {
                 disable_javascript_base_config: true,  // Disable JS base, will use minimal parser
@@ -799,9 +799,9 @@ describe('Parser Selection for Decorator Support', () => {
             expect(parsingErrors.length).toBe(0);
         });
 
-        it('should parse LWC files when disable_javascript_base_config is true', async () => {
+        it('should parse LWC files using LWC parser (not minimal fallback) when only JS base disabled', async () => {
             // When JS base config is disabled but LWC enabled, LWC decorators should still parse
-            // This verifies the smart parser selection chooses Babel for .js files
+            // This uses the LWC parser config, not the minimal fallback
             const configWithJsDisabled: ConfigObject = {
                 disable_javascript_base_config: true,
                 disable_lwc_base_config: false,  // LWC enabled for parsing
@@ -831,8 +831,9 @@ describe('Parser Selection for Decorator Support', () => {
             expect(parsingErrors.length).toBe(0);
         });
 
-        it('should analyze mixed React and LWC files when only JS base config is disabled', async () => {
+        it('should parse mixed React and LWC files using LWC parser + minimal fallback for JSX', async () => {
             // Verify that both React (JSX) and LWC (decorators) work when JS base disabled
+            // LWC uses LWC parser, JSX uses minimal fallback
             const configMixed: ConfigObject = {
                 disable_javascript_base_config: true,
                 disable_lwc_base_config: false,
@@ -866,9 +867,9 @@ describe('Parser Selection for Decorator Support', () => {
             expect(parsingErrors.length).toBe(0);
         });
 
-        it('should parse and analyze when all base configs disabled but React rules run', async () => {
+        it('should parse using minimal parser fallback when all base configs disabled', async () => {
             // All base configs disabled - only minimal parsers configured
-            // But we can still run React rules if they don't require base config
+            // Verifies the minimal parser fallback mechanism works
             const configAllDisabled: ConfigObject = {
                 disable_javascript_base_config: true,
                 disable_lwc_base_config: true,
@@ -899,8 +900,8 @@ describe('Parser Selection for Decorator Support', () => {
             expect(parsingErrors.length).toBe(0);
         });
 
-        it('should parse TypeScript files when disable_typescript_base_config is true', async () => {
-            // When TS base config is disabled, TypeScript should still parse
+        it('should parse TypeScript files using minimal parser fallback when TS base config disabled', async () => {
+            // When TS base config is disabled, minimal TS parser fallback activates
             // The minimal TS parser config allows parsing TS syntax without type-aware rules
             const configTsDisabled: ConfigObject = {
                 disable_typescript_base_config: true,
