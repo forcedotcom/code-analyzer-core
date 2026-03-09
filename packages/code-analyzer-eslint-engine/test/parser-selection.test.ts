@@ -761,4 +761,174 @@ describe('Parser Selection for Decorator Support', () => {
             expect(parsingErrors.length).toBe(0);
         });
     });
+
+    describe('Integration Tests: Verify Analysis Capabilities with Different Flag Combinations', () => {
+        const workspaceWithReactViolations: string = path.join(testDataFolder, 'workspaceWithReactViolations');
+        const workspaceWithLwcViolations: string = path.join(testDataFolder, 'workspaceWithLwcViolations');
+
+        it('should parse React JSX files even when disable_react_base_config is true', async () => {
+            // When React base config is disabled, we only disable React RULES, not parsing
+            // JSX should still parse correctly (uses Espree with JSX support)
+            const configWithReactDisabled: ConfigObject = {
+                disable_javascript_base_config: true,  // Disable JS base, will use minimal parser
+                disable_lwc_base_config: true,          // Disable LWC base (not needed for React)
+                disable_react_base_config: true,        // Disable React rules
+                file_extensions: {
+                    javascript: ['.jsx'],
+                    typescript: ['.ts'],
+                    html: ['.html'],
+                    css: ['.css'],
+                    other: []
+                },
+                config_root: __dirname
+            };
+
+            const engine: Engine = await createEngineFromPlugin(configWithReactDisabled);
+            const workspace: Workspace = new Workspace('test', [workspaceWithReactViolations],
+                [path.join(workspaceWithReactViolations, 'ComponentWithViolations.jsx')]);
+
+            const runOptions: RunOptions = createRunOptions(workspace);
+            // Just verify parsing works - we don't need to check for specific violations
+            const results: EngineRunResults = await engine.runRules(['no-debugger'], runOptions);
+
+            // Assert: Should parse successfully without parsing errors
+            expect(results.violations).toBeDefined();
+            const parsingErrors = results.violations.filter(v =>
+                v.message.includes('Parsing error')
+            );
+            expect(parsingErrors.length).toBe(0);
+        });
+
+        it('should parse LWC files when disable_javascript_base_config is true', async () => {
+            // When JS base config is disabled but LWC enabled, LWC decorators should still parse
+            // This verifies the smart parser selection chooses Babel for .js files
+            const configWithJsDisabled: ConfigObject = {
+                disable_javascript_base_config: true,
+                disable_lwc_base_config: false,  // LWC enabled for parsing
+                file_extensions: {
+                    javascript: ['.js'],
+                    typescript: ['.ts'],
+                    html: ['.html'],
+                    css: ['.css'],
+                    other: []
+                },
+                config_root: __dirname
+            };
+
+            const engine: Engine = await createEngineFromPlugin(configWithJsDisabled);
+            const workspace: Workspace = new Workspace('test', [workspaceWithLwcViolations],
+                [path.join(workspaceWithLwcViolations, 'lwcComponentWithViolations.js')]);
+
+            const runOptions: RunOptions = createRunOptions(workspace);
+            // Just verify parsing works
+            const results: EngineRunResults = await engine.runRules(['no-debugger'], runOptions);
+
+            // Assert: Should parse decorators successfully without parsing errors
+            expect(results.violations).toBeDefined();
+            const parsingErrors = results.violations.filter(v =>
+                v.message.includes('Parsing error') || v.message.includes('Unexpected character')
+            );
+            expect(parsingErrors.length).toBe(0);
+        });
+
+        it('should analyze mixed React and LWC files when only JS base config is disabled', async () => {
+            // Verify that both React (JSX) and LWC (decorators) work when JS base disabled
+            const configMixed: ConfigObject = {
+                disable_javascript_base_config: true,
+                disable_lwc_base_config: false,
+                disable_react_base_config: true,  // Disable React rules to avoid config issues
+                file_extensions: {
+                    javascript: ['.js', '.jsx'],
+                    typescript: ['.ts'],
+                    html: ['.html'],
+                    css: ['.css'],
+                    other: []
+                },
+                config_root: __dirname
+            };
+
+            const engine: Engine = await createEngineFromPlugin(configMixed);
+            const workspace: Workspace = new Workspace('test',
+                [workspaceWithLwcViolations, workspaceWithReactViolations],
+                [
+                    path.join(workspaceWithLwcViolations, 'lwcComponentWithViolations.js'),
+                    path.join(workspaceWithReactViolations, 'ComponentWithViolations.jsx')
+                ]);
+
+            const runOptions: RunOptions = createRunOptions(workspace);
+            const results: EngineRunResults = await engine.runRules(['no-debugger'], runOptions);
+
+            // Assert: Both files should parse without errors
+            expect(results.violations).toBeDefined();
+            const parsingErrors = results.violations.filter(v =>
+                v.message.includes('Parsing error') || v.message.includes('Unexpected character')
+            );
+            expect(parsingErrors.length).toBe(0);
+        });
+
+        it('should parse and analyze when all base configs disabled but React rules run', async () => {
+            // All base configs disabled - only minimal parsers configured
+            // But we can still run React rules if they don't require base config
+            const configAllDisabled: ConfigObject = {
+                disable_javascript_base_config: true,
+                disable_lwc_base_config: true,
+                disable_typescript_base_config: true,
+                file_extensions: {
+                    javascript: ['.jsx'],
+                    typescript: ['.ts'],
+                    html: ['.html'],
+                    css: ['.css'],
+                    other: []
+                },
+                config_root: __dirname
+            };
+
+            const engine: Engine = await createEngineFromPlugin(configAllDisabled);
+            const workspace: Workspace = new Workspace('test', [workspaceWithReactViolations],
+                [path.join(workspaceWithReactViolations, 'ComponentWithViolations.jsx')]);
+
+            const runOptions: RunOptions = createRunOptions(workspace);
+            // Run a simple rule that doesn't depend on base config
+            const results: EngineRunResults = await engine.runRules(['no-debugger'], runOptions);
+
+            // Assert: Should parse and run rules even with all base configs disabled
+            expect(results.violations).toBeDefined();
+            const parsingErrors = results.violations.filter(v =>
+                v.message.includes('Parsing error')
+            );
+            expect(parsingErrors.length).toBe(0);
+        });
+
+        it('should parse TypeScript files when disable_typescript_base_config is true', async () => {
+            // When TS base config is disabled, TypeScript should still parse
+            // The minimal TS parser config allows parsing TS syntax without type-aware rules
+            const configTsDisabled: ConfigObject = {
+                disable_typescript_base_config: true,
+                file_extensions: {
+                    javascript: ['.js'],
+                    typescript: ['.ts'],
+                    html: ['.html'],
+                    css: ['.css'],
+                    other: []
+                },
+                config_root: __dirname
+            };
+
+            const engine: Engine = await createEngineFromPlugin(configTsDisabled);
+            const workspaceWithTsViolations: string = path.join(testDataFolder, 'workspaceWithTsViolations');
+            const workspace: Workspace = new Workspace('test', [workspaceWithTsViolations],
+                [path.join(workspaceWithTsViolations, 'tsFileWithViolations.ts')]);
+
+            const runOptions: RunOptions = createRunOptions(workspace);
+            // Just verify parsing works - don't check for specific violations
+            const results: EngineRunResults = await engine.runRules(['no-debugger'], runOptions);
+
+            // Assert: Should parse TypeScript syntax (type annotations, decorators) without parsing errors
+            expect(results.violations).toBeDefined();
+            const parsingErrors = results.violations.filter(v =>
+                v.message.includes('Parsing error') || v.message.includes('Unexpected token')
+            );
+            expect(parsingErrors.length).toBe(0);
+        });
+    });
 });
