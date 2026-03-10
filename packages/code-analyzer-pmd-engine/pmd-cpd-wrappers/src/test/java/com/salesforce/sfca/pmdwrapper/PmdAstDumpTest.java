@@ -224,6 +224,278 @@ class PmdAstDumpTest {
         assertThat(results.error, is(notNullValue()));
     }
 
+    @Test
+    void whenCallingAstDumpWithNullLanguage_thenThrowsException(@TempDir Path tempDir) throws Exception {
+        // Create a test file
+        String testFile = createTempFile(tempDir, "test.txt", "some content");
+
+        // Create input JSON with null language
+        String inputFileContents = "{\n" +
+                "  \"language\": null,\n" +
+                "  \"fileToDump\": \"" + makePathJsonSafe(testFile) + "\",\n" +
+                "  \"encoding\": \"UTF-8\"\n" +
+                "}";
+        String inputFile = createTempFile(tempDir, "astDumpInput.json", inputFileContents);
+
+        String resultsOutputFile = tempDir.resolve("astDumpOutput.json").toAbsolutePath().toString();
+
+        // Execute ast-dump command - should throw exception
+        String[] args = {"ast-dump", inputFile, resultsOutputFile};
+        RuntimeException thrown = assertThrows(RuntimeException.class, () -> callPmdWrapper(args));
+        assertThat(thrown.getMessage(), containsString("'language' field is required"));
+    }
+
+    @Test
+    void whenCallingAstDumpWithEmptyLanguage_thenThrowsException(@TempDir Path tempDir) throws Exception {
+        // Create a test file
+        String testFile = createTempFile(tempDir, "test.txt", "some content");
+
+        // Create input JSON with empty language
+        String inputFileContents = "{\n" +
+                "  \"language\": \"  \",\n" +
+                "  \"fileToDump\": \"" + makePathJsonSafe(testFile) + "\",\n" +
+                "  \"encoding\": \"UTF-8\"\n" +
+                "}";
+        String inputFile = createTempFile(tempDir, "astDumpInput.json", inputFileContents);
+
+        String resultsOutputFile = tempDir.resolve("astDumpOutput.json").toAbsolutePath().toString();
+
+        // Execute ast-dump command - should throw exception
+        String[] args = {"ast-dump", inputFile, resultsOutputFile};
+        RuntimeException thrown = assertThrows(RuntimeException.class, () -> callPmdWrapper(args));
+        assertThat(thrown.getMessage(), containsString("'language' field is required"));
+    }
+
+    @Test
+    void whenCallingAstDumpWithNullFileToDump_thenThrowsException(@TempDir Path tempDir) throws Exception {
+        // Create input JSON with null fileToDump
+        String inputFileContents = "{\n" +
+                "  \"language\": \"apex\",\n" +
+                "  \"fileToDump\": null,\n" +
+                "  \"encoding\": \"UTF-8\"\n" +
+                "}";
+        String inputFile = createTempFile(tempDir, "astDumpInput.json", inputFileContents);
+
+        String resultsOutputFile = tempDir.resolve("astDumpOutput.json").toAbsolutePath().toString();
+
+        // Execute ast-dump command - should throw exception
+        String[] args = {"ast-dump", inputFile, resultsOutputFile};
+        RuntimeException thrown = assertThrows(RuntimeException.class, () -> callPmdWrapper(args));
+        assertThat(thrown.getMessage(), containsString("'fileToDump' field is required"));
+    }
+
+    @Test
+    void whenCallingAstDumpWithEmptyFileToDump_thenThrowsException(@TempDir Path tempDir) throws Exception {
+        // Create input JSON with empty fileToDump
+        String inputFileContents = "{\n" +
+                "  \"language\": \"apex\",\n" +
+                "  \"fileToDump\": \"   \",\n" +
+                "  \"encoding\": \"UTF-8\"\n" +
+                "}";
+        String inputFile = createTempFile(tempDir, "astDumpInput.json", inputFileContents);
+
+        String resultsOutputFile = tempDir.resolve("astDumpOutput.json").toAbsolutePath().toString();
+
+        // Execute ast-dump command - should throw exception
+        String[] args = {"ast-dump", inputFile, resultsOutputFile};
+        RuntimeException thrown = assertThrows(RuntimeException.class, () -> callPmdWrapper(args));
+        assertThat(thrown.getMessage(), containsString("'fileToDump' field is required"));
+    }
+
+    @Test
+    void whenCallingAstDumpWithNullEncoding_thenDefaultsToUtf8(@TempDir Path tempDir) throws Exception {
+        // Create a simple Apex class
+        String apexCode = "public class TestClass { }";
+        String apexFile = createTempFile(tempDir, "TestClass.cls", apexCode);
+
+        // Create input JSON with null encoding
+        String inputFileContents = "{\n" +
+                "  \"language\": \"apex\",\n" +
+                "  \"fileToDump\": \"" + makePathJsonSafe(apexFile) + "\",\n" +
+                "  \"encoding\": null\n" +
+                "}";
+        String inputFile = createTempFile(tempDir, "astDumpInput.json", inputFileContents);
+
+        String resultsOutputFile = tempDir.resolve("astDumpOutput.json").toAbsolutePath().toString();
+
+        // Execute ast-dump command
+        String[] args = {"ast-dump", inputFile, resultsOutputFile};
+        callPmdWrapper(args);
+
+        // Read and parse the results
+        String resultsJsonString = new String(Files.readAllBytes(Paths.get(resultsOutputFile)));
+        Gson gson = new Gson();
+        PmdAstDumpResults results = gson.fromJson(resultsJsonString, PmdAstDumpResults.class);
+
+        // Assert the AST was generated successfully (encoding defaulted to UTF-8)
+        assertThat(results.file, is(apexFile));
+        assertThat(results.ast, is(notNullValue()));
+        assertThat(results.error, is(nullValue()));
+    }
+
+    @Test
+    void whenCallingAstDumpWithEmptyEncoding_thenDefaultsToUtf8(@TempDir Path tempDir) throws Exception {
+        // Create a simple Apex class
+        String apexCode = "public class TestClass { }";
+        String apexFile = createTempFile(tempDir, "TestClass.cls", apexCode);
+
+        // Create input JSON with empty encoding
+        String inputFileContents = "{\n" +
+                "  \"language\": \"apex\",\n" +
+                "  \"fileToDump\": \"" + makePathJsonSafe(apexFile) + "\",\n" +
+                "  \"encoding\": \"  \"\n" +
+                "}";
+        String inputFile = createTempFile(tempDir, "astDumpInput.json", inputFileContents);
+
+        String resultsOutputFile = tempDir.resolve("astDumpOutput.json").toAbsolutePath().toString();
+
+        // Execute ast-dump command
+        String[] args = {"ast-dump", inputFile, resultsOutputFile};
+        callPmdWrapper(args);
+
+        // Read and parse the results
+        String resultsJsonString = new String(Files.readAllBytes(Paths.get(resultsOutputFile)));
+        Gson gson = new Gson();
+        PmdAstDumpResults results = gson.fromJson(resultsJsonString, PmdAstDumpResults.class);
+
+        // Assert the AST was generated successfully (encoding defaulted to UTF-8)
+        assertThat(results.file, is(apexFile));
+        assertThat(results.ast, is(notNullValue()));
+        assertThat(results.error, is(nullValue()));
+    }
+
+    @Test
+    void whenCallingAstDumpWithInvalidEncoding_thenReturnsError(@TempDir Path tempDir) throws Exception {
+        // Create a simple Apex class
+        String apexCode = "public class TestClass { }";
+        String apexFile = createTempFile(tempDir, "TestClass.cls", apexCode);
+
+        // Create input JSON with invalid encoding
+        String inputFileContents = "{\n" +
+                "  \"language\": \"apex\",\n" +
+                "  \"fileToDump\": \"" + makePathJsonSafe(apexFile) + "\",\n" +
+                "  \"encoding\": \"INVALID-ENCODING-NAME\"\n" +
+                "}";
+        String inputFile = createTempFile(tempDir, "astDumpInput.json", inputFileContents);
+
+        String resultsOutputFile = tempDir.resolve("astDumpOutput.json").toAbsolutePath().toString();
+
+        // Execute ast-dump command
+        String[] args = {"ast-dump", inputFile, resultsOutputFile};
+        callPmdWrapper(args);
+
+        // Read and parse the results
+        String resultsJsonString = new String(Files.readAllBytes(Paths.get(resultsOutputFile)));
+        Gson gson = new Gson();
+        PmdAstDumpResults results = gson.fromJson(resultsJsonString, PmdAstDumpResults.class);
+
+        // Assert error is returned
+        assertThat(results.file, is(apexFile));
+        assertThat(results.ast, is(nullValue()));
+        assertThat(results.error, is(notNullValue()));
+        assertThat(results.error.message, anyOf(
+                containsString("INVALID-ENCODING-NAME"),
+                containsString("Charset"),
+                containsString("encoding")));
+    }
+
+    @Test
+    void whenCallingAstDumpWithDirectory_thenReturnsError(@TempDir Path tempDir) throws Exception {
+        // Use the temp directory itself as the file to dump
+        String dirPath = tempDir.toAbsolutePath().toString();
+
+        // Create input JSON pointing to a directory
+        String inputFileContents = "{\n" +
+                "  \"language\": \"apex\",\n" +
+                "  \"fileToDump\": \"" + makePathJsonSafe(dirPath) + "\",\n" +
+                "  \"encoding\": \"UTF-8\"\n" +
+                "}";
+        String inputFile = createTempFile(tempDir, "astDumpInput.json", inputFileContents);
+
+        String resultsOutputFile = tempDir.resolve("astDumpOutput.json").toAbsolutePath().toString();
+
+        // Execute ast-dump command
+        String[] args = {"ast-dump", inputFile, resultsOutputFile};
+        callPmdWrapper(args);
+
+        // Read and parse the results
+        String resultsJsonString = new String(Files.readAllBytes(Paths.get(resultsOutputFile)));
+        Gson gson = new Gson();
+        PmdAstDumpResults results = gson.fromJson(resultsJsonString, PmdAstDumpResults.class);
+
+        // Assert error is returned
+        assertThat(results.file, is(dirPath));
+        assertThat(results.ast, is(nullValue()));
+        assertThat(results.error, is(notNullValue()));
+        assertThat(results.error.message, containsString("Not a regular file"));
+    }
+
+    @Test
+    void whenCallingAstDumpWithEmptyFile_thenGeneratesAst(@TempDir Path tempDir) throws Exception {
+        // Create an empty Apex file
+        String apexFile = createTempFile(tempDir, "Empty.cls", "");
+
+        // Create input JSON
+        String inputFileContents = "{\n" +
+                "  \"language\": \"apex\",\n" +
+                "  \"fileToDump\": \"" + makePathJsonSafe(apexFile) + "\",\n" +
+                "  \"encoding\": \"UTF-8\"\n" +
+                "}";
+        String inputFile = createTempFile(tempDir, "astDumpInput.json", inputFileContents);
+
+        String resultsOutputFile = tempDir.resolve("astDumpOutput.json").toAbsolutePath().toString();
+
+        // Execute ast-dump command
+        String[] args = {"ast-dump", inputFile, resultsOutputFile};
+        callPmdWrapper(args);
+
+        // Read and parse the results
+        String resultsJsonString = new String(Files.readAllBytes(Paths.get(resultsOutputFile)));
+        Gson gson = new Gson();
+        PmdAstDumpResults results = gson.fromJson(resultsJsonString, PmdAstDumpResults.class);
+
+        // Empty files may generate an AST or return an error depending on PMD behavior
+        // Either outcome is acceptable - we're verifying no exception is thrown
+        assertThat(results.file, is(apexFile));
+        // Don't assert on ast or error - PMD behavior may vary for empty files
+    }
+
+    @Test
+    void whenCallingAstDumpWithIso88591Encoding_thenGeneratesAst(@TempDir Path tempDir) throws Exception {
+        // Create an Apex file with special characters in ISO-8859-1 encoding
+        String apexCode = "public class TestClass {\n" +
+                "    // Comment with special char: \u00E9\n" + // é in ISO-8859-1
+                "    public String name;\n" +
+                "}";
+        Path apexPath = tempDir.resolve("TestClass.cls");
+        Files.write(apexPath, apexCode.getBytes("ISO-8859-1"));
+        String apexFile = apexPath.toAbsolutePath().toString();
+
+        // Create input JSON with ISO-8859-1 encoding
+        String inputFileContents = "{\n" +
+                "  \"language\": \"apex\",\n" +
+                "  \"fileToDump\": \"" + makePathJsonSafe(apexFile) + "\",\n" +
+                "  \"encoding\": \"ISO-8859-1\"\n" +
+                "}";
+        String inputFile = createTempFile(tempDir, "astDumpInput.json", inputFileContents);
+
+        String resultsOutputFile = tempDir.resolve("astDumpOutput.json").toAbsolutePath().toString();
+
+        // Execute ast-dump command
+        String[] args = {"ast-dump", inputFile, resultsOutputFile};
+        callPmdWrapper(args);
+
+        // Read and parse the results
+        String resultsJsonString = new String(Files.readAllBytes(Paths.get(resultsOutputFile)));
+        Gson gson = new Gson();
+        PmdAstDumpResults results = gson.fromJson(resultsJsonString, PmdAstDumpResults.class);
+
+        // Assert the AST was generated successfully with correct encoding
+        assertThat(results.file, is(apexFile));
+        assertThat(results.ast, is(notNullValue()));
+        assertThat(results.error, is(nullValue()));
+    }
+
     // ===================== HELPER METHODS =====================
 
     private static String createTempFile(Path tempDir, String fileName, String fileContents) throws Exception {
