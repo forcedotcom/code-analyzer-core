@@ -61,7 +61,7 @@ describe('SfgeEnginePlugin', () => {
                 disable_limit_reached_violations: false,
                 java_max_heap_size: undefined,
                 java_thread_count: 8,
-                java_thread_timeout: 180000
+                java_thread_timeout: 30000
             });
         });
 

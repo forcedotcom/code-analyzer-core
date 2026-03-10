@@ -25,7 +25,7 @@ public final class EnvUtil {
 
     @VisibleForTesting
     static final long DEFAULT_RULE_THREAD_TIMEOUT =
-            TimeUnit.MILLISECONDS.convert(3, TimeUnit.MINUTES);
+            TimeUnit.MILLISECONDS.convert(30, TimeUnit.SECONDS);
 
     @VisibleForTesting static final boolean DEFAULT_RULE_DISABLE_WARNING_VIOLATION = false;
     @VisibleForTesting static final boolean DEFAULT_LOG_WARNINGS_ON_VERBOSE = false;
