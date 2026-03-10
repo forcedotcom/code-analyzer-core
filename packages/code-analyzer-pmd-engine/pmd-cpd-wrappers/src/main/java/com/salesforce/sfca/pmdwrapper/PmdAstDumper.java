@@ -35,9 +35,9 @@ public class PmdAstDumper {
         try {
             System.out.println("Generating AST for file '" + inputData.fileToDump + "' with language '" + inputData.language + "'");
 
-            // Verify file exists
+            // Verify file exists and is valid (lightweight validation without reading content)
             Path filePath = Paths.get(inputData.fileToDump);
-            readFileContent(filePath, inputData.encoding);
+            validateFilePath(filePath, inputData.encoding);
 
             // Get language
             Language language = LanguageRegistry.PMD.getLanguageById(inputData.language);
@@ -104,9 +104,11 @@ public class PmdAstDumper {
     }
 
     /**
-     * Reads file content using the specified encoding
+     * Validates file path and encoding without reading file content.
+     * This avoids loading large files into memory unnecessarily.
+     * PMD's TreeExporter will handle reading the file content.
      */
-    private String readFileContent(Path filePath, String encoding) throws IOException {
+    private void validateFilePath(Path filePath, String encoding) throws IOException {
         if (!Files.exists(filePath)) {
             throw new IOException("File not found: " + filePath);
         }
@@ -114,7 +116,7 @@ public class PmdAstDumper {
             throw new IOException("Not a regular file: " + filePath);
         }
 
-        Charset charset = Charset.forName(encoding);
-        return Files.readString(filePath, charset);
+        // Validate encoding by attempting to get the Charset (throws if invalid)
+        Charset.forName(encoding);
     }
 }
