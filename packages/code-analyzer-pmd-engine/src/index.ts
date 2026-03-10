@@ -9,7 +9,5 @@ function createEnginePlugin(): EnginePlugin {
 // a createEnginePlugin function that creates the plugin (so that it can be dynamically loaded).
 export { createEnginePlugin, PmdCpdEnginesPlugin }
 
-// Export types for AST dump functionality
+// Export types for AST dump functionality (types only, engines remain internal)
 export type { PmdAstDumpResults, GenerateAstOptions, PmdProcessingError } from "./pmd-wrapper"
-export { PmdEngine } from "./pmd-engine"
-export { CpdEngine } from "./cpd-engine"
