@@ -19,6 +19,10 @@ import {RuntimeSfgeWrapper, SfgeRuleInfo, SfgeRunOptions, SfgeRunResult} from ".
 import {SfgeEngineConfig} from "./config";
 
 const SFGE_RELEVANT_FILE_EXTENSIONS = ['.cls', '.trigger', '-meta.xml', '.page', '.component'];
+// SFGE can only create entry points from Apex source files — filtering targets
+// to these extensions prevents SFGE from receiving non-Apex files as targets,
+// which would cause useless union() branches during static rule graph traversal.
+const SFGE_TARGET_FILE_EXTENSIONS = ['.cls', '.trigger'];
 const DEV_PREVIEW_TAG: string = 'DevPreview';
 
 export class SfgeEngine extends Engine {
@@ -68,8 +72,10 @@ export class SfgeEngine extends Engine {
             return { violations: [] };
         }
 
-        // Get targeted files and return early if empty - prevents SFGE from analyzing all workspace files
-        const targetedFiles: string[] = await runOptions.workspace.getTargetedFiles();
+        // Get targeted files and filter to Apex source only (.cls and .trigger).
+        // SFGE only creates entry points from Apex files; passing non-Apex targets
+        // causes useless union() branches during graph traversal with no benefit.
+        const targetedFiles: string[] = (await runOptions.workspace.getTargetedFiles()).filter(isApexSourceFile);
         if (targetedFiles.length === 0) {
             this.emitRunRulesProgressEvent(100);
             return { violations: [] };
@@ -195,6 +201,10 @@ function getCacheKey(workspace?: Workspace): string {
 
 function isFileRelevantToSfge(fileName: string): boolean {
     return SFGE_RELEVANT_FILE_EXTENSIONS.some(extension => fileName.toLowerCase().endsWith(extension));
+}
+
+function isApexSourceFile(fileName: string): boolean {
+    return SFGE_TARGET_FILE_EXTENSIONS.some(extension => fileName.toLowerCase().endsWith(extension));
 }
 
 function toRuleDescription(sfgeRuleInfo: SfgeRuleInfo): RuleDescription {
