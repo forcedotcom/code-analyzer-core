@@ -46,6 +46,23 @@ export type PmdProcessingError = {
     detail: string
 }
 
+export type PmdAstDumpInputData = {
+    language: string
+    fileToDump: string
+    encoding?: string
+}
+
+export type PmdAstDumpResults = {
+    file: string
+    ast: string | null
+    error: PmdProcessingError | null
+}
+
+export type GenerateAstOptions = {
+    encoding?: string
+    workingFolder?: string
+}
+
 const STDOUT_PROGRESS_MARKER = '[Progress]';
 const STDOUT_ERROR_MARKER = '[Error] ';
 const STDOUT_WARNING_MARKER = '[Warning] ';
@@ -143,6 +160,62 @@ export class PmdWrapperInvoker {
             emitProgress(100);
             return pmdResults;
 
+        } catch (err) /* istanbul ignore next */ {
+            const errMsg: string = err instanceof Error ? err.message : String(err);
+            throw new Error(getMessageFromCatalog(SHARED_MESSAGE_CATALOG, 'ErrorParsingOutputFile', resultsOutputFile, errMsg), {cause: err});
+        }
+    }
+
+    async invokeAstDumpCommand(
+        language: string,
+        fileToDump: string,
+        workingFolder: string,
+        encoding: string = 'UTF-8',
+        emitProgress: (percComplete: number) => void
+    ): Promise<PmdAstDumpResults> {
+
+        emitProgress(5);
+
+        // Prepare input data
+        const inputData: PmdAstDumpInputData = {
+            language: language,
+            fileToDump: fileToDump,
+            encoding: encoding
+        };
+
+        const inputFile: string = path.join(workingFolder, 'astDumpInput.json');
+        await fs.promises.writeFile(inputFile, JSON.stringify(inputData), 'utf-8');
+        emitProgress(10);
+
+        const resultsOutputFile: string = path.join(workingFolder, 'astDumpResults.json');
+        const javaCmdArgs: string[] = [PMD_WRAPPER_JAVA_CLASS, 'ast-dump', inputFile, resultsOutputFile];
+        const javaClassPaths: string[] = [
+            path.join(PMD_WRAPPER_LIB_FOLDER, '*'),
+            ...this.userProvidedJavaClasspathEntries.map(toJavaClasspathEntry)
+        ];
+
+        this.emitLogEvent(LogLevel.Fine, `Calling AST dump for file: ${fileToDump}`);
+
+        await this.javaCommandExecutor.exec(javaCmdArgs, javaClassPaths, (stdOutMsg: string) => {
+            if (stdOutMsg.startsWith(STDOUT_ERROR_MARKER)) {
+                const errorMessage: string = stdOutMsg.slice(STDOUT_ERROR_MARKER.length).replaceAll('{NEWLINE}','\n');
+                throw new Error(errorMessage);
+            } else if (stdOutMsg.startsWith(STDOUT_WARNING_MARKER)) {
+                const warningMessage: string = stdOutMsg.slice(STDOUT_WARNING_MARKER.length).replaceAll('{NEWLINE}','\n');
+                this.emitLogEvent(LogLevel.Warn, `[JAVA StdOut]: ${warningMessage}`);
+            } else {
+                this.emitLogEvent(LogLevel.Fine, `[JAVA StdOut]: ${stdOutMsg}`);
+            }
+        });
+
+        emitProgress(95);
+
+        // Read and parse results
+        try {
+            const resultsFileContents: string = await fs.promises.readFile(resultsOutputFile, 'utf-8');
+            const results: PmdAstDumpResults = JSON.parse(resultsFileContents);
+            emitProgress(100);
+            return results;
         } catch (err) /* istanbul ignore next */ {
             const errMsg: string = err instanceof Error ? err.message : String(err);
             throw new Error(getMessageFromCatalog(SHARED_MESSAGE_CATALOG, 'ErrorParsingOutputFile', resultsOutputFile, errMsg), {cause: err});

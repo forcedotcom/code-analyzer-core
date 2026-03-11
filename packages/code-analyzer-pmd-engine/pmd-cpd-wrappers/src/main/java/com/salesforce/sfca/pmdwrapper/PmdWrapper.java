@@ -67,6 +67,34 @@ import java.util.stream.Collectors;
  *                         }
  *                     ]
  *                 }
+ *   AST-DUMP:
+ *     - Generates Abstract Syntax Tree representation of a source file in XML format
+ *     - Invocation: java -cp {classPath} com.salesforce.sfca.pmdwrapper.PmdWrapper ast-dump {argsInputFile} {resultsOutputFile}
+ *         - {classPath} is the list of entries to add to the class path
+ *         - {argsInputFile} is a JSON file containing the input arguments for the ast-dump command.
+ *             Example:
+ *                  {
+ *                      "language": "apex",
+ *                      "fileToDump": "/full/path/to/MyClass.cls",
+ *                      "encoding": "UTF-8"
+ *                  }
+ *         - {resultsOutputFile} is a file to write the JSON formatted AST dump results to
+ *             Example (success):
+ *                 {
+ *                     "file": "/full/path/to/MyClass.cls",
+ *                     "ast": "<?xml version='1.0'?>\n<ApexClass>...",
+ *                     "error": null
+ *                 }
+ *             Example (error):
+ *                 {
+ *                     "file": "/full/path/to/MyClass.cls",
+ *                     "ast": null,
+ *                     "error": {
+ *                         "file": "/full/path/to/MyClass.cls",
+ *                         "message": "ParseException: Unexpected token",
+ *                         "detail": "..."
+ *                     }
+ *                 }
  */
 
 public class PmdWrapper {
@@ -82,8 +110,10 @@ public class PmdWrapper {
             invokeDescribeCommand(Arrays.copyOfRange(args, 1, args.length));
         } else if(args[0].equalsIgnoreCase("run")) {
             invokeRunCommand(Arrays.copyOfRange(args, 1, args.length));
+        } else if(args[0].equalsIgnoreCase("ast-dump")) {
+            invokeAstDumpCommand(Arrays.copyOfRange(args, 1, args.length));
         } else {
-            throw new RuntimeException("Bad first argument to PmdWrapper. Expected \"describe\" or \"run\". Received: \"" + args[0] + "\"");
+            throw new RuntimeException("Bad first argument to PmdWrapper. Expected \"describe\", \"run\", or \"ast-dump\". Received: \"" + args[0] + "\"");
         }
 
         long endTime = System.currentTimeMillis();
@@ -135,7 +165,7 @@ public class PmdWrapper {
         try (FileReader reader = new FileReader(argsInputFile)) {
             inputData = gson.fromJson(reader, PmdRunInputData.class);
         } catch (Exception e) {
-            throw new RuntimeException("Could not read contents from \"" + argsInputFile + "\"", e);
+            throw new RuntimeException("Could not read contents from \"" + argsInputFile + "\": " + e.getMessage(), e);
         }
 
         PmdRunner pmdRunner = new PmdRunner();
@@ -146,6 +176,40 @@ public class PmdWrapper {
             throw new RuntimeException("Error while attempting to invoke PmdRunner.run: " + e.getMessage(), e);
         }
 
+        try (FileWriter fileWriter = new FileWriter(resultsOutputFile)) {
+            gson.toJson(results, fileWriter);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    private static void invokeAstDumpCommand(String[] args) {
+        if (args.length != 2) {
+            throw new RuntimeException("Invalid number of arguments following the \"ast-dump\" command. Expected 2 but received: " + args.length);
+        }
+        String argsInputFile = args[0];
+        String resultsOutputFile = args[1];
+
+        Gson gson = new Gson();
+
+        // Read input data
+        PmdAstDumpInputData inputData;
+        try (FileReader reader = new FileReader(argsInputFile)) {
+            inputData = gson.fromJson(reader, PmdAstDumpInputData.class);
+        } catch (Exception e) {
+            throw new RuntimeException("Could not read contents from \"" + argsInputFile + "\": " + e.getMessage(), e);
+        }
+
+        // Execute AST dump
+        PmdAstDumper astDumper = new PmdAstDumper();
+        PmdAstDumpResults results;
+        try {
+            results = astDumper.dump(inputData);
+        } catch (Exception e) {
+            throw new RuntimeException("Error while attempting to invoke PmdAstDumper.dump: " + e.getMessage(), e);
+        }
+
+        // Write results
         try (FileWriter fileWriter = new FileWriter(resultsOutputFile)) {
             gson.toJson(results, fileWriter);
         } catch (IOException e) {
