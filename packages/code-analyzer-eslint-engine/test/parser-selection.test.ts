@@ -549,7 +549,7 @@ describe('Parser Selection for Decorator Support', () => {
             const runOptions: RunOptions = createRunOptions(workspace);
             const results: EngineRunResults = await engine.runRules(['no-debugger'], runOptions);
 
-            // Assert: Should parse decorators successfully (minimal parser config with Babel)
+            // Assert: Should parse decorators successfully (createJavascriptConfigArray with parserOnly=true uses Babel)
             expect(results.violations).toBeDefined();
             const parsingErrors = results.violations.filter(v =>
                 v.message.includes('Parsing error') || v.message.includes('Unexpected character')
@@ -670,7 +670,7 @@ describe('Parser Selection for Decorator Support', () => {
             const runOptions: RunOptions = createRunOptions(workspace);
             const results: EngineRunResults = await engine.runRules(['no-debugger'], runOptions);
 
-            // Assert: Should still parse with minimal parser config
+            // Assert: Should still parse with parserOnly mode of createJavascriptConfigArray
             expect(results.violations).toBeDefined();
             const parsingErrors = results.violations.filter(v =>
                 v.message.includes('Parsing error') || v.message.includes('Unexpected character')
@@ -766,8 +766,8 @@ describe('Parser Selection for Decorator Support', () => {
         const workspaceWithReactViolations: string = path.join(testDataFolder, 'workspaceWithReactViolations');
         const workspaceWithLwcViolations: string = path.join(testDataFolder, 'workspaceWithLwcViolations');
 
-        it('should parse React JSX files using minimal parser fallback when all base configs disabled', async () => {
-            // When all base configs are disabled, the minimal parser fallback activates
+        it('should parse React JSX files using parserOnly mode when all base configs disabled', async () => {
+            // When all base configs are disabled, createJavascriptConfigArray(parserOnly=true) activates
             // JSX should still parse correctly (uses Espree with JSX support)
             const configWithReactDisabled: ConfigObject = {
                 disable_javascript_base_config: true,  // Disable JS base, will use minimal parser
@@ -799,9 +799,9 @@ describe('Parser Selection for Decorator Support', () => {
             expect(parsingErrors.length).toBe(0);
         });
 
-        it('should parse LWC files using LWC parser (not minimal fallback) when only JS base disabled', async () => {
+        it('should parse LWC files using LWC parser (not parserOnly) when only JS base disabled', async () => {
             // When JS base config is disabled but LWC enabled, LWC decorators should still parse
-            // This uses the LWC parser config, not the minimal fallback
+            // This uses the LWC parser config via createLwcConfigArray, not parserOnly mode
             const configWithJsDisabled: ConfigObject = {
                 disable_javascript_base_config: true,
                 disable_lwc_base_config: false,  // LWC enabled for parsing
@@ -831,9 +831,9 @@ describe('Parser Selection for Decorator Support', () => {
             expect(parsingErrors.length).toBe(0);
         });
 
-        it('should parse mixed React and LWC files using LWC parser + minimal fallback for JSX', async () => {
+        it('should parse mixed React and LWC files using LWC parser + parserOnly for JSX', async () => {
             // Verify that both React (JSX) and LWC (decorators) work when JS base disabled
-            // LWC uses LWC parser, JSX uses minimal fallback
+            // LWC uses LWC parser, JSX uses parserOnly mode of createJavascriptConfigArray
             const configMixed: ConfigObject = {
                 disable_javascript_base_config: true,
                 disable_lwc_base_config: false,
@@ -867,9 +867,9 @@ describe('Parser Selection for Decorator Support', () => {
             expect(parsingErrors.length).toBe(0);
         });
 
-        it('should parse using minimal parser fallback when all base configs disabled', async () => {
-            // All base configs disabled - only minimal parsers configured
-            // Verifies the minimal parser fallback mechanism works
+        it('should parse using parserOnly mode when all base configs disabled', async () => {
+            // All base configs disabled - parserOnly mode of createJavascriptConfigArray/createTypescriptConfigArray
+            // Verifies the parserOnly mechanism works
             const configAllDisabled: ConfigObject = {
                 disable_javascript_base_config: true,
                 disable_lwc_base_config: true,
@@ -900,9 +900,9 @@ describe('Parser Selection for Decorator Support', () => {
             expect(parsingErrors.length).toBe(0);
         });
 
-        it('should parse TypeScript files using minimal parser fallback when TS base config disabled', async () => {
-            // When TS base config is disabled, minimal TS parser fallback activates
-            // The minimal TS parser config allows parsing TS syntax without type-aware rules
+        it('should parse TypeScript files using parserOnly mode when TS base config disabled', async () => {
+            // When TS base config is disabled, createTypescriptConfigArray(parserOnly=true) activates
+            // This allows parsing TS syntax without type-aware rules or projectService
             const configTsDisabled: ConfigObject = {
                 disable_typescript_base_config: true,
                 file_extensions: {
@@ -930,6 +930,136 @@ describe('Parser Selection for Decorator Support', () => {
                 v.message.includes('Parsing error') || v.message.includes('Unexpected token')
             );
             expect(parsingErrors.length).toBe(0);
+        });
+    });
+
+    describe('ParserOnly mode: no base rules applied', () => {
+        it('should not run JS base rules when createJavascriptConfigArray is called with parserOnly=true', async () => {
+            // When both JS and LWC base configs are disabled, parserOnly=true is used.
+            // Base JS rules (no-debugger, no-var) should NOT fire - only parsing should work.
+            const configBothDisabled: ConfigObject = {
+                disable_javascript_base_config: true,
+                disable_lwc_base_config: true,
+                disable_react_base_config: true,
+                file_extensions: {
+                    javascript: ['.js'],
+                    typescript: ['.ts'],
+                    html: ['.html'],
+                    css: ['.css'],
+                    other: []
+                },
+                config_root: __dirname
+            };
+
+            const engine: Engine = await createEngineFromPlugin(configBothDisabled);
+            const workspaceWithMultipleFiles: string = path.join(testDataFolder, 'workspaceWithMultipleFiles');
+            const workspace: Workspace = new Workspace('test', [workspaceWithMultipleFiles],
+                [path.join(workspaceWithMultipleFiles, 'withViolations.js')]);
+
+            const runOptions: RunOptions = createRunOptions(workspace);
+            const results: EngineRunResults = await engine.runRules(['no-debugger', 'no-var'], runOptions);
+
+            // File should parse (no parse errors from decorators)
+            const parsingErrors = results.violations.filter(v =>
+                v.message.includes('Parsing error') || v.message.includes('Unexpected character')
+            );
+            expect(parsingErrors.length).toBe(0);
+
+            // Base JS rules should NOT run since parserOnly doesn't include rules
+            const jsRuleViolations = results.violations.filter(v =>
+                v.ruleName === 'no-debugger' || v.ruleName === 'no-var'
+            );
+            expect(jsRuleViolations.length).toBe(0);
+        });
+
+        it('should not run TS base rules when createTypescriptConfigArray is called with parserOnly=true', async () => {
+            // When TS base config is disabled, parserOnly=true is used.
+            // TS-specific rules should NOT fire - only parsing should work.
+            const configTsDisabled: ConfigObject = {
+                disable_typescript_base_config: true,
+                disable_react_base_config: true,
+                file_extensions: {
+                    javascript: ['.js'],
+                    typescript: ['.ts'],
+                    html: ['.html'],
+                    css: ['.css'],
+                    other: []
+                },
+                config_root: __dirname
+            };
+
+            const engine: Engine = await createEngineFromPlugin(configTsDisabled);
+            const workspaceWithTsViolations: string = path.join(testDataFolder, 'workspaceWithTsViolations');
+            const workspace: Workspace = new Workspace('test', [workspaceWithTsViolations],
+                [path.join(workspaceWithTsViolations, 'tsFileWithViolations.ts')]);
+
+            const runOptions: RunOptions = createRunOptions(workspace);
+            const results: EngineRunResults = await engine.runRules(['no-debugger', '@typescript-eslint/no-unused-vars'], runOptions);
+
+            // File should parse without errors (TS parser handles type annotations)
+            const parsingErrors = results.violations.filter(v =>
+                v.message.includes('Parsing error') || v.message.includes('Unexpected token')
+            );
+            expect(parsingErrors.length).toBe(0);
+
+            // TS-specific rules should NOT run since parserOnly doesn't include rules
+            const tsRuleViolations = results.violations.filter(v =>
+                v.ruleName === '@typescript-eslint/no-unused-vars'
+            );
+            expect(tsRuleViolations.length).toBe(0);
+        });
+
+        it('should return empty config when parserOnly and no TS extensions present', async () => {
+            // When TS base config is disabled AND no TS extensions, no TS parser config should be added
+            const configNoTs: ConfigObject = {
+                disable_typescript_base_config: true,
+                disable_react_base_config: true,
+                file_extensions: {
+                    javascript: ['.js'],
+                    typescript: [],
+                    html: ['.html'],
+                    css: ['.css'],
+                    other: []
+                },
+                config_root: __dirname
+            };
+
+            const engine: Engine = await createEngineFromPlugin(configNoTs);
+            expect(engine).toBeDefined();
+
+            // Engine should work fine without TS config - just verify no errors
+            const workspace: Workspace = new Workspace('test', [workspaceWithLwcDecorators],
+                [path.join(workspaceWithLwcDecorators, 'lwcComponent.js')]);
+            const runOptions: RunOptions = createRunOptions(workspace);
+            const results: EngineRunResults = await engine.runRules(['no-debugger'], runOptions);
+            expect(results.violations).toBeDefined();
+            const parsingErrors = results.violations.filter(v =>
+                v.message.includes('Parsing error')
+            );
+            expect(parsingErrors.length).toBe(0);
+        });
+
+        it('should return empty config when parserOnly and no JS extensions present', async () => {
+            // When both JS and LWC base configs are disabled AND no JS extensions,
+            // createJavascriptConfigArray(parserOnly=true) should return []
+            const configNoJs: ConfigObject = {
+                disable_javascript_base_config: true,
+                disable_lwc_base_config: true,
+                disable_typescript_base_config: true,
+                disable_react_base_config: true,
+                file_extensions: {
+                    javascript: [],
+                    typescript: [],
+                    html: ['.html'],
+                    css: ['.css'],
+                    other: []
+                },
+                config_root: __dirname
+            };
+
+            const engine: Engine = await createEngineFromPlugin(configNoJs);
+            expect(engine).toBeDefined();
+            expect(engine.getName()).toBe('eslint');
         });
     });
 });

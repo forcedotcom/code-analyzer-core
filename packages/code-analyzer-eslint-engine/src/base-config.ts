@@ -89,10 +89,10 @@ export class BaseConfigFactory {
             configArray.push(...this.createJavascriptConfigArray());
         } else if (this.useLwcBaseConfig()) {
             configArray.push(...this.createLwcConfigArray());
-        } else if (this.engineConfig.file_extensions.javascript.length > 0) {
+        } else {
             // When both base configs are disabled, we still need to configure a parser for JavaScript files
-            // to avoid ESLint falling back to Espree which can't parse decorators
-            configArray.push(...this.createMinimalJavascriptParserConfig());
+            // to avoid ESLint falling back to Espree which can't parse decorators (returns [] if no JS extensions)
+            configArray.push(...this.createJavascriptConfigArray(true));
         }
         if (this.useSldsCSSBaseConfig()) {
             configArray.push(...this.createSldsCSSConfigArray());
@@ -105,7 +105,7 @@ export class BaseConfigFactory {
         } else if (this.engineConfig.file_extensions.typescript.length > 0) {
             // When TS base config is disabled, we still need to configure a parser for TypeScript files
             // to avoid ESLint falling back to a parser that can't handle TypeScript syntax
-            configArray.push(...this.createMinimalTypescriptParserConfig());
+            configArray.push(...this.createTypescriptConfigArray(true));
         }
         // Add React plugin config for JSX files
         if (this.useReactBaseConfig()) {
@@ -197,11 +197,20 @@ export class BaseConfigFactory {
         return configs;
     }
 
-    private createJavascriptConfigArray(): Linter.Config[] {
+    /**
+     * Builds JavaScript ESLint config. When parserOnly is true (both JS and LWC base configs disabled), returns
+     * only parser config with no rules so ESLint doesn't fall back to Espree which can't parse decorators.
+     */
+    private createJavascriptConfigArray(parserOnly?: boolean): Linter.Config[] {
+        const jsExtensions = this.engineConfig.file_extensions.javascript;
+        if (parserOnly && jsExtensions.length === 0) {
+            return [];
+        }
         // Smart parser selection based on file extensions:
         // - .js files may contain LWC decorators (@api, @track, @wire) → need Babel
         // - .jsx, .mjs, .cjs are typically React or modules without decorators → can use Espree (faster)
-        const hasJsExtension = this.engineConfig.file_extensions.javascript.includes('.js');
+        const allJsFilePatterns = jsExtensions.map(ext => `**/*${ext}`);
+        const hasJsExtension = jsExtensions.includes('.js');
 
         if (hasJsExtension) {
             // .js files might have LWC decorators - use Babel parser with decorator support
@@ -221,9 +230,10 @@ export class BaseConfigFactory {
                 }
             };
 
+            const base = parserOnly ? {} : { ...eslintJs.configs.all };
             return [{
-                ... eslintJs.configs.all,
-                files: this.engineConfig.file_extensions.javascript.map(ext => `**/*${ext}`),
+                ...base,
+                files: allJsFilePatterns,
                 languageOptions: {
                     parser: babelParser,
                     parserOptions: enhancedParserOptions
@@ -231,9 +241,10 @@ export class BaseConfigFactory {
             }];
         } else {
             // Only .jsx, .mjs, .cjs (no .js) - use Espree for better performance
+            const base = parserOnly ? {} : { ...eslintJs.configs.all };
             return [{
-                ... eslintJs.configs.all,
-                files: this.engineConfig.file_extensions.javascript.map(ext => `**/*${ext}`),
+                ...base,
+                files: allJsFilePatterns,
                 languageOptions: {
                     parserOptions: {
                         ecmaFeatures: {
@@ -245,85 +256,41 @@ export class BaseConfigFactory {
         }
     }
 
-    private createMinimalJavascriptParserConfig(): Linter.Config[] {
-        // When both disable_javascript_base_config and disable_lwc_base_config are true,
-        // we still need to configure a parser for JavaScript files to avoid ESLint falling
-        // back to Espree which can't parse decorators. This method configures ONLY the parser,
-        // without applying any base JavaScript or LWC rules.
-        const hasJsExtension = this.engineConfig.file_extensions.javascript.includes('.js');
+    /**
+     * Builds TypeScript ESLint config. When parserOnly is true (TS base config disabled), returns only parser config
+     * with no rules and no projectService so files outside tsconfig.json can be parsed; type-aware rules won't run.
+     * Both paths use the same logic to build languageOptions/parserOptions; only rules and projectService differ.
+     */
+    private createTypescriptConfigArray(parserOnly?: boolean): Linter.Config[] {
+        const filePatterns = this.engineConfig.file_extensions.typescript.map(ext => `**/*${ext}`);
+        const configsToApply = (parserOnly
+            ? (eslintTs.configs.all as Linter.Config[])
+            : ([eslintJs.configs.all, ...eslintTs.configs.all] as Linter.Config[]));
+        const configs: Linter.Config[] = [];
 
-        if (hasJsExtension) {
-            // .js files might have LWC decorators - use Babel parser with decorator support
-            const lwcConfig = validateAndGetRawLwcConfigArray()[0];
-            const babelParser = lwcConfig.languageOptions?.parser;
-            const originalParserOptions = lwcConfig.languageOptions?.parserOptions as Linter.ParserOptions;
-            const originalBabelOptions = originalParserOptions.babelOptions || {};
-
-            // Add @babel/preset-react to support JSX in React files alongside LWC files
-            const enhancedParserOptions = {
-                ...originalParserOptions,
-                babelOptions: {
-                    ...originalBabelOptions,
-                    configFile: false,
-                    // Add React preset for JSX support (.jsx files and React in .js files)
-                    presets: [...(originalBabelOptions.presets || []), require.resolve('@babel/preset-react')]
-                }
-            };
-
-            return [{
-                files: this.engineConfig.file_extensions.javascript.map(ext => `**/*${ext}`),
+        for (const conf of configsToApply) {
+            const baseLanguageOptions = conf.languageOptions ?? {};
+            const baseParserOptions = (baseLanguageOptions.parserOptions as Linter.ParserOptions) ?? {};
+            const parserOptions: Linter.ParserOptions = parserOnly
+                ? (() => { const { projectService: _omit, ...rest } = baseParserOptions; return rest; })()
+                : {
+                    ...baseParserOptions,
+                    // Finds the tsconfig.json file nearest to each source file. This should work for most users.
+                    // If not, then we may consider letting user specify this via config or alternatively users can
+                    // just set disable_typescript_base_config=true and configure typescript in their own eslint
+                    // config file. See https://typescript-eslint.io/packages/parser/#projectservice
+                    projectService: true
+                };
+            configs.push({
+                ...(parserOnly ? {} : conf),
+                files: filePatterns,
                 languageOptions: {
-                    parser: babelParser,
-                    parserOptions: enhancedParserOptions
+                    ...baseLanguageOptions,
+                    parserOptions
                 }
-            }];
-        } else {
-            // Only .jsx, .mjs, .cjs (no .js) - use Espree for better performance
-            return [{
-                files: this.engineConfig.file_extensions.javascript.map(ext => `**/*${ext}`),
-                languageOptions: {
-                    parserOptions: {
-                        ecmaFeatures: {
-                            jsx: true  // Enable JSX parsing for React/JSX files
-                        }
-                    }
-                }
-            }];
+            });
         }
-    }
-
-    private createMinimalTypescriptParserConfig(): Linter.Config[] {
-        // When disable_typescript_base_config is true, we still need to configure a parser
-        // for TypeScript files to avoid ESLint falling back to Espree which can't parse
-        // TypeScript syntax. This method configures ONLY the parser, without applying base rules.
-        //
-        // IMPORTANT LIMITATION - Type-Aware Rules:
-        // =========================================
-        // We intentionally do NOT set projectService here. The projectService option
-        // is used for type-aware linting, but it requires files to be in a tsconfig.json project.
-        // Without projectService, the TypeScript parser can still parse TypeScript syntax
-        // (decorators, type annotations, etc.) but ONLY non-type-aware rules can run.
-        //
-        // Type-aware rules (e.g., @typescript-eslint/await-thenable) will NOT work with this
-        // minimal config. If users need type-aware rules, they should enable the TypeScript
-        // base config (disable_typescript_base_config: false).
-        //
-        // This trade-off allows users to:
-        // ✓ Parse TypeScript files without a tsconfig.json
-        // ✓ Run basic ESLint rules on TypeScript code
-        // ✗ Cannot use type-aware TypeScript rules
-
-        // Get the first TypeScript config which contains the parser setup
-        const tsConfig = (eslintTs.configs.all as Linter.Config[])[0];
-
-        return [{
-            files: this.engineConfig.file_extensions.typescript.map(ext => `**/*${ext}`),
-            languageOptions: {
-                ...(tsConfig.languageOptions ?? {})
-                // Explicitly omit parserOptions.projectService to allow parsing files
-                // that aren't part of a TypeScript project
-            }
-        }];
+        return configs;
     }
 
     private createSldsHTMLConfigArray(): Linter.Config[] {
@@ -342,29 +309,6 @@ export class BaseConfigFactory {
                 files: this.engineConfig.file_extensions.css.map(ext => `**/*${ext}`)
             };
         });
-    }
-
-    private createTypescriptConfigArray(): Linter.Config[] {
-        const configs: Linter.Config[] = [];
-        for (const conf of ([eslintJs.configs.all, ...eslintTs.configs.all] as Linter.Config[])) {
-            configs.push({
-                ...conf,
-                files: this.engineConfig.file_extensions.typescript.map(ext => `**/*${ext}`),
-                languageOptions: {
-                    ... (conf.languageOptions ?? {}),
-                    parserOptions: {
-                        ... (conf.languageOptions?.parserOptions ?? {}),
-
-                        // Finds the tsconfig.json file nearest to each source file. This should work for most users.
-                        // If not, then we may consider letting user specify this via config or alternatively users can
-                        // just set disable_typescript_base_config=true and configure typescript in their own eslint
-                        // config file. See https://typescript-eslint.io/packages/parser/#projectservice
-                        projectService: true
-                    }
-                }
-            });
-        }
-        return configs;
     }
 
     /**
