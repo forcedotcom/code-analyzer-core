@@ -165,7 +165,7 @@ public class PmdWrapper {
         try (FileReader reader = new FileReader(argsInputFile)) {
             inputData = gson.fromJson(reader, PmdRunInputData.class);
         } catch (Exception e) {
-            throw new RuntimeException("Could not read contents from \"" + argsInputFile + "\"", e);
+            throw new RuntimeException("Could not read contents from \"" + argsInputFile + "\": " + e.getMessage(), e);
         }
 
         PmdRunner pmdRunner = new PmdRunner();
@@ -197,7 +197,7 @@ public class PmdWrapper {
         try (FileReader reader = new FileReader(argsInputFile)) {
             inputData = gson.fromJson(reader, PmdAstDumpInputData.class);
         } catch (Exception e) {
-            throw new RuntimeException("Could not read contents from \"" + argsInputFile + "\"", e);
+            throw new RuntimeException("Could not read contents from \"" + argsInputFile + "\": " + e.getMessage(), e);
         }
 
         // Execute AST dump
