@@ -52,25 +52,25 @@ public class PmdAstDumper {
             config.setFile(filePath);
 
             // Capture output to string
-            ByteArrayOutputStream baos = new ByteArrayOutputStream();
-            PrintStream ps = new PrintStream(baos, true, StandardCharsets.UTF_8);
+            ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+            PrintStream capturedPrintStream = new PrintStream(outputStream, true, StandardCharsets.UTF_8);
             PrintStream originalOut = System.out;
 
             try {
                 // Redirect System.out to capture XML output
-                System.setOut(ps);
+                System.setOut(capturedPrintStream);
 
                 // Create and export AST (TreeExporter writes to System.out)
                 TreeExporter exporter = new TreeExporter(config);
                 exporter.export();
 
                 // Get the XML output
-                results.ast = baos.toString(StandardCharsets.UTF_8);
+                results.ast = outputStream.toString(StandardCharsets.UTF_8);
 
             } finally {
                 // Restore original System.out
                 System.setOut(originalOut);
-                ps.close();
+                capturedPrintStream.close();
             }
 
             System.out.println("Successfully generated AST for file '" + inputData.fileToDump + "'");
