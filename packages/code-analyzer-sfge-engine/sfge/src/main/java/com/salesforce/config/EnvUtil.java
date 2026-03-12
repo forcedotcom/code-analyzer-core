@@ -21,11 +21,11 @@ public final class EnvUtil {
     // TODO: These should move to SfgeConfigImpl and this class should return Optionals
     @VisibleForTesting
     static final int DEFAULT_RULE_THREAD_COUNT =
-            Math.min(Runtime.getRuntime().availableProcessors(), 4);
+            Math.min(Runtime.getRuntime().availableProcessors(), 8);
 
     @VisibleForTesting
     static final long DEFAULT_RULE_THREAD_TIMEOUT =
-            TimeUnit.MILLISECONDS.convert(15, TimeUnit.MINUTES);
+            TimeUnit.MILLISECONDS.convert(30, TimeUnit.SECONDS);
 
     @VisibleForTesting static final boolean DEFAULT_RULE_DISABLE_WARNING_VIOLATION = false;
     @VisibleForTesting static final boolean DEFAULT_LOG_WARNINGS_ON_VERBOSE = false;
