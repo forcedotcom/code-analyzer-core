@@ -60,8 +60,8 @@ describe('SfgeEnginePlugin', () => {
                 java_command: resolvedConfig.java_command, // We just checked the Java Command above.
                 disable_limit_reached_violations: false,
                 java_max_heap_size: undefined,
-                java_thread_count: 4,
-                java_thread_timeout: 900000
+                java_thread_count: 8,
+                java_thread_timeout: 30000
             });
         });
 
