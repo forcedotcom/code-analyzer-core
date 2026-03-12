@@ -1005,6 +1005,30 @@ describe('Tests for runRules', () => {
 
         expect(runResults.violations).toHaveLength(0);
     });
+
+    it("NoMixedIndentation rule should NOT create false flags for valid patterns", async () => {
+        const runOptions: RunOptions = createRunOptions(
+            new Workspace('id', [path.resolve(__dirname, "test-data", "apexClassMixedIndentation", "validIndentation_NoFalseFlags.cls")]));
+        const runResults: EngineRunResults = await engine.runRules(["NoMixedIndentation"], runOptions);
+
+        // Should have 0 violations - all patterns are valid
+        expect(runResults.violations).toHaveLength(0);
+    });
+
+    it("NoMixedIndentation rule should detect edge case violations", async () => {
+        const runOptions: RunOptions = createRunOptions(
+            new Workspace('id', [path.resolve(__dirname, "test-data", "apexClassMixedIndentation", "mixedIndentation_EdgeCases.cls")]));
+        const runResults: EngineRunResults = await engine.runRules(["NoMixedIndentation"], runOptions);
+
+        // Should detect multiple violations
+        expect(runResults.violations.length).toBeGreaterThan(0);
+
+        // All violations should be NoMixedIndentation
+        for (const violation of runResults.violations) {
+            expect(violation.ruleName).toBe("NoMixedIndentation");
+            expect(violation.message).toBe(getMessage('MixedIndentationRuleMessage'));
+        }
+    });
 });
 
 describe('Tests for getEngineVersion', () => {
