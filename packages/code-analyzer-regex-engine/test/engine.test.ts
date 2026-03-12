@@ -52,6 +52,14 @@ const EXPECTED_NoTrailingWhitespace_RULE_DESCRIPTION: RuleDescription = {
     resourceUrls: []
 };
 
+const EXPECTED_NoMixedIndentation_RULE_DESCRIPTION: RuleDescription = {
+    name: "NoMixedIndentation",
+    severityLevel: SeverityLevel.Moderate,
+    tags: ["Recommended", "CodeStyle", "Apex"],
+    description: getMessage('MixedIndentationRuleDescription'),
+    resourceUrls: []
+};
+
 const EXPECTED_NoTodos_RULE_DESCRIPTION: RuleDescription = {
     name: "NoTodos",
     severityLevel: DEFAULT_SEVERITY_LEVEL,
@@ -126,15 +134,16 @@ describe("Tests for RegexEngine's getName and describeRules methods", () => {
 
     it('Calling describeRules without workspace, returns all available rules', async () => {
         const rulesDescriptions: RuleDescription[] = await engine.describeRules(createDescribeOptions());
-        expect(rulesDescriptions).toHaveLength(8);
+        expect(rulesDescriptions).toHaveLength(9);
         expect(rulesDescriptions[0]).toMatchObject(EXPECTED_NoTrailingWhitespace_RULE_DESCRIPTION);
-        expect(rulesDescriptions[1]).toMatchObject(EXPECTED_AvoidTermsWithImplicitBias_RULE_DESCRIPTION)
-        expect(rulesDescriptions[2]).toMatchObject(EXPECTED_AvoidOldSalesforceApiVersions_RULE_DESCRIPTION)
-        expect(rulesDescriptions[3]).toMatchObject(EXPECTED_NoGetHeapSizeInLoop_RULE_DESCRIPTION)
-        expect(rulesDescriptions[4]).toMatchObject(EXPECTED_MinVersionForAbstractVirtualClassesWithPrivateMethod_RULE_DESCRIPTION)
-        expect(rulesDescriptions[5]).toMatchObject(EXPECTED_NoTodos_RULE_DESCRIPTION);
-        expect(rulesDescriptions[6]).toMatchObject(EXPECTED_NoHellos_RULE_DESCRIPTION);
-        expect(rulesDescriptions[7]).toMatchObject(EXPECTED_NoTalkingAboutFightClub_RULE_DESCRIPTION);
+        expect(rulesDescriptions[1]).toMatchObject(EXPECTED_NoMixedIndentation_RULE_DESCRIPTION);
+        expect(rulesDescriptions[2]).toMatchObject(EXPECTED_AvoidTermsWithImplicitBias_RULE_DESCRIPTION);
+        expect(rulesDescriptions[3]).toMatchObject(EXPECTED_AvoidOldSalesforceApiVersions_RULE_DESCRIPTION);
+        expect(rulesDescriptions[4]).toMatchObject(EXPECTED_NoGetHeapSizeInLoop_RULE_DESCRIPTION);
+        expect(rulesDescriptions[5]).toMatchObject(EXPECTED_MinVersionForAbstractVirtualClassesWithPrivateMethod_RULE_DESCRIPTION);
+        expect(rulesDescriptions[6]).toMatchObject(EXPECTED_NoTodos_RULE_DESCRIPTION);
+        expect(rulesDescriptions[7]).toMatchObject(EXPECTED_NoHellos_RULE_DESCRIPTION);
+        expect(rulesDescriptions[8]).toMatchObject(EXPECTED_NoTalkingAboutFightClub_RULE_DESCRIPTION);
     });
 
     it("When workspace targeting zero applicable files, then describeRules returns no rules", async () => {
@@ -157,14 +166,15 @@ describe("Tests for RegexEngine's getName and describeRules methods", () => {
     it("When workspace contains files are applicable to all available rules, then describeRules returns all rules", async () => {
         const rulesDescriptions: RuleDescription[] = await engine.describeRules(createDescribeOptions(
             new Workspace('id', [path.resolve(__dirname, 'test-data', 'sampleWorkspace')])));
-        expect(rulesDescriptions).toHaveLength(7);
+        expect(rulesDescriptions).toHaveLength(8);
         expect(rulesDescriptions[0]).toMatchObject(EXPECTED_NoTrailingWhitespace_RULE_DESCRIPTION);
-        expect(rulesDescriptions[1]).toMatchObject(EXPECTED_AvoidTermsWithImplicitBias_RULE_DESCRIPTION);
-        expect(rulesDescriptions[2]).toMatchObject(EXPECTED_AvoidOldSalesforceApiVersions_RULE_DESCRIPTION);
-        expect(rulesDescriptions[3]).toMatchObject(EXPECTED_NoGetHeapSizeInLoop_RULE_DESCRIPTION);
-        expect(rulesDescriptions[4]).toMatchObject(EXPECTED_MinVersionForAbstractVirtualClassesWithPrivateMethod_RULE_DESCRIPTION);
-        expect(rulesDescriptions[5]).toMatchObject(EXPECTED_NoTodos_RULE_DESCRIPTION);
-        expect(rulesDescriptions[6]).toMatchObject(EXPECTED_NoHellos_RULE_DESCRIPTION);
+        expect(rulesDescriptions[1]).toMatchObject(EXPECTED_NoMixedIndentation_RULE_DESCRIPTION);
+        expect(rulesDescriptions[2]).toMatchObject(EXPECTED_AvoidTermsWithImplicitBias_RULE_DESCRIPTION);
+        expect(rulesDescriptions[3]).toMatchObject(EXPECTED_AvoidOldSalesforceApiVersions_RULE_DESCRIPTION);
+        expect(rulesDescriptions[4]).toMatchObject(EXPECTED_NoGetHeapSizeInLoop_RULE_DESCRIPTION);
+        expect(rulesDescriptions[5]).toMatchObject(EXPECTED_MinVersionForAbstractVirtualClassesWithPrivateMethod_RULE_DESCRIPTION);
+        expect(rulesDescriptions[6]).toMatchObject(EXPECTED_NoTodos_RULE_DESCRIPTION);
+        expect(rulesDescriptions[7]).toMatchObject(EXPECTED_NoHellos_RULE_DESCRIPTION);
     });
 });
 
@@ -958,6 +968,42 @@ describe('Tests for runRules', () => {
         for (const individualRunViolation of individualRunViolations) {
             expect(combinedRunViolations).toContainEqual(individualRunViolation);
         }
+    });
+
+    it("NoMixedIndentation rule should detect tab followed by spaces in indentation", async () => {
+        const runOptions: RunOptions = createRunOptions(
+            new Workspace('id', [path.resolve(__dirname, "test-data", "apexClassMixedIndentation", "mixedIndentation_TabThenSpaces.cls")]));
+        const runResults: EngineRunResults = await engine.runRules(["NoMixedIndentation"], runOptions);
+
+        expect(runResults.violations.length).toBeGreaterThan(0);
+        expect(runResults.violations[0].ruleName).toBe("NoMixedIndentation");
+        expect(runResults.violations[0].message).toBe(getMessage('MixedIndentationRuleMessage'));
+    });
+
+    it("NoMixedIndentation rule should detect spaces followed by tab in indentation", async () => {
+        const runOptions: RunOptions = createRunOptions(
+            new Workspace('id', [path.resolve(__dirname, "test-data", "apexClassMixedIndentation", "mixedIndentation_SpacesThenTab.cls")]));
+        const runResults: EngineRunResults = await engine.runRules(["NoMixedIndentation"], runOptions);
+
+        expect(runResults.violations.length).toBeGreaterThan(0);
+        expect(runResults.violations[0].ruleName).toBe("NoMixedIndentation");
+        expect(runResults.violations[0].message).toBe(getMessage('MixedIndentationRuleMessage'));
+    });
+
+    it("NoMixedIndentation rule should NOT flag lines with only spaces", async () => {
+        const runOptions: RunOptions = createRunOptions(
+            new Workspace('id', [path.resolve(__dirname, "test-data", "apexClassMixedIndentation", "validIndentation_OnlySpaces.cls")]));
+        const runResults: EngineRunResults = await engine.runRules(["NoMixedIndentation"], runOptions);
+
+        expect(runResults.violations).toHaveLength(0);
+    });
+
+    it("NoMixedIndentation rule should NOT flag lines with only tabs", async () => {
+        const runOptions: RunOptions = createRunOptions(
+            new Workspace('id', [path.resolve(__dirname, "test-data", "apexClassMixedIndentation", "validIndentation_OnlyTabs.cls")]));
+        const runResults: EngineRunResults = await engine.runRules(["NoMixedIndentation"], runOptions);
+
+        expect(runResults.violations).toHaveLength(0);
     });
 });
 

@@ -43,6 +43,12 @@ const MESSAGE_CATALOG : { [key: string]: string } = {
     TrailingWhitespaceRuleMessage:
         `Found trailing whitespace at the end of a line of code.`,
 
+    MixedIndentationRuleDescription:
+        `Detects lines where leading indentation contains both spaces and tabs. Mixed indentation can cause unexpected behavior in multiline strings (introduced in Apex API v262) due to how the indentation algorithm processes whitespace.`,
+
+    MixedIndentationRuleMessage:
+        `Found mixed spaces and tabs in leading indentation. Use either spaces or tabs consistently for indentation, not both.`,
+
     AvoidTermsWithImplicitBiasRuleDescription:
         `"Detects usage of terms that reinforce implicit bias.`,
 
