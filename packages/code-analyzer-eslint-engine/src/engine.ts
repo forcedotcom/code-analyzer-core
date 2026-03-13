@@ -1,19 +1,23 @@
 import * as fs from 'node:fs/promises';
+import * as fsSync from 'node:fs';
 import path from 'node:path';
 import {
+    CodeLocation,
     COMMON_TAGS,
     DescribeOptions,
     Engine,
     EngineRunResults,
     EventType,
+    Fix,
     LogLevel,
     RuleDescription,
     RunOptions,
+    Suggestion,
     SeverityLevel,
     Violation,
     Workspace,
 } from '@salesforce/code-analyzer-engine-api'
-import {ESLint, Linter} from "eslint";
+import {ESLint, Linter, Rule} from "eslint";
 import {RulesMeta} from "@eslint/core";
 import {ESLintEngineConfig} from "./config";
 import {UserConfigInfo, UserConfigState} from "./user-config-info";
@@ -136,26 +140,32 @@ export class ESLintEngine extends Engine {
             rulesToRun: ruleNames,
             engineConfig: this.engineConfig,
             eslintContext: context,
-            progressRange: [30, 95] // 30% to 95%
+            progressRange: [30, 95], // 30% to 95%
+            includeFixes: runOptions.includeFixes,
+            includeSuggestions: runOptions.includeSuggestions
         }
         const lintResults: ESLint.LintResult[] = await this._runESLintWorkerTask.run(runTaskInput, runOptions.workingFolder);
 
         const engineResults: EngineRunResults = {
-            violations: this.toViolations(lintResults, new Set(ruleNames))
+            violations: this.toViolations(lintResults, new Set(ruleNames),
+                runOptions.includeFixes ?? false, runOptions.includeSuggestions ?? false)
         };
         this.emitRunRulesProgressEvent(100);
         return engineResults;
     }
 
-    private toViolations(eslintResults: ESLint.LintResult[], specifiedRules: Set<string>): Violation[] {
+    private toViolations(eslintResults: ESLint.LintResult[], specifiedRules: Set<string>,
+            includeFixes: boolean, includeSuggestions: boolean): Violation[] {
         const violations: Violation[] = [];
+        const fileContentCache: Map<string, string> = new Map();
         for (const eslintResult of eslintResults) {
             for (const resultMsg of eslintResult.messages) {
                 if (!resultMsg.ruleId) { // If there is no ruleName, this is how ESLint indicates something else went wrong (like a parse error).
                     this.handleEslintErrorOrWarning(eslintResult.filePath, resultMsg);
                     continue;
                 }
-                const violation: Violation = toViolation(eslintResult.filePath, resultMsg);
+                const violation: Violation = toViolation(eslintResult.filePath, resultMsg,
+                    includeFixes, includeSuggestions, fileContentCache);
 
                 if (specifiedRules.has(violation.ruleName)) {
                     violations.push(violation);
@@ -219,6 +229,10 @@ function toRuleDescription(ruleName: string, metadata: RulesMeta, status: ESLint
     if (ruleUrl && ruleUrl.includes("://git.soma")) {
         ruleUrl = undefined;
     }
+    if (metadata.fixable) {
+        tags = [...tags, 'Fixable'];
+    }
+
     return {
         name: ruleName,
         severityLevel: severityLevel,
@@ -260,11 +274,10 @@ function toTagsForCustomRule(metadata: RulesMeta): string[] {
 }
 
 
-function toViolation(file: string, resultMsg: Linter.LintMessage): Violation {
-    // Note: If in the future we add in some sort of suggestion or fix field on Violation, then we might want to
-    // leverage the fix and/or suggestions field on the LintMessage object.
-    // See: https://eslint.org/docs/v8.x/integrate/nodejs-api#-lintmessage-type
-    return {
+function toViolation(file: string, resultMsg: Linter.LintMessage,
+        includeFixes: boolean, includeSuggestions: boolean,
+        fileContentCache: Map<string, string>): Violation {
+    const violation: Violation = {
         ruleName: resultMsg.ruleId as string,
         message: resultMsg.message,
         codeLocations: [{
@@ -275,6 +288,87 @@ function toViolation(file: string, resultMsg: Linter.LintMessage): Violation {
             endColumn: normalizeEndValue(resultMsg.endColumn),
         }],
         primaryLocationIndex: 0
+    };
+
+    if ((includeFixes && resultMsg.fix) || (includeSuggestions && resultMsg.suggestions?.length)) {
+        const fileContent: string = getFileContent(file, fileContentCache);
+        const lineStartOffsets: number[] = computeLineStartOffsets(fileContent);
+
+        if (includeFixes && resultMsg.fix) {
+            violation.fixes = [convertEslintFix(file, resultMsg.fix, lineStartOffsets)];
+        }
+
+        if (includeSuggestions && resultMsg.suggestions?.length) {
+            violation.suggestions = resultMsg.suggestions.map(s =>
+                convertEslintSuggestion(file, s, lineStartOffsets));
+        }
+    }
+
+    return violation;
+}
+
+function getFileContent(filePath: string, cache: Map<string, string>): string {
+    if (!cache.has(filePath)) {
+        cache.set(filePath, fsSync.readFileSync(filePath, 'utf8'));
+    }
+    return cache.get(filePath)!;
+}
+
+function computeLineStartOffsets(fileContent: string): number[] {
+    const offsets: number[] = [0];
+    for (let i = 0; i < fileContent.length; i++) {
+        if (fileContent[i] === '\n') {
+            offsets.push(i + 1);
+        }
+    }
+    return offsets;
+}
+
+function indexToLineColumn(index: number, lineStartOffsets: number[]): { line: number, column: number } {
+    // Binary search for the line containing this index
+    let low = 0;
+    let high = lineStartOffsets.length - 1;
+    while (low < high) {
+        const mid = Math.ceil((low + high + 1) / 2);
+        if (mid >= lineStartOffsets.length || lineStartOffsets[mid] > index) {
+            high = mid - 1;
+        } else {
+            low = mid;
+        }
+    }
+    return {
+        line: low + 1, // 1-based
+        column: index - lineStartOffsets[low] + 1 // 1-based
+    };
+}
+
+function convertEslintFix(file: string, eslintFix: Rule.Fix, lineStartOffsets: number[]): Fix {
+    const start = indexToLineColumn(eslintFix.range[0], lineStartOffsets);
+    const end = indexToLineColumn(eslintFix.range[1], lineStartOffsets);
+    return {
+        location: {
+            file: file,
+            startLine: start.line,
+            startColumn: start.column,
+            endLine: end.line,
+            endColumn: end.column
+        },
+        fixedCode: eslintFix.text
+    };
+}
+
+function convertEslintSuggestion(file: string, eslintSuggestion: Linter.LintSuggestion, lineStartOffsets: number[]): Suggestion {
+    const start = indexToLineColumn(eslintSuggestion.fix.range[0], lineStartOffsets);
+    const end = indexToLineColumn(eslintSuggestion.fix.range[1], lineStartOffsets);
+    return {
+        location: {
+            file: file,
+            startLine: start.line,
+            startColumn: start.column,
+            endLine: end.line,
+            endColumn: end.column
+        },
+        message: eslintSuggestion.desc
     };
 }
 
