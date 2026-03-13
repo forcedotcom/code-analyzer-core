@@ -1,7 +1,7 @@
 {
   "name": "@salesforce/code-analyzer-eslint8-engine",
   "description": "Plugin package that adds 'eslint' (version 8) as an engine into Salesforce Code Analyzer",
-  "version": "0.12.0",
+  "version": "0.12.1-SNAPSHOT",
   "author": "The Salesforce Code Analyzer Team",
   "license": "BSD-3-Clause",
   "homepage": "https://developer.salesforce.com/docs/platform/salesforce-code-analyzer/overview",
@@ -18,7 +18,7 @@
     "@eslint/js": "8.57.1",
     "@lwc/eslint-plugin-lwc": "2.2.0",
     "@lwc/eslint-plugin-lwc-platform": "5.2.0",
-    "@salesforce/code-analyzer-engine-api": "0.35.0",
+    "@salesforce/code-analyzer-engine-api": "0.36.0-SNAPSHOT",
     "@salesforce/eslint-config-lwc": "3.7.2",
     "@salesforce/eslint-plugin-lightning": "1.0.1",
     "@types/node": "^20.0.0",

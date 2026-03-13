@@ -50,7 +50,9 @@ export {
 export type {
     CodeLocation,
     EngineRunResults,
+    Fix,
     RunResults,
+    Suggestion,
     Violation
 } from "./results"
 
