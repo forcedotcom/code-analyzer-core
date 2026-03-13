@@ -60,6 +60,8 @@ export type {
 export type {
     CodeLocation,
     EngineRunResults,
+    Fix,
+    Suggestion,
     Violation
 } from "./results"
 

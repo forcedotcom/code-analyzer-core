@@ -60,6 +60,18 @@ export type RunOptions = {
      * the other workspace files (returned by the getWorkspaceFiles method) if needed to support the analysis.
      */
     workspace: Workspace
+
+    /**
+     * When true, engines should include {@link Fix} data on violations when available.
+     * Engines may skip expensive fix computation when this is false or undefined.
+     */
+    includeFixes?: boolean
+
+    /**
+     * When true, engines should include {@link Suggestion} data on violations when available.
+     * Engines may skip expensive suggestion computation when this is false or undefined.
+     */
+    includeSuggestions?: boolean
 }
 
 /**

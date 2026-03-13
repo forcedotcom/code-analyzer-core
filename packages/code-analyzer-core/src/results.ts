@@ -51,6 +51,34 @@ export interface Violation {
 
     /** Returns an array of urls for resources associated with the violation */
     getResourceUrls(): string[]
+
+    /** Returns an array of {@link Fix} instances that can be applied to resolve the violation */
+    getFixes(): Fix[]
+
+    /** Returns an array of {@link Suggestion} instances with messages to help resolve the violation */
+    getSuggestions(): Suggestion[]
+}
+
+/**
+ * Describes a fix that can be applied to resolve a {@link Violation}
+ */
+export interface Fix {
+    /** Returns the {@link CodeLocation} of the code to be replaced */
+    getLocation(): CodeLocation
+
+    /** Returns the replacement code to apply at the specified location */
+    getFixedCode(): string
+}
+
+/**
+ * Describes a suggestion to help resolve a {@link Violation}
+ */
+export interface Suggestion {
+    /** Returns the {@link CodeLocation} of the code associated with the suggestion */
+    getLocation(): CodeLocation
+
+    /** Returns a message describing the suggested change */
+    getMessage(): string
 }
 
 /**
@@ -116,6 +144,38 @@ export interface RunResults {
 
 
 /******* IMPLEMENTATIONS: *************************************************************************/
+export class FixImpl implements Fix {
+    private readonly apiFix: engApi.Fix;
+
+    constructor(apiFix: engApi.Fix) {
+        this.apiFix = apiFix;
+    }
+
+    getLocation(): CodeLocation {
+        return new CodeLocationImpl(this.apiFix.location);
+    }
+
+    getFixedCode(): string {
+        return this.apiFix.fixedCode;
+    }
+}
+
+export class SuggestionImpl implements Suggestion {
+    private readonly apiSuggestion: engApi.Suggestion;
+
+    constructor(apiSuggestion: engApi.Suggestion) {
+        this.apiSuggestion = apiSuggestion;
+    }
+
+    getLocation(): CodeLocation {
+        return new CodeLocationImpl(this.apiSuggestion.location);
+    }
+
+    getMessage(): string {
+        return this.apiSuggestion.message;
+    }
+}
+
 export class CodeLocationImpl implements CodeLocation {
     private readonly apiCodeLocation: engApi.CodeLocation;
 
@@ -211,6 +271,14 @@ export class ViolationImpl implements Violation {
         return !this.apiViolation.resourceUrls ? urls :
             [...urls, ...this.apiViolation.resourceUrls.filter(url => !urls.includes(url))];
     }
+
+    getFixes(): Fix[] {
+        return (this.apiViolation.fixes ?? []).map(f => new FixImpl(f));
+    }
+
+    getSuggestions(): Suggestion[] {
+        return (this.apiViolation.suggestions ?? []).map(s => new SuggestionImpl(s));
+    }
 }
 
 abstract class AbstractLocationlessViolation implements Violation {
@@ -243,6 +311,14 @@ abstract class AbstractLocationlessViolation implements Violation {
     }
 
     getResourceUrls(): string[] {
+        return [];
+    }
+
+    getFixes(): Fix[] {
+        return [];
+    }
+
+    getSuggestions(): Suggestion[] {
         return [];
     }
 }

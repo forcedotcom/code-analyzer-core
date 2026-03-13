@@ -1,4 +1,4 @@
-import {CodeLocation, RunResults, Violation} from "../../results";
+import {CodeLocation, Fix, RunResults, Suggestion, Violation} from "../../results";
 import {RunResultsFormatter, CODE_ANALYZER_CORE_NAME} from "../../output-format";
 import {Rule, SeverityLevel} from "../../rules";
 
@@ -68,6 +68,26 @@ export type JsonViolationOutput = {
 
     // An array of urls for resources associated with the violation
     resources: string[]
+
+    // An array of fixes that can be applied to resolve the violation
+    fixes?: JsonFixOutput[]
+
+    // An array of suggestions to help resolve the violation
+    suggestions?: JsonSuggestionOutput[]
+}
+export type JsonFixOutput = {
+    // The code location of the code to be replaced
+    location: JsonCodeLocationOutput
+
+    // The replacement code to apply at the specified location
+    fixedCode: string
+}
+export type JsonSuggestionOutput = {
+    // The code location associated with the suggestion
+    location: JsonCodeLocationOutput
+
+    // A message describing the suggested change
+    message: string
 }
 export type JsonCodeLocationOutput = {
     // The path, relative to runDir, of the file associated with the violation
@@ -132,7 +152,7 @@ export function toJsonViolationOutputArray(violations: Violation[], runDir: stri
 
 function toJsonViolationOutput(violation: Violation, runDir: string, sanitizeFcn: (text: string) => string): JsonViolationOutput {
     const rule: Rule = violation.getRule();
-    return {
+    const output: JsonViolationOutput = {
         rule: sanitizeFcn(rule.getName()),
         engine: sanitizeFcn(rule.getEngineName()),
         severity: rule.getSeverityLevel(),
@@ -141,6 +161,29 @@ function toJsonViolationOutput(violation: Violation, runDir: string, sanitizeFcn
         locations: toJsonCodeLocationOutputArray(violation.getCodeLocations(), runDir),
         message: sanitizeFcn(violation.getMessage()),
         resources: violation.getResourceUrls()
+    };
+    const fixes = violation.getFixes();
+    if (fixes.length > 0) {
+        output.fixes = fixes.map(f => toJsonFixOutput(f, runDir));
+    }
+    const suggestions = violation.getSuggestions();
+    if (suggestions.length > 0) {
+        output.suggestions = suggestions.map(s => toJsonSuggestionOutput(s, runDir, sanitizeFcn));
+    }
+    return output;
+}
+
+function toJsonFixOutput(fix: Fix, runDir: string): JsonFixOutput {
+    return {
+        location: toJsonCodeLocationOutput(fix.getLocation(), runDir),
+        fixedCode: fix.getFixedCode()
+    };
+}
+
+function toJsonSuggestionOutput(suggestion: Suggestion, runDir: string, sanitizeFcn: (text: string) => string): JsonSuggestionOutput {
+    return {
+        location: toJsonCodeLocationOutput(suggestion.getLocation(), runDir),
+        message: sanitizeFcn(suggestion.getMessage())
     };
 }
 

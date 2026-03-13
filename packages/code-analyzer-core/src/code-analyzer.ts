@@ -87,6 +87,12 @@ export type SelectOptions = {
 export type RunOptions = {
     /** Object that specifies the user's workspace and which files should be targeted in the run analysis. */
     workspace: Workspace
+
+    /** When true, engines should include fix data on violations when available. */
+    includeFixes?: boolean
+
+    /** When true, engines should include suggestion data on violations when available. */
+    includeSuggestions?: boolean
 }
 
 /**
@@ -359,7 +365,9 @@ export class CodeAnalyzer {
             const engineRunOptions: engApi.RunOptions = {
                 logFolder: this.config.getLogFolder(),
                 workingFolder: workingFolder,
-                workspace: engApiWorkspace
+                workspace: engApiWorkspace,
+                includeFixes: runOptions.includeFixes,
+                includeSuggestions: runOptions.includeSuggestions
             };
             const errorCallback: () => void = () => {
                 // istanbul ignore else

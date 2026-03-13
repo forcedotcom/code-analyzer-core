@@ -39,6 +39,34 @@ export type Violation = {
 
     /** An array of urls for resources associated with the violation */
     resourceUrls?: string[]
+
+    /** An array of {@link Fix} instances that can be applied to resolve the violation */
+    fixes?: Fix[]
+
+    /** An array of {@link Suggestion} instances with messages to help resolve the violation */
+    suggestions?: Suggestion[]
+}
+
+/**
+ * Describes a fix that can be applied to resolve a {@link Violation}
+ */
+export type Fix = {
+    /** The {@link CodeLocation} of the code to be replaced */
+    location: CodeLocation
+
+    /** The replacement code to apply at the specified location */
+    fixedCode: string
+}
+
+/**
+ * Describes a suggestion to help resolve a {@link Violation}
+ */
+export type Suggestion = {
+    /** The {@link CodeLocation} of the code associated with the suggestion */
+    location: CodeLocation
+
+    /** A message describing the suggested change */
+    message: string
 }
 
 /**
