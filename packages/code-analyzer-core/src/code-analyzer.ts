@@ -432,24 +432,6 @@ export class CodeAnalyzer {
         const suppressedCount = suppressedViolations.size;
         if (suppressedCount > 0) {
             this.emitLogEvent(LogLevel.Info, getMessage('SuppressedViolationsCount', suppressedCount));
-
-            // Log details of suppressed violations (first 10)
-            this.emitLogEvent(LogLevel.Info, 'Suppressed violations (showing first 10):');
-            let count = 0;
-            for (const violation of suppressedViolations) {
-                count++;
-                const loc = violation.getPrimaryLocation();
-                const file = loc.getFile();
-                const line = loc.getStartLine();
-                const rule = violation.getRule();
-                this.emitLogEvent(LogLevel.Info,
-                    `  ${count}. ${file}:${line} - ${rule.getEngineName()}:${rule.getName()}`);
-                if (count >= 10) {
-                    this.emitLogEvent(LogLevel.Info, `  ... and ${suppressedCount - 10} more suppressed violations`);
-                    break;
-                }
-            }
-
             runResults.applySuppressedViolationsFilter(suppressedViolations);
         } else {
             this.emitLogEvent(LogLevel.Info, getMessage('NoViolationsSuppressed'));
