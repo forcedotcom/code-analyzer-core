@@ -79,6 +79,14 @@ export function createBaseRegexRules(now: Date): RegexRules {
             severity: SeverityLevel.Info,
             tags: [COMMON_TAGS.RECOMMENDED, COMMON_TAGS.CATEGORIES.CODE_STYLE, COMMON_TAGS.LANGUAGES.APEX]
         },
+        NoMixedIndentation: {
+            regex: (/^(?<target>[ \t]*(\t[ ]+|[ ]+\t)[ \t]*)/gm).toString(),
+            file_extensions: ['.cls', '.trigger'],
+            description: getMessage('MixedIndentationRuleDescription'),
+            violation_message: getMessage('MixedIndentationRuleMessage'),
+            severity: SeverityLevel.Moderate,
+            tags: [COMMON_TAGS.RECOMMENDED, COMMON_TAGS.CATEGORIES.CODE_STYLE, COMMON_TAGS.LANGUAGES.APEX]
+        },
         AvoidTermsWithImplicitBias: { // file_extensions not listed so that it can run on all text files
             regex: (/\b(((black|white)\s*list\w*)|((black|brown)\s*out\w*)|(slaves?\b))/gi).toString(),
             description: getMessage('AvoidTermsWithImplicitBiasRuleDescription'),
