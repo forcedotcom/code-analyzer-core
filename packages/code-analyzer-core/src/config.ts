@@ -16,6 +16,7 @@ export const FIELDS = {
     ROOT_WORKING_FOLDER: 'root_working_folder', // Hidden
     CUSTOM_ENGINE_PLUGIN_MODULES: 'custom_engine_plugin_modules', // Hidden
     PRESERVE_ALL_WORKING_FOLDERS: 'preserve_all_working_folders', // Hidden
+    SUPPRESSIONS_ENABLED: 'suppressions_enabled',
     RULES: 'rules',
     ENGINES: 'engines',
     SEVERITY: 'severity',
@@ -55,6 +56,7 @@ type TopLevelConfig = {
     rules: Record<string, RuleOverrides>
     engines: Record<string, EngineOverrides>
     ignores: Ignores
+    suppressions_enabled: boolean // INTERNAL USE ONLY - set via CLI, not YAML
     root_working_folder: string, // INTERNAL USE ONLY
     preserve_all_working_folders: boolean // INTERNAL USE ONLY
     custom_engine_plugin_modules: string[] // INTERNAL USE ONLY
@@ -65,6 +67,7 @@ export const DEFAULT_CONFIG: TopLevelConfig = {
     config_root: process.cwd(),
     log_folder: os.tmpdir(),
     log_level: LogLevel.Debug,
+    suppressions_enabled: false, // Opt-in for suppression markers
     rules: {},
     engines: {},
     ignores: { files: [] },
@@ -155,12 +158,13 @@ export class CodeAnalyzerConfig {
         configRoot = !rawConfig.config_root ? (configRoot ?? process.cwd()) :
             validateAbsoluteFolder(rawConfig.config_root, FIELDS.CONFIG_ROOT);
         const configExtractor: engApi.ConfigValueExtractor = new engApi.ConfigValueExtractor(rawConfig, '', configRoot);
-        configExtractor.addKeysThatBypassValidation([FIELDS.CUSTOM_ENGINE_PLUGIN_MODULES, FIELDS.PRESERVE_ALL_WORKING_FOLDERS, FIELDS.ROOT_WORKING_FOLDER]); // Hidden fields bypass validation
+        configExtractor.addKeysThatBypassValidation([FIELDS.CUSTOM_ENGINE_PLUGIN_MODULES, FIELDS.PRESERVE_ALL_WORKING_FOLDERS, FIELDS.ROOT_WORKING_FOLDER, FIELDS.SUPPRESSIONS_ENABLED]); // Hidden fields bypass validation
         configExtractor.validateContainsOnlySpecifiedKeys([FIELDS.CONFIG_ROOT, FIELDS.LOG_FOLDER, FIELDS.LOG_LEVEL, FIELDS.RULES, FIELDS.ENGINES, FIELDS.IGNORES]);
         const config: TopLevelConfig = {
             config_root: configRoot,
             log_folder: configExtractor.extractFolder(FIELDS.LOG_FOLDER, DEFAULT_CONFIG.log_folder)!,
             log_level: extractLogLevel(configExtractor),
+            suppressions_enabled: configExtractor.extractBoolean(FIELDS.SUPPRESSIONS_ENABLED, DEFAULT_CONFIG.suppressions_enabled)!,
             custom_engine_plugin_modules: configExtractor.extractArray(FIELDS.CUSTOM_ENGINE_PLUGIN_MODULES,
                 engApi.ValueValidator.validateString,
                 DEFAULT_CONFIG.custom_engine_plugin_modules)!,
@@ -237,6 +241,14 @@ export class CodeAnalyzerConfig {
      */
     public getLogLevel(): LogLevel {
         return this.config.log_level;
+    }
+
+    /**
+     * Returns whether suppression markers should be processed.
+     * When enabled, code-analyzer-suppress/unsuppress markers in source files will filter out violations.
+     */
+    public getSuppressionsEnabled(): boolean {
+        return this.config.suppressions_enabled;
     }
 
     /**

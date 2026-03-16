@@ -276,6 +276,7 @@ export class EngineRunResultsImpl implements EngineRunResults {
     private readonly engineVersion: string;
     private readonly apiEngineRunResults: engApi.EngineRunResults;
     private readonly ruleSelection: RuleSelection;
+    private cachedViolations: Violation[] | undefined;
 
     constructor(engineName: string, engineVersion: string, apiEngineRunResults: engApi.EngineRunResults, ruleSelection: RuleSelection) {
         this.engineName = engineName;
@@ -301,8 +302,13 @@ export class EngineRunResultsImpl implements EngineRunResults {
     }
 
     getViolations(): Violation[] {
-        return this.apiEngineRunResults.violations.map(v =>
-            new ViolationImpl(v, this.ruleSelection.getRule(this.engineName, v.ruleName)));
+        // Cache violations to ensure the same objects are returned on multiple calls
+        // This is critical for Set-based filtering (e.g., inline suppressions)
+        if (!this.cachedViolations) {
+            this.cachedViolations = this.apiEngineRunResults.violations.map(v =>
+                new ViolationImpl(v, this.ruleSelection.getRule(this.engineName, v.ruleName)));
+        }
+        return this.cachedViolations;
     }
 }
 
@@ -347,6 +353,39 @@ export class UninstantiableEngineRunResults extends AbstractErroneousEngineRunRe
 export class UnexpectedErrorEngineRunResults extends AbstractErroneousEngineRunResults {
     constructor(engineName: string, engineVersion: string, error: Error) {
         super(engineName, engineVersion, new UnexpectedEngineErrorViolation(engineName, error));
+    }
+}
+
+/**
+ * Wrapper class that filters violations from an existing EngineRunResults
+ */
+class FilteredEngineRunResults implements EngineRunResults {
+    private readonly originalResults: EngineRunResults;
+    private readonly filteredViolations: Violation[];
+
+    constructor(originalResults: EngineRunResults, filteredViolations: Violation[]) {
+        this.originalResults = originalResults;
+        this.filteredViolations = filteredViolations;
+    }
+
+    getEngineName(): string {
+        return this.originalResults.getEngineName();
+    }
+
+    getEngineVersion(): string {
+        return this.originalResults.getEngineVersion();
+    }
+
+    getViolationCount(): number {
+        return this.filteredViolations.length;
+    }
+
+    getViolationCountOfSeverity(severity: SeverityLevel): number {
+        return this.filteredViolations.filter(v => v.getRule().getSeverityLevel() == severity).length;
+    }
+
+    getViolations(): Violation[] {
+        return this.filteredViolations;
     }
 }
 
@@ -414,5 +453,22 @@ export class RunResultsImpl implements RunResults {
 
     addEngineRunResults(engineRunResults: EngineRunResults): void {
         this.engineRunResultsMap.set(engineRunResults.getEngineName(), engineRunResults);
+    }
+
+    /**
+     * Applies suppression filtering to all violations in this RunResults
+     * This method filters out violations that have been suppressed via inline markers
+     * @param suppressedViolations Set of violations to suppress
+     */
+    applySuppressedViolationsFilter(suppressedViolations: Set<Violation>): void {
+        // For each engine, filter its violations
+        for (const [engineName, originalResults] of this.engineRunResultsMap.entries()) {
+            const originalViolations = originalResults.getViolations();
+            const filteredViolations = originalViolations.filter(v => !suppressedViolations.has(v));
+
+            // Replace with filtered results
+            const filteredResults = new FilteredEngineRunResults(originalResults, filteredViolations);
+            this.engineRunResultsMap.set(engineName, filteredResults);
+        }
     }
 }

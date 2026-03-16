@@ -6,8 +6,10 @@ import {
     RunResults,
     RunResultsImpl,
     UnexpectedErrorEngineRunResults,
-    UninstantiableEngineRunResults
+    UninstantiableEngineRunResults,
+    Violation
 } from "./results"
+import {processSuppressions} from "./suppressions"
 import {SemVer} from 'semver';
 import {
     EngineLogEvent,
@@ -384,7 +386,74 @@ export class CodeAnalyzer {
         for (const [uninstantiableEngine, error] of this.uninstantiableEnginesMap.entries()) {
             runResults.addEngineRunResults(new UninstantiableEngineRunResults(uninstantiableEngine, error));
         }
+
+        // Process inline suppressions (post-processing step)
+        // This filters out violations that have been suppressed via inline markers
+        await this.applyInlineSuppressions(runResults);
+
         return runResults;
+    }
+
+    /**
+     * Applies suppression filtering to the run results
+     * This processes suppression markers in source files and filters out suppressed violations
+     * @param runResults The run results to apply suppressions to
+     */
+    private async applyInlineSuppressions(runResults: RunResultsImpl): Promise<void> {
+        // Check if suppressions are enabled
+        if (!this.config.getSuppressionsEnabled()) {
+            return; // Feature disabled, skip processing
+        }
+
+        const allViolations = runResults.getViolations();
+
+        if (allViolations.length === 0) {
+            return; // No violations to process
+        }
+
+        this.emitLogEvent(LogLevel.Debug, getMessage('ProcessingInlineSuppressions', allViolations.length));
+
+        // Process suppressions (returns filtered violations)
+        const logger = (level: 'error' | 'warn' | 'debug', message: string) => {
+            const logLevel = level === 'error' ? LogLevel.Error : level === 'warn' ? LogLevel.Warn : LogLevel.Debug;
+            this.emitLogEvent(logLevel, message);
+        };
+        const filteredViolations = await processSuppressions(allViolations, logger);
+
+        // Calculate which violations were suppressed
+        const suppressedViolations = new Set<Violation>();
+        const filteredSet = new Set(filteredViolations);
+        for (const violation of allViolations) {
+            if (!filteredSet.has(violation)) {
+                suppressedViolations.add(violation);
+            }
+        }
+
+        const suppressedCount = suppressedViolations.size;
+        if (suppressedCount > 0) {
+            this.emitLogEvent(LogLevel.Info, getMessage('SuppressedViolationsCount', suppressedCount));
+
+            // Log details of suppressed violations (first 10)
+            this.emitLogEvent(LogLevel.Info, 'Suppressed violations (showing first 10):');
+            let count = 0;
+            for (const violation of suppressedViolations) {
+                count++;
+                const loc = violation.getPrimaryLocation();
+                const file = loc.getFile();
+                const line = loc.getStartLine();
+                const rule = violation.getRule();
+                this.emitLogEvent(LogLevel.Info,
+                    `  ${count}. Line ${line} - ${rule.getEngineName()}:${rule.getName()}`);
+                if (count >= 10) {
+                    this.emitLogEvent(LogLevel.Info, `  ... and ${suppressedCount - 10} more suppressed violations`);
+                    break;
+                }
+            }
+
+            runResults.applySuppressedViolationsFilter(suppressedViolations);
+        } else {
+            this.emitLogEvent(LogLevel.Info, getMessage('NoViolationsSuppressed'));
+        }
     }
 
     /**
