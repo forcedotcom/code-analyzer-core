@@ -443,7 +443,7 @@ export class CodeAnalyzer {
                 const line = loc.getStartLine();
                 const rule = violation.getRule();
                 this.emitLogEvent(LogLevel.Info,
-                    `  ${count}. Line ${line} - ${rule.getEngineName()}:${rule.getName()}`);
+                    `  ${count}. ${file}:${line} - ${rule.getEngineName()}:${rule.getName()}`);
                 if (count >= 10) {
                     this.emitLogEvent(LogLevel.Info, `  ... and ${suppressedCount - 10} more suppressed violations`);
                     break;
