@@ -174,6 +174,110 @@ describe("RunResultsFormatter Tests", () => {
     });
 });
 
+describe("Output format tests for fixes and suggestions", () => {
+    let resultsWithFixes: RunResults;
+
+    beforeAll(async () => {
+        const codeAnalyzer: CodeAnalyzer = new CodeAnalyzer(CodeAnalyzerConfig.withDefaults());
+        codeAnalyzer._setClock(new FixedClock(new Date(2024, 6, 3, 9, 14, 34, 567)));
+        const stubPlugin: stubs.StubEnginePlugin = new stubs.StubEnginePlugin();
+        await codeAnalyzer.addEnginePlugin(stubPlugin);
+        (stubPlugin.getCreatedEngine('stubEngine1') as stubs.StubEngine1).resultsToReturn = {
+            violations: [
+                stubs.getSampleViolationWithFixes(),
+                stubs.getSampleViolationWithSuggestions(),
+                stubs.getSampleViolationWithFixesAndSuggestions()
+            ]
+        };
+        const selection = await codeAnalyzer.selectRules(['all']);
+        resultsWithFixes = await codeAnalyzer.run(selection, {workspace: await codeAnalyzer.createWorkspace(['test'])});
+    });
+
+    describe("JSON output format with fixes and suggestions", () => {
+        it("Violations with fixes include fixes array in JSON output", () => {
+            const json = JSON.parse(resultsWithFixes.toFormattedOutput(OutputFormat.JSON));
+            const violationsWithFixes = json.violations.filter((v: {fixes?: unknown[]}) => v.fixes && v.fixes.length > 0);
+            expect(violationsWithFixes.length).toBeGreaterThanOrEqual(1);
+
+            const fix = violationsWithFixes[0].fixes[0];
+            expect(fix).toHaveProperty('location');
+            expect(fix).toHaveProperty('fixedCode');
+            expect(fix.location).toHaveProperty('file');
+            expect(fix.location).toHaveProperty('startLine');
+            expect(fix.location).toHaveProperty('startColumn');
+        });
+
+        it("Violations with suggestions include suggestions array in JSON output", () => {
+            const json = JSON.parse(resultsWithFixes.toFormattedOutput(OutputFormat.JSON));
+            const violationsWithSuggestions = json.violations.filter((v: {suggestions?: unknown[]}) => v.suggestions && v.suggestions.length > 0);
+            expect(violationsWithSuggestions.length).toBeGreaterThanOrEqual(1);
+
+            const suggestion = violationsWithSuggestions[0].suggestions[0];
+            expect(suggestion).toHaveProperty('location');
+            expect(suggestion).toHaveProperty('message');
+        });
+
+        it("Violations without fixes do not have a fixes key in JSON output", () => {
+            const json = JSON.parse(resultsWithFixes.toFormattedOutput(OutputFormat.JSON));
+            const violationsWithoutFixes = json.violations.filter((v: {fixes?: unknown[]}) => !v.fixes);
+            expect(violationsWithoutFixes.length).toBeGreaterThanOrEqual(1);
+            expect(violationsWithoutFixes[0]).not.toHaveProperty('fixes');
+        });
+
+        it("Fix location file paths are relative to runDir in JSON output", () => {
+            const json = JSON.parse(resultsWithFixes.toFormattedOutput(OutputFormat.JSON));
+            const violationWithFix = json.violations.find((v: {fixes?: unknown[]}) => v.fixes && v.fixes.length > 0);
+            const fixFile = violationWithFix.fixes[0].location.file;
+            expect(fixFile).not.toContain(json.runDir);
+            expect(path.isAbsolute(fixFile)).toBe(false);
+        });
+    });
+
+    describe("XML output format with fixes and suggestions", () => {
+        it("Violations with fixes include fix nodes in XML output", () => {
+            const xml = resultsWithFixes.toFormattedOutput(OutputFormat.XML);
+            expect(xml).toContain('<fixes>');
+            expect(xml).toContain('<fix>');
+            expect(xml).toContain('<fixedCode>');
+        });
+
+        it("Violations with suggestions include suggestion nodes in XML output", () => {
+            const xml = resultsWithFixes.toFormattedOutput(OutputFormat.XML);
+            expect(xml).toContain('<suggestions>');
+            expect(xml).toContain('<suggestion>');
+            expect(xml).toContain('<message>');
+        });
+    });
+
+    describe("SARIF output format with fixes", () => {
+        it("Violations with fixes include fix data in SARIF output", () => {
+            const sarif = JSON.parse(resultsWithFixes.toFormattedOutput(OutputFormat.SARIF));
+            const allResults = sarif.runs.flatMap((run: {results: unknown[]}) => run.results);
+            const resultsWithFixData = allResults.filter((r: {fixes?: unknown[]}) => r.fixes && r.fixes.length > 0);
+            expect(resultsWithFixData.length).toBeGreaterThanOrEqual(1);
+
+            const sarifFix = resultsWithFixData[0].fixes[0];
+            expect(sarifFix).toHaveProperty('artifactChanges');
+            expect(sarifFix.artifactChanges[0]).toHaveProperty('replacements');
+            expect(sarifFix.artifactChanges[0].replacements[0]).toHaveProperty('deletedRegion');
+            expect(sarifFix.artifactChanges[0].replacements[0]).toHaveProperty('insertedContent');
+        });
+
+        it("Suggestions are not included in SARIF output", () => {
+            const sarifStr = resultsWithFixes.toFormattedOutput(OutputFormat.SARIF);
+            expect(sarifStr).not.toContain('"suggestions"');
+        });
+    });
+
+    describe("CSV output format with fixes and suggestions", () => {
+        it("Fixes and suggestions are not included in CSV output", () => {
+            const csv = resultsWithFixes.toFormattedOutput(OutputFormat.CSV);
+            expect(csv).not.toContain('fixedCode');
+            expect(csv).not.toContain('const correctedValue');
+        });
+    });
+});
+
 describe("RuleSelectionFormatter Tests", () => {
 
     describe("Tests for the JSON output format", () => {
