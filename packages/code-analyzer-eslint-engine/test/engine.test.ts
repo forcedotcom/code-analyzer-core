@@ -1158,6 +1158,30 @@ describe('Tests for fixes and suggestions in runRules', () => {
             expect(violation.fixes![0].location.file).toEqual(fixableFile);
         }
     });
+
+    it('Fix locations are correct for files with multi-byte characters', async () => {
+        const multibyteFile: string = path.join(workspaceWithFixableViolations, 'fixable_multibyte.js');
+        const engine: Engine = await createEngineFromPlugin(DEFAULT_CONFIG_FOR_TESTING);
+        const runOptions: RunOptions = {
+            ...createRunOptions(new Workspace('id', [workspaceWithFixableViolations], [multibyteFile])),
+            includeFixes: true
+        };
+        const results: EngineRunResults = await engine.runRules(['prefer-const'], runOptions);
+
+        expect(results.violations.length).toBeGreaterThanOrEqual(1);
+        const violationWithFix = results.violations.find(v => v.fixes && v.fixes.length > 0);
+        expect(violationWithFix).toBeDefined();
+
+        const fix = violationWithFix!.fixes![0];
+        // Fix should target line 1 (let greeting) and replace with const
+        expect(fix.location.file).toEqual(multibyteFile);
+        expect(fix.location.startLine).toEqual(1);
+        expect(fix.fixedCode).toContain('const');
+        // Verify the line/column values are valid positive integers
+        expect(fix.location.startColumn).toBeGreaterThanOrEqual(1);
+        expect(fix.location.endLine).toBeGreaterThanOrEqual(1);
+        expect(fix.location.endColumn).toBeGreaterThanOrEqual(1);
+    });
 });
 
 function loadRuleDescriptions(fileNameFromTestDataFolder: string): RuleDescription[] {
