@@ -20,7 +20,8 @@
     "severityLevel": 3,
     "tags": [
       "BestPractices",
-      "TypeScript"
+      "TypeScript",
+      "Fixable"
     ]
   },
   {
@@ -57,7 +58,8 @@
     "severityLevel": 3,
     "tags": [
       "BestPractices",
-      "TypeScript"
+      "TypeScript",
+      "Fixable"
     ]
   },
   {
@@ -93,7 +95,8 @@
     "severityLevel": 3,
     "tags": [
       "BestPractices",
-      "TypeScript"
+      "TypeScript",
+      "Fixable"
     ]
   },
   {
@@ -105,7 +108,8 @@
     "severityLevel": 3,
     "tags": [
       "BestPractices",
-      "TypeScript"
+      "TypeScript",
+      "Fixable"
     ]
   },
   {
@@ -129,7 +133,8 @@
     "severityLevel": 3,
     "tags": [
       "BestPractices",
-      "TypeScript"
+      "TypeScript",
+      "Fixable"
     ]
   },
   {
@@ -141,7 +146,8 @@
     "severityLevel": 3,
     "tags": [
       "BestPractices",
-      "TypeScript"
+      "TypeScript",
+      "Fixable"
     ]
   },
   {
@@ -153,7 +159,8 @@
     "severityLevel": 3,
     "tags": [
       "BestPractices",
-      "TypeScript"
+      "TypeScript",
+      "Fixable"
     ]
   },
   {
@@ -165,7 +172,8 @@
     "severityLevel": 3,
     "tags": [
       "BestPractices",
-      "TypeScript"
+      "TypeScript",
+      "Fixable"
     ]
   },
   {
@@ -189,7 +197,8 @@
     "severityLevel": 3,
     "tags": [
       "BestPractices",
-      "TypeScript"
+      "TypeScript",
+      "Fixable"
     ]
   },
   {
@@ -213,7 +222,8 @@
     "severityLevel": 2,
     "tags": [
       "ErrorProne",
-      "TypeScript"
+      "TypeScript",
+      "Fixable"
     ]
   },
   {
@@ -273,7 +283,8 @@
     "severityLevel": 3,
     "tags": [
       "BestPractices",
-      "TypeScript"
+      "TypeScript",
+      "Fixable"
     ]
   },
   {
@@ -298,7 +309,8 @@
     "tags": [
       "Recommended",
       "BestPractices",
-      "TypeScript"
+      "TypeScript",
+      "Fixable"
     ]
   },
   {
@@ -346,7 +358,8 @@
     "severityLevel": 2,
     "tags": [
       "ErrorProne",
-      "TypeScript"
+      "TypeScript",
+      "Fixable"
     ]
   },
   {
@@ -395,7 +408,8 @@
     "severityLevel": 3,
     "tags": [
       "BestPractices",
-      "TypeScript"
+      "TypeScript",
+      "Fixable"
     ]
   },
   {
@@ -445,7 +459,8 @@
     "tags": [
       "Recommended",
       "BestPractices",
-      "TypeScript"
+      "TypeScript",
+      "Fixable"
     ]
   },
   {
@@ -458,7 +473,8 @@
     "tags": [
       "Recommended",
       "ErrorProne",
-      "TypeScript"
+      "TypeScript",
+      "Fixable"
     ]
   },
   {
@@ -518,7 +534,8 @@
     "severityLevel": 2,
     "tags": [
       "ErrorProne",
-      "TypeScript"
+      "TypeScript",
+      "Fixable"
     ]
   },
   {
@@ -530,7 +547,8 @@
     "severityLevel": 3,
     "tags": [
       "BestPractices",
-      "TypeScript"
+      "TypeScript",
+      "Fixable"
     ]
   },
   {
@@ -590,7 +608,8 @@
     "severityLevel": 3,
     "tags": [
       "BestPractices",
-      "TypeScript"
+      "TypeScript",
+      "Fixable"
     ]
   },
   {
@@ -750,7 +769,8 @@
     "severityLevel": 3,
     "tags": [
       "BestPractices",
-      "TypeScript"
+      "TypeScript",
+      "Fixable"
     ]
   },
   {
@@ -787,7 +807,8 @@
     "severityLevel": 3,
     "tags": [
       "BestPractices",
-      "TypeScript"
+      "TypeScript",
+      "Fixable"
     ]
   },
   {
@@ -823,7 +844,8 @@
     "severityLevel": 3,
     "tags": [
       "BestPractices",
-      "TypeScript"
+      "TypeScript",
+      "Fixable"
     ]
   },
   {
@@ -835,7 +857,8 @@
     "severityLevel": 3,
     "tags": [
       "BestPractices",
-      "TypeScript"
+      "TypeScript",
+      "Fixable"
     ]
   },
   {
@@ -847,7 +870,8 @@
     "severityLevel": 3,
     "tags": [
       "BestPractices",
-      "TypeScript"
+      "TypeScript",
+      "Fixable"
     ]
   },
   {
@@ -859,7 +883,8 @@
     "severityLevel": 3,
     "tags": [
       "BestPractices",
-      "TypeScript"
+      "TypeScript",
+      "Fixable"
     ]
   },
   {
@@ -1056,7 +1081,8 @@
     "tags": [
       "Recommended",
       "ErrorProne",
-      "TypeScript"
+      "TypeScript",
+      "Fixable"
     ]
   },
   {
@@ -1092,7 +1118,8 @@
     "severityLevel": 3,
     "tags": [
       "BestPractices",
-      "TypeScript"
+      "TypeScript",
+      "Fixable"
     ]
   },
   {
@@ -1104,7 +1131,8 @@
     "severityLevel": 3,
     "tags": [
       "BestPractices",
-      "TypeScript"
+      "TypeScript",
+      "Fixable"
     ]
   },
   {
@@ -1117,7 +1145,8 @@
     "tags": [
       "Recommended",
       "ErrorProne",
-      "TypeScript"
+      "TypeScript",
+      "Fixable"
     ]
   },
   {
@@ -1129,7 +1158,8 @@
     "severityLevel": 3,
     "tags": [
       "BestPractices",
-      "TypeScript"
+      "TypeScript",
+      "Fixable"
     ]
   },
   {
@@ -1166,7 +1196,8 @@
     "tags": [
       "Recommended",
       "BestPractices",
-      "TypeScript"
+      "TypeScript",
+      "Fixable"
     ]
   },
   {
@@ -1178,7 +1209,8 @@
     "severityLevel": 3,
     "tags": [
       "BestPractices",
-      "TypeScript"
+      "TypeScript",
+      "Fixable"
     ]
   },
   {
@@ -1226,7 +1258,8 @@
     "severityLevel": 3,
     "tags": [
       "BestPractices",
-      "TypeScript"
+      "TypeScript",
+      "Fixable"
     ]
   },
   {
@@ -1238,7 +1271,8 @@
     "severityLevel": 3,
     "tags": [
       "BestPractices",
-      "TypeScript"
+      "TypeScript",
+      "Fixable"
     ]
   },
   {
@@ -1263,7 +1297,8 @@
     "tags": [
       "Recommended",
       "BestPractices",
-      "TypeScript"
+      "TypeScript",
+      "Fixable"
     ]
   },
   {
@@ -1287,7 +1322,8 @@
     "severityLevel": 3,
     "tags": [
       "BestPractices",
-      "TypeScript"
+      "TypeScript",
+      "Fixable"
     ]
   },
   {
@@ -1311,7 +1347,8 @@
     "severityLevel": 3,
     "tags": [
       "BestPractices",
-      "TypeScript"
+      "TypeScript",
+      "Fixable"
     ]
   },
   {
@@ -1335,7 +1372,8 @@
     "severityLevel": 2,
     "tags": [
       "ErrorProne",
-      "TypeScript"
+      "TypeScript",
+      "Fixable"
     ]
   },
   {
@@ -1347,7 +1385,8 @@
     "severityLevel": 3,
     "tags": [
       "BestPractices",
-      "TypeScript"
+      "TypeScript",
+      "Fixable"
     ]
   },
   {
@@ -1359,7 +1398,8 @@
     "severityLevel": 3,
     "tags": [
       "BestPractices",
-      "TypeScript"
+      "TypeScript",
+      "Fixable"
     ]
   },
   {
@@ -1371,7 +1411,8 @@
     "severityLevel": 3,
     "tags": [
       "BestPractices",
-      "TypeScript"
+      "TypeScript",
+      "Fixable"
     ]
   },
   {
@@ -1383,7 +1424,8 @@
     "severityLevel": 3,
     "tags": [
       "BestPractices",
-      "TypeScript"
+      "TypeScript",
+      "Fixable"
     ]
   },
   {
@@ -1455,7 +1497,8 @@
     "severityLevel": 2,
     "tags": [
       "ErrorProne",
-      "TypeScript"
+      "TypeScript",
+      "Fixable"
     ]
   },
   {
@@ -1579,7 +1622,8 @@
     "tags": [
       "BestPractices",
       "JavaScript",
-      "TypeScript"
+      "TypeScript",
+      "Fixable"
     ]
   },
   {
@@ -1618,7 +1662,8 @@
     "tags": [
       "BestPractices",
       "JavaScript",
-      "TypeScript"
+      "TypeScript",
+      "Fixable"
     ]
   },
   {
@@ -1657,7 +1702,8 @@
     "tags": [
       "BestPractices",
       "JavaScript",
-      "TypeScript"
+      "TypeScript",
+      "Fixable"
     ]
   },
   {
@@ -1696,7 +1742,8 @@
     "tags": [
       "BestPractices",
       "JavaScript",
-      "TypeScript"
+      "TypeScript",
+      "Fixable"
     ]
   },
   {
@@ -1827,7 +1874,8 @@
     "tags": [
       "BestPractices",
       "JavaScript",
-      "TypeScript"
+      "TypeScript",
+      "Fixable"
     ]
   },
   {
@@ -2147,7 +2195,8 @@
     "tags": [
       "BestPractices",
       "JavaScript",
-      "TypeScript"
+      "TypeScript",
+      "Fixable"
     ]
   },
   {
@@ -2201,7 +2250,8 @@
     "tags": [
       "BestPractices",
       "JavaScript",
-      "TypeScript"
+      "TypeScript",
+      "Fixable"
     ]
   },
   {
@@ -2322,7 +2372,8 @@
     "tags": [
       "BestPractices",
       "JavaScript",
-      "TypeScript"
+      "TypeScript",
+      "Fixable"
     ]
   },
   {
@@ -2336,7 +2387,8 @@
       "Recommended",
       "BestPractices",
       "JavaScript",
-      "TypeScript"
+      "TypeScript",
+      "Fixable"
     ]
   },
   {
@@ -2349,7 +2401,8 @@
     "tags": [
       "BestPractices",
       "JavaScript",
-      "TypeScript"
+      "TypeScript",
+      "Fixable"
     ]
   },
   {
@@ -2390,7 +2443,8 @@
     "tags": [
       "BestPractices",
       "JavaScript",
-      "TypeScript"
+      "TypeScript",
+      "Fixable"
     ]
   },
   {
@@ -2523,7 +2577,8 @@
     "tags": [
       "BestPractices",
       "JavaScript",
-      "TypeScript"
+      "TypeScript",
+      "Fixable"
     ]
   },
   {
@@ -2776,7 +2831,8 @@
       "Recommended",
       "BestPractices",
       "JavaScript",
-      "TypeScript"
+      "TypeScript",
+      "Fixable"
     ]
   },
   {
@@ -2974,7 +3030,8 @@
     "tags": [
       "BestPractices",
       "JavaScript",
-      "TypeScript"
+      "TypeScript",
+      "Fixable"
     ]
   },
   {
@@ -3040,7 +3097,8 @@
     "tags": [
       "BestPractices",
       "JavaScript",
-      "TypeScript"
+      "TypeScript",
+      "Fixable"
     ]
   },
   {
@@ -3095,7 +3153,8 @@
       "Recommended",
       "BestPractices",
       "JavaScript",
-      "TypeScript"
+      "TypeScript",
+      "Fixable"
     ]
   },
   {
@@ -3162,7 +3221,8 @@
     "tags": [
       "BestPractices",
       "JavaScript",
-      "TypeScript"
+      "TypeScript",
+      "Fixable"
     ]
   },
   {
@@ -3202,7 +3262,8 @@
     "tags": [
       "BestPractices",
       "JavaScript",
-      "TypeScript"
+      "TypeScript",
+      "Fixable"
     ]
   },
   {
@@ -3215,7 +3276,8 @@
     "tags": [
       "BestPractices",
       "JavaScript",
-      "TypeScript"
+      "TypeScript",
+      "Fixable"
     ]
   },
   {
@@ -3229,7 +3291,8 @@
       "Recommended",
       "BestPractices",
       "JavaScript",
-      "TypeScript"
+      "TypeScript",
+      "Fixable"
     ]
   },
   {
@@ -3268,7 +3331,8 @@
     "tags": [
       "BestPractices",
       "JavaScript",
-      "TypeScript"
+      "TypeScript",
+      "Fixable"
     ]
   },
   {
@@ -3281,7 +3345,8 @@
     "tags": [
       "BestPractices",
       "JavaScript",
-      "TypeScript"
+      "TypeScript",
+      "Fixable"
     ]
   },
   {
@@ -3294,7 +3359,8 @@
     "tags": [
       "BestPractices",
       "JavaScript",
-      "TypeScript"
+      "TypeScript",
+      "Fixable"
     ]
   },
   {
@@ -3307,7 +3373,8 @@
     "tags": [
       "BestPractices",
       "JavaScript",
-      "TypeScript"
+      "TypeScript",
+      "Fixable"
     ]
   },
   {
@@ -3321,7 +3388,8 @@
       "Recommended",
       "BestPractices",
       "JavaScript",
-      "TypeScript"
+      "TypeScript",
+      "Fixable"
     ]
   },
   {
@@ -3334,7 +3402,8 @@
     "tags": [
       "BestPractices",
       "JavaScript",
-      "TypeScript"
+      "TypeScript",
+      "Fixable"
     ]
   },
   {
@@ -3360,7 +3429,8 @@
     "tags": [
       "BestPractices",
       "JavaScript",
-      "TypeScript"
+      "TypeScript",
+      "Fixable"
     ]
   },
   {
@@ -3373,7 +3443,8 @@
     "tags": [
       "BestPractices",
       "JavaScript",
-      "TypeScript"
+      "TypeScript",
+      "Fixable"
     ]
   },
   {
@@ -3386,7 +3457,8 @@
     "tags": [
       "BestPractices",
       "JavaScript",
-      "TypeScript"
+      "TypeScript",
+      "Fixable"
     ]
   },
   {
@@ -3440,7 +3512,8 @@
     "tags": [
       "BestPractices",
       "JavaScript",
-      "TypeScript"
+      "TypeScript",
+      "Fixable"
     ]
   },
   {
@@ -3519,7 +3592,8 @@
     "tags": [
       "BestPractices",
       "JavaScript",
-      "TypeScript"
+      "TypeScript",
+      "Fixable"
     ]
   },
   {
@@ -3545,7 +3619,8 @@
     "tags": [
       "BestPractices",
       "JavaScript",
-      "TypeScript"
+      "TypeScript",
+      "Fixable"
     ]
   },
   {
@@ -3558,7 +3633,8 @@
     "tags": [
       "BestPractices",
       "JavaScript",
-      "TypeScript"
+      "TypeScript",
+      "Fixable"
     ]
   },
   {
@@ -3584,7 +3660,8 @@
     "tags": [
       "CodeStyle",
       "JavaScript",
-      "TypeScript"
+      "TypeScript",
+      "Fixable"
     ]
   },
   {
@@ -3638,7 +3715,8 @@
     "tags": [
       "BestPractices",
       "JavaScript",
-      "TypeScript"
+      "TypeScript",
+      "Fixable"
     ]
   }
 ]

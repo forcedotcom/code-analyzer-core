@@ -34,6 +34,7 @@ const workspaceWithNoCustomConfig: string = path.join(testDataFolder, 'workspace
 const workspaceThatHasCustomConfigModifyingExistingRules: string = path.join(testDataFolder, 'workspaceWithFlatConfigCjs');
 const workspaceThatHasCustomConfigWithNewRules: string = path.join(testDataFolder, 'workspaceWithFlatConfigWithNewRules');
 const workspaceWithReactFiles: string = path.join(testDataFolder, 'workspaceWithReactFiles');
+const workspaceWithFixableViolations: string = path.join(testDataFolder, 'workspace_FixableViolations');
 
 let original_working_directory: string;
 beforeAll(() => {
@@ -1032,12 +1033,12 @@ describe('Tests for Fixable tag on rule descriptions', () => {
 });
 
 describe('Tests for fixes and suggestions in runRules', () => {
-    const fixableFile: string = path.join(workspaceWithNoCustomConfig, 'fixable.js');
+    const fixableFile: string = path.join(workspaceWithFixableViolations, 'fixable.js');
 
     it('When includeFixes is true, violations from fixable rules include fixes', async () => {
         const engine: Engine = await createEngineFromPlugin(DEFAULT_CONFIG_FOR_TESTING);
         const runOptions: RunOptions = {
-            ...createRunOptions(new Workspace('id', [workspaceWithNoCustomConfig], [fixableFile])),
+            ...createRunOptions(new Workspace('id', [workspaceWithFixableViolations], [fixableFile])),
             includeFixes: true
         };
         const results: EngineRunResults = await engine.runRules(['prefer-const'], runOptions);
@@ -1057,7 +1058,7 @@ describe('Tests for fixes and suggestions in runRules', () => {
     it('When includeFixes is false, violations do not include fixes even for fixable rules', async () => {
         const engine: Engine = await createEngineFromPlugin(DEFAULT_CONFIG_FOR_TESTING);
         const runOptions: RunOptions = {
-            ...createRunOptions(new Workspace('id', [workspaceWithNoCustomConfig], [fixableFile])),
+            ...createRunOptions(new Workspace('id', [workspaceWithFixableViolations], [fixableFile])),
             includeFixes: false
         };
         const results: EngineRunResults = await engine.runRules(['prefer-const'], runOptions);
@@ -1070,7 +1071,7 @@ describe('Tests for fixes and suggestions in runRules', () => {
 
     it('When includeFixes is not specified, violations do not include fixes', async () => {
         const engine: Engine = await createEngineFromPlugin(DEFAULT_CONFIG_FOR_TESTING);
-        const runOptions: RunOptions = createRunOptions(new Workspace('id', [workspaceWithNoCustomConfig], [fixableFile]));
+        const runOptions: RunOptions = createRunOptions(new Workspace('id', [workspaceWithFixableViolations], [fixableFile]));
         const results: EngineRunResults = await engine.runRules(['prefer-const'], runOptions);
 
         expect(results.violations.length).toBeGreaterThanOrEqual(1);
@@ -1082,7 +1083,7 @@ describe('Tests for fixes and suggestions in runRules', () => {
     it('When includeSuggestions is true, violations with suggestions include them', async () => {
         const engine: Engine = await createEngineFromPlugin(DEFAULT_CONFIG_FOR_TESTING);
         const runOptions: RunOptions = {
-            ...createRunOptions(new Workspace('id', [workspaceWithNoCustomConfig], [fixableFile])),
+            ...createRunOptions(new Workspace('id', [workspaceWithFixableViolations], [fixableFile])),
             includeSuggestions: true
         };
         const results: EngineRunResults = await engine.runRules(['no-unused-vars'], runOptions);
@@ -1101,7 +1102,7 @@ describe('Tests for fixes and suggestions in runRules', () => {
     it('When includeSuggestions is false, violations do not include suggestions', async () => {
         const engine: Engine = await createEngineFromPlugin(DEFAULT_CONFIG_FOR_TESTING);
         const runOptions: RunOptions = {
-            ...createRunOptions(new Workspace('id', [workspaceWithNoCustomConfig], [fixableFile])),
+            ...createRunOptions(new Workspace('id', [workspaceWithFixableViolations], [fixableFile])),
             includeSuggestions: false
         };
         const results: EngineRunResults = await engine.runRules(['no-unused-vars'], runOptions);
@@ -1114,7 +1115,7 @@ describe('Tests for fixes and suggestions in runRules', () => {
     it('When both includeFixes and includeSuggestions are true, both are populated where applicable', async () => {
         const engine: Engine = await createEngineFromPlugin(DEFAULT_CONFIG_FOR_TESTING);
         const runOptions: RunOptions = {
-            ...createRunOptions(new Workspace('id', [workspaceWithNoCustomConfig], [fixableFile])),
+            ...createRunOptions(new Workspace('id', [workspaceWithFixableViolations], [fixableFile])),
             includeFixes: true,
             includeSuggestions: true
         };
@@ -1128,7 +1129,7 @@ describe('Tests for fixes and suggestions in runRules', () => {
     it('Fix locations have correct line and column values converted from byte offsets', async () => {
         const engine: Engine = await createEngineFromPlugin(DEFAULT_CONFIG_FOR_TESTING);
         const runOptions: RunOptions = {
-            ...createRunOptions(new Workspace('id', [workspaceWithNoCustomConfig], [fixableFile])),
+            ...createRunOptions(new Workspace('id', [workspaceWithFixableViolations], [fixableFile])),
             includeFixes: true
         };
         const results: EngineRunResults = await engine.runRules(['prefer-const'], runOptions);
@@ -1146,7 +1147,7 @@ describe('Tests for fixes and suggestions in runRules', () => {
     it('Multiple violations in the same file produce fixes without errors', async () => {
         const engine: Engine = await createEngineFromPlugin(DEFAULT_CONFIG_FOR_TESTING);
         const runOptions: RunOptions = {
-            ...createRunOptions(new Workspace('id', [workspaceWithNoCustomConfig], [fixableFile])),
+            ...createRunOptions(new Workspace('id', [workspaceWithFixableViolations], [fixableFile])),
             includeFixes: true
         };
         const results: EngineRunResults = await engine.runRules(['prefer-const', 'no-var'], runOptions);
