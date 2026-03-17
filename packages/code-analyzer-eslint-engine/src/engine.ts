@@ -2,7 +2,6 @@ import * as fs from 'node:fs/promises';
 import * as fsSync from 'node:fs';
 import path from 'node:path';
 import {
-    CodeLocation,
     COMMON_TAGS,
     DescribeOptions,
     Engine,
