@@ -686,6 +686,117 @@ describe("Tests for the run method of CodeAnalyzer", () => {
         expect(violations[0].getCodeLocations()[0].getEndColumn()).toBeUndefined();
     });
 
+    it("When an engine returns a fix with a code location file that does not exist, then an error is thrown", async () => {
+        const badViolation: engApi.Violation = stubs.getSampleViolationWithFixes();
+        badViolation.fixes![0].location.file = 'test/doesNotExist';
+        stubEngine1.resultsToReturn = { violations: [badViolation] };
+        await expect(codeAnalyzer.run(selection, sampleRunOptions)).rejects.toThrow(
+            getMessage('EngineReturnedViolationWithCodeLocationFileThatDoesNotExist',
+                'stubEngine1', 'stub1RuleA', path.resolve('test', 'doesNotExist')));
+    });
+
+    it("When an engine returns a fix with an invalid startLine, then an error is thrown", async () => {
+        const badViolation: engApi.Violation = stubs.getSampleViolationWithFixes();
+        badViolation.fixes![0].location.startLine = -1;
+        stubEngine1.resultsToReturn = { violations: [badViolation] };
+        await expect(codeAnalyzer.run(selection, sampleRunOptions)).rejects.toThrow(
+            getMessage('EngineReturnedViolationWithCodeLocationWithInvalidLineOrColumn',
+                'stubEngine1', 'stub1RuleA', 'startLine', -1));
+    });
+
+    it("When an engine returns a fix with endLine before startLine, then an error is thrown", async () => {
+        const badViolation: engApi.Violation = stubs.getSampleViolationWithFixes();
+        badViolation.fixes![0].location.startLine = 10;
+        badViolation.fixes![0].location.endLine = 5;
+        stubEngine1.resultsToReturn = { violations: [badViolation] };
+        await expect(codeAnalyzer.run(selection, sampleRunOptions)).rejects.toThrow(
+            getMessage('EngineReturnedViolationWithCodeLocationWithEndLineBeforeStartLine',
+                'stubEngine1', 'stub1RuleA', 5, 10));
+    });
+
+    it("When an engine returns a suggestion with a code location file that does not exist, then an error is thrown", async () => {
+        const badViolation: engApi.Violation = stubs.getSampleViolationWithSuggestions();
+        badViolation.suggestions![0].location.file = 'test/doesNotExist';
+        stubEngine1.resultsToReturn = { violations: [badViolation] };
+        await expect(codeAnalyzer.run(selection, sampleRunOptions)).rejects.toThrow(
+            getMessage('EngineReturnedViolationWithCodeLocationFileThatDoesNotExist',
+                'stubEngine1', 'stub1RuleA', path.resolve('test', 'doesNotExist')));
+    });
+
+    it("When an engine returns a suggestion with an invalid startColumn, then an error is thrown", async () => {
+        const badViolation: engApi.Violation = stubs.getSampleViolationWithSuggestions();
+        badViolation.suggestions![0].location.startColumn = 0;
+        stubEngine1.resultsToReturn = { violations: [badViolation] };
+        await expect(codeAnalyzer.run(selection, sampleRunOptions)).rejects.toThrow(
+            getMessage('EngineReturnedViolationWithCodeLocationWithInvalidLineOrColumn',
+                'stubEngine1', 'stub1RuleA', 'startColumn', 0));
+    });
+
+    it("When an engine returns a violation with fixes, then getFixes returns the correct data", async () => {
+        stubEngine1.resultsToReturn = { violations: [stubs.getSampleViolationWithFixes()] };
+        const overallResults: RunResults = await codeAnalyzer.run(selection, sampleRunOptions);
+        const violations: Violation[] = overallResults.getViolations();
+        expect(violations).toHaveLength(1);
+
+        const fixes = violations[0].getFixes();
+        expect(fixes).toHaveLength(1);
+        expect(fixes[0].getFixedCode()).toEqual('const correctedValue = true;');
+        expect(fixes[0].getLocation().getFile()).toEqual(path.resolve('test/config.test.ts'));
+        expect(fixes[0].getLocation().getStartLine()).toEqual(3);
+        expect(fixes[0].getLocation().getStartColumn()).toEqual(6);
+        expect(fixes[0].getLocation().getEndLine()).toEqual(3);
+        expect(fixes[0].getLocation().getEndColumn()).toEqual(20);
+    });
+
+    it("When an engine returns a violation with suggestions, then getSuggestions returns the correct data", async () => {
+        stubEngine1.resultsToReturn = { violations: [stubs.getSampleViolationWithSuggestions()] };
+        const overallResults: RunResults = await codeAnalyzer.run(selection, sampleRunOptions);
+        const violations: Violation[] = overallResults.getViolations();
+        expect(violations).toHaveLength(1);
+
+        const suggestions = violations[0].getSuggestions();
+        expect(suggestions).toHaveLength(2);
+        expect(suggestions[0].getMessage()).toEqual('Consider using a boolean literal instead');
+        expect(suggestions[0].getLocation().getFile()).toEqual(path.resolve('test/config.test.ts'));
+        expect(suggestions[1].getMessage()).toEqual('Consider removing this unused variable');
+    });
+
+    it("When an engine returns a violation with both fixes and suggestions, then both are accessible", async () => {
+        stubEngine1.resultsToReturn = { violations: [stubs.getSampleViolationWithFixesAndSuggestions()] };
+        const overallResults: RunResults = await codeAnalyzer.run(selection, sampleRunOptions);
+        const violations: Violation[] = overallResults.getViolations();
+        expect(violations).toHaveLength(1);
+        expect(violations[0].getFixes()).toHaveLength(2);
+        expect(violations[0].getSuggestions()).toHaveLength(1);
+    });
+
+    it("When an engine returns a violation without fixes or suggestions, then getFixes and getSuggestions return empty arrays", async () => {
+        stubEngine1.resultsToReturn = { violations: [stubs.getSampleViolationForStub1RuleA()] };
+        const overallResults: RunResults = await codeAnalyzer.run(selection, sampleRunOptions);
+        const violations: Violation[] = overallResults.getViolations();
+        expect(violations).toHaveLength(1);
+        expect(violations[0].getFixes()).toEqual([]);
+        expect(violations[0].getSuggestions()).toEqual([]);
+    });
+
+    it("When includeFixes and includeSuggestions are specified in RunOptions, they are forwarded to the engine", async () => {
+        stubEngine1.resultsToReturn = { violations: [stubs.getSampleViolationForStub1RuleA()] };
+        await codeAnalyzer.run(selection, {
+            ...sampleRunOptions,
+            includeFixes: true,
+            includeSuggestions: true
+        });
+        expect(stubEngine1.runRulesCallHistory[0].runOptions.includeFixes).toBe(true);
+        expect(stubEngine1.runRulesCallHistory[0].runOptions.includeSuggestions).toBe(true);
+    });
+
+    it("When includeFixes and includeSuggestions are not specified in RunOptions, they are undefined in the engine run options", async () => {
+        stubEngine1.resultsToReturn = { violations: [stubs.getSampleViolationForStub1RuleA()] };
+        await codeAnalyzer.run(selection, sampleRunOptions);
+        expect(stubEngine1.runRulesCallHistory[0].runOptions.includeFixes).toBeUndefined();
+        expect(stubEngine1.runRulesCallHistory[0].runOptions.includeSuggestions).toBeUndefined();
+    });
+
     it("When an engine throws an exception when running, then a result is returned with a Critical violation of type UnexpectedError", async () => {
         codeAnalyzer = createCodeAnalyzer();
         await codeAnalyzer.addEnginePlugin(new stubs.ThrowingEnginePlugin());

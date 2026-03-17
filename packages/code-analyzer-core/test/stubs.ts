@@ -433,6 +433,128 @@ export function getSampleViolationForStub3RuleA(): engApi.Violation {
     }
 }
 
+export function getSampleViolationWithFixes(): engApi.Violation {
+    return {
+        ruleName: 'stub1RuleA',
+        message: 'SomeViolationWithFixes',
+        codeLocations: [
+            {
+                file: 'test/config.test.ts',
+                startLine: 3,
+                startColumn: 6,
+                endLine: 3,
+                endColumn: 20
+            }
+        ],
+        primaryLocationIndex: 0,
+        fixes: [
+            {
+                location: {
+                    file: 'test/config.test.ts',
+                    startLine: 3,
+                    startColumn: 6,
+                    endLine: 3,
+                    endColumn: 20
+                },
+                fixedCode: 'const correctedValue = true;'
+            }
+        ]
+    };
+}
+
+export function getSampleViolationWithSuggestions(): engApi.Violation {
+    return {
+        ruleName: 'stub1RuleA',
+        message: 'SomeViolationWithSuggestions',
+        codeLocations: [
+            {
+                file: 'test/config.test.ts',
+                startLine: 5,
+                startColumn: 1,
+                endLine: 5,
+                endColumn: 10
+            }
+        ],
+        primaryLocationIndex: 0,
+        suggestions: [
+            {
+                location: {
+                    file: 'test/config.test.ts',
+                    startLine: 5,
+                    startColumn: 1,
+                    endLine: 5,
+                    endColumn: 10
+                },
+                message: 'Consider using a boolean literal instead'
+            },
+            {
+                location: {
+                    file: 'test/config.test.ts',
+                    startLine: 5,
+                    startColumn: 1,
+                    endLine: 5,
+                    endColumn: 10
+                },
+                message: 'Consider removing this unused variable'
+            }
+        ]
+    };
+}
+
+export function getSampleViolationWithFixesAndSuggestions(): engApi.Violation {
+    return {
+        ruleName: 'stub1RuleC',
+        message: 'SomeViolationWithBoth',
+        codeLocations: [
+            {
+                file: 'test/code-analyzer.test.ts',
+                startLine: 21,
+                startColumn: 7,
+                endLine: 25,
+                endColumn: 4
+            }
+        ],
+        primaryLocationIndex: 0,
+        fixes: [
+            {
+                location: {
+                    file: 'test/code-analyzer.test.ts',
+                    startLine: 21,
+                    startColumn: 7,
+                    endLine: 21,
+                    endColumn: 15
+                },
+                fixedCode: 'const x = 1;'
+            },
+            {
+                location: {
+                    file: 'test/code-analyzer.test.ts',
+                    startLine: 23,
+                    startColumn: 1,
+                    endLine: 23,
+                    endColumn: 10
+                },
+                fixedCode: 'let y = 2;'
+            }
+        ],
+        suggestions: [
+            {
+                location: {
+                    file: 'test/code-analyzer.test.ts',
+                    startLine: 21,
+                    startColumn: 7,
+                    endLine: 25,
+                    endColumn: 4
+                },
+                message: 'Refactor this block to use modern syntax'
+            }
+        ],
+        resourceUrls: [
+            "https://example.com/aViolationSpecificUrl1",
+        ]
+    };
+}
+
 /**
  * EmptyTagEnginePlugin - A plugin to help with testing rules with empty tags
  */

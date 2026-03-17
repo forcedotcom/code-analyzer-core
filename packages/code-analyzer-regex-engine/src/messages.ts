@@ -43,6 +43,12 @@ const MESSAGE_CATALOG : { [key: string]: string } = {
     TrailingWhitespaceRuleMessage:
         `Found trailing whitespace at the end of a line of code.`,
 
+    MixedIndentationRuleDescription:
+        `Identifies lines with both spaces and tabs in the leading indentation. Mixed indentation causes unexpected behavior in multiline strings because the indentation algorithm processes whitespace differently.`,
+
+    MixedIndentationRuleMessage:
+        `Leading indentation contains mixed spaces and tabs. To fix this, use either spaces or tabs.`,
+
     AvoidTermsWithImplicitBiasRuleDescription:
         `"Detects usage of terms that reinforce implicit bias.`,
 
