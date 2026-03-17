@@ -1009,6 +1009,156 @@ describe('Tests for emitting events', () => {
     });
 });
 
+describe('Tests for Fixable tag on rule descriptions', () => {
+    it('When a rule has fixable metadata, the Fixable tag is included in its description', async () => {
+        const engine: Engine = await createEngineFromPlugin(DEFAULT_CONFIG_FOR_TESTING);
+        const describeOptions = createDescribeOptions(new Workspace('id', [workspaceWithNoCustomConfig]));
+        const ruleDescriptions: RuleDescription[] = await engine.describeRules(describeOptions);
+
+        const preferConstRule = ruleDescriptions.find(r => r.name === 'prefer-const');
+        expect(preferConstRule).toBeDefined();
+        expect(preferConstRule!.tags).toContain('Fixable');
+    });
+
+    it('When a rule does not have fixable metadata, the Fixable tag is not present', async () => {
+        const engine: Engine = await createEngineFromPlugin(DEFAULT_CONFIG_FOR_TESTING);
+        const describeOptions = createDescribeOptions(new Workspace('id', [workspaceWithNoCustomConfig]));
+        const ruleDescriptions: RuleDescription[] = await engine.describeRules(describeOptions);
+
+        const noInvalidRegexpRule = ruleDescriptions.find(r => r.name === 'no-invalid-regexp');
+        expect(noInvalidRegexpRule).toBeDefined();
+        expect(noInvalidRegexpRule!.tags).not.toContain('Fixable');
+    });
+});
+
+describe('Tests for fixes and suggestions in runRules', () => {
+    const fixableFile: string = path.join(workspaceWithNoCustomConfig, 'fixable.js');
+
+    it('When includeFixes is true, violations from fixable rules include fixes', async () => {
+        const engine: Engine = await createEngineFromPlugin(DEFAULT_CONFIG_FOR_TESTING);
+        const runOptions: RunOptions = {
+            ...createRunOptions(new Workspace('id', [workspaceWithNoCustomConfig], [fixableFile])),
+            includeFixes: true
+        };
+        const results: EngineRunResults = await engine.runRules(['prefer-const'], runOptions);
+
+        expect(results.violations.length).toBeGreaterThanOrEqual(1);
+        const violationWithFix = results.violations.find(v => v.fixes && v.fixes.length > 0);
+        expect(violationWithFix).toBeDefined();
+
+        const fix = violationWithFix!.fixes![0];
+        expect(fix.fixedCode).toBeDefined();
+        expect(fix.location.file).toEqual(fixableFile);
+        expect(fix.location.startLine).toBeGreaterThanOrEqual(1);
+        expect(fix.location.startColumn).toBeGreaterThanOrEqual(1);
+        expect(fix.location.endLine).toBeGreaterThanOrEqual(fix.location.startLine);
+    });
+
+    it('When includeFixes is false, violations do not include fixes even for fixable rules', async () => {
+        const engine: Engine = await createEngineFromPlugin(DEFAULT_CONFIG_FOR_TESTING);
+        const runOptions: RunOptions = {
+            ...createRunOptions(new Workspace('id', [workspaceWithNoCustomConfig], [fixableFile])),
+            includeFixes: false
+        };
+        const results: EngineRunResults = await engine.runRules(['prefer-const'], runOptions);
+
+        expect(results.violations.length).toBeGreaterThanOrEqual(1);
+        for (const violation of results.violations) {
+            expect(violation.fixes).toBeUndefined();
+        }
+    });
+
+    it('When includeFixes is not specified, violations do not include fixes', async () => {
+        const engine: Engine = await createEngineFromPlugin(DEFAULT_CONFIG_FOR_TESTING);
+        const runOptions: RunOptions = createRunOptions(new Workspace('id', [workspaceWithNoCustomConfig], [fixableFile]));
+        const results: EngineRunResults = await engine.runRules(['prefer-const'], runOptions);
+
+        expect(results.violations.length).toBeGreaterThanOrEqual(1);
+        for (const violation of results.violations) {
+            expect(violation.fixes).toBeUndefined();
+        }
+    });
+
+    it('When includeSuggestions is true, violations with suggestions include them', async () => {
+        const engine: Engine = await createEngineFromPlugin(DEFAULT_CONFIG_FOR_TESTING);
+        const runOptions: RunOptions = {
+            ...createRunOptions(new Workspace('id', [workspaceWithNoCustomConfig], [fixableFile])),
+            includeSuggestions: true
+        };
+        const results: EngineRunResults = await engine.runRules(['no-unused-vars'], runOptions);
+
+        const violationsWithSuggestions = results.violations.filter(v => v.suggestions && v.suggestions.length > 0);
+        for (const violation of violationsWithSuggestions) {
+            for (const suggestion of violation.suggestions!) {
+                expect(suggestion.message).toBeDefined();
+                expect(suggestion.location.file).toEqual(fixableFile);
+                expect(suggestion.location.startLine).toBeGreaterThanOrEqual(1);
+                expect(suggestion.location.startColumn).toBeGreaterThanOrEqual(1);
+            }
+        }
+    });
+
+    it('When includeSuggestions is false, violations do not include suggestions', async () => {
+        const engine: Engine = await createEngineFromPlugin(DEFAULT_CONFIG_FOR_TESTING);
+        const runOptions: RunOptions = {
+            ...createRunOptions(new Workspace('id', [workspaceWithNoCustomConfig], [fixableFile])),
+            includeSuggestions: false
+        };
+        const results: EngineRunResults = await engine.runRules(['no-unused-vars'], runOptions);
+
+        for (const violation of results.violations) {
+            expect(violation.suggestions).toBeUndefined();
+        }
+    });
+
+    it('When both includeFixes and includeSuggestions are true, both are populated where applicable', async () => {
+        const engine: Engine = await createEngineFromPlugin(DEFAULT_CONFIG_FOR_TESTING);
+        const runOptions: RunOptions = {
+            ...createRunOptions(new Workspace('id', [workspaceWithNoCustomConfig], [fixableFile])),
+            includeFixes: true,
+            includeSuggestions: true
+        };
+        const results: EngineRunResults = await engine.runRules(['prefer-const', 'no-unused-vars'], runOptions);
+
+        expect(results.violations.length).toBeGreaterThanOrEqual(1);
+        const hasAnyFixes = results.violations.some(v => v.fixes && v.fixes.length > 0);
+        expect(hasAnyFixes).toBe(true);
+    });
+
+    it('Fix locations have correct line and column values converted from byte offsets', async () => {
+        const engine: Engine = await createEngineFromPlugin(DEFAULT_CONFIG_FOR_TESTING);
+        const runOptions: RunOptions = {
+            ...createRunOptions(new Workspace('id', [workspaceWithNoCustomConfig], [fixableFile])),
+            includeFixes: true
+        };
+        const results: EngineRunResults = await engine.runRules(['prefer-const'], runOptions);
+
+        const preferConstViolation = results.violations.find(v => v.ruleName === 'prefer-const');
+        expect(preferConstViolation).toBeDefined();
+        expect(preferConstViolation!.fixes).toBeDefined();
+
+        const fix = preferConstViolation!.fixes![0];
+        expect(fix.location.startLine).toEqual(1);
+        expect(fix.location.startColumn).toBeGreaterThanOrEqual(1);
+        expect(fix.fixedCode).toContain('const');
+    });
+
+    it('Multiple violations in the same file produce fixes without errors', async () => {
+        const engine: Engine = await createEngineFromPlugin(DEFAULT_CONFIG_FOR_TESTING);
+        const runOptions: RunOptions = {
+            ...createRunOptions(new Workspace('id', [workspaceWithNoCustomConfig], [fixableFile])),
+            includeFixes: true
+        };
+        const results: EngineRunResults = await engine.runRules(['prefer-const', 'no-var'], runOptions);
+
+        const fixableViolations = results.violations.filter(v => v.fixes && v.fixes.length > 0);
+        expect(fixableViolations.length).toBeGreaterThanOrEqual(1);
+        for (const violation of fixableViolations) {
+            expect(violation.fixes![0].location.file).toEqual(fixableFile);
+        }
+    });
+});
+
 function loadRuleDescriptions(fileNameFromTestDataFolder: string): RuleDescription[] {
     return JSON.parse(fs.readFileSync(path.join(testDataFolder,
         fileNameFromTestDataFolder), 'utf8')) as RuleDescription[];
