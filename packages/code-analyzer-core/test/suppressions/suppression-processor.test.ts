@@ -8,7 +8,7 @@ import {
     filterSuppressedViolations
 } from '../../src/suppressions/suppression-processor';
 import { FileSuppressions, SuppressionRange } from '../../src/suppressions/suppression-types';
-import { Violation, CodeLocation } from '../../src/results';
+import { Violation, CodeLocation, Fix, Suggestion } from '../../src/results';
 import { Rule, SeverityLevel } from '../../src/rules';
 
 // Mock implementations for testing
@@ -106,6 +106,14 @@ class MockViolation implements Violation {
     }
 
     getResourceUrls(): string[] {
+        return [];
+    }
+
+    getFixes(): Fix[] {
+        return [];
+    }
+
+    getSuggestions(): Suggestion[] {
         return [];
     }
 }
