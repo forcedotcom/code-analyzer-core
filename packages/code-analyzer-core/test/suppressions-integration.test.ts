@@ -352,4 +352,42 @@ describe('Suppression Markers Integration Tests', () => {
             expect(result[0].getPrimaryLocation().getStartLine()).toBe(6);
         });
     });
+
+    describe('unsuppress without suppress', () => {
+        it('should have no effect when unsuppress markers exist without corresponding suppress markers', async () => {
+            const filePath = path.join(testDataDir, 'file-with-only-unsuppress.js');
+
+            const violations: Violation[] = [
+                new MockViolation(
+                    new MockRule('eslint', 'no-magic-numbers', SeverityLevel.Moderate),
+                    'No magic numbers',
+                    new MockCodeLocation(filePath, 7) // Before unsuppress marker
+                ),
+                new MockViolation(
+                    new MockRule('eslint', 'no-console', SeverityLevel.High),
+                    'No console',
+                    new MockCodeLocation(filePath, 10) // After unsuppress(eslint:no-console) on line 9
+                ),
+                new MockViolation(
+                    new MockRule('eslint', 'no-magic-numbers', SeverityLevel.Moderate),
+                    'No magic numbers',
+                    new MockCodeLocation(filePath, 12) // After first unsuppress
+                ),
+                new MockViolation(
+                    new MockRule('eslint', 'no-eval', SeverityLevel.Critical),
+                    'No eval',
+                    new MockCodeLocation(filePath, 15) // After unsuppress(all) on line 14
+                )
+            ];
+
+            const result = await processSuppressions(violations);
+
+            // All violations should remain - unsuppress without suppress has no effect
+            expect(result.length).toBe(4);
+            expect(result[0].getPrimaryLocation().getStartLine()).toBe(7);
+            expect(result[1].getPrimaryLocation().getStartLine()).toBe(10);
+            expect(result[2].getPrimaryLocation().getStartLine()).toBe(12);
+            expect(result[3].getPrimaryLocation().getStartLine()).toBe(15);
+        });
+    });
 });
