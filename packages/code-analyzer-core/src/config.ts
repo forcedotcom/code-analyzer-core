@@ -16,7 +16,8 @@ export const FIELDS = {
     ROOT_WORKING_FOLDER: 'root_working_folder', // Hidden
     CUSTOM_ENGINE_PLUGIN_MODULES: 'custom_engine_plugin_modules', // Hidden
     PRESERVE_ALL_WORKING_FOLDERS: 'preserve_all_working_folders', // Hidden
-    SUPPRESSIONS_ENABLED: 'suppressions_enabled',
+    SUPPRESSIONS: 'suppressions',
+    DISABLE_SUPPRESSIONS: 'disable_suppressions',
     RULES: 'rules',
     ENGINES: 'engines',
     SEVERITY: 'severity',
@@ -49,6 +50,13 @@ export type Ignores = {
     files: string[]
 }
 
+/**
+ * Object containing the user specified suppressions configuration
+ */
+export type Suppressions = {
+    disable_suppressions: boolean
+}
+
 type TopLevelConfig = {
     config_root: string
     log_folder: string
@@ -56,7 +64,7 @@ type TopLevelConfig = {
     rules: Record<string, RuleOverrides>
     engines: Record<string, EngineOverrides>
     ignores: Ignores
-    suppressions_enabled: boolean // INTERNAL USE ONLY - set via CLI, not YAML
+    suppressions: Suppressions
     root_working_folder: string, // INTERNAL USE ONLY
     preserve_all_working_folders: boolean // INTERNAL USE ONLY
     custom_engine_plugin_modules: string[] // INTERNAL USE ONLY
@@ -67,7 +75,7 @@ export const DEFAULT_CONFIG: TopLevelConfig = {
     config_root: process.cwd(),
     log_folder: os.tmpdir(),
     log_level: LogLevel.Debug,
-    suppressions_enabled: true, // Enabled by default for inline suppression markers
+    suppressions: { disable_suppressions: false }, // Suppressions enabled by default
     rules: {},
     engines: {},
     ignores: { files: [] },
@@ -158,13 +166,13 @@ export class CodeAnalyzerConfig {
         configRoot = !rawConfig.config_root ? (configRoot ?? process.cwd()) :
             validateAbsoluteFolder(rawConfig.config_root, FIELDS.CONFIG_ROOT);
         const configExtractor: engApi.ConfigValueExtractor = new engApi.ConfigValueExtractor(rawConfig, '', configRoot);
-        configExtractor.addKeysThatBypassValidation([FIELDS.CUSTOM_ENGINE_PLUGIN_MODULES, FIELDS.PRESERVE_ALL_WORKING_FOLDERS, FIELDS.ROOT_WORKING_FOLDER, FIELDS.SUPPRESSIONS_ENABLED]); // Hidden fields bypass validation
-        configExtractor.validateContainsOnlySpecifiedKeys([FIELDS.CONFIG_ROOT, FIELDS.LOG_FOLDER, FIELDS.LOG_LEVEL, FIELDS.RULES, FIELDS.ENGINES, FIELDS.IGNORES]);
+        configExtractor.addKeysThatBypassValidation([FIELDS.CUSTOM_ENGINE_PLUGIN_MODULES, FIELDS.PRESERVE_ALL_WORKING_FOLDERS, FIELDS.ROOT_WORKING_FOLDER]); // Hidden fields bypass validation
+        configExtractor.validateContainsOnlySpecifiedKeys([FIELDS.CONFIG_ROOT, FIELDS.LOG_FOLDER, FIELDS.LOG_LEVEL, FIELDS.RULES, FIELDS.ENGINES, FIELDS.IGNORES, FIELDS.SUPPRESSIONS]);
         const config: TopLevelConfig = {
             config_root: configRoot,
             log_folder: configExtractor.extractFolder(FIELDS.LOG_FOLDER, DEFAULT_CONFIG.log_folder)!,
             log_level: extractLogLevel(configExtractor),
-            suppressions_enabled: configExtractor.extractBoolean(FIELDS.SUPPRESSIONS_ENABLED, DEFAULT_CONFIG.suppressions_enabled)!,
+            suppressions: extractSuppressionsValue(configExtractor),
             custom_engine_plugin_modules: configExtractor.extractArray(FIELDS.CUSTOM_ENGINE_PLUGIN_MODULES,
                 engApi.ValueValidator.validateString,
                 DEFAULT_CONFIG.custom_engine_plugin_modules)!,
@@ -246,9 +254,10 @@ export class CodeAnalyzerConfig {
     /**
      * Returns whether suppression markers should be processed.
      * When enabled, code-analyzer-suppress/unsuppress markers in source files will filter out violations.
+     * Returns true by default unless explicitly disabled via suppressions.disable_suppressions config.
      */
     public getSuppressionsEnabled(): boolean {
-        return this.config.suppressions_enabled;
+        return !this.config.suppressions.disable_suppressions;
     }
 
     /**
@@ -368,6 +377,13 @@ function extractIgnoresValue(configExtractor: engApi.ConfigValueExtractor): Igno
     ignoresExtractor.validateContainsOnlySpecifiedKeys([FIELDS.FILES]);
     const files: string[] = ignoresExtractor.extractArray(FIELDS.FILES, validateGlobPattern, DEFAULT_CONFIG.ignores.files) || [];
     return { files };
+}
+
+function extractSuppressionsValue(configExtractor: engApi.ConfigValueExtractor): Suppressions {
+    const suppressionsExtractor: engApi.ConfigValueExtractor = configExtractor.extractObjectAsExtractor(FIELDS.SUPPRESSIONS, DEFAULT_CONFIG.suppressions);
+    suppressionsExtractor.validateContainsOnlySpecifiedKeys([FIELDS.DISABLE_SUPPRESSIONS]);
+    const disable_suppressions: boolean = suppressionsExtractor.extractBoolean(FIELDS.DISABLE_SUPPRESSIONS, DEFAULT_CONFIG.suppressions.disable_suppressions) || false;
+    return { disable_suppressions };
 }
 
 /**
