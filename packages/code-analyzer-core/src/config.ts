@@ -67,7 +67,7 @@ export const DEFAULT_CONFIG: TopLevelConfig = {
     config_root: process.cwd(),
     log_folder: os.tmpdir(),
     log_level: LogLevel.Debug,
-    suppressions_enabled: false, // Opt-in for suppression markers
+    suppressions_enabled: true, // Enabled by default for inline suppression markers
     rules: {},
     engines: {},
     ignores: { files: [] },
