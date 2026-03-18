@@ -499,12 +499,12 @@ describe('RegexEnginePlugin Custom Config Tests', () => {
             getMessageFromCatalog(SHARED_MESSAGE_CATALOG,'ConfigValueMustBeOfType', 'engines.regex.custom_rules.NoTodos.tags', 'array', 'string'));
     });
 
-    it("If user creates a rule with pattern_not_regex, it should be included in the config", async () => {
+    it("If user creates a rule with regex_ignore, it should be included in the config", async () => {
         const rawConfig = {
             custom_rules: {
                 "EmailHeaderInjection": {
                     regex: String.raw`/(To|From|Subject):\s*\$\([^)]+\)/gi`,
-                    pattern_not_regex: String.raw`/\$\(\s*validatedMessageId\s*\)/gi`,
+                    regex_ignore: String.raw`/\$\(\s*validatedMessageId\s*\)/gi`,
                     description: "Detects user input in email headers",
                     file_extensions: [".dwl"]
                 }
@@ -514,22 +514,22 @@ describe('RegexEnginePlugin Custom Config Tests', () => {
         const resolvedConfig: ConfigObject = await plugin.createEngineConfig("regex", valueExtractor);
         const pluginEngine: RegexEngine = await plugin.createEngine("regex", resolvedConfig) as RegexEngine;
 
-        expect(pluginEngine._getRegexRules()["EmailHeaderInjection"].pattern_not_regex).toBeDefined();
-        expect(pluginEngine._getRegexRules()["EmailHeaderInjection"].pattern_not_regex).toContain('validatedMessageId');
+        expect(pluginEngine._getRegexRules()["EmailHeaderInjection"].regex_ignore).toBeDefined();
+        expect(pluginEngine._getRegexRules()["EmailHeaderInjection"].regex_ignore).toContain('validatedMessageId');
     });
 
-    it("If user creates a rule with invalid pattern_not_regex, ensure correct error is emitted", async () => {
+    it("If user creates a rule with invalid regex_ignore, ensure correct error is emitted", async () => {
         const rawConfig = {
             custom_rules: {
                 "BadRule": {
                     ...SAMPLE_RAW_CUSTOM_RULE_DEFINITION,
-                    pattern_not_regex: "/bad[pattern/gi"
+                    regex_ignore: "/bad[pattern/gi"
                 }
             }
         };
         const valueExtractor: ConfigValueExtractor = new ConfigValueExtractor(rawConfig, 'engines.regex');
         await expect(plugin.createEngineConfig("regex", valueExtractor)).rejects.toThrow(
-            getMessage('InvalidConfigurationValueWithReason', 'engines.regex.custom_rules.BadRule.pattern_not_regex',
+            getMessage('InvalidConfigurationValueWithReason', 'engines.regex.custom_rules.BadRule.regex_ignore',
                 getMessage('InvalidRegexDueToError', '/bad[pattern/gi', "Invalid regular expression: /bad[pattern/gi: Unterminated character class")));
     });
 });

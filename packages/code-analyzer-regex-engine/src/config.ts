@@ -33,8 +33,8 @@ export type RegexRule = {
 
     // [Optional] The negative pattern - matches that also match this pattern will be excluded from violations.
     // This allows you to exclude false positives by specifying patterns that should NOT be flagged.
-    // Example: regex: /(To|From):\s*\$\([^)]+\)/ with pattern_not_regex: /\$\(validatedMessageId\)/
-    pattern_not_regex?: string;
+    // Example: regex: /(To|From):\s*\$\([^)]+\)/ with regex_ignore: /\$\(validatedMessageId\)/
+    regex_ignore?: string;
 
     // The extensions of the files that you would like to test the regular expression against.
     // If not defined, or equal to null, then all text-based files of any file extension will be tested.
@@ -79,9 +79,9 @@ export function validateAndNormalizeConfig(valueExtractor: ConfigValueExtractor)
         const description: string = ruleExtractor.extractRequiredString('description');
         const rawRegexString: string = ruleExtractor.extractRequiredString('regex');
         const regexString: string = validateRegexString(rawRegexString, ruleExtractor.getFieldPath('regex'));
-        const rawPatternNotRegex: string | undefined = ruleExtractor.extractString('pattern_not_regex');
+        const rawPatternNotRegex: string | undefined = ruleExtractor.extractString('regex_ignore');
         const patternNotRegexString: string | undefined = rawPatternNotRegex
-            ? validateRegexString(rawPatternNotRegex, ruleExtractor.getFieldPath('pattern_not_regex'))
+            ? validateRegexString(rawPatternNotRegex, ruleExtractor.getFieldPath('regex_ignore'))
             : undefined;
         const rawFileExtensions: string[] | undefined = ruleExtractor.extractArray('file_extensions',
             (element, fieldPath) => ValueValidator.validateString(element, fieldPath, FILE_EXT_PATTERN));
@@ -94,7 +94,7 @@ export function validateAndNormalizeConfig(valueExtractor: ConfigValueExtractor)
             severity: ruleExtractor.extractSeverityLevel('severity', DEFAULT_SEVERITY_LEVEL)!,
             tags: ruleExtractor.extractArray('tags', ValueValidator.validateString, [COMMON_TAGS.RECOMMENDED, COMMON_TAGS.CUSTOM])!,
             ...(rawFileExtensions ? { file_extensions: normalizeFileExtensions(rawFileExtensions) } : {}),
-            ...(patternNotRegexString ? { pattern_not_regex: patternNotRegexString } : {}),
+            ...(patternNotRegexString ? { regex_ignore: patternNotRegexString } : {}),
         }
     }
     return {

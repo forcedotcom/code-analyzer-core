@@ -1031,12 +1031,12 @@ describe('Tests for runRules', () => {
     });
 });
 
-describe('Tests for pattern_not_regex', () => {
-    it('pattern_not_regex should exclude matches that match the negative pattern', async () => {
+describe('Tests for regex_ignore', () => {
+    it('regex_ignore should exclude matches that match the negative pattern', async () => {
         const customRulesWithNegativePattern: RegexRules = {
             EmailHeaderInjection: {
                 regex: '/(To|From|Subject|In-Reply-To|References):\\s*\\$\\([^)]+\\)/gi',
-                pattern_not_regex: '/\\$\\(\\s*validatedMessageId\\s*\\)/gi',
+                regex_ignore: '/\\$\\(\\s*validatedMessageId\\s*\\)/gi',
                 description: "Detects user input in email headers, excluding validatedMessageId",
                 file_extensions: [".dwl"],
                 violation_message: "User input detected in email header",
@@ -1057,11 +1057,11 @@ describe('Tests for pattern_not_regex', () => {
         const unsanitizedViolations = runResults.violations.filter(v =>
             v.codeLocations[0].file.includes('emailHeaders_WithUnsanitizedPayload.dwl'));
 
-        expect(validatedIdViolations).toHaveLength(0); // Should be excluded by pattern_not_regex
+        expect(validatedIdViolations).toHaveLength(0); // Should be excluded by regex_ignore
         expect(unsanitizedViolations.length).toBeGreaterThan(0); // Should have violations
     });
 
-    it('Rule without pattern_not_regex should behave normally', async () => {
+    it('Rule without regex_ignore should behave normally', async () => {
         const customRulesWithoutNegativePattern: RegexRules = {
             EmailHeaderInjection: {
                 regex: '/(To|From|Subject|In-Reply-To|References):\\s*\\$\\([^)]+\\)/gi',
@@ -1078,7 +1078,7 @@ describe('Tests for pattern_not_regex', () => {
             new Workspace('id', [path.resolve(__dirname, "test-data", "patternNotRegex")]));
         const runResults: EngineRunResults = await testEngine.runRules(["EmailHeaderInjection"], runOptions);
 
-        // Without pattern_not_regex, both files should have violations
+        // Without regex_ignore, both files should have violations
         const validatedIdViolations = runResults.violations.filter(v =>
             v.codeLocations[0].file.includes('emailHeaders_WithValidatedId.dwl'));
         const unsanitizedViolations = runResults.violations.filter(v =>
@@ -1088,11 +1088,11 @@ describe('Tests for pattern_not_regex', () => {
         expect(unsanitizedViolations.length).toBeGreaterThan(0); // Should have violations
     });
 
-    it('pattern_not_regex with multiple exclusion patterns', async () => {
+    it('regex_ignore with multiple exclusion patterns', async () => {
         const customRulesWithMultipleExclusions: RegexRules = {
             EmailHeaderInjection: {
                 regex: '/(To|From|Subject):\\s*\\$\\([^)]+\\)/gi',
-                pattern_not_regex: '/\\$\\((validatedMessageId|sanitizeHeader|getSafeEmailHeader)\\s*[^)]*\\)/gi',
+                regex_ignore: '/\\$\\((validatedMessageId|sanitizeHeader|getSafeEmailHeader)\\s*[^)]*\\)/gi',
                 description: "Detects user input in email headers, excluding safe functions",
                 file_extensions: [".dwl"],
                 violation_message: "User input detected in email header",

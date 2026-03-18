@@ -140,8 +140,8 @@ export class RegexEngine extends Engine {
         const newlineIndexes: number[] = getNewlineIndices(fileContents, contextuallyDerivedEol);
 
         // Get negative pattern if defined
-        const patternNotRegex = this.regexRules[ruleName].pattern_not_regex
-            ? convertToRegex(this.regexRules[ruleName].pattern_not_regex!)
+        const patternNotRegex = this.regexRules[ruleName].regex_ignore
+            ? convertToRegex(this.regexRules[ruleName].regex_ignore!)
             : undefined;
 
         for (const match of fileContents.matchAll(regex)) {
