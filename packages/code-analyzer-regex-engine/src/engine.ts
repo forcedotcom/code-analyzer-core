@@ -139,6 +139,11 @@ export class RegexEngine extends Engine {
         const contextuallyDerivedEol: string = contextuallyDeriveEolString(fileContents);
         const newlineIndexes: number[] = getNewlineIndices(fileContents, contextuallyDerivedEol);
 
+        // Get negative pattern if defined
+        const patternNotRegex = this.regexRules[ruleName].regex_ignore
+            ? convertToRegex(this.regexRules[ruleName].regex_ignore!)
+            : undefined;
+
         for (const match of fileContents.matchAll(regex)) {
             let startIndex: number = match.index;
             let matchLength: number = match[0].length;
@@ -148,6 +153,18 @@ export class RegexEngine extends Engine {
             if (match.groups?.target) {
                 startIndex = startIndex + match[0].indexOf(match.groups.target);
                 matchLength = match.groups.target.length;
+            }
+
+            // Skip this match if it also matches the negative pattern
+            if (patternNotRegex) {
+                const matchedText = fileContents.substring(startIndex, startIndex + matchLength);
+                if (patternNotRegex.test(matchedText)) {
+                    // Reset regex state for next iteration
+                    patternNotRegex.lastIndex = 0;
+                    continue;
+                }
+                // Reset regex state for next iteration
+                patternNotRegex.lastIndex = 0;
             }
 
             const startLine: number = getLineNumber(startIndex, newlineIndexes);
