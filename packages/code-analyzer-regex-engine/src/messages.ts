@@ -11,6 +11,11 @@ const MESSAGE_CATALOG : { [key: string]: string } = {
         `  {rule_name} is the name you would like to give to your custom rule\n` +
         `  {rule_property_name} is the name of one of the rule properties. You may specify the following rule properties:\n` +
         `    'regex'             - The regular expression that triggers a violation when matched against the contents of a file.\n` +
+        `    'regex_ignore' - [Optional] The negative pattern - matches that also match this pattern will be excluded.\n` +
+        `                          This allows you to exclude false positives by specifying patterns that should NOT be flagged.\n` +
+        `                          Example: To match email headers with user input but exclude 'validatedMessageId':\n` +
+        `                          regex: /(To|From):\\s*\\$\\([^)]+\\)/gi\n` +
+        `                          regex_ignore: /\\$\\(\\s*validatedMessageId\\s*\\)/gi\n` +
         `    'file_extensions'   - The extensions of the files that you would like to test the regular expression against.\n` +
         `    'description'       - A description of the rule's purpose\n` +
         `    'violation_message' - [Optional] The message emitted when a rule violation occurs.\n` +
@@ -32,6 +37,13 @@ const MESSAGE_CATALOG : { [key: string]: string } = {
         `        violation_message: "A comment with a TODO statement was found. Please remove TODO statements from your apex code."\n` +
         `        severity: "Info"\n` +
         `        tags: ["TechDebt"]\n` +
+        `      "DataWeaveEmailHeaderInjection":\n` +
+        `        regex: /(To|From|Subject):\\s*\\$\\([^)]+\\)/gi\n` +
+        `        regex_ignore: /\\$\\(\\s*validatedMessageId\\s*\\)/gi\n` +
+        `        file_extensions: [".dwl"]\n` +
+        `        description: "Detects user input in email headers, excluding validated IDs."\n` +
+        `        severity: "Critical"\n` +
+        `        tags: ["Security"]\n` +
         `-------------------------------------------`,
 
     UnsupportedEngineName:

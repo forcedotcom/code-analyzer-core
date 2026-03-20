@@ -1031,6 +1031,89 @@ describe('Tests for runRules', () => {
     });
 });
 
+describe('Tests for regex_ignore', () => {
+    it('regex_ignore should exclude matches that match the negative pattern', async () => {
+        const customRulesWithNegativePattern: RegexRules = {
+            EmailHeaderInjection: {
+                regex: '/(To|From|Subject|In-Reply-To|References):\\s*\\$\\([^)]+\\)/gi',
+                regex_ignore: '/\\$\\(\\s*validatedMessageId\\s*\\)/gi',
+                description: "Detects user input in email headers, excluding validatedMessageId",
+                file_extensions: [".dwl"],
+                violation_message: "User input detected in email header",
+                severity: SeverityLevel.Critical,
+                tags: ["Security"]
+            }
+        };
+
+        const testEngine = new RegexEngine(customRulesWithNegativePattern, RULE_RESOURCE_URLS);
+        const runOptions: RunOptions = createRunOptions(
+            new Workspace('id', [path.resolve(__dirname, "test-data", "patternNotRegex")]));
+        const runResults: EngineRunResults = await testEngine.runRules(["EmailHeaderInjection"], runOptions);
+
+        // emailHeaders_WithValidatedId.dwl has $(validatedMessageId) - should be excluded
+        // emailHeaders_WithUnsanitizedPayload.dwl has $(payload.x) - should be violations
+        const validatedIdViolations = runResults.violations.filter(v =>
+            v.codeLocations[0].file.includes('emailHeaders_WithValidatedId.dwl'));
+        const unsanitizedViolations = runResults.violations.filter(v =>
+            v.codeLocations[0].file.includes('emailHeaders_WithUnsanitizedPayload.dwl'));
+
+        expect(validatedIdViolations).toHaveLength(0); // Should be excluded by regex_ignore
+        expect(unsanitizedViolations.length).toBeGreaterThan(0); // Should have violations
+    });
+
+    it('Rule without regex_ignore should behave normally', async () => {
+        const customRulesWithoutNegativePattern: RegexRules = {
+            EmailHeaderInjection: {
+                regex: '/(To|From|Subject|In-Reply-To|References):\\s*\\$\\([^)]+\\)/gi',
+                description: "Detects user input in email headers",
+                file_extensions: [".dwl"],
+                violation_message: "User input detected in email header",
+                severity: SeverityLevel.Critical,
+                tags: ["Security"]
+            }
+        };
+
+        const testEngine = new RegexEngine(customRulesWithoutNegativePattern, RULE_RESOURCE_URLS);
+        const runOptions: RunOptions = createRunOptions(
+            new Workspace('id', [path.resolve(__dirname, "test-data", "patternNotRegex")]));
+        const runResults: EngineRunResults = await testEngine.runRules(["EmailHeaderInjection"], runOptions);
+
+        // Without regex_ignore, both files should have violations
+        const validatedIdViolations = runResults.violations.filter(v =>
+            v.codeLocations[0].file.includes('emailHeaders_WithValidatedId.dwl'));
+        const unsanitizedViolations = runResults.violations.filter(v =>
+            v.codeLocations[0].file.includes('emailHeaders_WithUnsanitizedPayload.dwl'));
+
+        expect(validatedIdViolations.length).toBeGreaterThan(0); // Should have violations
+        expect(unsanitizedViolations.length).toBeGreaterThan(0); // Should have violations
+    });
+
+    it('regex_ignore with multiple exclusion patterns', async () => {
+        const customRulesWithMultipleExclusions: RegexRules = {
+            EmailHeaderInjection: {
+                regex: '/(To|From|Subject):\\s*\\$\\([^)]+\\)/gi',
+                regex_ignore: '/\\$\\((validatedMessageId|sanitizeHeader|getSafeEmailHeader)\\s*[^)]*\\)/gi',
+                description: "Detects user input in email headers, excluding safe functions",
+                file_extensions: [".dwl"],
+                violation_message: "User input detected in email header",
+                severity: SeverityLevel.Critical,
+                tags: ["Security"]
+            }
+        };
+
+        const testEngine = new RegexEngine(customRulesWithMultipleExclusions, RULE_RESOURCE_URLS);
+        const runOptions: RunOptions = createRunOptions(
+            new Workspace('id', [path.resolve(__dirname, "test-data", "patternNotRegex")]));
+        const runResults: EngineRunResults = await testEngine.runRules(["EmailHeaderInjection"], runOptions);
+
+        // validatedMessageId should still be excluded
+        const validatedIdViolations = runResults.violations.filter(v =>
+            v.codeLocations[0].file.includes('emailHeaders_WithValidatedId.dwl'));
+
+        expect(validatedIdViolations).toHaveLength(0);
+    });
+});
+
 describe('Tests for getEngineVersion', () => {
     it('Outputs something resembling a Semantic Version', async () => {
         const version: string = await engine.getEngineVersion();
