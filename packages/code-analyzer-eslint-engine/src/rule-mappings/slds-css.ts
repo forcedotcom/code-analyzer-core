@@ -15,9 +15,9 @@ export const RULE_MAPPINGS_SLDS_CSS: Record<string, {severity: SeverityLevel, ta
         severity: SeverityLevel.Moderate,
         tags: [COMMON_TAGS.RECOMMENDED, SLDS, COMMON_TAGS.CATEGORIES.ERROR_PRONE, COMMON_TAGS.LANGUAGES.CSS]
     },
-    "@salesforce-ux/slds/no-deprecated-slds-classes": {
+    "@salesforce-ux/slds/no-deprecated-classes-slds2": {
         severity: SeverityLevel.Moderate,
-        tags: [COMMON_TAGS.RECOMMENDED, SLDS, COMMON_TAGS.CATEGORIES.ERROR_PRONE, COMMON_TAGS.LANGUAGES.CSS]
+        tags: [COMMON_TAGS.RECOMMENDED, SLDS, COMMON_TAGS.CATEGORIES.ERROR_PRONE, COMMON_TAGS.LANGUAGES.HTML]
     },
     "@salesforce-ux/slds/no-hardcoded-values-slds2": {
         severity: SeverityLevel.Low,
