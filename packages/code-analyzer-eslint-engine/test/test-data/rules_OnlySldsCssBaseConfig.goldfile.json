@@ -42,17 +42,17 @@
     ]
   },
   {
-    "description": "Please replace the deprecated classes with a modern equivalent",
-    "name": "@salesforce-ux/slds/no-deprecated-slds-classes",
+    "description": "Replace classes that aren't available with SLDS 2 classes. See lightningdesignsystem.com for more info.",
+    "name": "@salesforce-ux/slds/no-deprecated-classes-slds2",
     "resourceUrls": [
-      "https://developer.salesforce.com/docs/platform/slds-linter/guide/reference-rules.html#no-deprecated-slds-classes"
+      "https://developer.salesforce.com/docs/platform/slds-linter/guide/reference-rules.html#no-deprecated-classes-slds2"
     ],
     "severityLevel": 3,
     "tags": [
       "Recommended",
       "SLDS",
       "ErrorProne",
-      "CSS"
+      "HTML"
     ]
   },
   {
@@ -70,7 +70,7 @@
     ]
   },
   {
-    "description": "Create new custom CSS classes instead of overriding SLDS selectors",
+    "description": "Create new custom CSS classes instead of overriding SLDS selectors. For more information, see the Lightning Web Components Developer Guide.",
     "name": "@salesforce-ux/slds/no-slds-class-overrides",
     "resourceUrls": [
       "https://developer.salesforce.com/docs/platform/slds-linter/guide/reference-rules.html#no-slds-class-overrides"
@@ -140,7 +140,7 @@
     ]
   },
   {
-    "description": "Identifies styling hooks that aren't present in SLDS 2. They must be replaced with styling hooks that have a similar effect, or they must be removed.",
+    "description": "Replace deprecated --slds styling hooks. See lightningdesignsystem.com for more info.",
     "name": "@salesforce-ux/slds/no-unsupported-hooks-slds2",
     "resourceUrls": [
       "https://developer.salesforce.com/docs/platform/slds-linter/guide/reference-rules.html#no-unsupported-hooks-slds2"
