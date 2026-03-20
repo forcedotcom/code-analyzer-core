@@ -1,7 +1,7 @@
 import {RunResults} from "../../results";
 import * as xmlbuilder from "xmlbuilder";
 import {RunResultsFormatter, CODE_ANALYZER_CORE_NAME} from "../../output-format";
-import {JsonResultsOutput, toJsonResultsOutput} from "./json-run-results-format";
+import {JsonCodeLocationOutput, JsonResultsOutput, toJsonResultsOutput} from "./json-run-results-format";
 
 /**
  * Formatter for Results XML Output Format
@@ -69,8 +69,45 @@ export class XmlRunResultsFormatter implements RunResultsFormatter {
             for (const resource of violationOutput.resources) {
                 resourcesNode.node('resource').text(resource);
             }
+
+            if (violationOutput.fixes && violationOutput.fixes.length > 0) {
+                const fixesNode: xmlbuilder.XMLElement = violationNode.node('fixes');
+                for (const fix of violationOutput.fixes) {
+                    const fixNode: xmlbuilder.XMLElement = fixesNode.node('fix');
+                    addCodeLocationXmlNode(fixNode, 'location', fix.location);
+                    fixNode.node('fixedCode').text(fix.fixedCode);
+                }
+            }
+
+            if (violationOutput.suggestions && violationOutput.suggestions.length > 0) {
+                const suggestionsNode: xmlbuilder.XMLElement = violationNode.node('suggestions');
+                for (const suggestion of violationOutput.suggestions) {
+                    const suggestionNode: xmlbuilder.XMLElement = suggestionsNode.node('suggestion');
+                    addCodeLocationXmlNode(suggestionNode, 'location', suggestion.location);
+                    suggestionNode.node('message').text(suggestion.message);
+                }
+            }
         }
 
         return violationsNode.end({ pretty: true, allowEmpty: true });
+    }
+}
+
+function addCodeLocationXmlNode(parentNode: xmlbuilder.XMLElement, nodeName: string, location: JsonCodeLocationOutput): void {
+    const locationNode: xmlbuilder.XMLElement = parentNode.node(nodeName);
+    if (location.file !== undefined) {
+        locationNode.node('file').text(location.file);
+    }
+    if (location.startLine !== undefined) {
+        locationNode.node('startLine').text(`${location.startLine}`);
+    }
+    if (location.startColumn !== undefined) {
+        locationNode.node('startColumn').text(`${location.startColumn}`);
+    }
+    if (location.endLine !== undefined) {
+        locationNode.node('endLine').text(`${location.endLine}`);
+    }
+    if (location.endColumn !== undefined) {
+        locationNode.node('endColumn').text(`${location.endColumn}`);
     }
 }

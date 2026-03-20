@@ -5,7 +5,7 @@
 
 import * as path from 'node:path';
 import { processSuppressions } from '../src/suppressions/suppression-processor';
-import { Violation } from '../src/results';
+import { Violation, Fix, Suggestion } from '../src/results';
 import { Rule } from '../src/rules';
 import { SeverityLevel } from '@salesforce/code-analyzer-engine-api';
 
@@ -53,6 +53,8 @@ class MockViolation implements Violation {
     getCodeLocations(): MockCodeLocation[] { return [this.primaryLocation]; }
     getPrimaryLocationIndex(): number { return 0; }
     getResourceUrls(): string[] { return []; }
+    getFixes(): Fix[] { return []; }
+    getSuggestions(): Suggestion[] { return []; }
 }
 
 describe('Suppression Markers Integration Tests', () => {

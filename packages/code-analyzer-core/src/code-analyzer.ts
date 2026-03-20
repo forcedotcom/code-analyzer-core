@@ -87,6 +87,12 @@ export type SelectOptions = {
 export type RunOptions = {
     /** Object that specifies the user's workspace and which files should be targeted in the run analysis. */
     workspace: Workspace
+
+    /** When true, engines should include fix data on violations when available. */
+    includeFixes?: boolean
+
+    /** When true, engines should include suggestion data on violations when available. */
+    includeSuggestions?: boolean
 }
 
 /**
@@ -359,7 +365,9 @@ export class CodeAnalyzer {
             const engineRunOptions: engApi.RunOptions = {
                 logFolder: this.config.getLogFolder(),
                 workingFolder: workingFolder,
-                workspace: engApiWorkspace
+                workspace: engApiWorkspace,
+                includeFixes: runOptions.includeFixes,
+                includeSuggestions: runOptions.includeSuggestions
             };
             const errorCallback: () => void = () => {
                 // istanbul ignore else
@@ -806,6 +814,8 @@ function validateEngineRunResults(engineName: string, apiEngineRunResults: engAp
         validateViolationRuleName(violation, engineName, ruleSelection);
         validateViolationCodeLocations(violation, engineName);
         validateViolationPrimaryLocationIndex(violation, engineName);
+        validateFixCodeLocations(violation, engineName);
+        validateSuggestionCodeLocations(violation, engineName);
     }
 }
 
@@ -829,47 +839,68 @@ function validateViolationCodeLocations(violation: engApi.Violation, engineName:
         throw new Error(getMessage('EngineReturnedViolationWithEmptyCodeLocationArray', engineName, violation.ruleName));
     }
     for (const codeLocation of violation.codeLocations) {
-        const absFile: string = toAbsolutePath(codeLocation.file);
-        fs.existsSync(absFile)
+        validateCodeLocation(codeLocation, engineName, violation.ruleName);
+    }
+}
 
-        if (!fs.existsSync(absFile)) {
-            throw new Error(getMessage('EngineReturnedViolationWithCodeLocationFileThatDoesNotExist',
-                engineName, violation.ruleName, absFile));
-        }
+function validateFixCodeLocations(violation: engApi.Violation, engineName: string): void {
+    if (!violation.fixes) {
+        return;
+    }
+    for (const fix of violation.fixes) {
+        validateCodeLocation(fix.location, engineName, violation.ruleName);
+    }
+}
 
-        if (!fs.statSync(absFile).isFile()) {
-            throw new Error(getMessage('EngineReturnedViolationWithCodeLocationFileAsFolder',
-                engineName, violation.ruleName, absFile));
-        }
+function validateSuggestionCodeLocations(violation: engApi.Violation, engineName: string): void {
+    if (!violation.suggestions) {
+        return;
+    }
+    for (const suggestion of violation.suggestions) {
+        validateCodeLocation(suggestion.location, engineName, violation.ruleName);
+    }
+}
 
-        if (!isValidLineOrColumn(codeLocation.startLine)) {
+function validateCodeLocation(codeLocation: engApi.CodeLocation, engineName: string, ruleName: string): void {
+    const absFile: string = toAbsolutePath(codeLocation.file);
+
+    if (!fs.existsSync(absFile)) {
+        throw new Error(getMessage('EngineReturnedViolationWithCodeLocationFileThatDoesNotExist',
+            engineName, ruleName, absFile));
+    }
+
+    if (!fs.statSync(absFile).isFile()) {
+        throw new Error(getMessage('EngineReturnedViolationWithCodeLocationFileAsFolder',
+            engineName, ruleName, absFile));
+    }
+
+    if (!isValidLineOrColumn(codeLocation.startLine)) {
+        throw new Error(getMessage('EngineReturnedViolationWithCodeLocationWithInvalidLineOrColumn',
+            engineName, ruleName, 'startLine', codeLocation.startLine));
+    }
+
+    if (!isValidLineOrColumn(codeLocation.startColumn)) {
+        throw new Error(getMessage('EngineReturnedViolationWithCodeLocationWithInvalidLineOrColumn',
+            engineName, ruleName, 'startColumn', codeLocation.startColumn));
+    }
+
+    if (codeLocation.endLine !== undefined) {
+        if (!isValidLineOrColumn(codeLocation.endLine)) {
             throw new Error(getMessage('EngineReturnedViolationWithCodeLocationWithInvalidLineOrColumn',
-                engineName, violation.ruleName, 'startLine', codeLocation.startLine));
+                engineName, ruleName, 'endLine', codeLocation.endLine));
+        } else if (codeLocation.endLine < codeLocation.startLine) {
+            throw new Error(getMessage('EngineReturnedViolationWithCodeLocationWithEndLineBeforeStartLine',
+                engineName, ruleName, codeLocation.endLine, codeLocation.startLine));
         }
 
-        if (!isValidLineOrColumn(codeLocation.startColumn)) {
-            throw new Error(getMessage('EngineReturnedViolationWithCodeLocationWithInvalidLineOrColumn',
-                engineName, violation.ruleName, 'startColumn', codeLocation.startColumn));
-        }
-
-        if (codeLocation.endLine !== undefined) {
-            if (!isValidLineOrColumn(codeLocation.endLine)) {
+        // istanbul ignore else
+        if (codeLocation.endColumn !== undefined) {
+            if (!isValidLineOrColumn(codeLocation.endColumn)) {
                 throw new Error(getMessage('EngineReturnedViolationWithCodeLocationWithInvalidLineOrColumn',
-                    engineName, violation.ruleName, 'endLine', codeLocation.endLine));
-            } else if (codeLocation.endLine < codeLocation.startLine) {
-                throw new Error(getMessage('EngineReturnedViolationWithCodeLocationWithEndLineBeforeStartLine',
-                    engineName, violation.ruleName, codeLocation.endLine, codeLocation.startLine));
-            }
-
-            // istanbul ignore else
-            if (codeLocation.endColumn !== undefined) {
-                if (!isValidLineOrColumn(codeLocation.endColumn)) {
-                    throw new Error(getMessage('EngineReturnedViolationWithCodeLocationWithInvalidLineOrColumn',
-                        engineName, violation.ruleName, 'endColumn', codeLocation.endColumn));
-                } else if (codeLocation.endLine == codeLocation.startLine && codeLocation.endColumn < codeLocation.startColumn) {
-                    throw new Error(getMessage('EngineReturnedViolationWithCodeLocationWithEndColumnBeforeStartColumnOnSameLine',
-                        engineName, violation.ruleName, codeLocation.endColumn, codeLocation.startColumn));
-                }
+                    engineName, ruleName, 'endColumn', codeLocation.endColumn));
+            } else if (codeLocation.endLine == codeLocation.startLine && codeLocation.endColumn < codeLocation.startColumn) {
+                throw new Error(getMessage('EngineReturnedViolationWithCodeLocationWithEndColumnBeforeStartColumnOnSameLine',
+                    engineName, ruleName, codeLocation.endColumn, codeLocation.startColumn));
             }
         }
     }

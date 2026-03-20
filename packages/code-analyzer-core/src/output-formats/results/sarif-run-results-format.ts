@@ -1,5 +1,5 @@
 import path from 'node:path';
-import {CodeLocation, EngineRunResults, RunResults, Violation} from "../../results";
+import {CodeLocation, EngineRunResults, Fix, RunResults, Violation} from "../../results";
 import * as sarif from "sarif";
 import {Rule, SeverityLevel} from "../../rules";
 import {RunResultsFormatter} from "../../output-format";
@@ -56,7 +56,7 @@ function toSarifRun(engineRunResults: EngineRunResults, runDir: string): sarif.R
 
 function toSarifResult(violation: Violation, runDir: string, ruleIndex: number) : sarif.Result {
     const primaryCodeLocation = violation.getCodeLocations()[violation.getPrimaryLocationIndex()];
-    return {
+    const result: sarif.Result = {
         ruleId: violation.getRule().getName(),
         ruleIndex: ruleIndex,
         level: toSarifNotificationLevel(violation.getRule().getSeverityLevel()),
@@ -68,6 +68,35 @@ function toSarifResult(violation: Violation, runDir: string, ruleIndex: number) 
 
         // And then we store the full locations array in the relatedLocations field if users want to see all of them
         relatedLocations: violation.getCodeLocations().map(codeLoc => toSarifLocation(codeLoc, runDir))
+    };
+    const fixes = violation.getFixes();
+    if (fixes.length > 0) {
+        result.fixes = fixes.map(fix => toSarifFix(fix, runDir));
+    }
+    return result;
+}
+
+function toSarifFix(fix: Fix, runDir: string): sarif.Fix {
+    const location = fix.getLocation();
+    const file = location.getFile();
+    return {
+        artifactChanges: [{
+            artifactLocation: {
+                uri: file ? encodeURI(path.relative(runDir, file)) : undefined,
+                uriBaseId: file ? encodeURI(runDir) : undefined
+            },
+            replacements: [{
+                deletedRegion: {
+                    startLine: location.getStartLine(),
+                    startColumn: location.getStartColumn(),
+                    endLine: location.getEndLine(),
+                    endColumn: location.getEndColumn()
+                } as sarif.Region,
+                insertedContent: {
+                    text: fix.getFixedCode()
+                }
+            }]
+        }]
     };
 }
 
