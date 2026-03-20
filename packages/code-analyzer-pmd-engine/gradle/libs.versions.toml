@@ -8,7 +8,7 @@
 [versions]
 hamcrest = "3.0"
 junit-jupiter = "5.14.3"
-pmd = "7.21.0" # !!! IMPORTANT !!! KEEP THIS IN SYNC WITH PMD_VERSION INSIDE OF: src/constants.ts
+pmd = "7.22.0" # !!! IMPORTANT !!! KEEP THIS IN SYNC WITH PMD_VERSION INSIDE OF: src/constants.ts
 
 # For the following: Keep in sync with whatever pmd-core pulls in. Basically, we don't want duplicates in our java-lib folder.
 # To see pmd-core's dependencies, go to https://mvnrepository.com/artifact/net.sourceforge.pmd/pmd-core
