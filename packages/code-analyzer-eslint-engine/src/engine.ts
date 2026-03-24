@@ -1,5 +1,4 @@
 import * as fs from 'node:fs/promises';
-import * as fsSync from 'node:fs';
 import path from 'node:path';
 import {
     COMMON_TAGS,
@@ -146,25 +145,33 @@ export class ESLintEngine extends Engine {
         const lintResults: ESLint.LintResult[] = await this._runESLintWorkerTask.run(runTaskInput, runOptions.workingFolder);
 
         const engineResults: EngineRunResults = {
-            violations: this.toViolations(lintResults, new Set(ruleNames),
+            violations: await this.toViolations(lintResults, new Set(ruleNames),
                 runOptions.includeFixes ?? false, runOptions.includeSuggestions ?? false)
         };
         this.emitRunRulesProgressEvent(100);
         return engineResults;
     }
 
-    private toViolations(eslintResults: ESLint.LintResult[], specifiedRules: Set<string>,
-            includeFixes: boolean, includeSuggestions: boolean): Violation[] {
+    private async toViolations(eslintResults: ESLint.LintResult[], specifiedRules: Set<string>,
+            includeFixes: boolean, includeSuggestions: boolean): Promise<Violation[]> {
         const violations: Violation[] = [];
-        const fileContentCache: Map<string, string> = new Map();
         for (const eslintResult of eslintResults) {
+            let lineStartOffsets: number[] | undefined;
             for (const resultMsg of eslintResult.messages) {
                 if (!resultMsg.ruleId) { // If there is no ruleName, this is how ESLint indicates something else went wrong (like a parse error).
                     this.handleEslintErrorOrWarning(eslintResult.filePath, resultMsg);
                     continue;
                 }
+
+                const needsFileContent = (includeFixes && resultMsg.fix) ||
+                    (includeSuggestions && resultMsg.suggestions?.length);
+                if (needsFileContent && !lineStartOffsets) {
+                    const source = eslintResult.source ?? await fs.readFile(eslintResult.filePath, 'utf8');
+                    lineStartOffsets = computeLineStartOffsets(source);
+                }
+
                 const violation: Violation = toViolation(eslintResult.filePath, resultMsg,
-                    includeFixes, includeSuggestions, fileContentCache);
+                    includeFixes, includeSuggestions, lineStartOffsets);
 
                 if (specifiedRules.has(violation.ruleName)) {
                     violations.push(violation);
@@ -275,7 +282,7 @@ function toTagsForCustomRule(metadata: RulesMeta): string[] {
 
 function toViolation(file: string, resultMsg: Linter.LintMessage,
         includeFixes: boolean, includeSuggestions: boolean,
-        fileContentCache: Map<string, string>): Violation {
+        lineStartOffsets?: number[]): Violation {
     const violation: Violation = {
         ruleName: resultMsg.ruleId as string,
         message: resultMsg.message,
@@ -289,10 +296,7 @@ function toViolation(file: string, resultMsg: Linter.LintMessage,
         primaryLocationIndex: 0
     };
 
-    if ((includeFixes && resultMsg.fix) || (includeSuggestions && resultMsg.suggestions?.length)) {
-        const fileContent: string = getFileContent(file, fileContentCache);
-        const lineStartOffsets: number[] = computeLineStartOffsets(fileContent);
-
+    if (lineStartOffsets) {
         if (includeFixes && resultMsg.fix) {
             violation.fixes = [convertEslintFix(file, resultMsg.fix, lineStartOffsets)];
         }
@@ -304,13 +308,6 @@ function toViolation(file: string, resultMsg: Linter.LintMessage,
     }
 
     return violation;
-}
-
-function getFileContent(filePath: string, cache: Map<string, string>): string {
-    if (!cache.has(filePath)) {
-        cache.set(filePath, fsSync.readFileSync(filePath, 'utf8'));
-    }
-    return cache.get(filePath)!;
 }
 
 function computeLineStartOffsets(fileContent: string): number[] {
