@@ -18,7 +18,8 @@ export {
 export {
     processSuppressions,
     isTextFile,
-    extractSuppressionsFromFiles
+    extractSuppressionsFromFiles,
+    filterSuppressedViolations
 } from './suppression-processor';
 
 export type { LoggerCallback } from './suppression-processor';

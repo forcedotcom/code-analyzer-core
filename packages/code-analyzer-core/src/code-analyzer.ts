@@ -9,7 +9,7 @@ import {
     UninstantiableEngineRunResults,
     Violation
 } from "./results"
-import {processSuppressions} from "./suppressions"
+import {processSuppressions, extractSuppressionsFromFiles, SuppressionsMap, LoggerCallback} from "./suppressions"
 import {SemVer} from 'semver';
 import {
     EngineLogEvent,
@@ -120,6 +120,11 @@ export class CodeAnalyzer {
     private readonly engineConfigDescriptions: Map<string, ConfigDescription> = new Map();
     private readonly rulesCache: Map<string, RuleImpl[]> = new Map();
     private readonly engineRuleDiscoveryProgressAggregator: EngineProgressAggregator = new EngineProgressAggregator();
+    // Caching for per-engine suppression processing to avoid duplicate file processing
+    private readonly suppressionsMap: SuppressionsMap = new Map();
+    private readonly fileProcessingPromises: Map<string, Promise<void>> = new Map();
+    // Track total suppressed violations for aggregate logging
+    private totalSuppressedViolations: number = 0;
 
     constructor(config: CodeAnalyzerConfig, fileSystem: FileSystem = new RealFileSystem(), nodeVersion: string = process.version) {
         this.validateEnvironment(nodeVersion);
@@ -348,6 +353,9 @@ export class CodeAnalyzer {
         //  up a bunch of RunResults promises and then does a Promise.all on them. Otherwise, the progress events may
         //  override each other.
 
+        // Reset suppression counter for this run
+        this.totalSuppressedViolations = 0;
+
         this.emitLogEvent(LogLevel.Debug, getMessage('RunningWithWorkspace', JSON.stringify({
             filesAndFolders: runOptions.workspace.getRawFilesAndFolders(),
             targets: runOptions.workspace.getRawTargets()
@@ -395,55 +403,147 @@ export class CodeAnalyzer {
             runResults.addEngineRunResults(new UninstantiableEngineRunResults(uninstantiableEngine, error));
         }
 
-        // Process inline suppressions (post-processing step)
-        // This filters out violations that have been suppressed via inline markers
-        await this.applyInlineSuppressions(runResults);
+        // Note: Inline suppressions are now applied per-engine in runEngineAndValidateResults() before EngineResultsEvent is emitted
+
+        // Log aggregate suppression count if any violations were suppressed
+        if (this.config.getSuppressionsEnabled()) {
+            if (this.totalSuppressedViolations > 0) {
+                this.emitLogEvent(LogLevel.Info, getMessage('SuppressedViolationsCount', this.totalSuppressedViolations));
+            } else {
+                this.emitLogEvent(LogLevel.Info, getMessage('NoViolationsSuppressed'));
+            }
+        }
 
         return runResults;
     }
 
     /**
-     * Applies suppression filtering to the run results
-     * This processes suppression markers in source files and filters out suppressed violations
-     * @param runResults The run results to apply suppressions to
+     * Applies suppression filtering to a single engine's results
+     * This processes suppression markers in source files and returns a filtered version of the engine results
+     * This method handles race conditions by caching suppression ranges per file
+     * @param engineRunResults The engine run results to apply suppressions to
+     * @returns Filtered engine run results with suppressions applied
      */
-    private async applyInlineSuppressions(runResults: RunResultsImpl): Promise<void> {
+    private async applyInlineSuppressionsToEngineResults(
+        engineRunResults: EngineRunResults
+    ): Promise<EngineRunResults> {
         // Check if suppressions are enabled
         if (!this.config.getSuppressionsEnabled()) {
-            return; // Feature disabled, skip processing
+            return engineRunResults; // Feature disabled, return original results
         }
 
-        const allViolations = runResults.getViolations();
+        const violations = engineRunResults.getViolations();
 
-        if (allViolations.length === 0) {
-            return; // No violations to process
+        if (violations.length === 0) {
+            return engineRunResults; // No violations to process
         }
 
-        this.emitLogEvent(LogLevel.Debug, getMessage('ProcessingInlineSuppressions', allViolations.length));
-
-        // Process suppressions (returns filtered violations)
-        const logger = (level: 'error' | 'warn' | 'debug', message: string) => {
-            const logLevel = level === 'error' ? LogLevel.Error : level === 'warn' ? LogLevel.Warn : LogLevel.Debug;
-            this.emitLogEvent(logLevel, message);
-        };
-        const filteredViolations = await processSuppressions(allViolations, logger);
-
-        // Calculate which violations were suppressed
-        const suppressedViolations = new Set<Violation>();
-        const filteredSet = new Set(filteredViolations);
-        for (const violation of allViolations) {
-            if (!filteredSet.has(violation)) {
-                suppressedViolations.add(violation);
+        // Extract unique file paths from violations for race condition handling
+        const filePaths = new Set<string>();
+        for (const violation of violations) {
+            const primaryLocation = violation.getPrimaryLocation();
+            const file = primaryLocation.getFile();
+            if (file) {
+                filePaths.add(file);
             }
         }
 
-        const suppressedCount = suppressedViolations.size;
-        if (suppressedCount > 0) {
-            this.emitLogEvent(LogLevel.Info, getMessage('SuppressedViolationsCount', suppressedCount));
-            runResults.applySuppressedViolationsFilter(suppressedViolations);
-        } else {
-            this.emitLogEvent(LogLevel.Info, getMessage('NoViolationsSuppressed'));
+        if (filePaths.size === 0) {
+            return engineRunResults; // No files with violations
         }
+
+        // Process files with race condition handling to pre-populate the shared map
+        await this.processFilesForSuppressions(filePaths);
+
+        // Use processSuppressions with the pre-populated shared map
+        // This will skip re-parsing files already in the map and just filter violations
+        const logger: LoggerCallback = (level: 'error' | 'warn' | 'debug', message: string) => {
+            const logLevel = level === 'error' ? LogLevel.Error : level === 'warn' ? LogLevel.Warn : LogLevel.Debug;
+            this.emitLogEvent(logLevel, message);
+        };
+        const filteredViolations = await processSuppressions(violations, logger, this.suppressionsMap);
+
+        // Calculate how many violations were suppressed
+        const suppressedCount = violations.length - filteredViolations.length;
+
+        // If all violations remain (nothing suppressed), return original results
+        if (suppressedCount === 0) {
+            return engineRunResults;
+        }
+
+        // Track suppressed violations for aggregate logging
+        this.totalSuppressedViolations += suppressedCount;
+
+        // Return filtered results using FilteredEngineRunResults wrapper
+        return this.createFilteredEngineRunResults(engineRunResults, filteredViolations);
+    }
+
+    /**
+     * Creates a FilteredEngineRunResults wrapper
+     * This is a temporary method until FilteredEngineRunResults is exported from results.ts
+     */
+    private createFilteredEngineRunResults(
+        originalResults: EngineRunResults,
+        filteredViolations: Violation[]
+    ): EngineRunResults {
+        // We need to create an instance that implements EngineRunResults
+        // but filters the violations
+        return {
+            getEngineName: () => originalResults.getEngineName(),
+            getEngineVersion: () => originalResults.getEngineVersion(),
+            getViolationCount: () => filteredViolations.length,
+            getViolationCountOfSeverity: (severity: number) =>
+                filteredViolations.filter(v => v.getRule().getSeverityLevel() === severity).length,
+            getViolations: () => filteredViolations
+        };
+    }
+
+    /**
+     * Processes files for suppression markers with race condition handling
+     * Uses caching to avoid processing the same file multiple times when multiple engines
+     * return violations for the same file
+     * @param filePaths Set of file paths that need suppression information
+     */
+    private async processFilesForSuppressions(filePaths: Set<string>): Promise<void> {
+        const logger: LoggerCallback = (level: 'error' | 'warn' | 'debug', message: string) => {
+            const logLevel = level === 'error' ? LogLevel.Error : level === 'warn' ? LogLevel.Warn : LogLevel.Debug;
+            this.emitLogEvent(logLevel, message);
+        };
+
+        const processingPromises: Promise<void>[] = [];
+
+        for (const filePath of filePaths) {
+            // If already in cache, skip
+            if (this.suppressionsMap.has(filePath)) {
+                continue;
+            }
+
+            // If currently being processed, await that promise
+            let processingPromise = this.fileProcessingPromises.get(filePath);
+
+            if (!processingPromise) {
+                // Start new processing - wrap extractSuppressionsFromFiles call
+                processingPromise = extractSuppressionsFromFiles(
+                    new Set([filePath]),
+                    this.suppressionsMap,
+                    logger
+                ).then(() => {
+                    // Clean up the promise from tracking map since it's done
+                    this.fileProcessingPromises.delete(filePath);
+                }).catch((err) => {
+                    // Clean up on error too
+                    this.fileProcessingPromises.delete(filePath);
+                    throw err;
+                });
+
+                this.fileProcessingPromises.set(filePath, processingPromise);
+            }
+
+            processingPromises.push(processingPromise);
+        }
+
+        // Wait for all file processing to complete
+        await Promise.all(processingPromises);
     }
 
     /**
@@ -565,7 +665,10 @@ export class CodeAnalyzer {
         }
 
         validateEngineRunResults(engineName, apiEngineRunResults, ruleSelection);
-        const engineRunResults: EngineRunResults = new EngineRunResultsImpl(engineName, await engine.getEngineVersion(), apiEngineRunResults, ruleSelection);
+        let engineRunResults: EngineRunResults = new EngineRunResultsImpl(engineName, await engine.getEngineVersion(), apiEngineRunResults, ruleSelection);
+
+        // Apply inline suppressions per-engine BEFORE emitting EngineResultsEvent
+        engineRunResults = await this.applyInlineSuppressionsToEngineResults(engineRunResults);
 
         this.emitEvent<EngineRunProgressEvent>({
             type: EventType.EngineRunProgressEvent, timestamp: this.clock.now(), engineName: engineName, percentComplete: 100

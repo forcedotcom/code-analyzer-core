@@ -3,6 +3,8 @@
  */
 
 import { SuppressionMarker, SuppressionRange, FileSuppressions } from './suppression-types';
+import { Selector, toSelector } from '../selectors';
+import { LoggerCallback } from './suppression-processor';
 
 /**
  * Regular expressions to match suppression markers (case-insensitive)
@@ -18,9 +20,10 @@ const UNSUPPRESS_PATTERN = /code-analyzer-unsuppress(?:\(([^()]*(?:\([^)]*\)[^()
  * Parses a file's content to extract suppression markers
  * @param fileContent The full content of the file as a string
  * @param filePath The absolute path to the file (for error reporting)
+ * @param logger Optional logger callback for warnings about invalid selectors
  * @returns Array of SuppressionMarker objects found in the file
  */
-export function parseSuppressionMarkers(fileContent: string, _filePath: string): SuppressionMarker[] {
+export function parseSuppressionMarkers(fileContent: string, filePath: string, logger?: LoggerCallback): SuppressionMarker[] {
     const markers: SuppressionMarker[] = [];
     const lines = fileContent.split('\n');
 
@@ -31,23 +34,45 @@ export function parseSuppressionMarkers(fileContent: string, _filePath: string):
         // Find all suppress markers in this line
         const suppressMatches = Array.from(line.matchAll(SUPPRESS_PATTERN));
         for (const match of suppressMatches) {
-            const ruleSelector = normalizeRuleSelector(match[1]);
-            markers.push({
-                type: 'suppress',
-                ruleSelector,
-                lineNumber
-            });
+            const ruleSelectorString = normalizeRuleSelectorString(match[1]);
+            try {
+                const ruleSelector = toSelector(ruleSelectorString);
+                markers.push({
+                    type: 'suppress',
+                    ruleSelector,
+                    ruleSelectorString,
+                    lineNumber
+                });
+            } catch (err) {
+                // If toSelector throws an error (invalid syntax), skip this marker
+                if (logger) {
+                    const errorMsg = err instanceof Error ? err.message : String(err);
+                    logger('warn', `Invalid rule selector '${ruleSelectorString}' in suppress marker at ${filePath}:${lineNumber}. Error: ${errorMsg}`);
+                }
+                continue;
+            }
         }
 
         // Find all unsuppress markers in this line
         const unsuppressMatches = Array.from(line.matchAll(UNSUPPRESS_PATTERN));
         for (const match of unsuppressMatches) {
-            const ruleSelector = normalizeRuleSelector(match[1]);
-            markers.push({
-                type: 'unsuppress',
-                ruleSelector,
-                lineNumber
-            });
+            const ruleSelectorString = normalizeRuleSelectorString(match[1]);
+            try {
+                const ruleSelector = toSelector(ruleSelectorString);
+                markers.push({
+                    type: 'unsuppress',
+                    ruleSelector,
+                    ruleSelectorString,
+                    lineNumber
+                });
+            } catch (err) {
+                // If toSelector throws an error (invalid syntax), skip this marker
+                if (logger) {
+                    const errorMsg = err instanceof Error ? err.message : String(err);
+                    logger('warn', `Invalid rule selector '${ruleSelectorString}' in unsuppress marker at ${filePath}:${lineNumber}. Error: ${errorMsg}`);
+                }
+                continue;
+            }
         }
     }
 
@@ -55,11 +80,11 @@ export function parseSuppressionMarkers(fileContent: string, _filePath: string):
 }
 
 /**
- * Normalizes a rule selector from a marker
+ * Normalizes a rule selector string from a marker
  * Empty or undefined selectors default to "all"
  * Trims whitespace from the selector
  */
-function normalizeRuleSelector(selector: string | undefined): string {
+function normalizeRuleSelectorString(selector: string | undefined): string {
     if (!selector || selector.trim() === '') {
         return 'all';
     }
@@ -193,13 +218,13 @@ export function buildSuppressionRanges(markers: SuppressionMarker[], _filePath: 
     const ranges: SuppressionRange[] = [];
 
     // Track which rule selectors are currently active (suppressed or unsuppressed)
-    // Map: ruleSelector -> {isSuppressed, startLine}
-    const activeStates = new Map<string, { isSuppressed: boolean, startLine: number }>();
+    // Map: ruleSelectorString -> {isSuppressed, startLine, ruleSelector (Selector object)}
+    const activeStates = new Map<string, { isSuppressed: boolean, startLine: number, ruleSelector: Selector }>();
 
     for (const marker of markers) {
         if (marker.type === 'suppress') {
             // Check if already suppressed (no-op if so)
-            const currentState = activeStates.get(marker.ruleSelector);
+            const currentState = activeStates.get(marker.ruleSelectorString);
             if (currentState && currentState.isSuppressed) {
                 continue;  // Already suppressed, skip
             }
@@ -207,23 +232,24 @@ export function buildSuppressionRanges(markers: SuppressionMarker[], _filePath: 
             // Check if this suppress should close any active unsuppressions hierarchically
             // For example, suppress(regex) should close unsuppress(regex:AvoidOldApi)
             const statesToEnd: string[] = [];
-            for (const [activeSelector, state] of activeStates.entries()) {
-                if (!state.isSuppressed && activeSelector !== marker.ruleSelector &&
-                    canSuppressCloseUnsuppress(marker.ruleSelector, activeSelector)) {
+            for (const [activeSelectorString, state] of activeStates.entries()) {
+                if (!state.isSuppressed && activeSelectorString !== marker.ruleSelectorString &&
+                    canSuppressCloseUnsuppress(marker.ruleSelectorString, activeSelectorString)) {
                     // Close this unsuppression range (but not for the same selector - handled below)
                     ranges.push({
                         startLine: state.startLine,
                         endLine: marker.lineNumber - 1,
-                        ruleSelector: activeSelector,
+                        ruleSelector: state.ruleSelector,
+                        ruleSelectorString: activeSelectorString,
                         isSuppressed: false
                     });
-                    statesToEnd.push(activeSelector);
+                    statesToEnd.push(activeSelectorString);
                 }
             }
 
             // Remove closed states
-            for (const selector of statesToEnd) {
-                activeStates.delete(selector);
+            for (const selectorString of statesToEnd) {
+                activeStates.delete(selectorString);
             }
 
             // If there was an unsuppression active for this exact selector, close it
@@ -232,55 +258,60 @@ export function buildSuppressionRanges(markers: SuppressionMarker[], _filePath: 
                     startLine: currentState.startLine,
                     endLine: marker.lineNumber - 1,
                     ruleSelector: marker.ruleSelector,
+                    ruleSelectorString: marker.ruleSelectorString,
                     isSuppressed: false
                 });
             }
 
             // Start new suppression
-            activeStates.set(marker.ruleSelector, {
+            activeStates.set(marker.ruleSelectorString, {
                 isSuppressed: true,
-                startLine: marker.lineNumber
+                startLine: marker.lineNumber,
+                ruleSelector: marker.ruleSelector
             });
         } else if (marker.type === 'unsuppress') {
             // End active suppression ranges that match hierarchically
             const statesToEnd: string[] = [];
 
-            for (const [suppressSelector, state] of activeStates.entries()) {
-                if (state.isSuppressed && canUnsuppressEndSuppress(suppressSelector, marker.ruleSelector)) {
+            for (const [suppressSelectorString, state] of activeStates.entries()) {
+                if (state.isSuppressed && canUnsuppressEndSuppress(suppressSelectorString, marker.ruleSelectorString)) {
                     // Create a suppression range from the suppress marker to the unsuppress marker (exclusive of unsuppress line)
                     ranges.push({
                         startLine: state.startLine,
                         endLine: marker.lineNumber - 1,
-                        ruleSelector: suppressSelector,
+                        ruleSelector: state.ruleSelector,
+                        ruleSelectorString: suppressSelectorString,
                         isSuppressed: true
                     });
-                    statesToEnd.push(suppressSelector);
+                    statesToEnd.push(suppressSelectorString);
                 }
             }
 
             // Remove ended suppressions
-            for (const selector of statesToEnd) {
-                activeStates.delete(selector);
+            for (const selectorString of statesToEnd) {
+                activeStates.delete(selectorString);
             }
 
             // Now start an unsuppression range for this selector
             // This creates the "exception" behavior - marking that this selector is explicitly unsuppressed
-            if (statesToEnd.length > 0 || marker.ruleSelector !== 'all') {
+            if (statesToEnd.length > 0 || marker.ruleSelectorString !== 'all') {
                 // Only create unsuppression range if we actually ended something, or if it's a specific selector
-                activeStates.set(marker.ruleSelector, {
+                activeStates.set(marker.ruleSelectorString, {
                     isSuppressed: false,
-                    startLine: marker.lineNumber
+                    startLine: marker.lineNumber,
+                    ruleSelector: marker.ruleSelector
                 });
             }
         }
     }
 
     // Any remaining active states extend to the end of the file
-    for (const [ruleSelector, state] of activeStates.entries()) {
+    for (const [ruleSelectorString, state] of activeStates.entries()) {
         ranges.push({
             startLine: state.startLine,
             endLine: undefined,
-            ruleSelector,
+            ruleSelector: state.ruleSelector,
+            ruleSelectorString,
             isSuppressed: state.isSuppressed
         });
     }
@@ -292,10 +323,11 @@ export function buildSuppressionRanges(markers: SuppressionMarker[], _filePath: 
  * Parses a file's content and builds complete suppression information
  * @param fileContent The full content of the file as a string
  * @param filePath The absolute path to the file
+ * @param logger Optional logger callback for warnings about invalid selectors
  * @returns FileSuppressions object containing all suppression ranges for the file
  */
-export function parseFileSuppressions(fileContent: string, filePath: string): FileSuppressions {
-    const markers = parseSuppressionMarkers(fileContent, filePath);
+export function parseFileSuppressions(fileContent: string, filePath: string, logger?: LoggerCallback): FileSuppressions {
+    const markers = parseSuppressionMarkers(fileContent, filePath, logger);
     const ranges = buildSuppressionRanges(markers, filePath);
 
     return {

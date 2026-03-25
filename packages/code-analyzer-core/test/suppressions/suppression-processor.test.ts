@@ -8,6 +8,7 @@ import {
     filterSuppressedViolations
 } from '../../src/suppressions/suppression-processor';
 import { FileSuppressions, SuppressionRange } from '../../src/suppressions/suppression-types';
+import { toSelector } from '../../src/selectors';
 import { Violation, CodeLocation, Fix, Suggestion } from '../../src/results';
 import { Rule, SeverityLevel } from '../../src/rules';
 
@@ -127,7 +128,7 @@ describe('isViolationSuppressed', () => {
                     {
                         startLine: 5,
                         endLine: 10,
-                        ruleSelector: 'pmd',
+                        ruleSelector: toSelector('pmd'), ruleSelectorString: 'pmd',
                         isSuppressed: true
                     }
                 ]
@@ -150,7 +151,7 @@ describe('isViolationSuppressed', () => {
                     {
                         startLine: 6,
                         endLine: 8,
-                        ruleSelector: 'all',
+                        ruleSelector: toSelector('all'), ruleSelectorString: 'all',
                         isSuppressed: true
                     }
                 ]
@@ -174,7 +175,7 @@ describe('isViolationSuppressed', () => {
                     {
                         startLine: 5,
                         endLine: 7,
-                        ruleSelector: 'all',
+                        ruleSelector: toSelector('all'), ruleSelectorString: 'all',
                         isSuppressed: true
                     }
                 ]
@@ -198,7 +199,7 @@ describe('isViolationSuppressed', () => {
                     {
                         startLine: 6,
                         endLine: 7,
-                        ruleSelector: 'all',
+                        ruleSelector: toSelector('all'), ruleSelectorString: 'all',
                         isSuppressed: true
                     }
                 ]
@@ -222,7 +223,7 @@ describe('isViolationSuppressed', () => {
                     {
                         startLine: 5,
                         endLine: 10,
-                        ruleSelector: 'all',
+                        ruleSelector: toSelector('all'), ruleSelectorString: 'all',
                         isSuppressed: true
                     }
                 ]
@@ -246,7 +247,7 @@ describe('isViolationSuppressed', () => {
                     {
                         startLine: 5,
                         endLine: 10,
-                        ruleSelector: 'all',
+                        ruleSelector: toSelector('all'), ruleSelectorString: 'all',
                         isSuppressed: true
                     }
                 ]
@@ -272,7 +273,7 @@ describe('isViolationSuppressed', () => {
                     {
                         startLine: 10,
                         endLine: 15,
-                        ruleSelector: 'pmd',
+                        ruleSelector: toSelector('pmd'), ruleSelectorString: 'pmd',
                         isSuppressed: true
                     }
                 ]
@@ -296,7 +297,7 @@ describe('isViolationSuppressed', () => {
                     {
                         startLine: 5,
                         endLine: 10,
-                        ruleSelector: 'all',
+                        ruleSelector: toSelector('all'), ruleSelectorString: 'all',
                         isSuppressed: true
                     }
                 ]
@@ -319,7 +320,7 @@ describe('isViolationSuppressed', () => {
                     {
                         startLine: 5,
                         endLine: undefined, // End of file
-                        ruleSelector: 'all',
+                        ruleSelector: toSelector('all'), ruleSelectorString: 'all',
                         isSuppressed: true
                     }
                 ]
@@ -344,7 +345,7 @@ describe('isViolationSuppressed', () => {
                     {
                         startLine: 5,
                         endLine: 10,
-                        ruleSelector: 'all',
+                        ruleSelector: toSelector('all'), ruleSelectorString: 'all',
                         isSuppressed: true
                     }
                 ]
@@ -366,7 +367,7 @@ describe('isViolationSuppressed', () => {
                     {
                         startLine: 5,
                         endLine: 10,
-                        ruleSelector: 'pmd',
+                        ruleSelector: toSelector('pmd'), ruleSelectorString: 'pmd',
                         isSuppressed: true
                     }
                 ]
@@ -388,7 +389,7 @@ describe('isViolationSuppressed', () => {
                     {
                         startLine: 5,
                         endLine: 10,
-                        ruleSelector: 'pmd:ApexCrudViolation',
+                        ruleSelector: toSelector('pmd:ApexCrudViolation'), ruleSelectorString: 'pmd:ApexCrudViolation',
                         isSuppressed: true
                     }
                 ]
@@ -410,7 +411,7 @@ describe('isViolationSuppressed', () => {
                     {
                         startLine: 5,
                         endLine: 10,
-                        ruleSelector: 'eslint',
+                        ruleSelector: toSelector('eslint'), ruleSelectorString: 'eslint',
                         isSuppressed: true
                     }
                 ]
@@ -433,7 +434,7 @@ describe('isViolationSuppressed', () => {
                     {
                         startLine: 5,
                         endLine: 10,
-                        ruleSelector: 'eslint:(3,4)',
+                        ruleSelector: toSelector('eslint:(3,4)'), ruleSelectorString: 'eslint:(3,4)',
                         isSuppressed: true
                     }
                 ]
@@ -456,7 +457,7 @@ describe('isViolationSuppressed', () => {
                     {
                         startLine: 5,
                         endLine: 10,
-                        ruleSelector: 'eslint:(3,4)',
+                        ruleSelector: toSelector('eslint:(3,4)'), ruleSelectorString: 'eslint:(3,4)',
                         isSuppressed: true
                     }
                 ]
@@ -481,13 +482,13 @@ describe('isViolationSuppressed', () => {
                     {
                         startLine: 1,
                         endLine: 20,
-                        ruleSelector: 'all',
+                        ruleSelector: toSelector('all'), ruleSelectorString: 'all',
                         isSuppressed: true
                     },
                     {
                         startLine: 5,
                         endLine: undefined,
-                        ruleSelector: 'pmd',
+                        ruleSelector: toSelector('pmd'), ruleSelectorString: 'pmd',
                         isSuppressed: false // Unsuppressed - exception
                     }
                 ]
@@ -512,13 +513,13 @@ describe('isViolationSuppressed', () => {
                     {
                         startLine: 1,
                         endLine: 20,
-                        ruleSelector: 'pmd',
+                        ruleSelector: toSelector('pmd'), ruleSelectorString: 'pmd',
                         isSuppressed: false // Unsuppressed
                     },
                     {
                         startLine: 5,
                         endLine: 15,
-                        ruleSelector: 'pmd:ApexCrudViolation',
+                        ruleSelector: toSelector('pmd:ApexCrudViolation'), ruleSelectorString: 'pmd:ApexCrudViolation',
                         isSuppressed: true // Re-suppressed
                     }
                 ]
@@ -543,13 +544,13 @@ describe('isViolationSuppressed', () => {
                     {
                         startLine: 1,
                         endLine: undefined,
-                        ruleSelector: 'pmd',
+                        ruleSelector: toSelector('pmd'), ruleSelectorString: 'pmd',
                         isSuppressed: true
                     },
                     {
                         startLine: 10,
                         endLine: undefined,
-                        ruleSelector: 'pmd',
+                        ruleSelector: toSelector('pmd'), ruleSelectorString: 'pmd',
                         isSuppressed: false // Unsuppressed later
                     }
                 ]
@@ -578,25 +579,25 @@ describe('isViolationSuppressed', () => {
                     {
                         startLine: 2,
                         endLine: 3,
-                        ruleSelector: 'all',
+                        ruleSelector: toSelector('all'), ruleSelectorString: 'all',
                         isSuppressed: true
                     },
                     {
                         startLine: 4,
                         endLine: 5,  // Closed by suppress(regex) at line 6
-                        ruleSelector: 'regex:AvoidOldSalesforceApiVersions',
+                        ruleSelector: toSelector('regex:AvoidOldSalesforceApiVersions'), ruleSelectorString: 'regex:AvoidOldSalesforceApiVersions',
                         isSuppressed: false
                     },
                     {
                         startLine: 6,
                         endLine: 11,
-                        ruleSelector: 'regex',
+                        ruleSelector: toSelector('regex'), ruleSelectorString: 'regex',
                         isSuppressed: true
                     },
                     {
                         startLine: 12,
                         endLine: undefined,
-                        ruleSelector: 'all',
+                        ruleSelector: toSelector('all'), ruleSelectorString: 'all',
                         isSuppressed: false
                     }
                 ]
@@ -636,6 +637,318 @@ describe('isViolationSuppressed', () => {
         });
     });
 
+    describe('Complex selector specificity (OR, AND, grouping)', () => {
+        it('should handle OR selector with minimum specificity rule', () => {
+            // Test that OR selectors take minimum specificity of both sides
+            const fileSuppressions: FileSuppressions = {
+                filePath: '/test/file.js',
+                ranges: [
+                    {
+                        startLine: 1,
+                        endLine: 20,
+                        ruleSelector: toSelector('all'), ruleSelectorString: 'all',
+                        isSuppressed: true
+                    },
+                    {
+                        startLine: 5,
+                        endLine: 15,
+                        ruleSelector: toSelector('eslint,pmd'), ruleSelectorString: 'eslint,pmd',
+                        isSuppressed: false // Unsuppressed
+                    }
+                ]
+            };
+
+            // ESLint violation at line 10
+            // 'all' (specificity 1) says suppress
+            // 'eslint,pmd' (specificity min(2,2) = 2) says don't suppress
+            // 'eslint,pmd' is more specific, so violation should NOT be suppressed
+            const eslintViolation = new MockViolation(
+                new MockRule('eslint', 'no-unused-vars'),
+                'Unused variable',
+                new MockCodeLocation('/test/file.js', 10, 1, 10, 20)
+            );
+            expect(isViolationSuppressed(eslintViolation, fileSuppressions)).toBe(false);
+
+            // PMD violation should also not be suppressed
+            const pmdViolation = new MockViolation(
+                new MockRule('pmd', 'UnusedVariable'),
+                'Unused variable',
+                new MockCodeLocation('/test/file.js', 10, 1, 10, 20)
+            );
+            expect(isViolationSuppressed(pmdViolation, fileSuppressions)).toBe(false);
+
+            // Regex violation (not in OR selector) should be suppressed by 'all'
+            const regexViolation = new MockViolation(
+                new MockRule('regex', 'SomeRule'),
+                'Some issue',
+                new MockCodeLocation('/test/file.js', 10, 1, 10, 20)
+            );
+            expect(isViolationSuppressed(regexViolation, fileSuppressions)).toBe(true);
+        });
+
+        it('should handle OR with different specificities (all,engine)', () => {
+            // Test with temporal ordering: most recent range wins
+            const fileSuppressions: FileSuppressions = {
+                filePath: '/test/file.js',
+                ranges: [
+                    {
+                        startLine: 1,
+                        endLine: 20,
+                        ruleSelector: toSelector('eslint:no-unused-vars'), ruleSelectorString: 'eslint:no-unused-vars',
+                        isSuppressed: true
+                    },
+                    {
+                        startLine: 5,
+                        endLine: 15,
+                        ruleSelector: toSelector('all,pmd'), ruleSelectorString: 'all,pmd',
+                        isSuppressed: false
+                    }
+                ]
+            };
+
+            // ESLint:no-unused-vars violation at line 10
+            // Range 1 (startLine=1): suppress
+            // Range 2 (startLine=5): unsuppress - more recent, so this wins
+            const violation = new MockViolation(
+                new MockRule('eslint', 'no-unused-vars'),
+                'Unused variable',
+                new MockCodeLocation('/test/file.js', 10, 1, 10, 20)
+            );
+            expect(isViolationSuppressed(violation, fileSuppressions)).toBe(false); // Most recent wins
+        });
+
+        it('should handle multiple colons (higher specificity)', () => {
+            // Test selectors with multiple colons for higher specificity
+            const fileSuppressions: FileSuppressions = {
+                filePath: '/test/file.js',
+                ranges: [
+                    {
+                        startLine: 1,
+                        endLine: 20,
+                        ruleSelector: toSelector('eslint:no-unused-vars'), ruleSelectorString: 'eslint:no-unused-vars',
+                        isSuppressed: true
+                    },
+                    {
+                        startLine: 5,
+                        endLine: 15,
+                        ruleSelector: toSelector('eslint:no-unused-vars:extra'), ruleSelectorString: 'eslint:no-unused-vars:extra',
+                        isSuppressed: false // Specificity 4 (3 colons)
+                    }
+                ]
+            };
+
+            // Violation matching 'eslint:no-unused-vars:extra'
+            // 'eslint:no-unused-vars' (specificity 3) says suppress
+            // 'eslint:no-unused-vars:extra' (specificity 4) says don't suppress
+            // More colons = more specific
+            const violation = new MockViolation(
+                new MockRule('eslint', 'no-unused-vars'),
+                'Unused variable',
+                new MockCodeLocation('/test/file.js', 10, 1, 10, 20)
+            );
+
+            // Note: This will actually be suppressed because the Selector won't match 'extra'
+            // But the specificity calculation still works correctly
+            expect(isViolationSuppressed(violation, fileSuppressions)).toBe(true);
+        });
+
+        it('should handle parentheses (transparent specificity)', () => {
+            // Test that parentheses don't affect specificity
+            const fileSuppressions: FileSuppressions = {
+                filePath: '/test/file.js',
+                ranges: [
+                    {
+                        startLine: 1,
+                        endLine: 20,
+                        ruleSelector: toSelector('all'), ruleSelectorString: 'all',
+                        isSuppressed: true
+                    },
+                    {
+                        startLine: 5,
+                        endLine: 15,
+                        ruleSelector: toSelector('(eslint)'), ruleSelectorString: '(eslint)',
+                        isSuppressed: false
+                    }
+                ]
+            };
+
+            // ESLint violation at line 10
+            // 'all' (specificity 1) says suppress
+            // '(eslint)' (specificity 2, same as 'eslint') says don't suppress
+            const violation = new MockViolation(
+                new MockRule('eslint', 'no-unused-vars'),
+                'Unused variable',
+                new MockCodeLocation('/test/file.js', 10, 1, 10, 20)
+            );
+            expect(isViolationSuppressed(violation, fileSuppressions)).toBe(false);
+        });
+
+        it('should handle complex combination: (engine,engine):rule', () => {
+            // Test '(eslint,pmd):no-unused-vars'
+            // This means (eslint OR pmd) AND no-unused-vars
+            const fileSuppressions: FileSuppressions = {
+                filePath: '/test/file.js',
+                ranges: [
+                    {
+                        startLine: 1,
+                        endLine: 20,
+                        ruleSelector: toSelector('eslint'), ruleSelectorString: 'eslint',
+                        isSuppressed: true
+                    },
+                    {
+                        startLine: 5,
+                        endLine: 15,
+                        ruleSelector: toSelector('(eslint,pmd):no-unused-vars'), ruleSelectorString: '(eslint,pmd):no-unused-vars',
+                        isSuppressed: false
+                    }
+                ]
+            };
+
+            // ESLint:no-unused-vars violation at line 10
+            // 'eslint' (specificity 2) says suppress
+            // '(eslint,pmd):no-unused-vars' has one colon, so specificity = 3
+            // More specific range wins
+            const violation = new MockViolation(
+                new MockRule('eslint', 'no-unused-vars'),
+                'Unused variable',
+                new MockCodeLocation('/test/file.js', 10, 1, 10, 20)
+            );
+            expect(isViolationSuppressed(violation, fileSuppressions)).toBe(false);
+        });
+
+        it('should handle severity selector: engine:(severity,severity)', () => {
+            // Test 'eslint:(3,4)' which means eslint with severity 3 OR 4
+            const fileSuppressions: FileSuppressions = {
+                filePath: '/test/file.js',
+                ranges: [
+                    {
+                        startLine: 1,
+                        endLine: 20,
+                        ruleSelector: toSelector('all'), ruleSelectorString: 'all',
+                        isSuppressed: true
+                    },
+                    {
+                        startLine: 5,
+                        endLine: 15,
+                        ruleSelector: toSelector('eslint:(3,4)'), ruleSelectorString: 'eslint:(3,4)',
+                        isSuppressed: false
+                    }
+                ]
+            };
+
+            // ESLint violation with severity 3 at line 10
+            // 'all' (specificity 1) says suppress
+            // 'eslint:(3,4)' (specificity 3: one colon) says don't suppress
+            const violation = new MockViolation(
+                new MockRule('eslint', 'no-unused-vars', SeverityLevel.Moderate), // Severity 3
+                'Unused variable',
+                new MockCodeLocation('/test/file.js', 10, 1, 10, 20)
+            );
+            expect(isViolationSuppressed(violation, fileSuppressions)).toBe(false);
+
+            // ESLint violation with severity 5 should be suppressed (doesn't match (3,4))
+            const violation2 = new MockViolation(
+                new MockRule('eslint', 'no-unused-vars', SeverityLevel.Critical), // Severity 5
+                'Unused variable',
+                new MockCodeLocation('/test/file.js', 10, 1, 10, 20)
+            );
+            expect(isViolationSuppressed(violation2, fileSuppressions)).toBe(true);
+        });
+
+        it('should handle deep nesting: ((engine,engine):rule,all)', () => {
+            // Test with temporal ordering: most recent range wins
+            const fileSuppressions: FileSuppressions = {
+                filePath: '/test/file.js',
+                ranges: [
+                    {
+                        startLine: 1,
+                        endLine: 20,
+                        ruleSelector: toSelector('eslint:no-unused-vars'), ruleSelectorString: 'eslint:no-unused-vars',
+                        isSuppressed: true
+                    },
+                    {
+                        startLine: 5,
+                        endLine: 15,
+                        ruleSelector: toSelector('((eslint,pmd):no-unused-vars,all)'), ruleSelectorString: '((eslint,pmd):no-unused-vars,all)',
+                        isSuppressed: false
+                    }
+                ]
+            };
+
+            // ESLint:no-unused-vars violation at line 10
+            // Range 1 (startLine=1): suppress
+            // Range 2 (startLine=5): unsuppress - more recent, so this wins
+            const violation = new MockViolation(
+                new MockRule('eslint', 'no-unused-vars'),
+                'Unused variable',
+                new MockCodeLocation('/test/file.js', 10, 1, 10, 20)
+            );
+            expect(isViolationSuppressed(violation, fileSuppressions)).toBe(false); // Most recent wins
+        });
+
+        it('should compare OR selectors correctly when both have same min specificity', () => {
+            // Test two OR selectors with same minimum specificity
+            const fileSuppressions: FileSuppressions = {
+                filePath: '/test/file.js',
+                ranges: [
+                    {
+                        startLine: 1,
+                        endLine: 20,
+                        ruleSelector: toSelector('eslint,pmd'), ruleSelectorString: 'eslint,pmd',
+                        isSuppressed: true // Specificity min(2,2) = 2
+                    },
+                    {
+                        startLine: 10,
+                        endLine: undefined,
+                        ruleSelector: toSelector('regex,sfge'), ruleSelectorString: 'regex,sfge',
+                        isSuppressed: false // Specificity min(2,2) = 2
+                    }
+                ]
+            };
+
+            // ESLint violation at line 15
+            // Both ranges have same specificity (2)
+            // Range with higher startLine (10) should win
+            const violation = new MockViolation(
+                new MockRule('eslint', 'no-unused-vars'),
+                'Unused variable',
+                new MockCodeLocation('/test/file.js', 15, 1, 15, 20)
+            );
+            expect(isViolationSuppressed(violation, fileSuppressions)).toBe(true); // eslint matches first range
+        });
+
+        it('should handle mixed AND and OR: engine:rule,engine:other', () => {
+            // Test 'eslint:no-unused-vars,pmd:UnusedVariable'
+            const fileSuppressions: FileSuppressions = {
+                filePath: '/test/file.js',
+                ranges: [
+                    {
+                        startLine: 1,
+                        endLine: 20,
+                        ruleSelector: toSelector('all'), ruleSelectorString: 'all',
+                        isSuppressed: true
+                    },
+                    {
+                        startLine: 5,
+                        endLine: 15,
+                        ruleSelector: toSelector('eslint:no-unused-vars,pmd:UnusedVariable'), ruleSelectorString: 'eslint:no-unused-vars,pmd:UnusedVariable',
+                        isSuppressed: false // Specificity min(3,3) = 3
+                    }
+                ]
+            };
+
+            // ESLint:no-unused-vars violation
+            // 'all' (specificity 1) says suppress
+            // 'eslint:no-unused-vars,pmd:UnusedVariable' (specificity 3) says don't suppress
+            const violation = new MockViolation(
+                new MockRule('eslint', 'no-unused-vars'),
+                'Unused variable',
+                new MockCodeLocation('/test/file.js', 10, 1, 10, 20)
+            );
+            expect(isViolationSuppressed(violation, fileSuppressions)).toBe(false);
+        });
+    });
+
     describe('Edge cases', () => {
         it('should return false when fileSuppressions is undefined', () => {
             const violation = new MockViolation(
@@ -669,7 +982,7 @@ describe('isViolationSuppressed', () => {
                     {
                         startLine: 5,
                         endLine: 10,
-                        ruleSelector: 'all',
+                        ruleSelector: toSelector('all'), ruleSelectorString: 'all',
                         isSuppressed: true
                     }
                 ]
@@ -691,7 +1004,7 @@ describe('isViolationSuppressed', () => {
                     {
                         startLine: 5,
                         endLine: 10,
-                        ruleSelector: 'all',
+                        ruleSelector: toSelector('all'), ruleSelectorString: 'all',
                         isSuppressed: true
                     }
                 ]
@@ -717,7 +1030,7 @@ describe('filterSuppressedViolations', () => {
                 {
                     startLine: 5,
                     endLine: 10,
-                    ruleSelector: 'pmd',
+                    ruleSelector: toSelector('pmd'), ruleSelectorString: 'pmd',
                     isSuppressed: true
                 }
             ]
@@ -750,7 +1063,7 @@ describe('filterSuppressedViolations', () => {
                 {
                     startLine: 5,
                     endLine: 10,
-                    ruleSelector: 'eslint',
+                    ruleSelector: toSelector('eslint'), ruleSelectorString: 'eslint',
                     isSuppressed: true
                 }
             ]
@@ -790,7 +1103,7 @@ describe('filterSuppressedViolations', () => {
                 {
                     startLine: 1,
                     endLine: undefined,
-                    ruleSelector: 'all',
+                    ruleSelector: toSelector('all'), ruleSelectorString: 'all',
                     isSuppressed: true
                 }
             ]

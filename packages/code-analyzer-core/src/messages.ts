@@ -231,9 +231,6 @@ const MESSAGE_CATALOG : MessageCatalog = {
     EngineWorkingFolderKeptDueToError:
         `Since the engine '%s' emitted an error, the following temporary working folder will not be removed: %s`,
 
-    ProcessingInlineSuppressions:
-        `Processing inline suppressions for %d violation(s).`,
-
     SuppressedViolationsCount:
         `%d violation(s) were suppressed by inline suppression markers.`,
 

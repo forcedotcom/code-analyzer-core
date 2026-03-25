@@ -9,6 +9,17 @@ import {
     parseFileSuppressions
 } from '../../src/suppressions/suppression-parser';
 import { SuppressionMarker, SuppressionRange } from '../../src/suppressions/suppression-types';
+import { toSelector } from '../../src/selectors';
+
+// Helper function to create test markers
+function createMarker(type: 'suppress' | 'unsuppress', ruleSelectorString: string, lineNumber: number): SuppressionMarker {
+    return {
+        type,
+        ruleSelector: toSelector(ruleSelectorString),
+        ruleSelectorString,
+        lineNumber
+    };
+}
 
 describe('parseSuppressionMarkers', () => {
     it('should find suppress marker with explicit rule selector', () => {
@@ -16,11 +27,10 @@ describe('parseSuppressionMarkers', () => {
         const markers = parseSuppressionMarkers(content, '/test/file.apex');
 
         expect(markers).toHaveLength(1);
-        expect(markers[0]).toEqual({
-            type: 'suppress',
-            ruleSelector: 'pmd:ApexCrudViolation',
-            lineNumber: 1
-        });
+        expect(markers[0].type).toBe('suppress');
+        expect(markers[0].ruleSelectorString).toBe('pmd:ApexCrudViolation');
+        expect(markers[0].lineNumber).toBe(1);
+        expect(markers[0].ruleSelector).toBeDefined();
     });
 
     it('should find suppress marker with "all" as default when no rule selector', () => {
@@ -28,11 +38,10 @@ describe('parseSuppressionMarkers', () => {
         const markers = parseSuppressionMarkers(content, '/test/file.js');
 
         expect(markers).toHaveLength(1);
-        expect(markers[0]).toEqual({
-            type: 'suppress',
-            ruleSelector: 'all',
-            lineNumber: 1
-        });
+        expect(markers[0].type).toBe('suppress');
+        expect(markers[0].ruleSelectorString).toBe('all');
+        expect(markers[0].lineNumber).toBe(1);
+        expect(markers[0].ruleSelector).toBeDefined();
     });
 
     it('should find suppress marker without parentheses as "all"', () => {
@@ -40,11 +49,10 @@ describe('parseSuppressionMarkers', () => {
         const markers = parseSuppressionMarkers(content, '/test/file.js');
 
         expect(markers).toHaveLength(1);
-        expect(markers[0]).toEqual({
-            type: 'suppress',
-            ruleSelector: 'all',
-            lineNumber: 1
-        });
+        expect(markers[0].type).toBe('suppress');
+        expect(markers[0].ruleSelectorString).toBe('all');
+        expect(markers[0].lineNumber).toBe(1);
+        expect(markers[0].ruleSelector).toBeDefined();
     });
 
     it('should find unsuppress marker with explicit rule selector', () => {
@@ -52,11 +60,10 @@ describe('parseSuppressionMarkers', () => {
         const markers = parseSuppressionMarkers(content, '/test/file.xml');
 
         expect(markers).toHaveLength(1);
-        expect(markers[0]).toEqual({
-            type: 'unsuppress',
-            ruleSelector: 'regex:AvoidOldSalesforceApiVersions',
-            lineNumber: 1
-        });
+        expect(markers[0].type).toBe('unsuppress');
+        expect(markers[0].ruleSelectorString).toBe('regex:AvoidOldSalesforceApiVersions');
+        expect(markers[0].lineNumber).toBe(1);
+        expect(markers[0].ruleSelector).toBeDefined();
     });
 
     it('should find multiple markers on different lines', () => {
@@ -67,16 +74,12 @@ public class Test {
         const markers = parseSuppressionMarkers(content, '/test/file.apex');
 
         expect(markers).toHaveLength(2);
-        expect(markers[0]).toEqual({
-            type: 'suppress',
-            ruleSelector: 'pmd',
-            lineNumber: 1
-        });
-        expect(markers[1]).toEqual({
-            type: 'unsuppress',
-            ruleSelector: 'pmd',
-            lineNumber: 3
-        });
+        expect(markers[0].type).toBe('suppress');
+        expect(markers[0].ruleSelectorString).toBe('pmd');
+        expect(markers[0].lineNumber).toBe(1);
+        expect(markers[1].type).toBe('unsuppress');
+        expect(markers[1].ruleSelectorString).toBe('pmd');
+        expect(markers[1].lineNumber).toBe(3);
     });
 
     it('should find markers in any part of a line, not just comments', () => {
@@ -84,7 +87,7 @@ public class Test {
         const markers = parseSuppressionMarkers(content, '/test/file.json');
 
         expect(markers).toHaveLength(1);
-        expect(markers[0].ruleSelector).toBe('rule1');
+        expect(markers[0].ruleSelectorString).toBe('rule1');
     });
 
     it('should handle multiple markers on the same line', () => {
@@ -92,8 +95,8 @@ public class Test {
         const markers = parseSuppressionMarkers(content, '/test/file.js');
 
         expect(markers).toHaveLength(2);
-        expect(markers[0].ruleSelector).toBe('rule1');
-        expect(markers[1].ruleSelector).toBe('rule2');
+        expect(markers[0].ruleSelectorString).toBe('rule1');
+        expect(markers[1].ruleSelectorString).toBe('rule2');
     });
 
     it('should trim whitespace from rule selectors', () => {
@@ -101,7 +104,7 @@ public class Test {
         const markers = parseSuppressionMarkers(content, '/test/file.apex');
 
         expect(markers).toHaveLength(1);
-        expect(markers[0].ruleSelector).toBe('pmd:SomeRule');
+        expect(markers[0].ruleSelectorString).toBe('pmd:SomeRule');
     });
 
     it('should handle empty file', () => {
@@ -125,7 +128,7 @@ public class Test {
         const markers = parseSuppressionMarkers(content, '/test/file.js');
 
         expect(markers).toHaveLength(1);
-        expect(markers[0].ruleSelector).toBe('eslint:(3,4)');
+        expect(markers[0].ruleSelectorString).toBe('eslint:(3,4)');
     });
 
     it('should be case-insensitive for marker names', () => {
@@ -135,176 +138,170 @@ public class Test {
         const markers = parseSuppressionMarkers(content, '/test/file.js');
 
         expect(markers).toHaveLength(3);
-        expect(markers[0]).toEqual({
-            type: 'suppress',
-            ruleSelector: 'pmd',
-            lineNumber: 1
-        });
-        expect(markers[1]).toEqual({
-            type: 'unsuppress',
-            ruleSelector: 'pmd',
-            lineNumber: 2
-        });
-        expect(markers[2]).toEqual({
-            type: 'suppress',
-            ruleSelector: 'eslint',
-            lineNumber: 3
-        });
+        expect(markers[0].type).toBe('suppress');
+        expect(markers[0].ruleSelectorString).toBe('pmd');
+        expect(markers[0].lineNumber).toBe(1);
+        expect(markers[1].type).toBe('unsuppress');
+        expect(markers[1].ruleSelectorString).toBe('pmd');
+        expect(markers[1].lineNumber).toBe(2);
+        expect(markers[2].type).toBe('suppress');
+        expect(markers[2].ruleSelectorString).toBe('eslint');
+        expect(markers[2].lineNumber).toBe(3);
     });
 });
 
 describe('buildSuppressionRanges', () => {
     it('should create suppression and unsuppression ranges', () => {
         const markers: SuppressionMarker[] = [
-            { type: 'suppress', ruleSelector: 'pmd', lineNumber: 5 },
-            { type: 'unsuppress', ruleSelector: 'pmd', lineNumber: 10 }
+            createMarker('suppress', 'pmd', 5),
+            createMarker('unsuppress', 'pmd', 10)
         ];
 
         const ranges = buildSuppressionRanges(markers, '/test/file.apex');
 
         expect(ranges).toHaveLength(2);
         // First range: suppressed from line 5-9
-        expect(ranges[0]).toEqual({
+        expect(ranges[0]).toMatchObject({
             startLine: 5,
             endLine: 9,
-            ruleSelector: 'pmd',
+            ruleSelectorString: 'pmd',
             isSuppressed: true
         });
         // Second range: unsuppressed from line 10 onwards
-        expect(ranges[1]).toEqual({
+        expect(ranges[1]).toMatchObject({
             startLine: 10,
             endLine: undefined,
-            ruleSelector: 'pmd',
+            ruleSelectorString: 'pmd',
             isSuppressed: false
         });
     });
 
     it('should create range to end of file when no unsuppress', () => {
         const markers: SuppressionMarker[] = [
-            { type: 'suppress', ruleSelector: 'all', lineNumber: 3 }
+            createMarker('suppress', 'all', 3)
         ];
 
         const ranges = buildSuppressionRanges(markers, '/test/file.js');
 
         expect(ranges).toHaveLength(1);
-        expect(ranges[0]).toEqual({
+        expect(ranges[0]).toMatchObject({
             startLine: 3,
             endLine: undefined,
-            ruleSelector: 'all',
+            ruleSelectorString: 'all',
             isSuppressed: true
         });
     });
 
     it('should handle multiple suppress/unsuppress pairs for same rule', () => {
         const markers: SuppressionMarker[] = [
-            { type: 'suppress', ruleSelector: 'pmd', lineNumber: 5 },
-            { type: 'unsuppress', ruleSelector: 'pmd', lineNumber: 10 },
-            { type: 'suppress', ruleSelector: 'pmd', lineNumber: 15 },
-            { type: 'unsuppress', ruleSelector: 'pmd', lineNumber: 20 }
+            createMarker('suppress', 'pmd', 5),
+            createMarker('unsuppress', 'pmd', 10),
+            createMarker('suppress', 'pmd', 15),
+            createMarker('unsuppress', 'pmd', 20)
         ];
 
         const ranges = buildSuppressionRanges(markers, '/test/file.apex');
 
         expect(ranges).toHaveLength(4);
-        expect(ranges[0]).toEqual({
+        expect(ranges[0]).toMatchObject({
             startLine: 5,
             endLine: 9,
-            ruleSelector: 'pmd',
+            ruleSelectorString: 'pmd',
             isSuppressed: true
         });
-        expect(ranges[1]).toEqual({
+        expect(ranges[1]).toMatchObject({
             startLine: 10,
             endLine: 14,
-            ruleSelector: 'pmd',
+            ruleSelectorString: 'pmd',
             isSuppressed: false
         });
-        expect(ranges[2]).toEqual({
+        expect(ranges[2]).toMatchObject({
             startLine: 15,
             endLine: 19,
-            ruleSelector: 'pmd',
+            ruleSelectorString: 'pmd',
             isSuppressed: true
         });
-        expect(ranges[3]).toEqual({
+        expect(ranges[3]).toMatchObject({
             startLine: 20,
             endLine: undefined,
-            ruleSelector: 'pmd',
+            ruleSelectorString: 'pmd',
             isSuppressed: false
         });
     });
 
     it('should handle different rule selectors independently', () => {
         const markers: SuppressionMarker[] = [
-            { type: 'suppress', ruleSelector: 'pmd', lineNumber: 5 },
-            { type: 'suppress', ruleSelector: 'eslint', lineNumber: 7 },
-            { type: 'unsuppress', ruleSelector: 'pmd', lineNumber: 10 },
-            { type: 'unsuppress', ruleSelector: 'eslint', lineNumber: 12 }
+            createMarker('suppress', 'pmd', 5),
+            createMarker('suppress', 'eslint', 7),
+            createMarker('unsuppress', 'pmd', 10),
+            createMarker('unsuppress', 'eslint', 12)
         ];
 
         const ranges = buildSuppressionRanges(markers, '/test/file.js');
 
         expect(ranges).toHaveLength(4);
-        expect(ranges[0]).toEqual({
+        expect(ranges[0]).toMatchObject({
             startLine: 5,
             endLine: 9,
-            ruleSelector: 'pmd',
+            ruleSelectorString: 'pmd',
             isSuppressed: true
         });
-        expect(ranges[1]).toEqual({
+        expect(ranges[1]).toMatchObject({
             startLine: 7,
             endLine: 11,
-            ruleSelector: 'eslint',
+            ruleSelectorString: 'eslint',
             isSuppressed: true
         });
-        expect(ranges[2]).toEqual({
+        expect(ranges[2]).toMatchObject({
             startLine: 10,
             endLine: undefined,
-            ruleSelector: 'pmd',
+            ruleSelectorString: 'pmd',
             isSuppressed: false
         });
-        expect(ranges[3]).toEqual({
+        expect(ranges[3]).toMatchObject({
             startLine: 12,
             endLine: undefined,
-            ruleSelector: 'eslint',
+            ruleSelectorString: 'eslint',
             isSuppressed: false
         });
     });
 
     it('should handle unsuppress without matching suppress', () => {
         const markers: SuppressionMarker[] = [
-            { type: 'unsuppress', ruleSelector: 'pmd', lineNumber: 5 }
+            createMarker('unsuppress', 'pmd', 5)
         ];
 
         const ranges = buildSuppressionRanges(markers, '/test/file.apex');
 
         expect(ranges).toHaveLength(1);
-        expect(ranges[0]).toEqual({
+        expect(ranges[0]).toMatchObject({
             startLine: 5,
             endLine: undefined,
-            ruleSelector: 'pmd',
+            ruleSelectorString: 'pmd',
             isSuppressed: false
         });
     });
 
     it('should handle nested suppress markers (second suppress is no-op)', () => {
         const markers: SuppressionMarker[] = [
-            { type: 'suppress', ruleSelector: 'all', lineNumber: 5 },
-            { type: 'suppress', ruleSelector: 'all', lineNumber: 7 }, // This is ignored
-            { type: 'unsuppress', ruleSelector: 'all', lineNumber: 10 }
+            createMarker('suppress', 'all', 5),
+            createMarker('suppress', 'all', 7), // This is ignored
+            createMarker('unsuppress', 'all', 10)
         ];
 
         const ranges = buildSuppressionRanges(markers, '/test/file.js');
 
         expect(ranges).toHaveLength(2);
-        expect(ranges[0]).toEqual({
+        expect(ranges[0]).toMatchObject({
             startLine: 5,
             endLine: 9,
-            ruleSelector: 'all',
+            ruleSelectorString: 'all',
             isSuppressed: true
         });
-        expect(ranges[1]).toEqual({
+        expect(ranges[1]).toMatchObject({
             startLine: 10,
             endLine: undefined,
-            ruleSelector: 'all',
+            ruleSelectorString: 'all',
             isSuppressed: false
         });
     });
@@ -320,25 +317,25 @@ describe('buildSuppressionRanges', () => {
     it('should handle unsuppress(engine) ending suppress(engine:rule)', () => {
         // Test symmetrical case: broader unsuppress ends more specific suppress
         const markers: SuppressionMarker[] = [
-            { type: 'suppress', ruleSelector: 'eslint:no-unused-vars', lineNumber: 2 },
-            { type: 'unsuppress', ruleSelector: 'eslint', lineNumber: 5 }
+            createMarker('suppress', 'eslint:no-unused-vars', 2),
+            createMarker('unsuppress', 'eslint', 5)
         ];
 
         const ranges = buildSuppressionRanges(markers, '/test/file.js');
 
         expect(ranges).toHaveLength(2);
         // suppress(eslint:no-unused-vars) should end at line 4 (before unsuppress(eslint))
-        expect(ranges[0]).toEqual({
+        expect(ranges[0]).toMatchObject({
             startLine: 2,
             endLine: 4,
-            ruleSelector: 'eslint:no-unused-vars',
+            ruleSelectorString: 'eslint:no-unused-vars',
             isSuppressed: true
         });
         // unsuppress(eslint) should start at line 5
-        expect(ranges[1]).toEqual({
+        expect(ranges[1]).toMatchObject({
             startLine: 5,
             endLine: undefined,
-            ruleSelector: 'eslint',
+            ruleSelectorString: 'eslint',
             isSuppressed: false
         });
     });
@@ -346,25 +343,25 @@ describe('buildSuppressionRanges', () => {
     it('should handle suppress(engine) closing unsuppress(engine:rule)', () => {
         // Test that broader suppress can close rule-based unsuppress (reverse of previous test)
         const markers: SuppressionMarker[] = [
-            { type: 'unsuppress', ruleSelector: 'eslint:no-unused-vars', lineNumber: 2 },
-            { type: 'suppress', ruleSelector: 'eslint', lineNumber: 5 }
+            createMarker('unsuppress', 'eslint:no-unused-vars', 2),
+            createMarker('suppress', 'eslint', 5)
         ];
 
         const ranges = buildSuppressionRanges(markers, '/test/file.js');
 
         expect(ranges).toHaveLength(2);
         // unsuppress(eslint:no-unused-vars) should end at line 4 (closed by suppress(eslint))
-        expect(ranges[0]).toEqual({
+        expect(ranges[0]).toMatchObject({
             startLine: 2,
             endLine: 4,
-            ruleSelector: 'eslint:no-unused-vars',
+            ruleSelectorString: 'eslint:no-unused-vars',
             isSuppressed: false
         });
         // suppress(eslint) should start at line 5
-        expect(ranges[1]).toEqual({
+        expect(ranges[1]).toMatchObject({
             startLine: 5,
             endLine: undefined,
-            ruleSelector: 'eslint',
+            ruleSelectorString: 'eslint',
             isSuppressed: true
         });
     });
@@ -372,9 +369,9 @@ describe('buildSuppressionRanges', () => {
     it('should handle suppress(engine) closing unsuppress(engine:(severity))', () => {
         // Test that broader suppress can close severity-based unsuppress
         const markers: SuppressionMarker[] = [
-            { type: 'suppress', ruleSelector: 'all', lineNumber: 2 },
-            { type: 'unsuppress', ruleSelector: 'eslint:(3)', lineNumber: 5 },
-            { type: 'suppress', ruleSelector: 'eslint', lineNumber: 10 }
+            createMarker('suppress', 'all', 2),
+            createMarker('unsuppress', 'eslint:(3)', 5),
+            createMarker('suppress', 'eslint', 10)
         ];
 
         const ranges = buildSuppressionRanges(markers, '/test/file.js');
@@ -386,34 +383,34 @@ describe('buildSuppressionRanges', () => {
 
         expect(ranges.length).toBe(3);
 
-        const allRanges = ranges.filter(r => r.ruleSelector === 'all');
-        const eslintSeverityRanges = ranges.filter(r => r.ruleSelector === 'eslint:(3)');
-        const eslintRanges = ranges.filter(r => r.ruleSelector === 'eslint');
+        const allRanges = ranges.filter(r => r.ruleSelectorString === 'all');
+        const eslintSeverityRanges = ranges.filter(r => r.ruleSelectorString === 'eslint:(3)');
+        const eslintRanges = ranges.filter(r => r.ruleSelectorString === 'eslint');
 
         // suppress(all) should continue to EOF (unsuppress(eslint:(3)) doesn't end it)
         expect(allRanges).toHaveLength(1);
-        expect(allRanges[0]).toEqual({
+        expect(allRanges[0]).toMatchObject({
             startLine: 2,
             endLine: undefined,
-            ruleSelector: 'all',
+            ruleSelectorString: 'all',
             isSuppressed: true
         });
 
         // unsuppress(eslint:(3)) creates exception [5,9] (closed by suppress(eslint))
         expect(eslintSeverityRanges).toHaveLength(1);
-        expect(eslintSeverityRanges[0]).toEqual({
+        expect(eslintSeverityRanges[0]).toMatchObject({
             startLine: 5,
             endLine: 9,
-            ruleSelector: 'eslint:(3)',
+            ruleSelectorString: 'eslint:(3)',
             isSuppressed: false
         });
 
         // suppress(eslint) starts at line 10
         expect(eslintRanges).toHaveLength(1);
-        expect(eslintRanges[0]).toEqual({
+        expect(eslintRanges[0]).toMatchObject({
             startLine: 10,
             endLine: undefined,
-            ruleSelector: 'eslint',
+            ruleSelectorString: 'eslint',
             isSuppressed: true
         });
     });
@@ -425,10 +422,10 @@ describe('buildSuppressionRanges', () => {
         // Line 6: suppress(regex) - suppress regex rules (closes the unsuppress exception)
         // Line 12: unsuppress(all) - end all suppressions
         const markers: SuppressionMarker[] = [
-            { type: 'suppress', ruleSelector: 'all', lineNumber: 2 },
-            { type: 'unsuppress', ruleSelector: 'regex:AvoidOldSalesforceApiVersions', lineNumber: 4 },
-            { type: 'suppress', ruleSelector: 'regex', lineNumber: 6 },
-            { type: 'unsuppress', ruleSelector: 'all', lineNumber: 12 }
+            createMarker('suppress', 'all', 2),
+            createMarker('unsuppress', 'regex:AvoidOldSalesforceApiVersions', 4),
+            createMarker('suppress', 'regex', 6),
+            createMarker('unsuppress', 'all', 12)
         ];
 
         const ranges = buildSuppressionRanges(markers, '/test/file.xml');
@@ -442,41 +439,41 @@ describe('buildSuppressionRanges', () => {
         expect(ranges.length).toBeGreaterThanOrEqual(3);
 
         // Find the ranges for each selector
-        const allRanges = ranges.filter(r => r.ruleSelector === 'all');
-        const regexAvoidRanges = ranges.filter(r => r.ruleSelector === 'regex:AvoidOldSalesforceApiVersions');
-        const regexRanges = ranges.filter(r => r.ruleSelector === 'regex');
+        const allRanges = ranges.filter(r => r.ruleSelectorString === 'all');
+        const regexAvoidRanges = ranges.filter(r => r.ruleSelectorString === 'regex:AvoidOldSalesforceApiVersions');
+        const regexRanges = ranges.filter(r => r.ruleSelectorString === 'regex');
 
         // "all" should have suppression [2,11] (continues despite unsuppress at line 4) and unsuppression [12, ∞]
-        expect(allRanges).toContainEqual({
+        expect(allRanges).toContainEqual(expect.objectContaining({
             startLine: 2,
             endLine: 11,
-            ruleSelector: 'all',
+            ruleSelectorString: 'all',
             isSuppressed: true
-        });
+        }));
 
-        expect(allRanges).toContainEqual({
+        expect(allRanges).toContainEqual(expect.objectContaining({
             startLine: 12,
             endLine: undefined,
-            ruleSelector: 'all',
+            ruleSelectorString: 'all',
             isSuppressed: false
-        });
+        }));
 
         // "regex:AvoidOldSalesforceApiVersions" should be unsuppressed [4,5]
         // closed by suppress(regex) at line 6
-        expect(regexAvoidRanges).toContainEqual({
+        expect(regexAvoidRanges).toContainEqual(expect.objectContaining({
             startLine: 4,
             endLine: 5,
-            ruleSelector: 'regex:AvoidOldSalesforceApiVersions',
+            ruleSelectorString: 'regex:AvoidOldSalesforceApiVersions',
             isSuppressed: false
-        });
+        }));
 
         // "regex" should be suppressed [6,11]
-        expect(regexRanges).toContainEqual({
+        expect(regexRanges).toContainEqual(expect.objectContaining({
             startLine: 6,
             endLine: 11,
-            ruleSelector: 'regex',
+            ruleSelectorString: 'regex',
             isSuppressed: true
-        });
+        }));
 
         // Expected behavior when checking violations (with specificity precedence):
         // Line 3: any violation → SUPPRESSED by "all" [2,11]
@@ -503,16 +500,16 @@ describe('parseFileSuppressions', () => {
 
         expect(fileSuppressions.filePath).toBe(filePath);
         expect(fileSuppressions.ranges).toHaveLength(2);
-        expect(fileSuppressions.ranges[0]).toEqual({
+        expect(fileSuppressions.ranges[0]).toMatchObject({
             startLine: 2,
             endLine: 4,
-            ruleSelector: 'pmd:ApexCrudViolation',
+            ruleSelectorString: 'pmd:ApexCrudViolation',
             isSuppressed: true
         });
-        expect(fileSuppressions.ranges[1]).toEqual({
+        expect(fileSuppressions.ranges[1]).toMatchObject({
             startLine: 5,
             endLine: undefined,
-            ruleSelector: 'pmd:ApexCrudViolation',
+            ruleSelectorString: 'pmd:ApexCrudViolation',
             isSuppressed: false
         });
     });

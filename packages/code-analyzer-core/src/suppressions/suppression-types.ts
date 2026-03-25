@@ -2,11 +2,7 @@
  * Types and interfaces for the suppression system
  */
 
-/**
- * Represents a rule selector that can be used in suppression markers
- * Examples: "all", "pmd:ApexCrudViolation", "eslint:(3,4)", "regex"
- */
-export type RuleSelector = string;
+import {Selector} from "../selectors";
 
 /**
  * Represents a suppression marker found in source code
@@ -15,8 +11,11 @@ export interface SuppressionMarker {
     /** The type of marker (suppress or unsuppress) */
     type: 'suppress' | 'unsuppress';
 
-    /** The rule selector specified in the marker */
-    ruleSelector: RuleSelector;
+    /** The rule selector specified in the marker (parsed using toSelector) */
+    ruleSelector: Selector;
+
+    /** The original rule selector string (kept for hierarchical ending logic) */
+    ruleSelectorString: string;
 
     /** The line number where the marker was found (1-indexed) */
     lineNumber: number;
@@ -32,8 +31,11 @@ export interface SuppressionRange {
     /** The ending line number (1-indexed, inclusive). undefined means end of file */
     endLine: number | undefined;
 
-    /** The rule selector that is affected in this range */
-    ruleSelector: RuleSelector;
+    /** The rule selector that is affected in this range (Selector object from selectors.ts) */
+    ruleSelector: Selector;
+
+    /** The original rule selector string (kept for hierarchical ending logic and debugging) */
+    ruleSelectorString: string;
 
     /** Whether this is a suppression (true) or unsuppression/exception (false) */
     isSuppressed: boolean;
