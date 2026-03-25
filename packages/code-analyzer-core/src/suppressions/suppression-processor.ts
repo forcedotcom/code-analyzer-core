@@ -53,8 +53,8 @@ export async function extractSuppressionsFromFiles(
         }
 
         try {
-            // Read file content
-            const fileContent = fs.readFileSync(filePath, 'utf-8');
+            // Read file content asynchronously
+            const fileContent = await fs.promises.readFile(filePath, 'utf-8');
 
             // Parse suppressions
             const fileSuppressions = parseFileSuppressions(fileContent, filePath, logger);
