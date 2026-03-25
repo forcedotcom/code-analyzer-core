@@ -296,15 +296,15 @@ function toViolation(file: string, resultMsg: Linter.LintMessage,
         primaryLocationIndex: 0
     };
 
-    if (lineStartOffsets) {
-        if (includeFixes && resultMsg.fix) {
-            violation.fixes = [convertEslintFix(file, resultMsg.fix, lineStartOffsets)];
-        }
-
-        if (includeSuggestions && resultMsg.suggestions?.length) {
-            violation.suggestions = resultMsg.suggestions.map(s =>
-                convertEslintSuggestion(file, s, lineStartOffsets));
-        }
+    if (!lineStartOffsets) {
+        return violation;
+    }
+    if (includeFixes && resultMsg.fix) {
+        violation.fixes = [convertEslintFix(file, resultMsg.fix, lineStartOffsets)];
+    }
+    if (includeSuggestions && resultMsg.suggestions?.length) {
+        violation.suggestions = resultMsg.suggestions.map(s =>
+            convertEslintSuggestion(file, s, lineStartOffsets));
     }
 
     return violation;
