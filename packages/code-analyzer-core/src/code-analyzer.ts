@@ -356,6 +356,12 @@ export class CodeAnalyzer {
         // Reset suppression counter for this run
         this.totalSuppressedViolations = 0;
 
+        // Clear suppression caches from previous runs to prevent unbounded memory growth
+        // Each run typically analyzes a different workspace, so caching across runs provides minimal benefit
+        // while keeping stale data in memory.
+        this.suppressionsMap.clear();
+        this.fileProcessingPromises.clear();
+
         this.emitLogEvent(LogLevel.Debug, getMessage('RunningWithWorkspace', JSON.stringify({
             filesAndFolders: runOptions.workspace.getRawFilesAndFolders(),
             targets: runOptions.workspace.getRawTargets()
