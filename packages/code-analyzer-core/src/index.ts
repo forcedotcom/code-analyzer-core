@@ -8,7 +8,8 @@ export type {
     EngineOverrides,
     Ignores,
     RuleOverrides,
-    RuleOverride
+    RuleOverride,
+    Suppressions
 } from "./config"
 
 

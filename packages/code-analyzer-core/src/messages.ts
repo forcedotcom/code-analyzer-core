@@ -61,6 +61,14 @@ const MESSAGE_CATALOG : MessageCatalog = {
         `    - "**/*.test.js"\n` +
         `-------------------------------------------`,
 
+    ConfigFieldDescription_suppressions:
+        `Configuration for inline suppression markers in source code.\n` +
+        `  disable_suppressions: Boolean to disable processing of suppression markers.\n` +
+        `---- [Example usage]: ---------------------\n` +
+        `suppressions:\n` +
+        `  disable_suppressions: false\n` +
+        `-------------------------------------------`,
+
     GenericEngineConfigOverview:
         `%s ENGINE CONFIGURATION`,
 
