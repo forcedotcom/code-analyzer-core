@@ -447,6 +447,12 @@ describe("Tests for creating and accessing configuration values", () => {
                 valueType: 'object',
                 defaultValue: { files: [] },
                 wasSuppliedByUser: false
+            },
+            suppressions: {
+                descriptionText: getMessage('ConfigFieldDescription_suppressions'),
+                valueType: 'object',
+                defaultValue: { disable_suppressions: false },
+                wasSuppliedByUser: false
             }
         });
     });
