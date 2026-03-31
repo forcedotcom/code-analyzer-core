@@ -412,12 +412,8 @@ export class CodeAnalyzer {
         // Note: Inline suppressions are now applied per-engine in runEngineAndValidateResults() before EngineResultsEvent is emitted
 
         // Log aggregate suppression count if any violations were suppressed
-        if (this.config.getSuppressionsEnabled()) {
-            if (this.totalSuppressedViolations > 0) {
-                this.emitLogEvent(LogLevel.Info, getMessage('SuppressedViolationsCount', this.totalSuppressedViolations));
-            } else {
-                this.emitLogEvent(LogLevel.Info, getMessage('NoViolationsSuppressed'));
-            }
+        if (this.config.getSuppressionsEnabled() && this.totalSuppressedViolations > 0) {
+            this.emitLogEvent(LogLevel.Info, getMessage('SuppressedViolationsCount', this.totalSuppressedViolations));
         }
 
         return runResults;

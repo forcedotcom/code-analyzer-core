@@ -163,7 +163,7 @@ describe('Per-Engine Suppression Processing', () => {
         expect(suppressionLog).toBeDefined();
     });
 
-    it('should log "No violations were suppressed" when no suppressions apply', async () => {
+    it('should not log suppression message when no suppressions apply', async () => {
         // Setup
         const config = CodeAnalyzerConfig.fromObject({
             suppressions: { disable_suppressions: false },
@@ -201,9 +201,7 @@ describe('Per-Engine Suppression Processing', () => {
         const ruleSelection = await codeAnalyzer.selectRules(['stubEngine1'], { workspace });
         await codeAnalyzer.run(ruleSelection, { workspace });
 
-        // Verify "No violations were suppressed" log was emitted
-        expect(logEvents.length).toBeGreaterThan(0);
-        const noSuppressionLog = logEvents.find(e => e.message.includes('No violations were suppressed'));
-        expect(noSuppressionLog).toBeDefined();
+        // Verify no suppression log was emitted (since no violations were suppressed)
+        expect(logEvents.length).toBe(0);
     });
 });

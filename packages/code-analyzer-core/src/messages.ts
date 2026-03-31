@@ -240,10 +240,7 @@ const MESSAGE_CATALOG : MessageCatalog = {
         `Since the engine '%s' emitted an error, the following temporary working folder will not be removed: %s`,
 
     SuppressedViolationsCount:
-        `%d violation(s) were suppressed by inline suppression markers.`,
-
-    NoViolationsSuppressed:
-        `No violations were suppressed by inline suppression markers.`
+        `%d violation(s) were suppressed by inline suppression markers.`
 }
 
 /**
