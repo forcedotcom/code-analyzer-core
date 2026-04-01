@@ -61,6 +61,14 @@ const MESSAGE_CATALOG : MessageCatalog = {
         `    - "**/*.test.js"\n` +
         `-------------------------------------------`,
 
+    ConfigFieldDescription_suppressions:
+        `Configuration for inline suppression markers in source code.\n` +
+        `  disable_suppressions: Boolean to disable processing of suppression markers.\n` +
+        `---- [Example usage]: ---------------------\n` +
+        `suppressions:\n` +
+        `  disable_suppressions: false\n` +
+        `-------------------------------------------`,
+
     GenericEngineConfigOverview:
         `%s ENGINE CONFIGURATION`,
 
@@ -231,14 +239,8 @@ const MESSAGE_CATALOG : MessageCatalog = {
     EngineWorkingFolderKeptDueToError:
         `Since the engine '%s' emitted an error, the following temporary working folder will not be removed: %s`,
 
-    ProcessingInlineSuppressions:
-        `Processing inline suppressions for %d violation(s).`,
-
     SuppressedViolationsCount:
-        `%d violation(s) were suppressed by inline suppression markers.`,
-
-    NoViolationsSuppressed:
-        `No violations were suppressed by inline suppression markers.`
+        `%d violation(s) were suppressed by inline suppression markers.`
 }
 
 /**

@@ -227,6 +227,12 @@ export class CodeAnalyzerConfig {
                     valueType: 'object',
                     defaultValue: { files: [] },
                     wasSuppliedByUser: !deepEquals(this.config.ignores, DEFAULT_CONFIG.ignores)
+                },
+                suppressions: {
+                    descriptionText: getMessage('ConfigFieldDescription_suppressions'),
+                    valueType: 'object',
+                    defaultValue: { disable_suppressions: false },
+                    wasSuppliedByUser: !deepEquals(this.config.suppressions, DEFAULT_CONFIG.suppressions)
                 }
             }
         };
@@ -258,6 +264,13 @@ export class CodeAnalyzerConfig {
      */
     public getSuppressionsEnabled(): boolean {
         return !this.config.suppressions.disable_suppressions;
+    }
+
+    /**
+     * Returns the suppressions configuration object.
+     */
+    public getSuppressions(): Suppressions {
+        return this.config.suppressions;
     }
 
     /**

@@ -5,6 +5,8 @@
 import { Violation } from '../results';
 import { FileSuppressions, SuppressionRange, SuppressionsMap } from './suppression-types';
 import { parseFileSuppressions } from './suppression-parser';
+import { Selector } from '../selectors';
+import { SeverityLevel } from '@salesforce/code-analyzer-engine-api';
 import fs from 'node:fs';
 import { isBinaryFile } from 'isbinaryfile';
 
@@ -51,11 +53,11 @@ export async function extractSuppressionsFromFiles(
         }
 
         try {
-            // Read file content
-            const fileContent = fs.readFileSync(filePath, 'utf-8');
+            // Read file content asynchronously
+            const fileContent = await fs.promises.readFile(filePath, 'utf-8');
 
             // Parse suppressions
-            const fileSuppressions = parseFileSuppressions(fileContent, filePath);
+            const fileSuppressions = parseFileSuppressions(fileContent, filePath, logger);
 
             // Cache the result
             suppressionsMap.set(filePath, fileSuppressions);
@@ -71,20 +73,6 @@ export async function extractSuppressionsFromFiles(
     }
 
     return suppressionsMap;
-}
-
-/**
- * Gets the specificity level of a rule selector
- * More specific selectors override less specific ones
- */
-function getSelectorSpecificity(selector: string): number {
-    if (selector === 'all') {
-        return 1; // Least specific
-    }
-    if (selector.includes(':')) {
-        return 3; // Most specific (engine:rule)
-    }
-    return 2; // Medium specific (engine only)
 }
 
 /**
@@ -121,24 +109,34 @@ export function isViolationSuppressed(violation: Violation, fileSuppressions: Fi
         return false; // No applicable ranges
     }
 
-    // Apply specificity rules: find the most specific applicable range
-    // If there are multiple ranges at the same specificity, take the one with the highest startLine (most recent)
-    let mostSpecificRange: SuppressionRange | null = null;
-    let highestSpecificity = 0;
+    // Find the most recent applicable range (highest startLine wins)
+    // This is the simplest rule: the nearest suppression marker takes precedence
+    //
+    // EDGE CASE - Multiple markers on same line:
+    // If multiple suppression markers are placed on the same line (e.g., same comment),
+    // the behavior is undefined (whichever appears last in the array wins).
+    // This is an anti-pattern and users should NOT write markers this way.
+    // We intentionally do not implement complex tie-breaking logic for this edge case.
+    //
+    // Example of what NOT to do:
+    //   // code-analyzer-suppress(all) code-analyzer-suppress(eslint)
+    //
+    // Proper usage - one marker per line:
+    //   // code-analyzer-suppress(all)
+    //   // code-analyzer-suppress(eslint)
+    //
+    let selectedRange: SuppressionRange | null = null;
+    let highestStartLine = 0;
 
     for (const range of applicableRanges) {
-        const specificity = getSelectorSpecificity(range.ruleSelector);
-
-        if (specificity > highestSpecificity ||
-            (specificity === highestSpecificity && mostSpecificRange &&
-             range.startLine > mostSpecificRange.startLine)) {
-            mostSpecificRange = range;
-            highestSpecificity = specificity;
+        if (range.startLine >= highestStartLine) {
+            selectedRange = range;
+            highestStartLine = range.startLine;
         }
     }
 
-    // Return the isSuppressed value of the most specific range
-    return mostSpecificRange ? mostSpecificRange.isSuppressed : false;
+    // Return the isSuppressed value of the selected range
+    return selectedRange ? selectedRange.isSuppressed : false;
 }
 
 /**
@@ -166,56 +164,28 @@ function doesRangeOverlapViolation(
 
 /**
  * Checks if a rule selector matches a violation's rule
+ * Uses the same Selector.matchesSelectables() logic as rule selection
  *
- * Rule selector matching rules:
- * - "all" matches all rules
- * - "engineName" matches all rules from that engine (e.g., "pmd", "eslint")
- * - "engineName:ruleName" matches specific rule
- * - "engineName:(severity1,severity2)" matches rules from engine with those severities
- *
- * @param ruleSelector The rule selector from suppression marker
+ * @param ruleSelector The Selector from suppression marker
  * @param violation The violation to check
  * @returns true if the selector matches this violation's rule
  */
-function doesRuleSelectorMatch(ruleSelector: string, violation: Violation): boolean {
-    // "all" matches everything
-    if (ruleSelector === 'all') {
-        return true;
-    }
-
+function doesRuleSelectorMatch(ruleSelector: Selector, violation: Violation): boolean {
     const rule = violation.getRule();
-    const engineName = rule.getEngineName();
-    const ruleName = rule.getName();
-    const severity = rule.getSeverityLevel();
 
-    // Check for exact "engineName:ruleName" match
-    const fullRuleName = `${engineName}:${ruleName}`;
-    if (ruleSelector === fullRuleName) {
-        return true;
-    }
+    // Build selectables array (same as Rule.matchesRuleSelector in rules.ts)
+    const sevNumber: number = rule.getSeverityLevel().valueOf();
+    const sevName: string = SeverityLevel[sevNumber];
+    const selectables: string[] = [
+        "all",
+        rule.getEngineName().toLowerCase(),
+        rule.getName().toLowerCase(),
+        sevName.toLowerCase(),
+        String(sevNumber),
+        ...rule.getTags().map(t => t.toLowerCase())
+    ];
 
-    // Check for engine-only match (e.g., "pmd" matches all pmd rules)
-    if (ruleSelector === engineName) {
-        return true;
-    }
-
-    // Check for severity-based match (e.g., "eslint:(3,4)")
-    const severityPattern = /^([^:]+):\(([^)]+)\)$/;
-    const severityMatch = ruleSelector.match(severityPattern);
-    if (severityMatch) {
-        const selectorEngine = severityMatch[1];
-        const severitiesStr = severityMatch[2];
-
-        if (selectorEngine === engineName) {
-            // Parse severities: "3,4" -> [3, 4]
-            const severities = severitiesStr.split(',').map(s => parseInt(s.trim(), 10));
-            if (severities.includes(severity)) {
-                return true;
-            }
-        }
-    }
-
-    return false;
+    return ruleSelector.matchesSelectables(selectables);
 }
 
 /**
@@ -257,9 +227,14 @@ export type LoggerCallback = (level: 'error' | 'warn' | 'debug', message: string
  *
  * @param violations Array of all violations from all engines
  * @param logger Optional logger callback for error/warning messages
+ * @param existingSuppressionsMap Optional pre-populated suppressions map to use for caching across multiple calls
  * @returns Filtered violations with suppressions applied
  */
-export async function processSuppressions(violations: Violation[], logger?: LoggerCallback): Promise<Violation[]> {
+export async function processSuppressions(
+    violations: Violation[],
+    logger?: LoggerCallback,
+    existingSuppressionsMap?: SuppressionsMap
+): Promise<Violation[]> {
     if (violations.length === 0) {
         return violations;
     }
@@ -279,8 +254,11 @@ export async function processSuppressions(violations: Violation[], logger?: Logg
         return violations;
     }
 
-    // Parse suppression information from files
-    const suppressionsMap = await extractSuppressionsFromFiles(filePaths, new Map(), logger);
+    // Use provided map or create new one
+    const suppressionsMap = existingSuppressionsMap || new Map();
+
+    // Parse suppression information from files (will skip already-cached files)
+    await extractSuppressionsFromFiles(filePaths, suppressionsMap, logger);
 
     // Filter violations
     return filterSuppressedViolations(violations, suppressionsMap);
