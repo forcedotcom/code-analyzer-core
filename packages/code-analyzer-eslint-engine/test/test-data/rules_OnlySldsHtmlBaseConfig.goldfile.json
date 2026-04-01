@@ -10,7 +10,8 @@
       "Recommended",
       "SLDS",
       "BestPractices",
-      "HTML"
+      "HTML",
+      "Fixable"
     ]
   },
   {
@@ -24,7 +25,8 @@
       "Recommended",
       "SLDS",
       "ErrorProne",
-      "HTML"
+      "HTML",
+      "Fixable"
     ]
   },
   {
