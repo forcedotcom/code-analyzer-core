@@ -10,7 +10,9 @@ export type RunESLintWorkerTaskInput = {
     rulesToRun: string[]
     engineConfig: ESLintEngineConfig,
     eslintContext: ESLintContext,
-    progressRange: [number, number]
+    progressRange: [number, number],
+    includeFixes?: boolean,
+    includeSuggestions?: boolean
 }
 
 export class RunESLintWorkerTask extends WorkerTask<RunESLintWorkerTaskInput, ESLint.LintResult[]> {
