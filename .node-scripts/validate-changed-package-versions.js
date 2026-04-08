@@ -114,7 +114,8 @@ function getLatestReleasedVersion(changedPackage) {
 
 function isPackageThatHasNotPublished(changedPackage) {
     return [
-        "packages/ENGINE-TEMPLATE"
+        "packages/ENGINE-TEMPLATE",
+        "packages/code-analyzer-apexguru-engine"
     ].includes(changedPackage.replace("\\","/"));
 }
 

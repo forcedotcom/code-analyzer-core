@@ -1,0 +1,26 @@
+
+
+import { EnginePlugin } from '@salesforce/code-analyzer-engine-api';
+import { ApexGuruEnginePlugin } from './plugin';
+
+/**
+ * Factory function to create the ApexGuru engine plugin
+ * This is the entry point for dynamic loading by Code Analyzer
+ */
+function createEnginePlugin(): EnginePlugin {
+    return new ApexGuruEnginePlugin();
+}
+
+// Export plugin factory and plugin class
+export { createEnginePlugin, ApexGuruEnginePlugin };
+
+// Export engine and supporting classes for direct usage
+export { ApexGuruEngine } from './engine';
+export { ApexGuruService } from './services/ApexGuruService';
+export { ApexGuruAuthService } from './services/ApexGuruAuthService';
+export { ViolationMapper } from './mappers/ViolationMapper';
+export * from './types';
+
+// Export rule mappings and utilities
+export { APEXGURU_RULE_MAPPINGS, hasRuleMapping, getRuleMapping } from './apexguru-rule-mappings';
+export { buildRuleDescription, mapApexGuruSeverity, mapApexGuruCategory } from './rule-utils';
