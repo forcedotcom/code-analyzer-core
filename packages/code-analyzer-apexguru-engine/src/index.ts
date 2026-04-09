@@ -20,7 +20,3 @@ export { ApexGuruService } from './services/ApexGuruService';
 export { ApexGuruAuthService } from './services/ApexGuruAuthService';
 export { ViolationMapper } from './mappers/ViolationMapper';
 export * from './types';
-
-// Export rule mappings and utilities
-export { APEXGURU_RULE_MAPPINGS, hasRuleMapping, getRuleMapping } from './apexguru-rule-mappings';
-export { buildRuleDescription, mapApexGuruSeverity, mapApexGuruCategory } from './rule-utils';

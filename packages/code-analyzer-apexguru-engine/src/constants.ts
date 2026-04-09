@@ -7,10 +7,9 @@ export const ENGINE_NAME = 'apexguru';
 
 /**
  * File extensions that ApexGuru can analyze
- * ApexGuru only supports Apex class files (.cls)
- * Note: .trigger files are not supported by ApexGuru API
+ * ApexGuru supports Apex class files (.cls) and trigger files (.trigger)
  */
-export const APEXGURU_FILE_EXTENSIONS = ['.cls'];
+export const APEXGURU_FILE_EXTENSIONS = ['.cls', '.trigger'];
 
 /**
  * Display name for supported language

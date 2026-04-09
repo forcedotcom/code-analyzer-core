@@ -115,7 +115,7 @@ function getLatestReleasedVersion(changedPackage) {
 function isPackageThatHasNotPublished(changedPackage) {
     return [
         "packages/ENGINE-TEMPLATE",
-        "packages/code-analyzer-apexguru-engine"
+        "packages/code-analyzer-apexguru-engine" // remove ths exception once PR merges and is published
     ].includes(changedPackage.replace("\\","/"));
 }
 

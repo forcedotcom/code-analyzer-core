@@ -34,7 +34,9 @@ export class ApexGuruEngine extends EngineEventEmitter implements Engine {
         this.apexGuruService = new ApexGuruService(
             this.emitLogEvent.bind(this),
             config.api_timeout_ms,
-            config.api_initial_retry_ms
+            config.api_initial_retry_ms,
+            config.api_max_retry_ms,
+            config.api_backoff_multiplier
         );
         this.violationMapper = new ViolationMapper();
     }
@@ -44,8 +46,9 @@ export class ApexGuruEngine extends EngineEventEmitter implements Engine {
     }
 
     async getEngineVersion(): Promise<string> {
-        // Return package version
-        return '0.36.0-SNAPSHOT';
+        const pathToPackageJson: string = path.join(__dirname, '..', 'package.json');
+        const packageJson: {version: string} = JSON.parse(await fs.readFile(pathToPackageJson, 'utf-8'));
+        return packageJson.version;
     }
 
     async describeRules(describeOptions: DescribeOptions): Promise<RuleDescription[]> {

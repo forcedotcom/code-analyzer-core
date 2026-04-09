@@ -1,5 +1,3 @@
-
-
 import { Violation, CodeLocation, Fix, Suggestion } from '@salesforce/code-analyzer-engine-api';
 import { ApexGuruViolation, ApexGuruLocation, ApexGuruFix, ApexGuruSuggestion } from '../types';
 import { isKnownRule, FALLBACK_RULE_NAME } from '../apexguru-rules';
@@ -36,7 +34,7 @@ export class ViolationMapper {
             codeLocations: av.locations.map(loc => this.normalizeLocation(loc, filePath)),
             primaryLocationIndex: av.primaryLocationIndex,
             resourceUrls: av.resources,
-            fixes: av.fixes?.map(fix => this.mapFix(fix, filePath)),
+            //fixes: av.fixes?.map(fix => this.mapFix(fix, filePath)),
             suggestions: av.suggestions?.map(suggestion => this.mapSuggestion(suggestion, filePath))
         };
     }

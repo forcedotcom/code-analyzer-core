@@ -10,11 +10,6 @@ import {
     ApexGuruViolation
 } from '../types';
 
-const APEX_GURU_MAX_TIMEOUT_MS = 120000;  // 2 minutes
-const APEX_GURU_INITIAL_RETRY_MS = 2000;   // 2 seconds
-const APEX_GURU_MAX_RETRY_MS = 60000;      // 60 seconds
-const APEX_GURU_BACKOFF_MULTIPLIER = 2;
-
 /**
  * Service for interacting with ApexGuru APIs
  */
@@ -23,17 +18,23 @@ export class ApexGuruService {
     private readonly emitLogEvent: (logLevel: LogLevel, message: string) => void;
     private readonly maxTimeoutMs: number;
     private readonly initialRetryMs: number;
+    private readonly maxRetryMs: number;
+    private readonly backoffMultiplier: number;
     private progressCallback?: (progress: number) => void;
 
     constructor(
         emitLogEvent: (logLevel: LogLevel, message: string) => void,
-        maxTimeoutMs: number = APEX_GURU_MAX_TIMEOUT_MS,
-        initialRetryMs: number = APEX_GURU_INITIAL_RETRY_MS
+        maxTimeoutMs: number,
+        initialRetryMs: number,
+        maxRetryMs: number,
+        backoffMultiplier: number
     ) {
         this.authService = new ApexGuruAuthService(emitLogEvent);
         this.emitLogEvent = emitLogEvent;
         this.maxTimeoutMs = maxTimeoutMs;
         this.initialRetryMs = initialRetryMs;
+        this.maxRetryMs = maxRetryMs;
+        this.backoffMultiplier = backoffMultiplier;
     }
 
     /**
@@ -54,35 +55,15 @@ export class ApexGuruService {
      * Validate ApexGuru access
      */
     async validate(): Promise<boolean> {
-        const connection: Connection = this.authService.getConnection();
-        const apiVersion = this.authService.getApiVersion();
-        const url = `/services/data/v${apiVersion}/apexguru/validate`;
-        const fullUrl = `${connection.instanceUrl}${url}`;
+        const VALIDATE_TIMEOUT_MS = 60000; // 60 seconds hardcoded timeout
+
+        const validatePromise = this.performValidate();
+        const timeoutPromise = new Promise<never>((_, reject) => {
+            setTimeout(() => reject(new Error(`Validate request timed out after ${VALIDATE_TIMEOUT_MS}ms`)), VALIDATE_TIMEOUT_MS);
+        });
 
         try {
-            // Debug: Log API call details (captured in CLI log file)
-            this.emitLogEvent(LogLevel.Debug, '=== VALIDATE API CALL ===');
-            this.emitLogEvent(LogLevel.Debug, `URL: GET ${fullUrl}`);
-            this.emitLogEvent(LogLevel.Debug, `Authorization: Bearer ${connection.accessToken?.substring(0, 20)}...`);
-            this.emitLogEvent(LogLevel.Debug, `API Version: v${apiVersion}`);
-
-            const response: any = await connection.request({
-                method: 'GET',
-                url
-            });
-
-            // Debug: Log response
-            this.emitLogEvent(LogLevel.Debug, `Response Status: ${response.status || 'N/A'}`);
-            this.emitLogEvent(LogLevel.Debug, `Response Body: ${JSON.stringify(response)}`);
-            this.emitLogEvent(LogLevel.Debug, '=== END VALIDATE ===');
-
-            if (response.status && response.status.toLowerCase() === ApexGuruResponseStatus.SUCCESS) {
-                this.emitLogEvent(LogLevel.Info, 'ApexGuru access validated successfully');
-                return true;
-            }
-
-            this.emitLogEvent(LogLevel.Warn, `ApexGuru validation returned status: ${response.status}`);
-            return false;
+            return await Promise.race([validatePromise, timeoutPromise]);
         } catch (error: any) {
             this.emitLogEvent(LogLevel.Error, `VALIDATE ERROR: ${error.message}`);
             this.emitLogEvent(LogLevel.Debug, `Error Stack: ${error.stack}`);
@@ -91,9 +72,58 @@ export class ApexGuruService {
     }
 
     /**
+     * Internal validate implementation (without timeout wrapper)
+     */
+    private async performValidate(): Promise<boolean> {
+        const connection: Connection = this.authService.getConnection();
+        const apiVersion = this.authService.getApiVersion();
+        const url = `/services/data/v${apiVersion}/apexguru/validate`;
+        const fullUrl = `${connection.instanceUrl}${url}`;
+
+        // Debug: Log API call details (captured in CLI log file)
+        this.emitLogEvent(LogLevel.Debug, '=== VALIDATE API CALL ===');
+        this.emitLogEvent(LogLevel.Debug, `URL Format: GET <instance-url>/services/data/v<api-version>/apexguru/validate`);
+        this.emitLogEvent(LogLevel.Debug, `URL: GET ${fullUrl}`);
+        this.emitLogEvent(LogLevel.Debug, `Authorization: Bearer ${connection.accessToken?.substring(0, 20)}...`);
+        this.emitLogEvent(LogLevel.Debug, `API Version: v${apiVersion}`);
+
+        const response: any = await connection.request({
+            method: 'GET',
+            url
+        });
+
+        // Debug: Log response
+        this.emitLogEvent(LogLevel.Debug, `Response Status: ${response.status || 'N/A'}`);
+        this.emitLogEvent(LogLevel.Debug, `Response Body: ${JSON.stringify(response)}`);
+        this.emitLogEvent(LogLevel.Debug, '=== END VALIDATE ===');
+
+        if (response.status && response.status.toLowerCase() === ApexGuruResponseStatus.SUCCESS) {
+            this.emitLogEvent(LogLevel.Info, 'ApexGuru access validated successfully');
+            return true;
+        }
+
+        this.emitLogEvent(LogLevel.Warn, `ApexGuru validation returned status: ${response.status}`);
+        return false;
+    }
+
+    /**
      * Submit Apex class for analysis and wait for results
+     * Wraps submit + poll together with a single timeout (api_timeout_ms)
      */
     async analyzeApexClass(classContent: string, filePath: string): Promise<ApexGuruViolation[]> {
+        const analysisPromise = this.performAnalysis(classContent, filePath);
+        const timeoutPromise = new Promise<never>((_, reject) => {
+            setTimeout(() => reject(new Error(`Analysis timed out after ${this.maxTimeoutMs}ms for file: ${filePath}`)), this.maxTimeoutMs);
+        });
+
+        return await Promise.race([analysisPromise, timeoutPromise]);
+    }
+
+    /**
+     * Internal analysis implementation (without timeout wrapper)
+     * Performs submit + poll
+     */
+    private async performAnalysis(classContent: string, filePath: string): Promise<ApexGuruViolation[]> {
         // Step 1: Submit request
         const requestId = await this.submitAnalysis(classContent, filePath);
 
@@ -117,6 +147,7 @@ export class ApexGuruService {
 
         // Debug: Log API call details (captured in CLI log file)
         this.emitLogEvent(LogLevel.Debug, '=== SUBMIT ANALYSIS API CALL ===');
+        this.emitLogEvent(LogLevel.Debug, `URL Format: POST <instance-url>/services/data/v<api-version>/apexguru/request`);
         this.emitLogEvent(LogLevel.Debug, `URL: POST ${fullUrl}`);
         this.emitLogEvent(LogLevel.Debug, `Authorization: Bearer ${connection.accessToken?.substring(0, 20)}...`);
         this.emitLogEvent(LogLevel.Debug, `Content-Type: application/json`);
@@ -164,6 +195,7 @@ export class ApexGuruService {
 
     /**
      * Poll for analysis results with exponential backoff
+     * Note: Timeout is handled by analyzeApexClass wrapper, not here
      */
     private async pollForResults(requestId: string, filePath: string): Promise<ApexGuruViolation[]> {
         const connection: Connection = this.authService.getConnection();
@@ -173,18 +205,17 @@ export class ApexGuruService {
             : `/services/data/v${apiVersion}/apexguru/request/${requestId}`;
         const fullUrl = `${connection.instanceUrl}${url}`;
 
-        const startTime = Date.now();
         let delay = this.initialRetryMs;
         let attempts = 0;
 
         // Debug: Log polling setup (captured in CLI log file)
         this.emitLogEvent(LogLevel.Debug, '=== POLL FOR RESULTS ===');
+        this.emitLogEvent(LogLevel.Debug, `URL Format: GET <instance-url>/services/data/v<api-version>/apexguru/request/<request-id>`);
         this.emitLogEvent(LogLevel.Debug, `URL: GET ${fullUrl}`);
         this.emitLogEvent(LogLevel.Info, `Polling for Request ID: ${requestId}`);
-        this.emitLogEvent(LogLevel.Debug, `Max Timeout: ${this.maxTimeoutMs}ms`);
         this.emitLogEvent(LogLevel.Debug, `Initial Retry Delay: ${this.initialRetryMs}ms`);
 
-        while ((Date.now() - startTime) < this.maxTimeoutMs) {
+        while (true) {
             if (attempts > 0) {
                 // Wait before next attempt
                 this.emitLogEvent(LogLevel.Debug, `Waiting ${delay}ms before next poll...`);
@@ -192,7 +223,6 @@ export class ApexGuruService {
             }
 
             attempts++;
-            const elapsedTime = Date.now() - startTime;
 
             // Emit asymptotic progress (approaches 95% but never quite reaches it)
             // Formula: 95 * (1 - e^(-attempts/4))
@@ -203,7 +233,7 @@ export class ApexGuruService {
             }
 
             try {
-                this.emitLogEvent(LogLevel.Debug, `--- Poll Attempt ${attempts} (${elapsedTime}ms elapsed) ---`);
+                this.emitLogEvent(LogLevel.Debug, `--- Poll Attempt ${attempts} ---`);
                 this.emitLogEvent(LogLevel.Debug, `GET ${fullUrl}`);
 
                 const response: ApexGuruQueryResponse = await connection.request({
@@ -245,7 +275,7 @@ export class ApexGuruService {
                 // Still processing, continue polling with exponential backoff
                 this.emitLogEvent(LogLevel.Info, `⏳ Status: ${response.status} - Still processing...`);
                 const oldDelay = delay;
-                delay = Math.min(delay * APEX_GURU_BACKOFF_MULTIPLIER, APEX_GURU_MAX_RETRY_MS);
+                delay = Math.min(delay * this.backoffMultiplier, this.maxRetryMs);
                 this.emitLogEvent(LogLevel.Debug, `Next poll delay: ${oldDelay}ms → ${delay}ms`);
             } catch (error: any) {
                 this.emitLogEvent(LogLevel.Error, `❌ Poll attempt ${attempts} FAILED: ${error.message}`);
@@ -253,10 +283,6 @@ export class ApexGuruService {
                 throw error;
             }
         }
-
-        this.emitLogEvent(LogLevel.Error, `⏰ TIMEOUT after ${this.maxTimeoutMs}ms (${attempts} attempts)`);
-        this.emitLogEvent(LogLevel.Debug, '=== END POLL (TIMEOUT) ===');
-        throw new Error(`Analysis timed out after ${this.maxTimeoutMs}ms for file: ${filePath}`);
     }
 
     /**
