@@ -135,49 +135,22 @@ function doesFileMatchConfigPath(
     configPath: string,
     workspaceRoot: string
 ): boolean {
-    const debugEnabled = process.env.DEBUG_BULK_SUPPRESSIONS === 'true';
-
-    if (debugEnabled) {
-        console.log('[DEBUG] doesFileMatchConfigPath called:');
-        console.log('  violationFile:', violationFile);
-        console.log('  configPath:', configPath);
-        console.log('  workspaceRoot:', workspaceRoot);
-        console.log('  path.isAbsolute(configPath):', path.isAbsolute(configPath));
-    }
-
     // Config paths can be relative (recommended, like .gitignore) or absolute
     // If relative, resolve against workspace root
     // If absolute, use as-is
     const absoluteConfigPath = path.resolve(workspaceRoot, configPath);
 
-    if (debugEnabled) {
-        console.log('  After path.resolve:', absoluteConfigPath);
-    }
-
     // Normalize paths for consistent comparison
     const normalizedViolationFile = path.normalize(violationFile);
     const normalizedConfigPath = path.normalize(absoluteConfigPath);
-
-    if (debugEnabled) {
-        console.log('  After normalize - violation:', normalizedViolationFile);
-        console.log('  After normalize - config:', normalizedConfigPath);
-    }
 
     // Normalize to POSIX separators for cross-platform comparison
     // Convert all backslashes to forward slashes for consistent comparison
     const comparisonViolationFile = normalizedViolationFile.replace(/\\/g, '/');
     const comparisonConfigPath = normalizedConfigPath.replace(/\\/g, '/');
 
-    if (debugEnabled) {
-        console.log('  After POSIX normalize - violation:', comparisonViolationFile);
-        console.log('  After POSIX normalize - config:', comparisonConfigPath);
-    }
-
     // Check if it's an exact file match
     if (comparisonViolationFile === comparisonConfigPath) {
-        if (debugEnabled) {
-            console.log('  Result: EXACT MATCH');
-        }
         return true;
     }
 
@@ -188,14 +161,7 @@ function doesFileMatchConfigPath(
         ? comparisonConfigPath
         : comparisonConfigPath + '/';
 
-    const result = comparisonViolationFile.startsWith(configPathWithSep);
-
-    if (debugEnabled) {
-        console.log('  Folder match check - configPathWithSep:', configPathWithSep);
-        console.log('  Result:', result ? 'FOLDER MATCH' : 'NO MATCH');
-    }
-
-    return result;
+    return comparisonViolationFile.startsWith(configPathWithSep);
 }
 
 /**
