@@ -3,6 +3,22 @@ import {BulkSuppressionRule} from "../../src/config";
 import {Violation, CodeLocation} from "../../src/results";
 import {RuleImpl} from "../../src/rules";
 import * as path from 'node:path';
+import * as os from 'node:os';
+
+/**
+ * Helper to create platform-appropriate absolute paths for testing
+ * On Windows: C:\Users\...
+ * On Unix: /Users/...
+ */
+function createTestAbsolutePath(...segments: string[]): string {
+    if (os.platform() === 'win32') {
+        // Windows: start with C:\ drive
+        return path.join('C:', path.sep, ...segments);
+    } else {
+        // Unix: start with /
+        return path.join(path.sep, ...segments);
+    }
+}
 
 /**
  * Tests specifically for Bug #2: Workspace Root vs Config Root inconsistency
@@ -80,7 +96,7 @@ describe('Bulk Suppressions - Workspace Root Path Resolution (Bug #2)', () => {
      */
     it('BUG #2: Paths in config are resolved relative to WORKSPACE ROOT, not config file location', () => {
         // Workspace root (where -w flag points) - use platform-appropriate paths
-        const workspaceRoot = path.join(path.sep, 'Users', 'user', 'workspace', 'dreamhouse');
+        const workspaceRoot = createTestAbsolutePath('Users', 'user', 'workspace', 'dreamhouse');
 
         // Violation file path (absolute) - use platform-appropriate paths
         const violationFilePath = path.join(workspaceRoot, 'force-app', 'main', 'default', 'react-components', 'utils.js');
@@ -115,7 +131,7 @@ describe('Bulk Suppressions - Workspace Root Path Resolution (Bug #2)', () => {
 
     it('BUG #2: Same directory level - workspace root equals config directory (worked before bug fix)', () => {
         // This case worked even with Bug #2 because workspace root === config root
-        const workspaceRoot = path.join(path.sep, 'Users', 'user', 'workspace', 'project');
+        const workspaceRoot = createTestAbsolutePath('Users', 'user', 'workspace', 'project');
         const violationFilePath = path.join(workspaceRoot, 'utils.js');
 
         const violation = new MockViolation(
@@ -171,7 +187,7 @@ describe('Bulk Suppressions - Workspace Root Path Resolution (Bug #2)', () => {
     });
 
     it('BUG #2: Multiple files at different levels all resolve correctly from workspace root', () => {
-        const workspaceRoot = path.join(path.sep, 'workspace', 'project');
+        const workspaceRoot = createTestAbsolutePath('workspace', 'project');
 
         // Violations at different directory levels
         const violation1 = new MockViolation(
@@ -219,7 +235,7 @@ describe('Bulk Suppressions - Workspace Root Path Resolution (Bug #2)', () => {
     });
 
     it('BUG #2: Folder-level suppression from workspace root matches nested files', () => {
-        const workspaceRoot = path.join(path.sep, 'workspace', 'project');
+        const workspaceRoot = createTestAbsolutePath('workspace', 'project');
 
         // Violations in nested folder
         const violation1 = new MockViolation(
@@ -256,7 +272,7 @@ describe('Bulk Suppressions - Workspace Root Path Resolution (Bug #2)', () => {
 
     it('Config paths can be relative to workspace root (recommended)', () => {
         // This test documents the recommended usage: paths relative to workspace root
-        const workspaceRoot = path.join(path.sep, 'workspace', 'project');
+        const workspaceRoot = createTestAbsolutePath('workspace', 'project');
         const violationFilePath = path.join(workspaceRoot, 'src', 'file.js');
 
         const violation = new MockViolation(
@@ -287,7 +303,7 @@ describe('Bulk Suppressions - Workspace Root Path Resolution (Bug #2)', () => {
          * - Both resolve paths relative to workspace root
          * - Both fall back to absolute paths if workspace root is null
          */
-        const workspaceRoot = path.join(path.sep, 'Users', 'user', 'dreamhouse');
+        const workspaceRoot = createTestAbsolutePath('Users', 'user', 'dreamhouse');
 
         // Imagine ignores config: ["force-app/test/**"]
         // Imagine bulk suppressions: "force-app/main/default/utils.js"

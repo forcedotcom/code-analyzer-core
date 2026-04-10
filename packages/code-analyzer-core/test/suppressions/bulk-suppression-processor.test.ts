@@ -9,6 +9,22 @@ import {
 } from '../../src/suppressions/bulk-suppression-processor';
 import { BulkSuppressionRule } from '../../src/config';
 import * as path from 'node:path';
+import * as os from 'node:os';
+
+/**
+ * Helper to create platform-appropriate absolute paths for testing
+ * On Windows: C:\workspace\...
+ * On Unix: /workspace/...
+ */
+function createTestAbsolutePath(...segments: string[]): string {
+    if (os.platform() === 'win32') {
+        // Windows: start with C:\ drive
+        return path.join('C:', path.sep, ...segments);
+    } else {
+        // Unix: start with /
+        return path.join(path.sep, ...segments);
+    }
+}
 import { Violation, CodeLocation } from '../../src/results';
 import { Rule, SeverityLevel } from '../../src/rules';
 
@@ -121,7 +137,7 @@ class MockViolation implements Violation {
 }
 
 describe('applyBulkSuppressions', () => {
-    const workspaceRoot = path.join(path.sep, 'workspace');
+    const workspaceRoot = createTestAbsolutePath('workspace');
 
     describe('Basic suppression scenarios', () => {
         it('should suppress violations matching rule selector with no quota limit', () => {
