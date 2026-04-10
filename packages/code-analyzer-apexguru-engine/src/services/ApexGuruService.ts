@@ -60,12 +60,12 @@ export class ApexGuruService {
      */
     cleanup(): void {
         try {
-            // Destroy the HTTP/HTTPS agent used by JSForce to force-close all sockets
-            // This is critical to allow the Node.js process to exit, especially when timeouts occur
-            // and underlying HTTP requests are still pending
-
-            // Destroy global agents (JSForce uses these by default)
-            // Node.js will automatically create new agents when needed
+            // TODO: This destroys process-wide HTTP agents, which could interfere with
+            // concurrent HTTP work in the Code Analyzer process. We should investigate
+            // using custom agents specific to ApexGuru's Connection and destroy only
+            // those agents instead of the global ones. For now, this approach works
+            // because Node.js automatically recreates destroyed agents when needed.
+            // To be addressed in a future PR.
             http.globalAgent.destroy();
             https.globalAgent.destroy();
         } catch {
@@ -183,11 +183,7 @@ export class ApexGuruService {
                 throw new Error(`Unexpected response status: ${response.status}`);
             }
 
-            // Note: requestId might not be present in some responses
-            // We'll use a placeholder and poll the same endpoint
-            const requestId = response.requestId || 'pending';
-
-            return requestId;
+            return response.requestId || 'pending';
         } catch (error) {
             const message = error instanceof Error ? error.message : String(error);
             throw new Error(`Failed to submit analysis request: ${message}`);

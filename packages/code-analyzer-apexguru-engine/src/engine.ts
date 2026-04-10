@@ -54,13 +54,13 @@ export class ApexGuruEngine extends EngineEventEmitter implements Engine {
     async describeRules(describeOptions: DescribeOptions): Promise<RuleDescription[]> {
         this.emitDescribeRulesProgressEvent(0);
 
-        // Check if workspace has any Apex files (following SFGE pattern)
+        // Check if targeted files contain any Apex files
         if (describeOptions.workspace) {
-            const workspaceFiles = await describeOptions.workspace.getWorkspaceFiles();
-            const hasApexFiles = workspaceFiles.some(file => this.isApexFile(path.basename(file)));
+            const targetedFiles = await describeOptions.workspace.getTargetedFiles();
+            const hasApexFiles = targetedFiles.some(file => this.isApexFile(path.basename(file)));
 
             if (!hasApexFiles) {
-                this.emitLogEvent(LogLevel.Debug, 'No Apex files found in workspace. Returning no ApexGuru rules.');
+                this.emitLogEvent(LogLevel.Debug, 'No Apex files in target set. Returning no ApexGuru rules.');
                 this.emitDescribeRulesProgressEvent(100);
                 return [];
             }
@@ -68,13 +68,18 @@ export class ApexGuruEngine extends EngineEventEmitter implements Engine {
 
         // ApexGuru is dynamic - new rules can be added by Salesforce at any time.
         // We declare known rules explicitly (in apexguru-rules.ts), plus a fallback rule.
-        // Unknown violations from the API will be mapped to "apexguru-other" by ViolationMapper.
+        // Unknown violations from the API will be mapped to "apexguru-other".
         this.emitDescribeRulesProgressEvent(100);
 
         return APEXGURU_RULES;
     }
 
     async runRules(ruleNames: string[], runOptions: RunOptions): Promise<EngineRunResults> {
+        // Short-circuit if no rules selected - avoid unnecessary auth/network calls
+        if (ruleNames.length === 0) {
+            return { violations: [] };
+        }
+
         // Note: ApexGuru API analyzes code and returns ALL detected violations.
         // Individual rules cannot be enabled/disabled via the API.
         // We filter violations to match the selected rules after analysis completes.

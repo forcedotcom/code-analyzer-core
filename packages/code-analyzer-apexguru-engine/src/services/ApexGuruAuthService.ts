@@ -29,7 +29,6 @@ export class ApexGuruAuthService {
      * TODO: Implement SF CLI, env vars, and OAuth in future PR
      * @param _config - Auth configuration (currently unused, for future implementation)
      */
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     async initialize(_config: AuthConfig): Promise<void> {
         // Use hardcoded credentials (temporary implementation)
         this.emitLogEvent(LogLevel.Warn, '⚠️  Using HARDCODED authentication credentials (for testing)');

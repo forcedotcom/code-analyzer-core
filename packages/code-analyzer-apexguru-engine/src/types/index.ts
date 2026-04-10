@@ -38,7 +38,6 @@ export type ApexGuruResponse = {
  */
 export type ApexGuruInitialResponse = ApexGuruResponse & {
     requestId?: string;
-    report?: string | null;
 };
 
 /**

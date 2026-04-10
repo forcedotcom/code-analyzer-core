@@ -76,7 +76,7 @@ describe('ApexGuruEngine', () => {
         });
 
         it('should return empty array when workspace has no Apex files', async () => {
-            mockWorkspace.getWorkspaceFiles = jest.fn().mockResolvedValue([
+            mockWorkspace.getTargetedFiles = jest.fn().mockResolvedValue([
                 '/project/js/app.js',
                 '/project/js/utils.js',
                 '/project/css/styles.css'
@@ -89,11 +89,11 @@ describe('ApexGuruEngine', () => {
             });
 
             expect(rules).toEqual([]);
-            expect(mockWorkspace.getWorkspaceFiles).toHaveBeenCalled();
+            expect(mockWorkspace.getTargetedFiles).toHaveBeenCalled();
         });
 
         it('should return all rules when workspace has Apex files', async () => {
-            mockWorkspace.getWorkspaceFiles = jest.fn().mockResolvedValue([
+            mockWorkspace.getTargetedFiles = jest.fn().mockResolvedValue([
                 '/project/classes/Account.cls',
                 '/project/js/app.js'
             ]);
@@ -109,7 +109,7 @@ describe('ApexGuruEngine', () => {
         });
 
         it('should return all rules when workspace has trigger files', async () => {
-            mockWorkspace.getWorkspaceFiles = jest.fn().mockResolvedValue([
+            mockWorkspace.getTargetedFiles = jest.fn().mockResolvedValue([
                 '/project/triggers/AccountTrigger.trigger',
                 '/project/js/app.js'
             ]);
@@ -148,6 +148,15 @@ describe('ApexGuruEngine', () => {
             };
             mockApexGuruService.initialize.mockResolvedValue();
             mockApexGuruService.validate.mockResolvedValue(true);
+        });
+
+        it('should return empty results immediately when no rules selected', async () => {
+            const results = await engine.runRules([], mockRunOptions);
+
+            expect(results.violations).toEqual([]);
+            expect(mockApexGuruService.initialize).not.toHaveBeenCalled();
+            expect(mockApexGuruService.validate).not.toHaveBeenCalled();
+            expect(mockWorkspace.getTargetedFiles).not.toHaveBeenCalled();
         });
 
         it('should authenticate and validate', async () => {
