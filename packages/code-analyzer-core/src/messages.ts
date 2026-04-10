@@ -152,6 +152,9 @@ const MESSAGE_CATALOG : MessageCatalog = {
     InvalidGlobPattern:
         `The configuration field '%s' contains an invalid glob pattern '%s': %s`,
 
+    InvalidBulkSuppressionRule:
+        `The bulk suppression rule at '%s' is invalid: %s`,
+
     RulePropertyOverridden:
         `The %s value of rule '%s' of engine '%s' was overridden according to the specified configuration. The old value '%s' was replaced with the new value '%s'.`,
 
@@ -240,7 +243,13 @@ const MESSAGE_CATALOG : MessageCatalog = {
         `Since the engine '%s' emitted an error, the following temporary working folder will not be removed: %s`,
 
     SuppressedViolationsCount:
-        `%d violation(s) were suppressed by inline suppression markers.`
+        `%d violation(s) were suppressed by inline suppression markers.`,
+
+    InlineSuppressedViolationsCount:
+        `%d violation(s) were suppressed by inline suppression markers.`,
+
+    BulkSuppressedViolationsCount:
+        `%d violation(s) were suppressed by bulk suppressions.`
 }
 
 /**

@@ -51,10 +51,20 @@ export type Ignores = {
 }
 
 /**
+ * Rule for bulk suppression of violations
+ */
+export type BulkSuppressionRule = {
+    rule_selector: string;
+    max_suppressed_violations?: number | null;
+    reason?: string;
+};
+
+/**
  * Object containing the user specified suppressions configuration
  */
 export type Suppressions = {
-    disable_suppressions: boolean
+    disable_suppressions: boolean;
+    bulk_suppressions: Record<string, BulkSuppressionRule[]>;
 }
 
 type TopLevelConfig = {
@@ -75,7 +85,7 @@ export const DEFAULT_CONFIG: TopLevelConfig = {
     config_root: process.cwd(),
     log_folder: os.tmpdir(),
     log_level: LogLevel.Debug,
-    suppressions: { disable_suppressions: false }, // Suppressions enabled by default
+    suppressions: { disable_suppressions: false, bulk_suppressions: {} }, // Suppressions enabled by default
     rules: {},
     engines: {},
     ignores: { files: [] },
@@ -274,6 +284,13 @@ export class CodeAnalyzerConfig {
     }
 
     /**
+     * Returns the bulk suppressions configuration (file paths mapped to suppression rules).
+     */
+    public getBulkSuppressions(): Record<string, BulkSuppressionRule[]> {
+        return this.config.suppressions.bulk_suppressions;
+    }
+
+    /**
      * Returns the absolute path folder where all path based values within the configuration may be relative to.
      *     Typically, this is set as the folder where a configuration file was loaded from, but doesn't have to be.
      */
@@ -304,6 +321,15 @@ export class CodeAnalyzerConfig {
      */
     public getRootWorkingFolder(): string {
         return this.config.root_working_folder;
+    }
+
+    /**
+     * Returns the names of engines that have at least one rule override in the configuration.
+     * Used when writing config output to preserve rule overrides (e.g. disabled rules) for engines
+     * that may have no selected rules.
+     */
+    public getEngineNamesWithRuleOverrides(): string[] {
+        return Object.keys(this.config.rules);
     }
 
     /**
@@ -394,9 +420,61 @@ function extractIgnoresValue(configExtractor: engApi.ConfigValueExtractor): Igno
 
 function extractSuppressionsValue(configExtractor: engApi.ConfigValueExtractor): Suppressions {
     const suppressionsExtractor: engApi.ConfigValueExtractor = configExtractor.extractObjectAsExtractor(FIELDS.SUPPRESSIONS, DEFAULT_CONFIG.suppressions);
-    suppressionsExtractor.validateContainsOnlySpecifiedKeys([FIELDS.DISABLE_SUPPRESSIONS]);
+
     const disable_suppressions: boolean = suppressionsExtractor.extractBoolean(FIELDS.DISABLE_SUPPRESSIONS, DEFAULT_CONFIG.suppressions.disable_suppressions) || false;
-    return { disable_suppressions };
+
+    // Extract bulk suppressions - all keys except 'disable_suppressions' are file/folder paths
+    const bulk_suppressions: Record<string, BulkSuppressionRule[]> = {};
+    const suppressionKeys = suppressionsExtractor.getKeys();
+
+    for (const key of suppressionKeys) {
+        if (key === FIELDS.DISABLE_SUPPRESSIONS) {
+            continue; // Skip the disable_suppressions flag
+        }
+
+        // key is a file/folder path, value should be an array of suppression rules
+        const rulesArray = suppressionsExtractor.extractArray(
+            key,
+            (value, fieldPath) => validateBulkSuppressionRule(value, fieldPath)
+        );
+
+        if (rulesArray && rulesArray.length > 0) {
+            bulk_suppressions[key] = rulesArray;
+        }
+    }
+
+    return { disable_suppressions, bulk_suppressions };
+}
+
+function validateBulkSuppressionRule(value: unknown, fieldPath: string): BulkSuppressionRule {
+    if (typeof value !== 'object' || value === null || Array.isArray(value)) {
+        throw new Error(getMessage('InvalidBulkSuppressionRule', fieldPath, 'Expected an object'));
+    }
+
+    const rule = value as Record<string, unknown>;
+
+    // rule_selector is required
+    if (!rule.rule_selector || typeof rule.rule_selector !== 'string') {
+        throw new Error(getMessage('InvalidBulkSuppressionRule', fieldPath, 'rule_selector is required and must be a string'));
+    }
+
+    // max_suppressed_violations is optional, can be number or null
+    if (rule.max_suppressed_violations !== undefined &&
+        rule.max_suppressed_violations !== null &&
+        typeof rule.max_suppressed_violations !== 'number') {
+        throw new Error(getMessage('InvalidBulkSuppressionRule', fieldPath, 'max_suppressed_violations must be a number or null'));
+    }
+
+    // reason is optional
+    if (rule.reason !== undefined && typeof rule.reason !== 'string') {
+        throw new Error(getMessage('InvalidBulkSuppressionRule', fieldPath, 'reason must be a string'));
+    }
+
+    return {
+        rule_selector: rule.rule_selector as string,
+        max_suppressed_violations: rule.max_suppressed_violations as number | null | undefined,
+        reason: rule.reason as string | undefined
+    };
 }
 
 /**

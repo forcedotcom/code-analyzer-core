@@ -293,6 +293,16 @@ describe("Tests for creating and accessing configuration values", () => {
         });
     });
 
+    it("When config has rule overrides, getEngineNamesWithRuleOverrides returns engine names that have at least one rule override", () => {
+        const conf: CodeAnalyzerConfig = CodeAnalyzerConfig.fromFile(path.join(TEST_DATA_DIR, 'sample-config-with-disabled-rule.yaml'));
+        expect(conf.getEngineNamesWithRuleOverrides()).toEqual(['stubEngine1', 'stubEngine2']);
+    });
+
+    it("When config has no rule overrides, getEngineNamesWithRuleOverrides returns empty array", () => {
+        const conf: CodeAnalyzerConfig = CodeAnalyzerConfig.withDefaults();
+        expect(conf.getEngineNamesWithRuleOverrides()).toEqual([]);
+    });
+
     it("When log_folder does not exist, then throw an error", () => {
         const nonExistingFolder: string = path.resolve(__dirname, "doesNotExist");
         expect(() => CodeAnalyzerConfig.fromObject({log_folder: nonExistingFolder})).toThrow(
