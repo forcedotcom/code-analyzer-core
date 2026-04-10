@@ -82,6 +82,66 @@ describe('ApexGuruEngine', () => {
             expect(progressSpy).toHaveBeenCalledWith(0);
             expect(progressSpy).toHaveBeenCalledWith(100);
         });
+
+        it('should return empty array when workspace has no Apex files', async () => {
+            mockWorkspace.getWorkspaceFiles = jest.fn().mockResolvedValue([
+                '/project/js/app.js',
+                '/project/js/utils.js',
+                '/project/css/styles.css'
+            ]);
+
+            const rules = await engine.describeRules({
+                logFolder: '/tmp/logs',
+                workingFolder: '/tmp/working',
+                workspace: mockWorkspace
+            });
+
+            expect(rules).toEqual([]);
+            expect(mockWorkspace.getWorkspaceFiles).toHaveBeenCalled();
+        });
+
+        it('should return all rules when workspace has Apex files', async () => {
+            mockWorkspace.getWorkspaceFiles = jest.fn().mockResolvedValue([
+                '/project/classes/Account.cls',
+                '/project/js/app.js'
+            ]);
+
+            const rules = await engine.describeRules({
+                logFolder: '/tmp/logs',
+                workingFolder: '/tmp/working',
+                workspace: mockWorkspace
+            });
+
+            expect(rules.length).toBeGreaterThan(0);
+            expect(rules.find(r => r.name === 'SoqlInALoop')).toBeDefined();
+        });
+
+        it('should return all rules when workspace has trigger files', async () => {
+            mockWorkspace.getWorkspaceFiles = jest.fn().mockResolvedValue([
+                '/project/triggers/AccountTrigger.trigger',
+                '/project/js/app.js'
+            ]);
+
+            const rules = await engine.describeRules({
+                logFolder: '/tmp/logs',
+                workingFolder: '/tmp/working',
+                workspace: mockWorkspace
+            });
+
+            expect(rules.length).toBeGreaterThan(0);
+            expect(rules.find(r => r.name === 'DmlInALoop')).toBeDefined();
+        });
+
+        it('should return all rules when no workspace provided', async () => {
+            const rules = await engine.describeRules({
+                logFolder: '/tmp/logs',
+                workingFolder: '/tmp/working'
+                // No workspace
+            });
+
+            expect(rules.length).toBeGreaterThan(0);
+            expect(rules.find(r => r.name === 'SoqlInALoop')).toBeDefined();
+        });
     });
 
     describe('runRules', () => {
