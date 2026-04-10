@@ -3,6 +3,16 @@ import {BulkSuppressionRule} from "../../src/config";
 import {Violation, CodeLocation} from "../../src/results";
 import {RuleImpl} from "../../src/rules";
 
+// Helper to enable debug logging in tests via environment variable
+const createTestLogger = () => {
+    if (process.env.DEBUG_BULK_SUPPRESSIONS === 'true') {
+        return (level: 'error' | 'warn' | 'debug', message: string) => {
+            console.log(`[${level.toUpperCase()}] ${message}`);
+        };
+    }
+    return undefined;
+};
+
 /**
  * Tests specifically for Bug #2: Workspace Root vs Config Root inconsistency
  *
@@ -105,7 +115,7 @@ describe('Bulk Suppressions - Workspace Root Path Resolution (Bug #2)', () => {
         const quotas: BulkSuppressionQuotas = new Map();
 
         // Apply suppressions using workspace root (Bug #2 fix)
-        const result = applyBulkSuppressions([violation], bulkConfig, quotas, workspaceRoot);
+        const result = applyBulkSuppressions([violation], bulkConfig, quotas, workspaceRoot, createTestLogger());
 
         // Violation should be suppressed
         expect(result.unsuppressedViolations).toHaveLength(0);
@@ -133,7 +143,7 @@ describe('Bulk Suppressions - Workspace Root Path Resolution (Bug #2)', () => {
         };
 
         const quotas: BulkSuppressionQuotas = new Map();
-        const result = applyBulkSuppressions([violation], bulkConfig, quotas, workspaceRoot);
+        const result = applyBulkSuppressions([violation], bulkConfig, quotas, workspaceRoot, createTestLogger());
 
         // Should work regardless of bug
         expect(result.unsuppressedViolations).toHaveLength(0);
@@ -162,7 +172,7 @@ describe('Bulk Suppressions - Workspace Root Path Resolution (Bug #2)', () => {
         };
 
         const quotas: BulkSuppressionQuotas = new Map();
-        const result = applyBulkSuppressions([violation], bulkConfig, quotas, workspaceRoot);
+        const result = applyBulkSuppressions([violation], bulkConfig, quotas, workspaceRoot, createTestLogger());
 
         // Should NOT suppress because path doesn't match
         expect(result.unsuppressedViolations).toHaveLength(1);
@@ -209,7 +219,8 @@ describe('Bulk Suppressions - Workspace Root Path Resolution (Bug #2)', () => {
             [violation1, violation2, violation3],
             bulkConfig,
             quotas,
-            workspaceRoot
+            workspaceRoot,
+            createTestLogger()
         );
 
         // All should be suppressed
@@ -245,7 +256,8 @@ describe('Bulk Suppressions - Workspace Root Path Resolution (Bug #2)', () => {
             [violation1, violation2],
             bulkConfig,
             quotas,
-            workspaceRoot
+            workspaceRoot,
+            createTestLogger()
         );
 
         // Both files in folder should be suppressed
@@ -272,7 +284,7 @@ describe('Bulk Suppressions - Workspace Root Path Resolution (Bug #2)', () => {
         };
 
         const quotas: BulkSuppressionQuotas = new Map();
-        const result = applyBulkSuppressions([violation], bulkConfig, quotas, workspaceRoot);
+        const result = applyBulkSuppressions([violation], bulkConfig, quotas, workspaceRoot, createTestLogger());
 
         // Should suppress
         expect(result.unsuppressedViolations).toHaveLength(0);
@@ -305,7 +317,7 @@ describe('Bulk Suppressions - Workspace Root Path Resolution (Bug #2)', () => {
         };
 
         const quotas: BulkSuppressionQuotas = new Map();
-        const result = applyBulkSuppressions([violation], bulkConfig, quotas, workspaceRoot);
+        const result = applyBulkSuppressions([violation], bulkConfig, quotas, workspaceRoot, createTestLogger());
 
         expect(result.unsuppressedViolations).toHaveLength(0);
         expect(result.suppressedCount).toBe(1);
@@ -347,7 +359,7 @@ describe('Bulk Suppressions - Workspace Root Path Resolution (Bug #2)', () => {
         };
 
         const quotas: BulkSuppressionQuotas = new Map();
-        const result = applyBulkSuppressions(violations, bulkConfig, quotas, workspaceRoot);
+        const result = applyBulkSuppressions(violations, bulkConfig, quotas, workspaceRoot, createTestLogger());
 
         // First rule suppresses 3, second rule suppresses 2 = 5 total
         expect(result.suppressedCount).toBe(5);

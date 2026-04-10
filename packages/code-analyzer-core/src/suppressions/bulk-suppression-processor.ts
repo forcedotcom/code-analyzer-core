@@ -80,7 +80,7 @@ export function applyBulkSuppressions(
         }
 
         // Find matching suppression rules for this violation's file
-        const matchingRules = findMatchingBulkSuppressionRules(violationFile, bulkConfig, workspaceRoot);
+        const matchingRules = findMatchingBulkSuppressionRules(violationFile, bulkConfig, workspaceRoot, logger);
 
         let suppressed = false;
         for (const ruleWithPath of matchingRules) {
@@ -107,17 +107,19 @@ export function applyBulkSuppressions(
  * @param violationFile Absolute file path from violation
  * @param bulkConfig Bulk suppression configuration
  * @param workspaceRoot Root directory for resolving relative paths
+ * @param logger Optional logger callback for debug messages
  * @returns Array of rules with their matching config paths
  */
 function findMatchingBulkSuppressionRules(
     violationFile: string,
     bulkConfig: Record<string, BulkSuppressionRule[]>,
-    workspaceRoot: string
+    workspaceRoot: string,
+    logger?: LoggerCallback
 ): RuleWithConfigPath[] {
     const matchingRules: RuleWithConfigPath[] = [];
 
     for (const [configPath, rules] of Object.entries(bulkConfig)) {
-        const matches = doesFileMatchConfigPath(violationFile, configPath, workspaceRoot);
+        const matches = doesFileMatchConfigPath(violationFile, configPath, workspaceRoot, logger);
 
         if (matches) {
             // Add each rule with its config path and index for unique quota tracking
@@ -143,31 +145,68 @@ function findMatchingBulkSuppressionRules(
 function doesFileMatchConfigPath(
     violationFile: string,
     configPath: string,
-    workspaceRoot: string
+    workspaceRoot: string,
+    logger?: LoggerCallback
 ): boolean {
+    const log = (msg: string) => logger?.('debug', msg);
+
     // Step 1: Use path module to properly resolve and normalize paths
     // This handles . and .., redundant separators, and makes paths absolute
-    const normalizedWorkspaceRoot = path.normalize(workspaceRoot);
-    const absoluteConfigPath = path.isAbsolute(configPath)
-        ? path.normalize(configPath)
-        : path.resolve(normalizedWorkspaceRoot, configPath);
 
-    const normalizedViolationFile = path.normalize(violationFile);
+    // Helper to check if a path is absolute (cross-platform)
+    // Handles: Unix (/foo), Windows (C:\foo), UNC (\\server\share)
+    const isAbsolutePath = (p: string): boolean => {
+        // Unix absolute path starts with /
+        if (p.startsWith('/')) return true;
+        // Windows absolute path: C:\ or C:/ (drive letter + colon)
+        if (/^[A-Za-z]:[\\/]/.test(p)) return true;
+        // UNC path: \\server\share
+        if (p.startsWith('\\\\')) return true;
+        // Use path.isAbsolute() for platform-native check
+        if (path.isAbsolute(p)) return true;
+        return false;
+    };
+
+    // Helper to join paths in a cross-platform way
+    // When joining Windows paths on Unix or vice versa, path.resolve() doesn't work correctly
+    // So we do simple string concatenation and normalize separators later
+    const joinPaths = (base: string, relative: string): string => {
+        // Normalize the base path separator to match its style
+        const baseEndsWithSep = base.endsWith('/') || base.endsWith('\\');
+        const sep = base.includes('\\') ? '\\' : '/';
+        return baseEndsWithSep ? base + relative : base + sep + relative;
+    };
+
+    // Normalize workspace root - keep as-is if absolute, otherwise normalize with platform path module
+    const normalizedWorkspaceRoot = isAbsolutePath(workspaceRoot)
+        ? workspaceRoot
+        : path.normalize(workspaceRoot);
+
+    // For config path: if absolute, use as-is; otherwise join with workspace root
+    const absoluteConfigPath = isAbsolutePath(configPath)
+        ? configPath
+        : joinPaths(normalizedWorkspaceRoot, configPath);
+
+    // Same for violation file
+    const normalizedViolationFile = isAbsolutePath(violationFile)
+        ? violationFile
+        : joinPaths(normalizedWorkspaceRoot, violationFile);
+
+    log(`Path matching - violationFile: "${violationFile}", configPath: "${configPath}", workspaceRoot: "${workspaceRoot}"`);
+    log(`After normalization - normalizedViolationFile: "${normalizedViolationFile}", absoluteConfigPath: "${absoluteConfigPath}"`);
 
     // Step 2: Normalize to POSIX separators for cross-platform comparison
-    // This follows the same pattern as ignores feature (workspace.ts lines 203-206)
-    // Windows: C:\workspace\src\file.apex -> C:/workspace/src/file.apex
-    // Unix: /workspace/src/file.apex -> /workspace/src/file.apex (no change)
-    let comparisonViolationFile = normalizedViolationFile;
-    let comparisonConfigPath = absoluteConfigPath;
+    // Convert all backslashes to forward slashes for consistent comparison
+    // This handles both: Windows paths on Unix (C:\foo -> C:/foo) and Unix paths on Windows
+    const comparisonViolationFile = normalizedViolationFile.replace(/\\/g, '/');
+    const comparisonConfigPath = absoluteConfigPath.replace(/\\/g, '/');
 
-    if (path.sep !== '/') {
-        comparisonViolationFile = comparisonViolationFile.split(path.sep).join('/');
-        comparisonConfigPath = comparisonConfigPath.split(path.sep).join('/');
-    }
+    log(`After separator normalization - comparisonViolationFile: "${comparisonViolationFile}", comparisonConfigPath: "${comparisonConfigPath}"`);
+
 
     // Step 3: Check if it's an exact file match
     if (comparisonViolationFile === comparisonConfigPath) {
+        log(`Path matched (exact file match)`);
         return true;
     }
 
@@ -178,7 +217,9 @@ function doesFileMatchConfigPath(
         ? comparisonConfigPath
         : comparisonConfigPath + '/';
 
-    return comparisonViolationFile.startsWith(configPathWithSep);
+    const matches = comparisonViolationFile.startsWith(configPathWithSep);
+    log(`Path ${matches ? 'matched' : 'did not match'} (folder prefix: "${configPathWithSep}")`);
+    return matches;
 }
 
 /**
