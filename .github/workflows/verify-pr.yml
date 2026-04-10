@@ -96,5 +96,3 @@ jobs:
           npm run build `cat workspace-args.txt`
           npm run lint
           npm run test `cat workspace-args.txt`
-        env:
-          DEBUG_BULK_SUPPRESSIONS: ${{ matrix.os == 'windows-latest' && 'true' || 'false' }}

@@ -345,7 +345,7 @@ describe('applyBulkSuppressions', () => {
             ];
 
             const bulkConfig = {
-                '/workspace/src/file1.apex': [  // ❌ Absolute path - not supported
+                '/workspace/src/file1.apex': [  // Absolute path - not supported
                     {
                         rule_selector: 'pmd',
                         max_suppressed_violations: null
