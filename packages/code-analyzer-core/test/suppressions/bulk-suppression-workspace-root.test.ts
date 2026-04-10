@@ -3,16 +3,6 @@ import {BulkSuppressionRule} from "../../src/config";
 import {Violation, CodeLocation} from "../../src/results";
 import {RuleImpl} from "../../src/rules";
 
-// Helper to enable debug logging in tests via environment variable
-const createTestLogger = () => {
-    if (process.env.DEBUG_BULK_SUPPRESSIONS === 'true') {
-        return (level: 'error' | 'warn' | 'debug', message: string) => {
-            console.log(`[${level.toUpperCase()}] ${message}`);
-        };
-    }
-    return undefined;
-};
-
 /**
  * Tests specifically for Bug #2: Workspace Root vs Config Root inconsistency
  *
@@ -115,7 +105,7 @@ describe('Bulk Suppressions - Workspace Root Path Resolution (Bug #2)', () => {
         const quotas: BulkSuppressionQuotas = new Map();
 
         // Apply suppressions using workspace root (Bug #2 fix)
-        const result = applyBulkSuppressions([violation], bulkConfig, quotas, workspaceRoot, createTestLogger());
+        const result = applyBulkSuppressions([violation], bulkConfig, quotas, workspaceRoot);
 
         // Violation should be suppressed
         expect(result.unsuppressedViolations).toHaveLength(0);
@@ -143,7 +133,7 @@ describe('Bulk Suppressions - Workspace Root Path Resolution (Bug #2)', () => {
         };
 
         const quotas: BulkSuppressionQuotas = new Map();
-        const result = applyBulkSuppressions([violation], bulkConfig, quotas, workspaceRoot, createTestLogger());
+        const result = applyBulkSuppressions([violation], bulkConfig, quotas, workspaceRoot);
 
         // Should work regardless of bug
         expect(result.unsuppressedViolations).toHaveLength(0);
@@ -172,7 +162,7 @@ describe('Bulk Suppressions - Workspace Root Path Resolution (Bug #2)', () => {
         };
 
         const quotas: BulkSuppressionQuotas = new Map();
-        const result = applyBulkSuppressions([violation], bulkConfig, quotas, workspaceRoot, createTestLogger());
+        const result = applyBulkSuppressions([violation], bulkConfig, quotas, workspaceRoot);
 
         // Should NOT suppress because path doesn't match
         expect(result.unsuppressedViolations).toHaveLength(1);
@@ -219,8 +209,7 @@ describe('Bulk Suppressions - Workspace Root Path Resolution (Bug #2)', () => {
             [violation1, violation2, violation3],
             bulkConfig,
             quotas,
-            workspaceRoot,
-            createTestLogger()
+            workspaceRoot
         );
 
         // All should be suppressed
@@ -256,8 +245,7 @@ describe('Bulk Suppressions - Workspace Root Path Resolution (Bug #2)', () => {
             [violation1, violation2],
             bulkConfig,
             quotas,
-            workspaceRoot,
-            createTestLogger()
+            workspaceRoot
         );
 
         // Both files in folder should be suppressed
@@ -265,8 +253,8 @@ describe('Bulk Suppressions - Workspace Root Path Resolution (Bug #2)', () => {
         expect(result.suppressedCount).toBe(2);
     });
 
-    it('BUG #2: Absolute paths in config still work (edge case)', () => {
-        // Users shouldn't use absolute paths, but they should still work
+    it('Config paths must be relative to workspace root (not absolute)', () => {
+        // This test documents the correct usage: paths relative to workspace root
         const workspaceRoot = '/workspace/project';
         const violationFilePath = '/workspace/project/src/file.js';
 
@@ -276,17 +264,17 @@ describe('Bulk Suppressions - Workspace Root Path Resolution (Bug #2)', () => {
             new MockCodeLocation(violationFilePath, 10, 1, 10, 20)
         );
 
-        // Absolute path in config (not recommended but should work)
+        // ✅ CORRECT: Use relative path from workspace root
         const bulkConfig: Record<string, BulkSuppressionRule[]> = {
-            '/workspace/project/src/file.js': [
+            'src/file.js': [  // Relative to /workspace/project
                 { rule_selector: 'eslint:all', max_suppressed_violations: 1 }
             ]
         };
 
         const quotas: BulkSuppressionQuotas = new Map();
-        const result = applyBulkSuppressions([violation], bulkConfig, quotas, workspaceRoot, createTestLogger());
+        const result = applyBulkSuppressions([violation], bulkConfig, quotas, workspaceRoot);
 
-        // Should suppress
+        // Should suppress because path is correctly specified as relative
         expect(result.unsuppressedViolations).toHaveLength(0);
         expect(result.suppressedCount).toBe(1);
     });
@@ -317,7 +305,7 @@ describe('Bulk Suppressions - Workspace Root Path Resolution (Bug #2)', () => {
         };
 
         const quotas: BulkSuppressionQuotas = new Map();
-        const result = applyBulkSuppressions([violation], bulkConfig, quotas, workspaceRoot, createTestLogger());
+        const result = applyBulkSuppressions([violation], bulkConfig, quotas, workspaceRoot);
 
         expect(result.unsuppressedViolations).toHaveLength(0);
         expect(result.suppressedCount).toBe(1);
@@ -359,7 +347,7 @@ describe('Bulk Suppressions - Workspace Root Path Resolution (Bug #2)', () => {
         };
 
         const quotas: BulkSuppressionQuotas = new Map();
-        const result = applyBulkSuppressions(violations, bulkConfig, quotas, workspaceRoot, createTestLogger());
+        const result = applyBulkSuppressions(violations, bulkConfig, quotas, workspaceRoot);
 
         // First rule suppresses 3, second rule suppresses 2 = 5 total
         expect(result.suppressedCount).toBe(5);

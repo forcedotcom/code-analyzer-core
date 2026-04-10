@@ -11,16 +11,6 @@ import { BulkSuppressionRule } from '../../src/config';
 import { Violation, CodeLocation } from '../../src/results';
 import { Rule, SeverityLevel } from '../../src/rules';
 
-// Helper to enable debug logging in tests via environment variable
-const createTestLogger = () => {
-    if (process.env.DEBUG_BULK_SUPPRESSIONS === 'true') {
-        return (level: 'error' | 'warn' | 'debug', message: string) => {
-            console.log(`[${level.toUpperCase()}] ${message}`);
-        };
-    }
-    return undefined;
-};
-
 // Mock implementations for testing
 class MockCodeLocation implements CodeLocation {
     constructor(
@@ -157,7 +147,7 @@ describe('applyBulkSuppressions', () => {
             };
 
             const quotas: BulkSuppressionQuotas = new Map();
-            const result = applyBulkSuppressions(violations, bulkConfig, quotas, workspaceRoot, createTestLogger());
+            const result = applyBulkSuppressions(violations, bulkConfig, quotas, workspaceRoot);
 
             expect(result.unsuppressedViolations).toHaveLength(0);
             expect(result.suppressedCount).toBe(2);
@@ -194,7 +184,7 @@ describe('applyBulkSuppressions', () => {
             };
 
             const quotas: BulkSuppressionQuotas = new Map();
-            const result = applyBulkSuppressions(violations, bulkConfig, quotas, workspaceRoot, createTestLogger());
+            const result = applyBulkSuppressions(violations, bulkConfig, quotas, workspaceRoot);
 
             expect(result.unsuppressedViolations).toHaveLength(1);
             expect(result.suppressedCount).toBe(2);
@@ -225,7 +215,7 @@ describe('applyBulkSuppressions', () => {
             // Quota key uses config path with rule index
             quotas.set('src/file1.apex|0|pmd:UnusedMethod', 1); // Quota already used
 
-            const result = applyBulkSuppressions(violations, bulkConfig, quotas, workspaceRoot, createTestLogger());
+            const result = applyBulkSuppressions(violations, bulkConfig, quotas, workspaceRoot);
 
             expect(result.unsuppressedViolations).toHaveLength(1);
             expect(result.suppressedCount).toBe(0);
@@ -256,7 +246,7 @@ describe('applyBulkSuppressions', () => {
             };
 
             const quotas: BulkSuppressionQuotas = new Map();
-            const result = applyBulkSuppressions(violations, bulkConfig, quotas, workspaceRoot, createTestLogger());
+            const result = applyBulkSuppressions(violations, bulkConfig, quotas, workspaceRoot);
 
             expect(result.unsuppressedViolations).toHaveLength(1);
             expect(result.suppressedCount).toBe(1);
@@ -284,7 +274,7 @@ describe('applyBulkSuppressions', () => {
             };
 
             const quotas: BulkSuppressionQuotas = new Map();
-            const result = applyBulkSuppressions(violations, bulkConfig, quotas, workspaceRoot, createTestLogger());
+            const result = applyBulkSuppressions(violations, bulkConfig, quotas, workspaceRoot);
 
             expect(result.suppressedCount).toBe(1);
         });
@@ -313,7 +303,7 @@ describe('applyBulkSuppressions', () => {
             };
 
             const quotas: BulkSuppressionQuotas = new Map();
-            const result = applyBulkSuppressions(violations, bulkConfig, quotas, workspaceRoot, createTestLogger());
+            const result = applyBulkSuppressions(violations, bulkConfig, quotas, workspaceRoot);
 
             expect(result.suppressedCount).toBe(2);
         });
@@ -337,7 +327,7 @@ describe('applyBulkSuppressions', () => {
             };
 
             const quotas: BulkSuppressionQuotas = new Map();
-            const result = applyBulkSuppressions(violations, bulkConfig, quotas, workspaceRoot, createTestLogger());
+            const result = applyBulkSuppressions(violations, bulkConfig, quotas, workspaceRoot);
 
             expect(result.suppressedCount).toBe(0);
             expect(result.unsuppressedViolations).toHaveLength(1);
@@ -362,7 +352,7 @@ describe('applyBulkSuppressions', () => {
             };
 
             const quotas: BulkSuppressionQuotas = new Map();
-            const result = applyBulkSuppressions(violations, bulkConfig, quotas, workspaceRoot, createTestLogger());
+            const result = applyBulkSuppressions(violations, bulkConfig, quotas, workspaceRoot);
 
             expect(result.suppressedCount).toBe(1);
         });
@@ -393,7 +383,7 @@ describe('applyBulkSuppressions', () => {
             };
 
             const quotas: BulkSuppressionQuotas = new Map();
-            const result = applyBulkSuppressions(violations, bulkConfig, quotas, workspaceRoot, createTestLogger());
+            const result = applyBulkSuppressions(violations, bulkConfig, quotas, workspaceRoot);
 
             expect(result.suppressedCount).toBe(1);
             expect(result.unsuppressedViolations).toHaveLength(1);
@@ -424,7 +414,7 @@ describe('applyBulkSuppressions', () => {
             };
 
             const quotas: BulkSuppressionQuotas = new Map();
-            const result = applyBulkSuppressions(violations, bulkConfig, quotas, workspaceRoot, createTestLogger());
+            const result = applyBulkSuppressions(violations, bulkConfig, quotas, workspaceRoot);
 
             expect(result.suppressedCount).toBe(1);
             expect(result.unsuppressedViolations).toHaveLength(1);
@@ -460,7 +450,7 @@ describe('applyBulkSuppressions', () => {
             };
 
             const quotas: BulkSuppressionQuotas = new Map();
-            const result = applyBulkSuppressions(violations, bulkConfig, quotas, workspaceRoot, createTestLogger());
+            const result = applyBulkSuppressions(violations, bulkConfig, quotas, workspaceRoot);
 
             expect(result.suppressedCount).toBe(2);
             expect(result.unsuppressedViolations).toHaveLength(1);
@@ -491,7 +481,7 @@ describe('applyBulkSuppressions', () => {
             };
 
             const quotas: BulkSuppressionQuotas = new Map();
-            const result = applyBulkSuppressions(violations, bulkConfig, quotas, workspaceRoot, createTestLogger());
+            const result = applyBulkSuppressions(violations, bulkConfig, quotas, workspaceRoot);
 
             expect(result.suppressedCount).toBe(1);
             expect(result.unsuppressedViolations).toHaveLength(1);
@@ -528,7 +518,7 @@ describe('applyBulkSuppressions', () => {
             };
 
             const quotas: BulkSuppressionQuotas = new Map();
-            const result = applyBulkSuppressions(violations, bulkConfig, quotas, workspaceRoot, createTestLogger());
+            const result = applyBulkSuppressions(violations, bulkConfig, quotas, workspaceRoot);
 
             expect(result.suppressedCount).toBe(2);
             expect(result.unsuppressedViolations).toHaveLength(0);
@@ -557,7 +547,7 @@ describe('applyBulkSuppressions', () => {
             };
 
             const quotas: BulkSuppressionQuotas = new Map();
-            const result = applyBulkSuppressions(violations, bulkConfig, quotas, workspaceRoot, createTestLogger());
+            const result = applyBulkSuppressions(violations, bulkConfig, quotas, workspaceRoot);
 
             expect(result.suppressedCount).toBe(1);
             // Quota key uses config path with rule index (first rule at index 0 is used)
@@ -596,7 +586,7 @@ describe('applyBulkSuppressions', () => {
             };
 
             const quotas: BulkSuppressionQuotas = new Map();
-            const result = applyBulkSuppressions(violations, bulkConfig, quotas, workspaceRoot, createTestLogger());
+            const result = applyBulkSuppressions(violations, bulkConfig, quotas, workspaceRoot);
 
             expect(result.suppressedCount).toBe(2);
             expect(result.unsuppressedViolations).toHaveLength(1);
@@ -636,7 +626,7 @@ describe('applyBulkSuppressions', () => {
             };
 
             const quotas: BulkSuppressionQuotas = new Map();
-            const result = applyBulkSuppressions(violations, bulkConfig, quotas, workspaceRoot, createTestLogger());
+            const result = applyBulkSuppressions(violations, bulkConfig, quotas, workspaceRoot);
 
             // Should suppress first 2 violations (across different files), reject 3rd
             expect(result.suppressedCount).toBe(2);
@@ -676,13 +666,13 @@ describe('applyBulkSuppressions', () => {
             const quotas: BulkSuppressionQuotas = new Map();
 
             // First call - should suppress
-            const result1 = applyBulkSuppressions(violations1, bulkConfig, quotas, workspaceRoot, createTestLogger());
+            const result1 = applyBulkSuppressions(violations1, bulkConfig, quotas, workspaceRoot);
             expect(result1.suppressedCount).toBe(1);
             // Quota key uses config path with rule index
             expect(quotas.get('src/file1.apex|0|pmd:UnusedMethod')).toBe(1);
 
             // Second call - quota exhausted, should not suppress
-            const result2 = applyBulkSuppressions(violations2, bulkConfig, quotas, workspaceRoot, createTestLogger());
+            const result2 = applyBulkSuppressions(violations2, bulkConfig, quotas, workspaceRoot);
             expect(result2.suppressedCount).toBe(0);
             expect(result2.unsuppressedViolations).toHaveLength(1);
         });
@@ -699,7 +689,7 @@ describe('applyBulkSuppressions', () => {
             ];
 
             const quotas: BulkSuppressionQuotas = new Map();
-            const result = applyBulkSuppressions(violations, {}, quotas, workspaceRoot, createTestLogger());
+            const result = applyBulkSuppressions(violations, {}, quotas, workspaceRoot);
 
             expect(result.unsuppressedViolations).toHaveLength(1);
             expect(result.suppressedCount).toBe(0);
@@ -716,7 +706,7 @@ describe('applyBulkSuppressions', () => {
             };
 
             const quotas: BulkSuppressionQuotas = new Map();
-            const result = applyBulkSuppressions([], bulkConfig, quotas, workspaceRoot, createTestLogger());
+            const result = applyBulkSuppressions([], bulkConfig, quotas, workspaceRoot);
 
             expect(result.unsuppressedViolations).toHaveLength(0);
             expect(result.suppressedCount).toBe(0);
@@ -741,7 +731,7 @@ describe('applyBulkSuppressions', () => {
             };
 
             const quotas: BulkSuppressionQuotas = new Map();
-            const result = applyBulkSuppressions(violations, bulkConfig, quotas, workspaceRoot, createTestLogger());
+            const result = applyBulkSuppressions(violations, bulkConfig, quotas, workspaceRoot);
 
             expect(result.unsuppressedViolations).toHaveLength(1);
             expect(result.suppressedCount).toBe(0);
@@ -766,7 +756,7 @@ describe('applyBulkSuppressions', () => {
             };
 
             const quotas: BulkSuppressionQuotas = new Map();
-            const result = applyBulkSuppressions(violations, bulkConfig, quotas, workspaceRoot, createTestLogger());
+            const result = applyBulkSuppressions(violations, bulkConfig, quotas, workspaceRoot);
 
             // Should not suppress due to invalid selector
             expect(result.unsuppressedViolations).toHaveLength(1);
@@ -792,7 +782,7 @@ describe('applyBulkSuppressions', () => {
             };
 
             const quotas: BulkSuppressionQuotas = new Map();
-            const result = applyBulkSuppressions(violations, bulkConfig, quotas, workspaceRoot, createTestLogger());
+            const result = applyBulkSuppressions(violations, bulkConfig, quotas, workspaceRoot);
 
             expect(result.unsuppressedViolations).toHaveLength(1);
             expect(result.suppressedCount).toBe(0);

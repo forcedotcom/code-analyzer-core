@@ -3,7 +3,6 @@ import {BulkSuppressionRule} from "../config";
 import {toSelector, Selector} from "../selectors";
 import {SeverityLevel} from "../rules";
 import * as path from 'node:path';
-import {LoggerCallback} from "./suppression-processor";
 
 /**
  * Tracks the number of suppressions applied per config path and rule selector combination
@@ -34,26 +33,17 @@ export type BulkSuppressionResult = {
  * @param bulkConfig Bulk suppression configuration from YAML
  * @param quotas Shared quota tracker (mutated by this function)
  * @param workspaceRoot Root directory for resolving relative paths
- * @param logger Optional logger callback for debug/info messages
  * @returns Object containing unsuppressed violations and count of suppressions applied
  */
 export function applyBulkSuppressions(
     violations: Violation[],
     bulkConfig: Record<string, BulkSuppressionRule[]>,
     quotas: BulkSuppressionQuotas,
-    workspaceRoot: string,
-    logger?: LoggerCallback
+    workspaceRoot: string
 ): BulkSuppressionResult {
-    const log = (msg: string) => logger?.('debug', msg);
-
-    log(`Bulk suppressions: processing ${violations.length} violation(s) with workspace root ${workspaceRoot}`);
-
     if (Object.keys(bulkConfig).length === 0) {
-        log('No bulk suppressions configured');
         return { unsuppressedViolations: violations, suppressedCount: 0 };
     }
-
-    log(`Bulk suppression config paths: ${Object.keys(bulkConfig).join(', ')}`);
 
     // Sort violations for deterministic processing within this engine
     const sortedViolations = [...violations].sort((a, b) => {
@@ -80,11 +70,11 @@ export function applyBulkSuppressions(
         }
 
         // Find matching suppression rules for this violation's file
-        const matchingRules = findMatchingBulkSuppressionRules(violationFile, bulkConfig, workspaceRoot, logger);
+        const matchingRules = findMatchingBulkSuppressionRules(violationFile, bulkConfig, workspaceRoot);
 
         let suppressed = false;
         for (const ruleWithPath of matchingRules) {
-            if (shouldSuppressViolation(violation, ruleWithPath.rule, quotas, ruleWithPath.configPath, ruleWithPath.ruleIndex, logger)) {
+            if (shouldSuppressViolation(violation, ruleWithPath.rule, quotas, ruleWithPath.configPath, ruleWithPath.ruleIndex)) {
                 suppressed = true;
                 suppressedCount++;
                 break; // Violation suppressed, move to next
@@ -96,7 +86,6 @@ export function applyBulkSuppressions(
         }
     }
 
-    log(`Bulk suppressions: ${suppressedCount} suppressed, ${unsuppressedViolations.length} unsuppressed`);
 
     return { unsuppressedViolations, suppressedCount };
 }
@@ -113,13 +102,12 @@ export function applyBulkSuppressions(
 function findMatchingBulkSuppressionRules(
     violationFile: string,
     bulkConfig: Record<string, BulkSuppressionRule[]>,
-    workspaceRoot: string,
-    logger?: LoggerCallback
+    workspaceRoot: string
 ): RuleWithConfigPath[] {
     const matchingRules: RuleWithConfigPath[] = [];
 
     for (const [configPath, rules] of Object.entries(bulkConfig)) {
-        const matches = doesFileMatchConfigPath(violationFile, configPath, workspaceRoot, logger);
+        const matches = doesFileMatchConfigPath(violationFile, configPath, workspaceRoot);
 
         if (matches) {
             // Add each rule with its config path and index for unique quota tracking
@@ -145,55 +133,20 @@ function findMatchingBulkSuppressionRules(
 function doesFileMatchConfigPath(
     violationFile: string,
     configPath: string,
-    workspaceRoot: string,
-    logger?: LoggerCallback
+    workspaceRoot: string
 ): boolean {
-    const log = (msg: string) => logger?.('debug', msg);
+    // Step 1: Use path module to resolve config paths relative to workspace root
+    // Config paths should always be relative (like .gitignore patterns)
+    // Violation file paths are absolute (from the file system)
 
-    // Step 1: Use path module to properly resolve and normalize paths
-    // This handles . and .., redundant separators, and makes paths absolute
+    const normalizedWorkspaceRoot = path.normalize(workspaceRoot);
 
-    // Helper to check if a path is absolute (cross-platform)
-    // Handles: Unix (/foo), Windows (C:\foo), UNC (\\server\share)
-    const isAbsolutePath = (p: string): boolean => {
-        // Unix absolute path starts with /
-        if (p.startsWith('/')) return true;
-        // Windows absolute path: C:\ or C:/ (drive letter + colon)
-        if (/^[A-Za-z]:[\\/]/.test(p)) return true;
-        // UNC path: \\server\share
-        if (p.startsWith('\\\\')) return true;
-        // Use path.isAbsolute() for platform-native check
-        if (path.isAbsolute(p)) return true;
-        return false;
-    };
+    // Config paths are always treated as relative to workspace root
+    // If user provides absolute path in config, it won't match - that's correct behavior
+    const absoluteConfigPath = path.resolve(normalizedWorkspaceRoot, configPath);
 
-    // Helper to join paths in a cross-platform way
-    // When joining Windows paths on Unix or vice versa, path.resolve() doesn't work correctly
-    // So we do simple string concatenation and normalize separators later
-    const joinPaths = (base: string, relative: string): string => {
-        // Normalize the base path separator to match its style
-        const baseEndsWithSep = base.endsWith('/') || base.endsWith('\\');
-        const sep = base.includes('\\') ? '\\' : '/';
-        return baseEndsWithSep ? base + relative : base + sep + relative;
-    };
-
-    // Normalize workspace root - keep as-is if absolute, otherwise normalize with platform path module
-    const normalizedWorkspaceRoot = isAbsolutePath(workspaceRoot)
-        ? workspaceRoot
-        : path.normalize(workspaceRoot);
-
-    // For config path: if absolute, use as-is; otherwise join with workspace root
-    const absoluteConfigPath = isAbsolutePath(configPath)
-        ? configPath
-        : joinPaths(normalizedWorkspaceRoot, configPath);
-
-    // Same for violation file
-    const normalizedViolationFile = isAbsolutePath(violationFile)
-        ? violationFile
-        : joinPaths(normalizedWorkspaceRoot, violationFile);
-
-    log(`Path matching - violationFile: "${violationFile}", configPath: "${configPath}", workspaceRoot: "${workspaceRoot}"`);
-    log(`After normalization - normalizedViolationFile: "${normalizedViolationFile}", absoluteConfigPath: "${absoluteConfigPath}"`);
+    // Violation files are always absolute paths from the engine
+    const normalizedViolationFile = path.normalize(violationFile);
 
     // Step 2: Normalize to POSIX separators for cross-platform comparison
     // Convert all backslashes to forward slashes for consistent comparison
@@ -201,12 +154,8 @@ function doesFileMatchConfigPath(
     const comparisonViolationFile = normalizedViolationFile.replace(/\\/g, '/');
     const comparisonConfigPath = absoluteConfigPath.replace(/\\/g, '/');
 
-    log(`After separator normalization - comparisonViolationFile: "${comparisonViolationFile}", comparisonConfigPath: "${comparisonConfigPath}"`);
-
-
     // Step 3: Check if it's an exact file match
     if (comparisonViolationFile === comparisonConfigPath) {
-        log(`Path matched (exact file match)`);
         return true;
     }
 
@@ -217,9 +166,7 @@ function doesFileMatchConfigPath(
         ? comparisonConfigPath
         : comparisonConfigPath + '/';
 
-    const matches = comparisonViolationFile.startsWith(configPathWithSep);
-    log(`Path ${matches ? 'matched' : 'did not match'} (folder prefix: "${configPathWithSep}")`);
-    return matches;
+    return comparisonViolationFile.startsWith(configPathWithSep);
 }
 
 /**
@@ -238,11 +185,10 @@ function shouldSuppressViolation(
     rule: BulkSuppressionRule,
     quotas: BulkSuppressionQuotas,
     configPath: string,
-    ruleIndex: number,
-    logger?: LoggerCallback
+    ruleIndex: number
 ): boolean {
     // Check if the rule selector matches this violation
-    if (!ruleMatches(violation, rule.rule_selector, logger)) {
+    if (!ruleMatches(violation, rule.rule_selector)) {
         return false;
     }
 
@@ -273,12 +219,9 @@ function shouldSuppressViolation(
  * Uses the same rule selector matching logic as rule selection
  * @param violation The violation to check
  * @param ruleSelector The rule selector string (e.g., "pmd:UnusedMethod", "3,4", etc.)
- * @param logger Optional logger callback for debug messages
  * @returns true if the violation matches the selector
  */
-function ruleMatches(violation: Violation, ruleSelector: string, logger?: LoggerCallback): boolean {
-    const log = (msg: string) => logger?.('debug', msg);
-
+function ruleMatches(violation: Violation, ruleSelector: string): boolean {
     try {
         const selector: Selector = toSelector(ruleSelector);
         const rule = violation.getRule();
@@ -296,9 +239,8 @@ function ruleMatches(violation: Violation, ruleSelector: string, logger?: Logger
         ];
 
         return selector.matchesSelectables(selectables);
-    } catch (error) {
+    } catch (_error) {
         // If selector is invalid, don't match
-        log(`Invalid rule selector "${ruleSelector}": ${error instanceof Error ? error.message : String(error)}`);
         return false;
     }
 }

@@ -552,19 +552,11 @@ export class CodeAnalyzer {
         // This is set during run() and should never be null at this point
         const workspaceRoot = this.currentWorkspaceRoot || this.config.getConfigRoot();
 
-        // Create logger for bulk suppression debug output
-        const logger: LoggerCallback = (level: 'error' | 'warn' | 'debug', message: string) => {
-            const logLevel = level === 'error' ? LogLevel.Error :
-                             level === 'warn' ? LogLevel.Warn : LogLevel.Debug;
-            this.emitLogEvent(logLevel, message);
-        };
-
         const bulkResult = applyBulkSuppressions(
             violations,
             bulkConfig,
             this.bulkSuppressionQuotas,
-            workspaceRoot,
-            logger
+            workspaceRoot
         );
 
         const suppressedCount = bulkResult.suppressedCount;
