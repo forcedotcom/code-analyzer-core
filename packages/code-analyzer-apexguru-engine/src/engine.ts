@@ -102,12 +102,11 @@ export class ApexGuruEngine extends EngineEventEmitter implements Engine {
         }
 
         // Validate ApexGuru access
-        const hasAccess = await this.apexGuruService.validate();
-        if (!hasAccess) {
-            throw new Error(
-                'ApexGuru is not available for this org.\n' +
-                'Please check that ApexGuru is enabled and you have the required permissions.'
-            );
+        try {
+            await this.apexGuruService.validate();
+        } catch (error) {
+            const message = error instanceof Error ? error.message : String(error);
+            throw new Error(`Failed to validate ApexGuru access: ${message}`);
         }
 
         // Get targeted files from workspace and filter for Apex files

@@ -147,7 +147,7 @@ describe('ApexGuruEngine', () => {
                 includeSuggestions: false
             };
             mockApexGuruService.initialize.mockResolvedValue();
-            mockApexGuruService.validate.mockResolvedValue(true);
+            mockApexGuruService.validate.mockResolvedValue();
         });
 
         it('should return empty results immediately when no rules selected', async () => {
@@ -178,10 +178,10 @@ describe('ApexGuruEngine', () => {
         });
 
         it('should throw error if validation fails', async () => {
-            mockApexGuruService.validate.mockResolvedValue(false);
+            mockApexGuruService.validate.mockRejectedValue(new Error('ApexGuru is not available for this org'));
 
             await expect(engine.runRules(['SoqlInALoop'], mockRunOptions))
-                .rejects.toThrow('ApexGuru is not available for this org');
+                .rejects.toThrow('Failed to validate ApexGuru access');
         });
 
         it('should return empty results if no Apex files found', async () => {

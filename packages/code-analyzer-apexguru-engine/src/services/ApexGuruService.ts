@@ -23,6 +23,7 @@ export class ApexGuruService {
     private readonly maxRetryMs: number;
     private readonly backoffMultiplier: number;
     private progressCallback?: (progress: number) => void;
+    private isCancelled = false;
 
     constructor(
         emitLogEvent: (logLevel: LogLevel, message: string) => void,
@@ -75,24 +76,18 @@ export class ApexGuruService {
 
     /**
      * Validate ApexGuru access
+     * Throws error with specific context if validation fails
      */
-    async validate(): Promise<boolean> {
-        const VALIDATE_TIMEOUT_MS = 60000; // 60 seconds hardcoded timeout
-
+    async validate(): Promise<void> {
         let timeoutId: NodeJS.Timeout;
         const validatePromise = this.performValidate();
         const timeoutPromise = new Promise<never>((_, reject) => {
-            timeoutId = setTimeout(() => reject(new Error(`Validate request timed out after ${VALIDATE_TIMEOUT_MS}ms`)), VALIDATE_TIMEOUT_MS);
+            timeoutId = setTimeout(() => reject(new Error(`Validate request timed out after ${this.maxTimeoutMs}ms`)), this.maxTimeoutMs);
         });
 
         try {
-            return await Promise.race([validatePromise, timeoutPromise]);
-        } catch (error) {
-            const message = error instanceof Error ? error.message : String(error);
-            this.emitLogEvent(LogLevel.Error, `Failed to validate ApexGuru access: ${message}`);
-            return false;
+            await Promise.race([validatePromise, timeoutPromise]);
         } finally {
-            // Clear the timeout to prevent it from keeping the process alive
             clearTimeout(timeoutId!);
         }
     }
@@ -100,7 +95,7 @@ export class ApexGuruService {
     /**
      * Internal validate implementation (without timeout wrapper)
      */
-    private async performValidate(): Promise<boolean> {
+    private async performValidate(): Promise<void> {
         const connection: Connection = this.authService.getConnection();
         const apiVersion = this.authService.getApiVersion();
         const url = `/services/data/v${apiVersion}/apexguru/validate`;
@@ -111,11 +106,13 @@ export class ApexGuruService {
         }) as { status?: string };
 
         if (response.status && response.status.toLowerCase() === ApexGuruResponseStatus.SUCCESS) {
-            return true;
+            return;
         }
 
-        this.emitLogEvent(LogLevel.Warn, `ApexGuru validation returned status: ${response.status ?? 'unknown'}`);
-        return false;
+        throw new Error(
+            `ApexGuru is not available for this org (status: ${response.status ?? 'unknown'}).\n` +
+            'Please check that ApexGuru is enabled and you have the required permissions.'
+        );
     }
 
     /**
@@ -123,17 +120,21 @@ export class ApexGuruService {
      * Wraps submit + poll together with a single timeout (api_timeout_ms)
      */
     async analyzeApexClass(classContent: string, filePath: string): Promise<ApexGuruViolation[]> {
+        this.isCancelled = false;
         let timeoutId: NodeJS.Timeout;
         const analysisPromise = this.performAnalysis(classContent);
         const timeoutPromise = new Promise<never>((_, reject) => {
-            timeoutId = setTimeout(() => reject(new Error(`Analysis timed out after ${this.maxTimeoutMs}ms for file: ${filePath}`)), this.maxTimeoutMs);
+            timeoutId = setTimeout(() => {
+                this.isCancelled = true;
+                reject(new Error(`Analysis timed out after ${this.maxTimeoutMs}ms for file: ${filePath}`));
+            }, this.maxTimeoutMs);
         });
 
         try {
             return await Promise.race([analysisPromise, timeoutPromise]);
         } finally {
-            // Clear the timeout to prevent it from keeping the process alive
             clearTimeout(timeoutId!);
+            this.isCancelled = false;
         }
     }
 
@@ -205,6 +206,10 @@ export class ApexGuruService {
         let attempts = 0;
 
         while (true) {
+            if (this.isCancelled) {
+                throw new Error('Analysis cancelled due to timeout');
+            }
+
             if (attempts > 0) {
                 await this.sleep(delay);
             }

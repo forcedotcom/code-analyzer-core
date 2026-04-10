@@ -1,7 +1,6 @@
 import { ApexGuruService } from '../src/services/ApexGuruService';
 import { ApexGuruAuthService } from '../src/services/ApexGuruAuthService';
 import { Connection } from '@salesforce/core';
-import { LogLevel } from '@salesforce/code-analyzer-engine-api';
 import { ApexGuruResponseStatus } from '../src/types';
 
 // Mock dependencies
@@ -58,58 +57,58 @@ describe('ApexGuruService', () => {
     });
 
     describe('validate', () => {
-        it('should return true when validation succeeds', async () => {
+        it('should succeed when validation returns success status', async () => {
             (mockConnection.request as jest.Mock).mockResolvedValue({
                 status: ApexGuruResponseStatus.SUCCESS
             });
 
-            const result = await apexGuruService.validate();
+            await expect(apexGuruService.validate()).resolves.toBeUndefined();
 
-            expect(result).toBe(true);
             expect(mockConnection.request).toHaveBeenCalledWith({
                 method: 'GET',
                 url: '/services/data/v64.0/apexguru/validate'
             });
         });
 
-        it('should return true for uppercase SUCCESS status', async () => {
+        it('should succeed for uppercase SUCCESS status', async () => {
             (mockConnection.request as jest.Mock).mockResolvedValue({
                 status: 'SUCCESS'
             });
 
-            const result = await apexGuruService.validate();
-
-            expect(result).toBe(true);
+            await expect(apexGuruService.validate()).resolves.toBeUndefined();
         });
 
-        it('should return false when validation fails', async () => {
+        it('should throw error when validation fails', async () => {
             (mockConnection.request as jest.Mock).mockResolvedValue({
                 status: ApexGuruResponseStatus.FAILED
             });
 
-            const result = await apexGuruService.validate();
-
-            expect(result).toBe(false);
-            expect(mockEmitLogEvent).toHaveBeenCalledWith(
-                LogLevel.Warn,
-                expect.stringContaining('validation returned status')
-            );
+            await expect(apexGuruService.validate())
+                .rejects.toThrow('ApexGuru is not available for this org');
         });
 
-        it('should return false on error', async () => {
+        it('should throw error on network failure', async () => {
             (mockConnection.request as jest.Mock).mockRejectedValue(new Error('Network error'));
 
-            const result = await apexGuruService.validate();
-
-            expect(result).toBe(false);
-            expect(mockEmitLogEvent).toHaveBeenCalledWith(
-                LogLevel.Error,
-                expect.stringContaining('Failed to validate')
-            );
+            await expect(apexGuruService.validate())
+                .rejects.toThrow('Network error');
         });
 
-        // Timeout test removed - difficult to test with fake timers and Promise.race
-        // Timeout behavior is tested in integration/e2e tests
+        it('should throw timeout error when validation takes too long', async () => {
+            jest.useFakeTimers();
+
+            (mockConnection.request as jest.Mock).mockImplementation(() =>
+                new Promise(resolve => setTimeout(() => resolve({ status: ApexGuruResponseStatus.SUCCESS }), 200000))
+            );
+
+            const validatePromise = apexGuruService.validate();
+
+            jest.advanceTimersByTime(120000);
+
+            await expect(validatePromise).rejects.toThrow('Validate request timed out after 120000ms');
+
+            jest.useRealTimers();
+        });
     });
 
     describe('analyzeApexClass', () => {
@@ -303,6 +302,35 @@ describe('ApexGuruService', () => {
             expect(violations).toHaveLength(2);
             expect(violations[0].rule).toBe('SoqlInALoop');
             expect(violations[1].rule).toBe('DmlInALoop');
+        });
+
+        it('should stop polling when timeout occurs', async () => {
+            jest.useFakeTimers();
+
+            // Mock submit response
+            (mockConnection.request as jest.Mock).mockResolvedValueOnce({
+                status: ApexGuruResponseStatus.NEW,
+                requestId: 'req-123'
+            });
+
+            // Mock never-ending polling (keeps returning "processing")
+            (mockConnection.request as jest.Mock).mockImplementation(() =>
+                new Promise(resolve => {
+                    setTimeout(() => resolve({ status: ApexGuruResponseStatus.NEW }), 100);
+                })
+            );
+
+            const analyzePromise = apexGuruService.analyzeApexClass(testClassContent, testFilePath);
+
+            // Fast-forward past the timeout
+            jest.advanceTimersByTime(120000);
+
+            await expect(analyzePromise).rejects.toThrow('Analysis timed out');
+
+            // Verify flag was set (polling should stop)
+            expect((apexGuruService as any).isCancelled).toBe(false); // Reset in finally block
+
+            jest.useRealTimers();
         });
     });
 
