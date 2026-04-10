@@ -151,8 +151,8 @@ describe('applyBulkSuppressions', () => {
 
             expect(result.unsuppressedViolations).toHaveLength(0);
             expect(result.suppressedCount).toBe(2);
-            // Quota key uses config path, not file path
-            expect(quotas.get('src/file1.apex|pmd:UnusedMethod')).toBe(2);
+            // Quota key uses config path with rule index
+            expect(quotas.get('src/file1.apex|0|pmd:UnusedMethod')).toBe(2);
         });
 
         it('should suppress violations up to quota limit', () => {
@@ -189,8 +189,8 @@ describe('applyBulkSuppressions', () => {
             expect(result.unsuppressedViolations).toHaveLength(1);
             expect(result.suppressedCount).toBe(2);
             expect(result.unsuppressedViolations[0].getPrimaryLocation().getStartLine()).toBe(30);
-            // Quota key uses config path, not file path
-            expect(quotas.get('src/file1.apex|pmd:UnusedMethod')).toBe(2);
+            // Quota key uses config path with rule index
+            expect(quotas.get('src/file1.apex|0|pmd:UnusedMethod')).toBe(2);
         });
 
         it('should not suppress violations when quota is already exhausted', () => {
@@ -212,14 +212,14 @@ describe('applyBulkSuppressions', () => {
             };
 
             const quotas: BulkSuppressionQuotas = new Map();
-            // Quota key uses config path, not file path
-            quotas.set('src/file1.apex|pmd:UnusedMethod', 1); // Quota already used
+            // Quota key uses config path with rule index
+            quotas.set('src/file1.apex|0|pmd:UnusedMethod', 1); // Quota already used
 
             const result = applyBulkSuppressions(violations, bulkConfig, quotas, workspaceRoot);
 
             expect(result.unsuppressedViolations).toHaveLength(1);
             expect(result.suppressedCount).toBe(0);
-            expect(quotas.get('src/file1.apex|pmd:UnusedMethod')).toBe(1);
+            expect(quotas.get('src/file1.apex|0|pmd:UnusedMethod')).toBe(1);
         });
 
         it('should not suppress violations that do not match rule selector', () => {
@@ -550,9 +550,9 @@ describe('applyBulkSuppressions', () => {
             const result = applyBulkSuppressions(violations, bulkConfig, quotas, workspaceRoot);
 
             expect(result.suppressedCount).toBe(1);
-            // Quota key uses config path, not file path
-            expect(quotas.get('src/file1.apex|pmd')).toBe(1);
-            expect(quotas.get('src/file1.apex|pmd:UnusedMethod')).toBeUndefined();
+            // Quota key uses config path with rule index (first rule at index 0 is used)
+            expect(quotas.get('src/file1.apex|0|pmd')).toBe(1);
+            expect(quotas.get('src/file1.apex|1|pmd:UnusedMethod')).toBeUndefined();
         });
     });
 
@@ -633,8 +633,8 @@ describe('applyBulkSuppressions', () => {
             expect(result.unsuppressedViolations).toHaveLength(1);
             expect(result.unsuppressedViolations[0].getPrimaryLocation().getFile()).toBe('/workspace/src/controllers/file3.apex');
 
-            // Quota is shared at folder level, not per-file
-            expect(quotas.get('src/controllers|pmd:UnusedMethod')).toBe(2);
+            // Quota is shared at folder level, not per-file (rule index 0)
+            expect(quotas.get('src/controllers|0|pmd:UnusedMethod')).toBe(2);
         });
 
         it('should maintain quota state across multiple calls', () => {
@@ -668,8 +668,8 @@ describe('applyBulkSuppressions', () => {
             // First call - should suppress
             const result1 = applyBulkSuppressions(violations1, bulkConfig, quotas, workspaceRoot);
             expect(result1.suppressedCount).toBe(1);
-            // Quota key uses config path, not file path
-            expect(quotas.get('src/file1.apex|pmd:UnusedMethod')).toBe(1);
+            // Quota key uses config path with rule index
+            expect(quotas.get('src/file1.apex|0|pmd:UnusedMethod')).toBe(1);
 
             // Second call - quota exhausted, should not suppress
             const result2 = applyBulkSuppressions(violations2, bulkConfig, quotas, workspaceRoot);

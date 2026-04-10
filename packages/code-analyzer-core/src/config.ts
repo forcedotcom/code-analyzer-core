@@ -85,7 +85,7 @@ export const DEFAULT_CONFIG: TopLevelConfig = {
     config_root: process.cwd(),
     log_folder: os.tmpdir(),
     log_level: LogLevel.Debug,
-    suppressions: { disable_suppressions: false, bulk_suppressions: {} }, // Suppressions enabled by default
+    suppressions: { disable_suppressions: false, bulk_suppressions: {} }, // Suppressions enabled by default, no bulk suppressions by default
     rules: {},
     engines: {},
     ignores: { files: [] },
@@ -423,13 +423,13 @@ function extractSuppressionsValue(configExtractor: engApi.ConfigValueExtractor):
 
     const disable_suppressions: boolean = suppressionsExtractor.extractBoolean(FIELDS.DISABLE_SUPPRESSIONS, DEFAULT_CONFIG.suppressions.disable_suppressions) || false;
 
-    // Extract bulk suppressions - all keys except 'disable_suppressions' are file/folder paths
+    // Extract bulk suppressions - all keys except 'disable_suppressions' and 'bulk_suppressions' are file/folder paths
     const bulk_suppressions: Record<string, BulkSuppressionRule[]> = {};
     const suppressionKeys = suppressionsExtractor.getKeys();
 
     for (const key of suppressionKeys) {
-        if (key === FIELDS.DISABLE_SUPPRESSIONS) {
-            continue; // Skip the disable_suppressions flag
+        if (key === FIELDS.DISABLE_SUPPRESSIONS || key === 'bulk_suppressions') {
+            continue; // Skip the disable_suppressions flag and bulk_suppressions placeholder from default config
         }
 
         // key is a file/folder path, value should be an array of suppression rules
