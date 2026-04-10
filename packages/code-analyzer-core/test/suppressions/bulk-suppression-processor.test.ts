@@ -8,6 +8,7 @@ import {
     BulkSuppressionQuotas
 } from '../../src/suppressions/bulk-suppression-processor';
 import { BulkSuppressionRule } from '../../src/config';
+import * as path from 'node:path';
 import { Violation, CodeLocation } from '../../src/results';
 import { Rule, SeverityLevel } from '../../src/rules';
 
@@ -120,7 +121,7 @@ class MockViolation implements Violation {
 }
 
 describe('applyBulkSuppressions', () => {
-    const workspaceRoot = '/workspace';
+    const workspaceRoot = path.join(path.sep, 'workspace');
 
     describe('Basic suppression scenarios', () => {
         it('should suppress violations matching rule selector with no quota limit', () => {
@@ -128,12 +129,12 @@ describe('applyBulkSuppressions', () => {
                 new MockViolation(
                     new MockRule('pmd', 'UnusedMethod'),
                     'Unused method',
-                    new MockCodeLocation('/workspace/src/file1.apex', 10, 1, 10, 20)
+                    new MockCodeLocation(path.join(workspaceRoot, 'src', 'file1.apex'), 10, 1, 10, 20)
                 ),
                 new MockViolation(
                     new MockRule('pmd', 'UnusedMethod'),
                     'Unused method',
-                    new MockCodeLocation('/workspace/src/file1.apex', 20, 1, 20, 20)
+                    new MockCodeLocation(path.join(workspaceRoot, 'src', 'file1.apex'), 20, 1, 20, 20)
                 )
             ];
 
@@ -160,17 +161,17 @@ describe('applyBulkSuppressions', () => {
                 new MockViolation(
                     new MockRule('pmd', 'UnusedMethod'),
                     'Unused method',
-                    new MockCodeLocation('/workspace/src/file1.apex', 10, 1, 10, 20)
+                    new MockCodeLocation(path.join(workspaceRoot, 'src', 'file1.apex'), 10, 1, 10, 20)
                 ),
                 new MockViolation(
                     new MockRule('pmd', 'UnusedMethod'),
                     'Unused method',
-                    new MockCodeLocation('/workspace/src/file1.apex', 20, 1, 20, 20)
+                    new MockCodeLocation(path.join(workspaceRoot, 'src', 'file1.apex'), 20, 1, 20, 20)
                 ),
                 new MockViolation(
                     new MockRule('pmd', 'UnusedMethod'),
                     'Unused method',
-                    new MockCodeLocation('/workspace/src/file1.apex', 30, 1, 30, 20)
+                    new MockCodeLocation(path.join(workspaceRoot, 'src', 'file1.apex'), 30, 1, 30, 20)
                 )
             ];
 
@@ -198,7 +199,7 @@ describe('applyBulkSuppressions', () => {
                 new MockViolation(
                     new MockRule('pmd', 'UnusedMethod'),
                     'Unused method',
-                    new MockCodeLocation('/workspace/src/file1.apex', 10, 1, 10, 20)
+                    new MockCodeLocation(path.join(workspaceRoot, 'src', 'file1.apex'), 10, 1, 10, 20)
                 )
             ];
 
@@ -227,12 +228,12 @@ describe('applyBulkSuppressions', () => {
                 new MockViolation(
                     new MockRule('pmd', 'UnusedMethod'),
                     'Unused method',
-                    new MockCodeLocation('/workspace/src/file1.apex', 10, 1, 10, 20)
+                    new MockCodeLocation(path.join(workspaceRoot, 'src', 'file1.apex'), 10, 1, 10, 20)
                 ),
                 new MockViolation(
                     new MockRule('eslint', 'no-unused-vars'),
                     'Unused variable',
-                    new MockCodeLocation('/workspace/src/file1.apex', 20, 1, 20, 20)
+                    new MockCodeLocation(path.join(workspaceRoot, 'src', 'file1.apex'), 20, 1, 20, 20)
                 )
             ];
 
@@ -260,7 +261,7 @@ describe('applyBulkSuppressions', () => {
                 new MockViolation(
                     new MockRule('pmd', 'UnusedMethod'),
                     'Unused method',
-                    new MockCodeLocation('/workspace/src/file1.apex', 10, 1, 10, 20)
+                    new MockCodeLocation(path.join(workspaceRoot, 'src', 'file1.apex'), 10, 1, 10, 20)
                 )
             ];
 
@@ -284,12 +285,12 @@ describe('applyBulkSuppressions', () => {
                 new MockViolation(
                     new MockRule('pmd', 'UnusedMethod'),
                     'Unused method',
-                    new MockCodeLocation('/workspace/src/folder/file1.apex', 10, 1, 10, 20)
+                    new MockCodeLocation(path.join(workspaceRoot, 'src', 'folder', 'file1.apex'), 10, 1, 10, 20)
                 ),
                 new MockViolation(
                     new MockRule('pmd', 'UnusedMethod'),
                     'Unused method',
-                    new MockCodeLocation('/workspace/src/folder/file2.apex', 20, 1, 20, 20)
+                    new MockCodeLocation(path.join(workspaceRoot, 'src', 'folder', 'file2.apex'), 20, 1, 20, 20)
                 )
             ];
 
@@ -313,7 +314,7 @@ describe('applyBulkSuppressions', () => {
                 new MockViolation(
                     new MockRule('pmd', 'UnusedMethod'),
                     'Unused method',
-                    new MockCodeLocation('/workspace/other/file1.apex', 10, 1, 10, 20)
+                    new MockCodeLocation(path.join(workspaceRoot, 'other', 'file1.apex'), 10, 1, 10, 20)
                 )
             ];
 
@@ -333,19 +334,21 @@ describe('applyBulkSuppressions', () => {
             expect(result.unsuppressedViolations).toHaveLength(1);
         });
 
-        it('should NOT support absolute paths in config (relative paths only)', () => {
-            // Config paths must be relative to workspace root
-            // Absolute paths in config are not supported (similar to .gitignore)
+        it('should support absolute paths in config', () => {
+            // Config paths can be absolute (in addition to relative paths)
+            // This provides flexibility for users who need to specify exact file locations
             const violations = [
                 new MockViolation(
                     new MockRule('pmd', 'UnusedMethod'),
                     'Unused method',
-                    new MockCodeLocation('/workspace/src/file1.apex', 10, 1, 10, 20)
+                    new MockCodeLocation(path.join(workspaceRoot, 'src', 'file1.apex'), 10, 1, 10, 20)
                 )
             ];
 
+            // Create config with absolute path key
+            const absolutePath = path.join(workspaceRoot, 'src', 'file1.apex');
             const bulkConfig = {
-                '/workspace/src/file1.apex': [  // Absolute path - not supported
+                [absolutePath]: [
                     {
                         rule_selector: 'pmd',
                         max_suppressed_violations: null
@@ -356,9 +359,9 @@ describe('applyBulkSuppressions', () => {
             const quotas: BulkSuppressionQuotas = new Map();
             const result = applyBulkSuppressions(violations, bulkConfig, quotas, workspaceRoot);
 
-            // Should NOT suppress - absolute paths in config are not supported
-            expect(result.suppressedCount).toBe(0);
-            expect(result.unsuppressedViolations).toHaveLength(1);
+            // Should suppress - absolute paths are supported
+            expect(result.suppressedCount).toBe(1);
+            expect(result.unsuppressedViolations).toHaveLength(0);
         });
     });
 
@@ -368,12 +371,12 @@ describe('applyBulkSuppressions', () => {
                 new MockViolation(
                     new MockRule('pmd', 'UnusedMethod'),
                     'Unused method',
-                    new MockCodeLocation('/workspace/src/file1.apex', 10, 1, 10, 20)
+                    new MockCodeLocation(path.join(workspaceRoot, 'src', 'file1.apex'), 10, 1, 10, 20)
                 ),
                 new MockViolation(
                     new MockRule('eslint', 'no-unused-vars'),
                     'Unused variable',
-                    new MockCodeLocation('/workspace/src/file1.apex', 20, 1, 20, 20)
+                    new MockCodeLocation(path.join(workspaceRoot, 'src', 'file1.apex'), 20, 1, 20, 20)
                 )
             ];
 
@@ -399,12 +402,12 @@ describe('applyBulkSuppressions', () => {
                 new MockViolation(
                     new MockRule('pmd', 'UnusedMethod'),
                     'Unused method',
-                    new MockCodeLocation('/workspace/src/file1.apex', 10, 1, 10, 20)
+                    new MockCodeLocation(path.join(workspaceRoot, 'src', 'file1.apex'), 10, 1, 10, 20)
                 ),
                 new MockViolation(
                     new MockRule('pmd', 'UnusedVariable'),
                     'Unused variable',
-                    new MockCodeLocation('/workspace/src/file1.apex', 20, 1, 20, 20)
+                    new MockCodeLocation(path.join(workspaceRoot, 'src', 'file1.apex'), 20, 1, 20, 20)
                 )
             ];
 
@@ -430,17 +433,17 @@ describe('applyBulkSuppressions', () => {
                 new MockViolation(
                     new MockRule('pmd', 'Rule1', SeverityLevel.High),
                     'High severity',
-                    new MockCodeLocation('/workspace/src/file1.apex', 10, 1, 10, 20)
+                    new MockCodeLocation(path.join(workspaceRoot, 'src', 'file1.apex'), 10, 1, 10, 20)
                 ),
                 new MockViolation(
                     new MockRule('pmd', 'Rule2', SeverityLevel.Moderate),
                     'Moderate severity',
-                    new MockCodeLocation('/workspace/src/file1.apex', 20, 1, 20, 20)
+                    new MockCodeLocation(path.join(workspaceRoot, 'src', 'file1.apex'), 20, 1, 20, 20)
                 ),
                 new MockViolation(
                     new MockRule('pmd', 'Rule3', SeverityLevel.Low),
                     'Low severity',
-                    new MockCodeLocation('/workspace/src/file1.apex', 30, 1, 30, 20)
+                    new MockCodeLocation(path.join(workspaceRoot, 'src', 'file1.apex'), 30, 1, 30, 20)
                 )
             ];
 
@@ -466,12 +469,12 @@ describe('applyBulkSuppressions', () => {
                 new MockViolation(
                     new MockRule('pmd', 'Rule1', SeverityLevel.High, ['Recommended']),
                     'Tagged violation',
-                    new MockCodeLocation('/workspace/src/file1.apex', 10, 1, 10, 20)
+                    new MockCodeLocation(path.join(workspaceRoot, 'src', 'file1.apex'), 10, 1, 10, 20)
                 ),
                 new MockViolation(
                     new MockRule('pmd', 'Rule2', SeverityLevel.High, ['Security']),
                     'Security violation',
-                    new MockCodeLocation('/workspace/src/file1.apex', 20, 1, 20, 20)
+                    new MockCodeLocation(path.join(workspaceRoot, 'src', 'file1.apex'), 20, 1, 20, 20)
                 )
             ];
 
@@ -499,12 +502,12 @@ describe('applyBulkSuppressions', () => {
                 new MockViolation(
                     new MockRule('pmd', 'UnusedMethod'),
                     'Unused method',
-                    new MockCodeLocation('/workspace/src/file1.apex', 10, 1, 10, 20)
+                    new MockCodeLocation(path.join(workspaceRoot, 'src', 'file1.apex'), 10, 1, 10, 20)
                 ),
                 new MockViolation(
                     new MockRule('eslint', 'no-unused-vars'),
                     'Unused variable',
-                    new MockCodeLocation('/workspace/src/file1.apex', 20, 1, 20, 20)
+                    new MockCodeLocation(path.join(workspaceRoot, 'src', 'file1.apex'), 20, 1, 20, 20)
                 )
             ];
 
@@ -533,7 +536,7 @@ describe('applyBulkSuppressions', () => {
                 new MockViolation(
                     new MockRule('pmd', 'UnusedMethod'),
                     'Unused method',
-                    new MockCodeLocation('/workspace/src/file1.apex', 10, 1, 10, 20)
+                    new MockCodeLocation(path.join(workspaceRoot, 'src', 'file1.apex'), 10, 1, 10, 20)
                 )
             ];
 
@@ -566,17 +569,17 @@ describe('applyBulkSuppressions', () => {
                 new MockViolation(
                     new MockRule('pmd', 'UnusedMethod'),
                     'Unused method',
-                    new MockCodeLocation('/workspace/src/file2.apex', 10, 1, 10, 20)
+                    new MockCodeLocation(path.join(workspaceRoot, 'src', 'file2.apex'), 10, 1, 10, 20)
                 ),
                 new MockViolation(
                     new MockRule('pmd', 'UnusedMethod'),
                     'Unused method',
-                    new MockCodeLocation('/workspace/src/file1.apex', 20, 1, 20, 20)
+                    new MockCodeLocation(path.join(workspaceRoot, 'src', 'file1.apex'), 20, 1, 20, 20)
                 ),
                 new MockViolation(
                     new MockRule('pmd', 'UnusedMethod'),
                     'Unused method',
-                    new MockCodeLocation('/workspace/src/file1.apex', 10, 1, 10, 20)
+                    new MockCodeLocation(path.join(workspaceRoot, 'src', 'file1.apex'), 10, 1, 10, 20)
                 )
             ];
 
@@ -595,7 +598,7 @@ describe('applyBulkSuppressions', () => {
             expect(result.suppressedCount).toBe(2);
             expect(result.unsuppressedViolations).toHaveLength(1);
             // Should suppress file1:10 and file1:20 (sorted by file, then line)
-            expect(result.unsuppressedViolations[0].getPrimaryLocation().getFile()).toBe('/workspace/src/file2.apex');
+            expect(result.unsuppressedViolations[0].getPrimaryLocation().getFile()).toBe(path.join(workspaceRoot, 'src', 'file2.apex'));
         });
     });
 
@@ -606,17 +609,17 @@ describe('applyBulkSuppressions', () => {
                 new MockViolation(
                     new MockRule('pmd', 'UnusedMethod'),
                     'Unused method in file1',
-                    new MockCodeLocation('/workspace/src/controllers/file1.apex', 10, 1, 10, 20)
+                    new MockCodeLocation(path.join(workspaceRoot, 'src', 'controllers', 'file1.apex'), 10, 1, 10, 20)
                 ),
                 new MockViolation(
                     new MockRule('pmd', 'UnusedMethod'),
                     'Unused method in file2',
-                    new MockCodeLocation('/workspace/src/controllers/file2.apex', 20, 1, 20, 20)
+                    new MockCodeLocation(path.join(workspaceRoot, 'src', 'controllers', 'file2.apex'), 20, 1, 20, 20)
                 ),
                 new MockViolation(
                     new MockRule('pmd', 'UnusedMethod'),
                     'Unused method in file3',
-                    new MockCodeLocation('/workspace/src/controllers/file3.apex', 30, 1, 30, 20)
+                    new MockCodeLocation(path.join(workspaceRoot, 'src', 'controllers', 'file3.apex'), 30, 1, 30, 20)
                 )
             ];
 
@@ -635,7 +638,7 @@ describe('applyBulkSuppressions', () => {
             // Should suppress first 2 violations (across different files), reject 3rd
             expect(result.suppressedCount).toBe(2);
             expect(result.unsuppressedViolations).toHaveLength(1);
-            expect(result.unsuppressedViolations[0].getPrimaryLocation().getFile()).toBe('/workspace/src/controllers/file3.apex');
+            expect(result.unsuppressedViolations[0].getPrimaryLocation().getFile()).toBe(path.join(workspaceRoot, 'src', 'controllers', 'file3.apex'));
 
             // Quota is shared at folder level, not per-file (rule index 0)
             expect(quotas.get('src/controllers|0|pmd:UnusedMethod')).toBe(2);
@@ -646,7 +649,7 @@ describe('applyBulkSuppressions', () => {
                 new MockViolation(
                     new MockRule('pmd', 'UnusedMethod'),
                     'Unused method',
-                    new MockCodeLocation('/workspace/src/file1.apex', 10, 1, 10, 20)
+                    new MockCodeLocation(path.join(workspaceRoot, 'src', 'file1.apex'), 10, 1, 10, 20)
                 )
             ];
 
@@ -654,7 +657,7 @@ describe('applyBulkSuppressions', () => {
                 new MockViolation(
                     new MockRule('pmd', 'UnusedMethod'),
                     'Unused method',
-                    new MockCodeLocation('/workspace/src/file1.apex', 20, 1, 20, 20)
+                    new MockCodeLocation(path.join(workspaceRoot, 'src', 'file1.apex'), 20, 1, 20, 20)
                 )
             ];
 
@@ -688,7 +691,7 @@ describe('applyBulkSuppressions', () => {
                 new MockViolation(
                     new MockRule('pmd', 'UnusedMethod'),
                     'Unused method',
-                    new MockCodeLocation('/workspace/src/file1.apex', 10, 1, 10, 20)
+                    new MockCodeLocation(path.join(workspaceRoot, 'src', 'file1.apex'), 10, 1, 10, 20)
                 )
             ];
 
@@ -746,7 +749,7 @@ describe('applyBulkSuppressions', () => {
                 new MockViolation(
                     new MockRule('pmd', 'UnusedMethod'),
                     'Unused method',
-                    new MockCodeLocation('/workspace/src/file1.apex', 10, 1, 10, 20)
+                    new MockCodeLocation(path.join(workspaceRoot, 'src', 'file1.apex'), 10, 1, 10, 20)
                 )
             ];
 
@@ -772,7 +775,7 @@ describe('applyBulkSuppressions', () => {
                 new MockViolation(
                     new MockRule('pmd', 'UnusedMethod'),
                     'Unused method',
-                    new MockCodeLocation('/workspace/src/file1.apex', 10, 1, 10, 20)
+                    new MockCodeLocation(path.join(workspaceRoot, 'src', 'file1.apex'), 10, 1, 10, 20)
                 )
             ];
 

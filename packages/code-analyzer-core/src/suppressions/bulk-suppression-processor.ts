@@ -126,7 +126,7 @@ function findMatchingBulkSuppressionRules(
  * This follows the same pattern as the ignores feature in workspace.ts for cross-platform compatibility.
  *
  * @param violationFile Absolute file path from violation
- * @param configPath Relative path from config (file or folder)
+ * @param configPath Relative or absolute path from config (file or folder)
  * @param workspaceRoot Root directory for resolving relative paths
  * @returns true if the file matches
  */
@@ -135,59 +135,67 @@ function doesFileMatchConfigPath(
     configPath: string,
     workspaceRoot: string
 ): boolean {
-    // Step 1: Use path module to resolve config paths relative to workspace root
-    // Config paths should always be relative (like .gitignore patterns)
-    // Violation file paths are absolute (from the file system)
+    const debugEnabled = process.env.DEBUG_BULK_SUPPRESSIONS === 'true';
 
-    // CROSS-PLATFORM TEST COMPATIBILITY:
-    // On Windows, Unix-style paths like /workspace are NOT recognized as absolute by path.isAbsolute()
-    // because Windows expects drive letters (C:\). However, our tests use Unix-style paths and run
-    // on all platforms (including Windows CI). In production, all paths are native format, so this
-    // check is primarily for test compatibility.
-    const isUnixStylePath = (p: string) => p.startsWith('/');
-
-    // If workspace root is Unix-style path (starts with /), keep it as-is
-    const normalizedWorkspaceRoot = isUnixStylePath(workspaceRoot)
-        ? workspaceRoot
-        : path.normalize(workspaceRoot);
-
-    // Config paths are ALWAYS treated as relative to workspace root (like .gitignore)
-    // User should never provide absolute paths in config
-    let absoluteConfigPath: string;
-    if (isUnixStylePath(normalizedWorkspaceRoot)) {
-        // For Unix-style paths, use simple concatenation (path.resolve doesn't work cross-platform)
-        // e.g., "/workspace" + "src/file.js" = "/workspace/src/file.js"
-        const separator = normalizedWorkspaceRoot.endsWith('/') ? '' : '/';
-        absoluteConfigPath = normalizedWorkspaceRoot + separator + configPath;
-    } else {
-        // For native paths, use path.resolve (handles Windows paths properly)
-        absoluteConfigPath = path.resolve(normalizedWorkspaceRoot, configPath);
+    if (debugEnabled) {
+        console.log('[DEBUG] doesFileMatchConfigPath called:');
+        console.log('  violationFile:', violationFile);
+        console.log('  configPath:', configPath);
+        console.log('  workspaceRoot:', workspaceRoot);
+        console.log('  path.isAbsolute(configPath):', path.isAbsolute(configPath));
     }
 
-    // Violation files: keep as-is if Unix-style (for cross-platform test compatibility)
-    const normalizedViolationFile = isUnixStylePath(violationFile)
-        ? violationFile
-        : path.normalize(violationFile);
+    // Config paths can be relative (recommended, like .gitignore) or absolute
+    // If relative, resolve against workspace root
+    // If absolute, use as-is
+    const absoluteConfigPath = path.resolve(workspaceRoot, configPath);
 
-    // Step 2: Normalize to POSIX separators for cross-platform comparison
+    if (debugEnabled) {
+        console.log('  After path.resolve:', absoluteConfigPath);
+    }
+
+    // Normalize paths for consistent comparison
+    const normalizedViolationFile = path.normalize(violationFile);
+    const normalizedConfigPath = path.normalize(absoluteConfigPath);
+
+    if (debugEnabled) {
+        console.log('  After normalize - violation:', normalizedViolationFile);
+        console.log('  After normalize - config:', normalizedConfigPath);
+    }
+
+    // Normalize to POSIX separators for cross-platform comparison
     // Convert all backslashes to forward slashes for consistent comparison
-    // This handles both: Windows paths on Unix (C:\foo -> C:/foo) and Unix paths on Windows
     const comparisonViolationFile = normalizedViolationFile.replace(/\\/g, '/');
-    const comparisonConfigPath = absoluteConfigPath.replace(/\\/g, '/');
+    const comparisonConfigPath = normalizedConfigPath.replace(/\\/g, '/');
 
-    // Step 3: Check if it's an exact file match
+    if (debugEnabled) {
+        console.log('  After POSIX normalize - violation:', comparisonViolationFile);
+        console.log('  After POSIX normalize - config:', comparisonConfigPath);
+    }
+
+    // Check if it's an exact file match
     if (comparisonViolationFile === comparisonConfigPath) {
+        if (debugEnabled) {
+            console.log('  Result: EXACT MATCH');
+        }
         return true;
     }
 
-    // Step 4: Check if violation file is within config folder
+    // Check if violation file is within config folder
     // Add separator to ensure we match whole directory names
     // e.g., "src/utils" should match "src/utils/file.js" but not "src/utils2/file.js"
     const configPathWithSep = comparisonConfigPath.endsWith('/')
         ? comparisonConfigPath
         : comparisonConfigPath + '/';
 
-    return comparisonViolationFile.startsWith(configPathWithSep);
+    const result = comparisonViolationFile.startsWith(configPathWithSep);
+
+    if (debugEnabled) {
+        console.log('  Folder match check - configPathWithSep:', configPathWithSep);
+        console.log('  Result:', result ? 'FOLDER MATCH' : 'NO MATCH');
+    }
+
+    return result;
 }
 
 /**

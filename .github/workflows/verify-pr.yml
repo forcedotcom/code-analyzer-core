@@ -88,6 +88,8 @@ jobs:
           python-version: 3.12
       - run: npm install
       - name: Test changes in affected packages
+        env:
+          DEBUG_BULK_SUPPRESSIONS: ${{ matrix.os == 'windows-latest' && 'true' || 'false' }}
         run: |
           BASE_SHA=${{ github.event.pull_request.base.sha }}
           HEAD_SHA=${{ github.event.pull_request.head.sha }}

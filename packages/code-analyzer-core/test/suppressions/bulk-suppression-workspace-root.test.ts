@@ -2,6 +2,7 @@ import {applyBulkSuppressions, BulkSuppressionQuotas} from "../../src/suppressio
 import {BulkSuppressionRule} from "../../src/config";
 import {Violation, CodeLocation} from "../../src/results";
 import {RuleImpl} from "../../src/rules";
+import * as path from 'node:path';
 
 /**
  * Tests specifically for Bug #2: Workspace Root vs Config Root inconsistency
@@ -78,11 +79,11 @@ describe('Bulk Suppressions - Workspace Root Path Resolution (Bug #2)', () => {
      * NOT: "utils.js" (relative to config root)
      */
     it('BUG #2: Paths in config are resolved relative to WORKSPACE ROOT, not config file location', () => {
-        // Workspace root (where -w flag points)
-        const workspaceRoot = '/Users/user/workspace/dreamhouse';
+        // Workspace root (where -w flag points) - use platform-appropriate paths
+        const workspaceRoot = path.join(path.sep, 'Users', 'user', 'workspace', 'dreamhouse');
 
-        // Violation file path (absolute)
-        const violationFilePath = '/Users/user/workspace/dreamhouse/force-app/main/default/react-components/utils.js';
+        // Violation file path (absolute) - use platform-appropriate paths
+        const violationFilePath = path.join(workspaceRoot, 'force-app', 'main', 'default', 'react-components', 'utils.js');
 
         // Create violation
         const violation = new MockViolation(
@@ -92,7 +93,7 @@ describe('Bulk Suppressions - Workspace Root Path Resolution (Bug #2)', () => {
         );
 
         // Bulk config with path relative to WORKSPACE ROOT (consistent with ignores)
-        // This is what user should write in config file
+        // This is what user should write in config file (always use forward slashes)
         const bulkConfig: Record<string, BulkSuppressionRule[]> = {
             'force-app/main/default/react-components/utils.js': [
                 {
@@ -114,8 +115,8 @@ describe('Bulk Suppressions - Workspace Root Path Resolution (Bug #2)', () => {
 
     it('BUG #2: Same directory level - workspace root equals config directory (worked before bug fix)', () => {
         // This case worked even with Bug #2 because workspace root === config root
-        const workspaceRoot = '/Users/user/workspace/project';
-        const violationFilePath = '/Users/user/workspace/project/utils.js';
+        const workspaceRoot = path.join(path.sep, 'Users', 'user', 'workspace', 'project');
+        const violationFilePath = path.join(workspaceRoot, 'utils.js');
 
         const violation = new MockViolation(
             mockRule,
@@ -142,8 +143,8 @@ describe('Bulk Suppressions - Workspace Root Path Resolution (Bug #2)', () => {
 
     it('BUG #2: Config in subdirectory with WRONG path (relative to config root) does NOT suppress', () => {
         // This demonstrates the bug - if user writes path relative to config file location
-        const workspaceRoot = '/Users/user/workspace/dreamhouse';
-        const violationFilePath = '/Users/user/workspace/dreamhouse/force-app/main/default/react-components/utils.js';
+        const workspaceRoot = path.join(path.sep, 'Users', 'user', 'workspace', 'dreamhouse');
+        const violationFilePath = path.join(workspaceRoot, 'force-app', 'main', 'default', 'react-components', 'utils.js');
 
         const violation = new MockViolation(
             mockRule,
@@ -170,25 +171,25 @@ describe('Bulk Suppressions - Workspace Root Path Resolution (Bug #2)', () => {
     });
 
     it('BUG #2: Multiple files at different levels all resolve correctly from workspace root', () => {
-        const workspaceRoot = '/workspace/project';
+        const workspaceRoot = path.join(path.sep, 'workspace', 'project');
 
         // Violations at different directory levels
         const violation1 = new MockViolation(
             mockRule,
             'Console in nested file',
-            new MockCodeLocation('/workspace/project/src/utils.js', 10, 1, 10, 20)
+            new MockCodeLocation(path.join(workspaceRoot, 'src', 'utils.js'), 10, 1, 10, 20)
         );
 
         const violation2 = new MockViolation(
             mockRule,
             'Console in deeper nested file',
-            new MockCodeLocation('/workspace/project/force-app/main/default/lwc/component.js', 20, 1, 20, 20)
+            new MockCodeLocation(path.join(workspaceRoot, 'force-app', 'main', 'default', 'lwc', 'component.js'), 20, 1, 20, 20)
         );
 
         const violation3 = new MockViolation(
             mockRule,
             'Console in root file',
-            new MockCodeLocation('/workspace/project/index.js', 30, 1, 30, 20)
+            new MockCodeLocation(path.join(workspaceRoot, 'index.js'), 30, 1, 30, 20)
         );
 
         // All paths relative to workspace root
@@ -218,19 +219,19 @@ describe('Bulk Suppressions - Workspace Root Path Resolution (Bug #2)', () => {
     });
 
     it('BUG #2: Folder-level suppression from workspace root matches nested files', () => {
-        const workspaceRoot = '/workspace/project';
+        const workspaceRoot = path.join(path.sep, 'workspace', 'project');
 
         // Violations in nested folder
         const violation1 = new MockViolation(
             mockRule,
             'Console',
-            new MockCodeLocation('/workspace/project/src/utils/helper.js', 10, 1, 10, 20)
+            new MockCodeLocation(path.join(workspaceRoot, 'src', 'utils', 'helper.js'), 10, 1, 10, 20)
         );
 
         const violation2 = new MockViolation(
             mockRule,
             'Console',
-            new MockCodeLocation('/workspace/project/src/utils/formatter.js', 20, 1, 20, 20)
+            new MockCodeLocation(path.join(workspaceRoot, 'src', 'utils', 'formatter.js'), 20, 1, 20, 20)
         );
 
         // Suppress entire folder (path relative to workspace root)
@@ -253,10 +254,10 @@ describe('Bulk Suppressions - Workspace Root Path Resolution (Bug #2)', () => {
         expect(result.suppressedCount).toBe(2);
     });
 
-    it('Config paths must be relative to workspace root (not absolute)', () => {
-        // This test documents the correct usage: paths relative to workspace root
-        const workspaceRoot = '/workspace/project';
-        const violationFilePath = '/workspace/project/src/file.js';
+    it('Config paths can be relative to workspace root (recommended)', () => {
+        // This test documents the recommended usage: paths relative to workspace root
+        const workspaceRoot = path.join(path.sep, 'workspace', 'project');
+        const violationFilePath = path.join(workspaceRoot, 'src', 'file.js');
 
         const violation = new MockViolation(
             mockRule,
@@ -264,9 +265,9 @@ describe('Bulk Suppressions - Workspace Root Path Resolution (Bug #2)', () => {
             new MockCodeLocation(violationFilePath, 10, 1, 10, 20)
         );
 
-        // ✅ CORRECT: Use relative path from workspace root
+        // RECOMMENDED: Use relative path from workspace root
         const bulkConfig: Record<string, BulkSuppressionRule[]> = {
-            'src/file.js': [  // Relative to /workspace/project
+            'src/file.js': [  // Relative to workspace root
                 { rule_selector: 'eslint:all', max_suppressed_violations: 1 }
             ]
         };
@@ -274,7 +275,7 @@ describe('Bulk Suppressions - Workspace Root Path Resolution (Bug #2)', () => {
         const quotas: BulkSuppressionQuotas = new Map();
         const result = applyBulkSuppressions([violation], bulkConfig, quotas, workspaceRoot);
 
-        // Should suppress because path is correctly specified as relative
+        // Should suppress because path is correctly specified
         expect(result.unsuppressedViolations).toHaveLength(0);
         expect(result.suppressedCount).toBe(1);
     });
@@ -286,16 +287,16 @@ describe('Bulk Suppressions - Workspace Root Path Resolution (Bug #2)', () => {
          * - Both resolve paths relative to workspace root
          * - Both fall back to absolute paths if workspace root is null
          */
-        const workspaceRoot = '/Users/user/dreamhouse';
+        const workspaceRoot = path.join(path.sep, 'Users', 'user', 'dreamhouse');
 
         // Imagine ignores config: ["force-app/test/**"]
         // Imagine bulk suppressions: "force-app/main/default/utils.js"
-        // Both should resolve relative to /Users/user/dreamhouse
+        // Both should resolve relative to workspace root
 
         const violation = new MockViolation(
             mockRule,
             'Console',
-            new MockCodeLocation('/Users/user/dreamhouse/force-app/main/default/utils.js', 10, 1, 10, 20)
+            new MockCodeLocation(path.join(workspaceRoot, 'force-app', 'main', 'default', 'utils.js'), 10, 1, 10, 20)
         );
 
         const bulkConfig: Record<string, BulkSuppressionRule[]> = {
@@ -326,8 +327,8 @@ describe('Bulk Suppressions - Workspace Root Path Resolution (Bug #2)', () => {
          *
          * Expected: 5 total violations suppressed (3 + 2), not 3 with shared quota
          */
-        const workspaceRoot = '/Users/user/workspace';
-        const filePath = '/Users/user/workspace/force-app/utils.js';
+        const workspaceRoot = path.join(path.sep, 'Users', 'user', 'workspace');
+        const filePath = path.join(workspaceRoot, 'force-app', 'utils.js');
 
         // Create 6 violations that would match the duplicate selectors
         const violations: Violation[] = [];
