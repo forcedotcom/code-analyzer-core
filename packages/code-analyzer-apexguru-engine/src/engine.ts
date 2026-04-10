@@ -82,8 +82,8 @@ export class ApexGuruEngine extends EngineEventEmitter implements Engine {
         // Create a Set for faster rule name lookup
         const selectedRulesSet = new Set(ruleNames);
 
-        // Extract targetOrg from workspace (if available)
-        const targetOrg = this.getTargetOrgFromWorkspace(runOptions);
+        // Extract targetOrg from environment
+        const targetOrg = this.getTargetOrgFromEnvironment();
 
         // Initialize authentication
         try {
@@ -188,24 +188,17 @@ export class ApexGuruEngine extends EngineEventEmitter implements Engine {
     }
 
     /**
-     * Extract target org from workspace or environment
+     * Extract target org from environment
+     * Note: Workspace does not currently expose org configuration through the Engine API.
+     * Target org can be set via SF_TARGET_ORG environment variable.
      */
-    private getTargetOrgFromWorkspace(runOptions: RunOptions): string | undefined {
-        // Try to get from workspace config
-        // This is a placeholder - actual implementation depends on how RunOptions exposes config
-        const workspace = runOptions.workspace as any;
-
-        // Check if workspace has org config
-        if (workspace.targetOrg) {
-            return workspace.targetOrg;
-        }
-
+    private getTargetOrgFromEnvironment(): string | undefined {
         // Check environment variable
         if (process.env.SF_TARGET_ORG) {
             return process.env.SF_TARGET_ORG;
         }
 
-        // Return undefined to use default org
+        // Return undefined to use default org from SF CLI
         return undefined;
     }
 
