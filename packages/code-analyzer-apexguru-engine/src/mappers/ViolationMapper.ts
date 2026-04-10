@@ -15,8 +15,8 @@ export class ViolationMapper {
     /**
      * Map ApexGuru violations to Code Analyzer violations
      */
-    mapViolations(apexGuruViolations: ApexGuruViolation[], filePath: string): Violation[] {
-        return apexGuruViolations.map(av => this.mapSingleViolation(av, filePath));
+    mapViolations(apexGuruViolations: ApexGuruViolation[], filePath: string, includeSuggestions: boolean): Violation[] {
+        return apexGuruViolations.map(av => this.mapSingleViolation(av, filePath, includeSuggestions));
     }
 
     /**
@@ -24,7 +24,7 @@ export class ViolationMapper {
      *
      * If the rule is unknown (not declared in describeRules), map it to the fallback rule.
      */
-    private mapSingleViolation(av: ApexGuruViolation, filePath: string): Violation {
+    private mapSingleViolation(av: ApexGuruViolation, filePath: string, includeSuggestions: boolean): Violation {
         // Map unknown rules to fallback to ensure Core validation passes
         const ruleName = isKnownRule(av.rule) ? av.rule : FALLBACK_RULE_NAME;
 
@@ -35,7 +35,9 @@ export class ViolationMapper {
             primaryLocationIndex: av.primaryLocationIndex,
             resourceUrls: av.resources,
             //fixes: av.fixes?.map(fix => this.mapFix(fix, filePath)),
-            suggestions: av.suggestions?.map(suggestion => this.mapSuggestion(suggestion, filePath))
+            suggestions: includeSuggestions && av.suggestions?.length ?
+                av.suggestions.map(suggestion => this.mapSuggestion(suggestion, filePath)) :
+                undefined
         };
     }
 

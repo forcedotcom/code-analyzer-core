@@ -53,7 +53,6 @@ export class ApexGuruEngine extends EngineEventEmitter implements Engine {
 
     async describeRules(describeOptions: DescribeOptions): Promise<RuleDescription[]> {
         this.emitDescribeRulesProgressEvent(0);
-        this.emitLogEvent(LogLevel.Fine, 'Returning known ApexGuru rules plus fallback for new rules');
 
         // ApexGuru is dynamic - new rules can be added by Salesforce at any time.
         // We declare known rules explicitly (in apexguru-rules.ts), plus a fallback rule.
@@ -64,11 +63,12 @@ export class ApexGuruEngine extends EngineEventEmitter implements Engine {
     }
 
     async runRules(ruleNames: string[], runOptions: RunOptions): Promise<EngineRunResults> {
-        // Note: ruleNames parameter is ignored. ApexGuru API analyzes code and returns
-        // all detected violations. Individual rules cannot be enabled/disabled.
-        // This is by design - ApexGuru determines which rules to apply dynamically.
+        // Note: ApexGuru API analyzes code and returns ALL detected violations.
+        // Individual rules cannot be enabled/disabled via the API.
+        // We filter violations to match the selected rules after analysis completes.
 
-        this.emitLogEvent(LogLevel.Info, 'Starting ApexGuru analysis...');
+        // Create a Set for faster rule name lookup
+        const selectedRulesSet = new Set(ruleNames);
 
         // Extract targetOrg from workspace (if available)
         const targetOrg = this.getTargetOrgFromWorkspace(runOptions);
@@ -98,63 +98,72 @@ export class ApexGuruEngine extends EngineEventEmitter implements Engine {
 
         if (apexFiles.length === 0) {
             this.emitLogEvent(LogLevel.Warn, 'No Apex class files found to analyze');
+            this.apexGuruService.cleanup(); // Cleanup even on early return
             return { violations: [] };
         }
 
-        this.emitLogEvent(LogLevel.Info, `Found ${apexFiles.length} Apex class(es) to analyze`);
+        try {
+            // Analyze each file
+            const allViolations: Violation[] = [];
+            let filesProcessed = 0;
 
-        // Analyze each file
-        const allViolations: Violation[] = [];
-        let filesProcessed = 0;
+            for (let i = 0; i < apexFiles.length; i++) {
+                const filePath = apexFiles[i];
 
-        for (let i = 0; i < apexFiles.length; i++) {
-            const filePath = apexFiles[i];
+                try {
+                    // Emit progress at start of file
+                    const baseProgress = (filesProcessed / apexFiles.length) * 100;
+                    this.emitRunRulesProgressEvent(baseProgress);
 
-            try {
-                this.emitLogEvent(LogLevel.Fine, `Analyzing: ${filePath}`);
+                    // Set up progress callback for polling
+                    // Each file gets a slice of the total progress (0-95% of that slice during polling)
+                    const progressSlicePerFile = 100 / apexFiles.length;
+                    this.apexGuruService.setProgressCallback((pollingProgress: number) => {
+                        // Map polling progress (0-95) to this file's slice
+                        const fileProgress = baseProgress + (pollingProgress / 100) * progressSlicePerFile;
+                        this.emitRunRulesProgressEvent(fileProgress);
+                    });
 
-                // Emit progress at start of file
-                const baseProgress = (filesProcessed / apexFiles.length) * 100;
-                this.emitRunRulesProgressEvent(baseProgress);
+                    const fileContent = await fs.readFile(filePath, 'utf-8');
+                    const apexGuruViolations: ApexGuruViolation[] = await this.apexGuruService.analyzeApexClass(
+                        fileContent,
+                        filePath
+                    );
 
-                // Set up progress callback for polling
-                // Each file gets a slice of the total progress (0-95% of that slice during polling)
-                const progressSlicePerFile = 100 / apexFiles.length;
-                this.apexGuruService.setProgressCallback((pollingProgress: number) => {
-                    // Map polling progress (0-95) to this file's slice
-                    const fileProgress = baseProgress + (pollingProgress / 100) * progressSlicePerFile;
-                    this.emitRunRulesProgressEvent(fileProgress);
-                });
+                    const violations = this.violationMapper.mapViolations(
+                        apexGuruViolations,
+                        filePath,
+                        runOptions.includeSuggestions ?? false
+                    );
 
-                const fileContent = await fs.readFile(filePath, 'utf-8');
-                const apexGuruViolations: ApexGuruViolation[] = await this.apexGuruService.analyzeApexClass(
-                    fileContent,
-                    filePath
-                );
+                    // Filter violations to only include selected rules
+                    const filteredViolations = violations.filter(v => selectedRulesSet.has(v.ruleName));
+                    allViolations.push(...filteredViolations);
 
-                const violations = this.violationMapper.mapViolations(apexGuruViolations, filePath);
-                allViolations.push(...violations);
+                    if (violations.length !== filteredViolations.length) {
+                        this.emitLogEvent(
+                            LogLevel.Fine,
+                            `Filtered ${violations.length - filteredViolations.length} violation(s) for unselected rules`
+                        );
+                    }
 
-                filesProcessed++;
-                const endProgress = (filesProcessed / apexFiles.length) * 100;
-                this.emitRunRulesProgressEvent(endProgress);
-
-                this.emitLogEvent(
-                    LogLevel.Fine,
-                    `Found ${violations.length} violation(s) in ${path.basename(filePath)}`
-                );
-            } catch (error: any) {
-                this.emitLogEvent(
-                    LogLevel.Warn,
-                    `Failed to analyze ${path.basename(filePath)}: ${error.message}`
-                );
-                // Continue with other files
+                    filesProcessed++;
+                    const endProgress = (filesProcessed / apexFiles.length) * 100;
+                    this.emitRunRulesProgressEvent(endProgress);
+                } catch (error: any) {
+                    this.emitLogEvent(
+                        LogLevel.Warn,
+                        `Failed to analyze ${path.basename(filePath)}: ${error.message}`
+                    );
+                    // Continue with other files
+                }
             }
+
+            return { violations: allViolations };
+        } finally {
+            // Always cleanup resources to allow process to exit
+            this.apexGuruService.cleanup();
         }
-
-        this.emitLogEvent(LogLevel.Info, `ApexGuru analysis complete. Total violations: ${allViolations.length}`);
-
-        return { violations: allViolations };
     }
 
     /**

@@ -30,7 +30,6 @@ export class ApexGuruAuthService {
      * Priority: 1) hardcoded (if enabled), 2) targetOrg, 3) direct credentials, 4) env vars
      */
     async initialize(config: AuthConfig): Promise<void> {
-        this.emitLogEvent(LogLevel.Debug, '=== AUTHENTICATION ===');
 
         // Option 0: Use hardcoded credentials (for quick testing)
         if (USE_HARDCODED_AUTH) {
@@ -53,38 +52,21 @@ export class ApexGuruAuthService {
                     }
                 })
             });
-            this.emitLogEvent(LogLevel.Debug, `Instance URL: ${this.connection.instanceUrl}`);
-            this.emitLogEvent(LogLevel.Debug, `Access Token: ${this.connection.accessToken?.substring(0, 20)}...`);
-            this.emitLogEvent(LogLevel.Debug, `API Version: v${this.connection.version}`);
-            this.emitLogEvent(LogLevel.Debug, '=== END AUTHENTICATION ===');
-            this.emitLogEvent(LogLevel.Info, `✓ Connected to: ${this.connection.instanceUrl}`);
             return;
         }
 
         // Option 1: Use target org (or default org if targetOrg is undefined)
         if (config.targetOrg !== undefined || (!config.accessToken && !config.instanceUrl)) {
             try {
-                this.emitLogEvent(LogLevel.Info,
-                    config.targetOrg
-                        ? `Authenticating with target org: ${config.targetOrg}`
-                        : 'Using default org from SF CLI'
-                );
 
                 const org = await Org.create({
                     aliasOrUsername: config.targetOrg  // undefined = use default org
                 });
 
                 this.connection = org.getConnection();
-                this.emitLogEvent(LogLevel.Debug, `Instance URL: ${this.connection.instanceUrl}`);
-                this.emitLogEvent(LogLevel.Debug, `Access Token: ${this.connection.accessToken?.substring(0, 20)}...`);
-                this.emitLogEvent(LogLevel.Debug, `API Version: v${this.connection.version}`);
-                this.emitLogEvent(LogLevel.Debug, `Org ID: ${org.getOrgId()}`);
-                this.emitLogEvent(LogLevel.Debug, `Username: ${org.getUsername()}`);
-                this.emitLogEvent(LogLevel.Debug, '=== END AUTHENTICATION ===');
-                this.emitLogEvent(LogLevel.Info, `✓ Connected to: ${this.connection.instanceUrl}`);
                 return;
-            } catch (error: any) {
-                if (error.name === 'NamedOrgNotFound') {
+            } catch (error) {
+                if (error instanceof Error && error.name === 'NamedOrgNotFound') {
                     throw new Error(
                         `Org '${config.targetOrg}' not found. Run 'sf org list' to see authenticated orgs.`
                     );
@@ -95,7 +77,6 @@ export class ApexGuruAuthService {
 
         // Option 2: Direct credentials (for CI/CD or testing)
         if (config.accessToken && config.instanceUrl) {
-            this.emitLogEvent(LogLevel.Fine, 'Using direct access token and instance URL');
             this.connection = await Connection.create({
                 authInfo: await AuthInfo.create({
                     accessTokenOptions: {
@@ -112,7 +93,6 @@ export class ApexGuruAuthService {
         const envUrl = process.env.SF_INSTANCE_URL;
 
         if (envToken && envUrl) {
-            this.emitLogEvent(LogLevel.Fine, 'Using SF_ACCESS_TOKEN and SF_INSTANCE_URL from environment');
             this.connection = await Connection.create({
                 authInfo: await AuthInfo.create({
                     accessTokenOptions: {

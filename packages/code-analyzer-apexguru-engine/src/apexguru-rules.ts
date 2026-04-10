@@ -10,7 +10,7 @@ import { RuleDescription, SeverityLevel, COMMON_TAGS } from '@salesforce/code-an
  */
 export const APEXGURU_RULES: RuleDescription[] = [
     // =================================================================================================================
-    //   PERFORMANCE RULES - HIGH SEVERITY
+    //   PERFORMANCE RULES - HIGH SEVERITY (CRITICAL - RECOMMENDED)
     // =================================================================================================================
 
     {
@@ -30,7 +30,7 @@ export const APEXGURU_RULES: RuleDescription[] = [
     },
 
     // =================================================================================================================
-    //   PERFORMANCE RULES - MODERATE SEVERITY
+    //   PERFORMANCE RULES - MODERATE SEVERITY (CRITICAL - RECOMMENDED)
     // =================================================================================================================
 
     {
@@ -50,38 +50,6 @@ export const APEXGURU_RULES: RuleDescription[] = [
     },
 
     {
-        name: 'Soql Aggregation',
-        severityLevel: SeverityLevel.Moderate,
-        tags: [COMMON_TAGS.RECOMMENDED, COMMON_TAGS.CATEGORIES.PERFORMANCE, COMMON_TAGS.LANGUAGES.APEX],
-        description: 'Manual aggregation in Apex instead of using SOQL aggregate functions causes performance issues',
-        resourceUrls: ['https://help.salesforce.com/s/articleView?id=xcloud.apexguru_antipattern_aggregating_in_apex.htm&type=5']
-    },
-
-    {
-        name: 'SoqlWithApexFilter',
-        severityLevel: SeverityLevel.Moderate,
-        tags: [COMMON_TAGS.RECOMMENDED, COMMON_TAGS.CATEGORIES.PERFORMANCE, COMMON_TAGS.LANGUAGES.APEX],
-        description: 'Filtering records in Apex instead of using SOQL WHERE clause causes performance issues',
-        resourceUrls: ['https://help.salesforce.com/s/articleView?id=xcloud.apexguru_antipattern_soql_with_apex_filter.htm&type=5']
-    },
-
-    {
-        name: 'CopyingListOrSetElementsUsingAForLoop',
-        severityLevel: SeverityLevel.Moderate,
-        tags: [COMMON_TAGS.RECOMMENDED, COMMON_TAGS.CATEGORIES.PERFORMANCE, COMMON_TAGS.LANGUAGES.APEX],
-        description: 'Copying list or set elements using a for loop is inefficient - use addAll() instead',
-        resourceUrls: ['https://help.salesforce.com/s/articleView?id=xcloud.apexguru_antipattern_copying_elements_with_for_loop.htm&type=5']
-    },
-
-    {
-        name: 'Redundant Soql',
-        severityLevel: SeverityLevel.Moderate,
-        tags: [COMMON_TAGS.RECOMMENDED, COMMON_TAGS.CATEGORIES.PERFORMANCE, COMMON_TAGS.LANGUAGES.APEX],
-        description: 'Multiple identical SOQL queries cause unnecessary database round trips',
-        resourceUrls: ['https://help.salesforce.com/s/articleView?id=xcloud.apexguru_antipattern_redundant_soql.htm&type=5']
-    },
-
-    {
         name: 'SchemaGetGlobalDescribeNotEfficient',
         severityLevel: SeverityLevel.Moderate,
         tags: [COMMON_TAGS.RECOMMENDED, COMMON_TAGS.CATEGORIES.PERFORMANCE, COMMON_TAGS.LANGUAGES.APEX],
@@ -89,10 +57,46 @@ export const APEXGURU_RULES: RuleDescription[] = [
         resourceUrls: ['https://help.salesforce.com/s/articleView?id=xcloud.apexguru_antipattern_schema_getglobaldescribe_not_efficient.htm&type=5']
     },
 
+    // =================================================================================================================
+    //   PERFORMANCE RULES - MODERATE SEVERITY (PERFORMANCE ONLY - NOT RECOMMENDED)
+    // =================================================================================================================
+
+    {
+        name: 'Soql Aggregation',
+        severityLevel: SeverityLevel.Moderate,
+        tags: [COMMON_TAGS.CATEGORIES.PERFORMANCE, COMMON_TAGS.LANGUAGES.APEX],
+        description: 'Manual aggregation in Apex instead of using SOQL aggregate functions causes performance issues',
+        resourceUrls: ['https://help.salesforce.com/s/articleView?id=xcloud.apexguru_antipattern_aggregating_in_apex.htm&type=5']
+    },
+
+    {
+        name: 'SoqlWithApexFilter',
+        severityLevel: SeverityLevel.Moderate,
+        tags: [COMMON_TAGS.CATEGORIES.PERFORMANCE, COMMON_TAGS.LANGUAGES.APEX],
+        description: 'Filtering records in Apex instead of using SOQL WHERE clause causes performance issues',
+        resourceUrls: ['https://help.salesforce.com/s/articleView?id=xcloud.apexguru_antipattern_soql_with_apex_filter.htm&type=5']
+    },
+
+    {
+        name: 'CopyingListOrSetElementsUsingAForLoop',
+        severityLevel: SeverityLevel.Moderate,
+        tags: [COMMON_TAGS.CATEGORIES.PERFORMANCE, COMMON_TAGS.LANGUAGES.APEX],
+        description: 'Copying list or set elements using a for loop is inefficient - use addAll() instead',
+        resourceUrls: ['https://help.salesforce.com/s/articleView?id=xcloud.apexguru_antipattern_copying_elements_with_for_loop.htm&type=5']
+    },
+
+    {
+        name: 'Redundant Soql',
+        severityLevel: SeverityLevel.Moderate,
+        tags: [COMMON_TAGS.CATEGORIES.PERFORMANCE, COMMON_TAGS.LANGUAGES.APEX],
+        description: 'Multiple identical SOQL queries cause unnecessary database round trips',
+        resourceUrls: ['https://help.salesforce.com/s/articleView?id=xcloud.apexguru_antipattern_redundant_soql.htm&type=5']
+    },
+
     {
         name: 'SoqlWithNegativeExpressions',
         severityLevel: SeverityLevel.Moderate,
-        tags: [COMMON_TAGS.RECOMMENDED, COMMON_TAGS.CATEGORIES.PERFORMANCE, COMMON_TAGS.LANGUAGES.APEX],
+        tags: [COMMON_TAGS.CATEGORIES.PERFORMANCE, COMMON_TAGS.LANGUAGES.APEX],
         description: 'SOQL queries using negative expressions (NOT IN, !=) don\'t use indexes and cause full table scans',
         resourceUrls: ['https://help.salesforce.com/s/articleView?id=xcloud.apexguru_antipattern_soql_with_negative_expressions.htm&type=5']
     },
@@ -100,38 +104,14 @@ export const APEXGURU_RULES: RuleDescription[] = [
     {
         name: 'SObjectMapInAForLoop',
         severityLevel: SeverityLevel.Moderate,
-        tags: [COMMON_TAGS.RECOMMENDED, COMMON_TAGS.CATEGORIES.PERFORMANCE, COMMON_TAGS.LANGUAGES.APEX],
+        tags: [COMMON_TAGS.CATEGORIES.PERFORMANCE, COMMON_TAGS.LANGUAGES.APEX],
         description: 'Building Map<Id, SObject> using .put() in a for loop is inefficient - use map constructor or putAll()',
         resourceUrls: ['https://help.salesforce.com/s/articleView?id=xcloud.apexguru_antipattern_sobject_map_in_for_loop.htm&type=5']
     },
 
     // =================================================================================================================
-    //   BEST PRACTICES - LOW SEVERITY
+    //   BEST PRACTICES - LOW SEVERITY (RECOMMENDED)
     // =================================================================================================================
-
-    {
-        name: 'SortingInApex',
-        severityLevel: SeverityLevel.Low,
-        tags: [COMMON_TAGS.RECOMMENDED, COMMON_TAGS.CATEGORIES.BEST_PRACTICES, COMMON_TAGS.LANGUAGES.APEX],
-        description: 'Sorting records in Apex wastes CPU time and can exceed governor limits - use ORDER BY in SOQL',
-        resourceUrls: ['https://help.salesforce.com/s/articleView?id=xcloud.apexguru_antipattern_sorting_in_apex.htm&type=5']
-    },
-
-    {
-        name: 'BusyLoopDelay',
-        severityLevel: SeverityLevel.Low,
-        tags: [COMMON_TAGS.RECOMMENDED, COMMON_TAGS.CATEGORIES.BEST_PRACTICES, COMMON_TAGS.LANGUAGES.APEX],
-        description: 'Using empty loops to delay execution wastes CPU time - use System.enqueueJob with delay parameter',
-        resourceUrls: ['https://help.salesforce.com/s/articleView?id=xcloud.apexguru_antipattern_busy_loop_delay.htm&type=5']
-    },
-
-    {
-        name: 'SoqlWithUnusedFields',
-        severityLevel: SeverityLevel.Low,
-        tags: [COMMON_TAGS.RECOMMENDED, COMMON_TAGS.CATEGORIES.BEST_PRACTICES, COMMON_TAGS.LANGUAGES.APEX],
-        description: 'SOQL query selecting unused fields increases resource consumption unnecessarily',
-        resourceUrls: ['https://help.salesforce.com/s/articleView?id=xcloud.apexguru_antipattern_soql_with_unused_fields.htm&type=5']
-    },
 
     {
         name: 'UsingTheTestMethodKeyword',
@@ -139,6 +119,34 @@ export const APEXGURU_RULES: RuleDescription[] = [
         tags: [COMMON_TAGS.RECOMMENDED, COMMON_TAGS.CATEGORIES.BEST_PRACTICES, COMMON_TAGS.LANGUAGES.APEX],
         description: 'The testMethod keyword is deprecated - use @isTest annotation instead',
         resourceUrls: ['https://help.salesforce.com/s/articleView?id=xcloud.apexguru_test_case_antipattern_using_testmethod.htm&type=5']
+    },
+
+    // =================================================================================================================
+    //   BEST PRACTICES - LOW SEVERITY (NOT RECOMMENDED)
+    // =================================================================================================================
+
+    {
+        name: 'SortingInApex',
+        severityLevel: SeverityLevel.Low,
+        tags: [COMMON_TAGS.CATEGORIES.BEST_PRACTICES, COMMON_TAGS.LANGUAGES.APEX],
+        description: 'Sorting records in Apex wastes CPU time and can exceed governor limits - use ORDER BY in SOQL',
+        resourceUrls: ['https://help.salesforce.com/s/articleView?id=xcloud.apexguru_antipattern_sorting_in_apex.htm&type=5']
+    },
+
+    {
+        name: 'BusyLoopDelay',
+        severityLevel: SeverityLevel.Low,
+        tags: [COMMON_TAGS.CATEGORIES.BEST_PRACTICES, COMMON_TAGS.LANGUAGES.APEX],
+        description: 'Using empty loops to delay execution wastes CPU time - use System.enqueueJob with delay parameter',
+        resourceUrls: ['https://help.salesforce.com/s/articleView?id=xcloud.apexguru_antipattern_busy_loop_delay.htm&type=5']
+    },
+
+    {
+        name: 'SoqlWithUnusedFields',
+        severityLevel: SeverityLevel.Low,
+        tags: [COMMON_TAGS.CATEGORIES.BEST_PRACTICES, COMMON_TAGS.LANGUAGES.APEX],
+        description: 'SOQL query selecting unused fields increases resource consumption unnecessarily',
+        resourceUrls: ['https://help.salesforce.com/s/articleView?id=xcloud.apexguru_antipattern_soql_with_unused_fields.htm&type=5']
     },
 
     // =================================================================================================================
