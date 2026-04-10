@@ -131,16 +131,10 @@ function findMatchingBulkSuppressionRules(
 }
 
 /**
- * Normalizes path separators to forward slashes for cross-platform comparison
- * @param filePath Path to normalize
- * @returns Path with forward slashes
- */
-function normalizeSeparators(filePath: string): string {
-    return filePath.split(path.sep).join('/');
-}
-
-/**
  * Checks if a file path matches a config path (file or folder)
+ * Uses Node's path module for proper path operations, then normalizes separators for comparison.
+ * This follows the same pattern as the ignores feature in workspace.ts for cross-platform compatibility.
+ *
  * @param violationFile Absolute file path from violation
  * @param configPath Relative path from config (file or folder)
  * @param workspaceRoot Root directory for resolving relative paths
@@ -151,27 +145,40 @@ function doesFileMatchConfigPath(
     configPath: string,
     workspaceRoot: string
 ): boolean {
-    // Convert config path to absolute
+    // Step 1: Use path module to properly resolve and normalize paths
+    // This handles . and .., redundant separators, and makes paths absolute
+    const normalizedWorkspaceRoot = path.normalize(workspaceRoot);
     const absoluteConfigPath = path.isAbsolute(configPath)
-        ? configPath
-        : path.resolve(workspaceRoot, configPath);
+        ? path.normalize(configPath)
+        : path.resolve(normalizedWorkspaceRoot, configPath);
 
-    // Normalize paths for comparison (use forward slashes for cross-platform compatibility)
-    const normalizedViolationFile = normalizeSeparators(path.normalize(violationFile));
-    const normalizedConfigPath = normalizeSeparators(path.normalize(absoluteConfigPath));
+    const normalizedViolationFile = path.normalize(violationFile);
 
-    // Check if it's an exact file match
-    if (normalizedViolationFile === normalizedConfigPath) {
+    // Step 2: Normalize to POSIX separators for cross-platform comparison
+    // This follows the same pattern as ignores feature (workspace.ts lines 203-206)
+    // Windows: C:\workspace\src\file.apex -> C:/workspace/src/file.apex
+    // Unix: /workspace/src/file.apex -> /workspace/src/file.apex (no change)
+    let comparisonViolationFile = normalizedViolationFile;
+    let comparisonConfigPath = absoluteConfigPath;
+
+    if (path.sep !== '/') {
+        comparisonViolationFile = comparisonViolationFile.split(path.sep).join('/');
+        comparisonConfigPath = comparisonConfigPath.split(path.sep).join('/');
+    }
+
+    // Step 3: Check if it's an exact file match
+    if (comparisonViolationFile === comparisonConfigPath) {
         return true;
     }
 
-    // Check if violation file is within config folder
-    // Config path is a folder if it matches the start of the file path
-    const configPathWithSep = normalizedConfigPath.endsWith('/')
-        ? normalizedConfigPath
-        : normalizedConfigPath + '/';
+    // Step 4: Check if violation file is within config folder
+    // Add separator to ensure we match whole directory names
+    // e.g., "src/utils" should match "src/utils/file.js" but not "src/utils2/file.js"
+    const configPathWithSep = comparisonConfigPath.endsWith('/')
+        ? comparisonConfigPath
+        : comparisonConfigPath + '/';
 
-    return normalizedViolationFile.startsWith(configPathWithSep);
+    return comparisonViolationFile.startsWith(configPathWithSep);
 }
 
 /**
