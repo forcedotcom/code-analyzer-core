@@ -343,7 +343,7 @@ describe('Bulk Suppressions - Workspace Root Path Resolution (Bug #2)', () => {
          *
          * Expected: 5 total violations suppressed (3 + 2), not 3 with shared quota
          */
-        const workspaceRoot = path.join(path.sep, 'Users', 'user', 'workspace');
+        const workspaceRoot = createTestAbsolutePath('Users', 'user', 'workspace');
         const filePath = path.join(workspaceRoot, 'force-app', 'utils.js');
 
         // Create 6 violations that would match the duplicate selectors
