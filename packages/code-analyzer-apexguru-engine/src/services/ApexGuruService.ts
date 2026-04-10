@@ -134,7 +134,6 @@ export class ApexGuruService {
             return await Promise.race([analysisPromise, timeoutPromise]);
         } finally {
             clearTimeout(timeoutId!);
-            this.isCancelled = false;
         }
     }
 

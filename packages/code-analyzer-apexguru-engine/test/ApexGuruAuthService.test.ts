@@ -14,10 +14,9 @@ describe('ApexGuruAuthService', () => {
     });
 
     describe('initialize', () => {
-        it('should throw error when hardcoded credentials not set', async () => {
-            // Hardcoded credentials are set to 'YOUR_ACCESS_TOKEN_HERE' by default
-            await expect(authService.initialize({}))
-                .rejects.toThrow('Hardcoded credentials not set');
+        it('should initialize with hardcoded credentials', async () => {
+            // Currently using hardcoded credentials for testing
+            await expect(authService.initialize({})).resolves.toBeUndefined();
         });
 
         // TODO: Add tests for proper auth methods when implemented

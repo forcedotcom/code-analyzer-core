@@ -327,8 +327,8 @@ describe('ApexGuruService', () => {
 
             await expect(analyzePromise).rejects.toThrow('Analysis timed out');
 
-            // Verify flag was set (polling should stop)
-            expect((apexGuruService as any).isCancelled).toBe(false); // Reset in finally block
+            // Verify flag remains true so background polling can detect and abort
+            expect((apexGuruService as any).isCancelled).toBe(true);
 
             jest.useRealTimers();
         });
