@@ -333,7 +333,9 @@ describe('applyBulkSuppressions', () => {
             expect(result.unsuppressedViolations).toHaveLength(1);
         });
 
-        it('should handle absolute paths in config', () => {
+        it('should NOT support absolute paths in config (relative paths only)', () => {
+            // Config paths must be relative to workspace root
+            // Absolute paths in config are not supported (similar to .gitignore)
             const violations = [
                 new MockViolation(
                     new MockRule('pmd', 'UnusedMethod'),
@@ -343,7 +345,7 @@ describe('applyBulkSuppressions', () => {
             ];
 
             const bulkConfig = {
-                '/workspace/src/file1.apex': [
+                '/workspace/src/file1.apex': [  // ❌ Absolute path - not supported
                     {
                         rule_selector: 'pmd',
                         max_suppressed_violations: null
@@ -354,7 +356,9 @@ describe('applyBulkSuppressions', () => {
             const quotas: BulkSuppressionQuotas = new Map();
             const result = applyBulkSuppressions(violations, bulkConfig, quotas, workspaceRoot);
 
-            expect(result.suppressedCount).toBe(1);
+            // Should NOT suppress - absolute paths in config are not supported
+            expect(result.suppressedCount).toBe(0);
+            expect(result.unsuppressedViolations).toHaveLength(1);
         });
     });
 

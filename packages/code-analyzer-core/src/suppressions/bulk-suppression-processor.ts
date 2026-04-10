@@ -149,21 +149,30 @@ function doesFileMatchConfigPath(
     // because Windows expects drive letters (C:\). However, our tests use Unix-style paths and run
     // on all platforms (including Windows CI). In production, all paths are native format, so this
     // check is primarily for test compatibility.
-    const isAbsolutePath = (p: string) => path.isAbsolute(p) || p.startsWith('/');
+    const isUnixStylePath = (p: string) => p.startsWith('/');
 
-    // Keep workspace root as-is if it looks absolute (avoids path.normalize() issues on cross-platform tests)
-    const normalizedWorkspaceRoot = isAbsolutePath(workspaceRoot)
+    // If workspace root is Unix-style path (starts with /), keep it as-is
+    const normalizedWorkspaceRoot = isUnixStylePath(workspaceRoot)
         ? workspaceRoot
         : path.normalize(workspaceRoot);
     log(`  After normalize workspace: "${normalizedWorkspaceRoot}"`);
 
     // Config paths are ALWAYS treated as relative to workspace root (like .gitignore)
     // User should never provide absolute paths in config
-    const absoluteConfigPath = path.resolve(normalizedWorkspaceRoot, configPath);
+    let absoluteConfigPath: string;
+    if (isUnixStylePath(normalizedWorkspaceRoot)) {
+        // For Unix-style paths, use simple concatenation (path.resolve doesn't work cross-platform)
+        // e.g., "/workspace" + "src/file.js" = "/workspace/src/file.js"
+        const separator = normalizedWorkspaceRoot.endsWith('/') ? '' : '/';
+        absoluteConfigPath = normalizedWorkspaceRoot + separator + configPath;
+    } else {
+        // For native paths, use path.resolve (handles Windows paths properly)
+        absoluteConfigPath = path.resolve(normalizedWorkspaceRoot, configPath);
+    }
     log(`  After resolve config: "${absoluteConfigPath}"`);
 
-    // Violation files: keep as-is if absolute (for cross-platform test compatibility)
-    const normalizedViolationFile = isAbsolutePath(violationFile)
+    // Violation files: keep as-is if Unix-style (for cross-platform test compatibility)
+    const normalizedViolationFile = isUnixStylePath(violationFile)
         ? violationFile
         : path.normalize(violationFile);
     log(`  After normalize file: "${normalizedViolationFile}"`);
