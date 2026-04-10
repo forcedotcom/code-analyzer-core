@@ -131,6 +131,15 @@ function findMatchingBulkSuppressionRules(
 }
 
 /**
+ * Normalizes path separators to forward slashes for cross-platform comparison
+ * @param filePath Path to normalize
+ * @returns Path with forward slashes
+ */
+function normalizeSeparators(filePath: string): string {
+    return filePath.split(path.sep).join('/');
+}
+
+/**
  * Checks if a file path matches a config path (file or folder)
  * @param violationFile Absolute file path from violation
  * @param configPath Relative path from config (file or folder)
@@ -147,9 +156,9 @@ function doesFileMatchConfigPath(
         ? configPath
         : path.resolve(workspaceRoot, configPath);
 
-    // Normalize paths for comparison
-    const normalizedViolationFile = path.normalize(violationFile);
-    const normalizedConfigPath = path.normalize(absoluteConfigPath);
+    // Normalize paths for comparison (use forward slashes for cross-platform compatibility)
+    const normalizedViolationFile = normalizeSeparators(path.normalize(violationFile));
+    const normalizedConfigPath = normalizeSeparators(path.normalize(absoluteConfigPath));
 
     // Check if it's an exact file match
     if (normalizedViolationFile === normalizedConfigPath) {
@@ -158,9 +167,9 @@ function doesFileMatchConfigPath(
 
     // Check if violation file is within config folder
     // Config path is a folder if it matches the start of the file path
-    const configPathWithSep = normalizedConfigPath.endsWith(path.sep)
+    const configPathWithSep = normalizedConfigPath.endsWith('/')
         ? normalizedConfigPath
-        : normalizedConfigPath + path.sep;
+        : normalizedConfigPath + '/';
 
     return normalizedViolationFile.startsWith(configPathWithSep);
 }
