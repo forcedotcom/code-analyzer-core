@@ -18,5 +18,4 @@ export { createEnginePlugin, ApexGuruEnginePlugin };
 export { ApexGuruEngine } from './engine';
 export { ApexGuruService } from './services/ApexGuruService';
 export { ApexGuruAuthService } from './services/ApexGuruAuthService';
-export { ViolationMapper } from './mappers/ViolationMapper';
 export * from './types';

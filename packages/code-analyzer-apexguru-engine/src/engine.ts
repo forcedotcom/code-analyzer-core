@@ -8,14 +8,16 @@ import {
     RuleDescription,
     EngineRunResults,
     Violation,
+    CodeLocation,
+    Fix,
+    Suggestion,
     LogLevel
 } from '@salesforce/code-analyzer-engine-api';
 import { ApexGuruService } from './services/ApexGuruService';
-import { ViolationMapper } from './mappers/ViolationMapper';
-import { ApexGuruViolation } from './types';
+import { ApexGuruViolation, ApexGuruLocation, ApexGuruFix, ApexGuruSuggestion } from './types';
 import { ApexGuruEngineConfig, DEFAULT_APEXGURU_ENGINE_CONFIG } from './config';
 import { ENGINE_NAME, APEXGURU_FILE_EXTENSIONS } from './constants';
-import { APEXGURU_RULES } from './apexguru-rules';
+import { APEXGURU_RULES, isKnownRule, FALLBACK_RULE_NAME } from './apexguru-rules';
 import * as fs from 'node:fs/promises';
 import * as path from 'node:path';
 
@@ -25,7 +27,6 @@ import * as path from 'node:path';
  */
 export class ApexGuruEngine extends EngineEventEmitter implements Engine {
     private readonly apexGuruService: ApexGuruService;
-    private readonly violationMapper: ViolationMapper;
     private readonly config: ApexGuruEngineConfig;
 
     constructor(config: ApexGuruEngineConfig = DEFAULT_APEXGURU_ENGINE_CONFIG) {
@@ -38,7 +39,6 @@ export class ApexGuruEngine extends EngineEventEmitter implements Engine {
             config.api_max_retry_ms,
             config.api_backoff_multiplier
         );
-        this.violationMapper = new ViolationMapper();
     }
 
     getName(): string {
@@ -143,10 +143,8 @@ export class ApexGuruEngine extends EngineEventEmitter implements Engine {
                         filePath
                     );
 
-                    const violations = this.violationMapper.mapViolations(
-                        apexGuruViolations,
-                        filePath,
-                        runOptions.includeSuggestions ?? false
+                    const violations = apexGuruViolations.map(av =>
+                        toViolation(av, filePath, runOptions.includeFixes ?? false, runOptions.includeSuggestions ?? false)
                     );
 
                     // Filter violations to only include selected rules
@@ -202,4 +200,91 @@ export class ApexGuruEngine extends EngineEventEmitter implements Engine {
         return undefined;
     }
 
+}
+
+/**
+ * Convert ApexGuru violation to Code Analyzer violation format
+ *
+ * Note: Violations do not include severity/tags in Code Analyzer's data model.
+ * Severity and tags are defined in RuleDescription (from describeRules()).
+ *
+ * For unknown rules (not in apexguru-rules.ts), violations are mapped to the
+ * fallback rule "apexguru-other" to ensure Core validation passes.
+ */
+function toViolation(
+    av: ApexGuruViolation,
+    filePath: string,
+    includeFixes: boolean,
+    includeSuggestions: boolean
+): Violation {
+    // Map unknown rules to fallback to ensure Core validation passes
+    const ruleName = isKnownRule(av.rule) ? av.rule : FALLBACK_RULE_NAME;
+
+    const violation: Violation = {
+        ruleName,
+        message: av.message,
+        codeLocations: av.locations.map(loc => normalizeLocation(loc, filePath)),
+        primaryLocationIndex: av.primaryLocationIndex,
+        resourceUrls: av.resources
+    };
+
+    // Add fixes if requested and available
+    if (includeFixes && av.fixes?.length) {
+        violation.fixes = av.fixes.map(fix => toFix(fix, filePath));
+    }
+
+    // Add suggestions if requested and available
+    if (includeSuggestions && av.suggestions?.length) {
+        violation.suggestions = av.suggestions.map(suggestion => toSuggestion(suggestion, filePath));
+    }
+
+    return violation;
+}
+
+/**
+ * Convert ApexGuru fix to Code Analyzer Fix format
+ * Note: ApexGuru API does not currently return fixes, only suggestions
+ */
+function toFix(apexGuruFix: ApexGuruFix, filePath: string): Fix {
+    return {
+        location: normalizeLocation(apexGuruFix.location, filePath),
+        fixedCode: apexGuruFix.fixedCode
+    };
+}
+
+/**
+ * Convert ApexGuru suggestion to Code Analyzer Suggestion format
+ * Note: suggestion.message contains "// explanation\ncode" - we keep it as-is
+ */
+function toSuggestion(apexGuruSuggestion: ApexGuruSuggestion, filePath: string): Suggestion {
+    return {
+        location: normalizeLocation(apexGuruSuggestion.location, filePath),
+        message: apexGuruSuggestion.message  // Keep "// explanation\ncode" as-is
+    };
+}
+
+/**
+ * Normalize location by filling in required fields
+ *
+ * ApexGuru API only provides:
+ * - startLine (required)
+ * - comment (optional)
+ *
+ * We fill in:
+ * - file (required by Code Analyzer, not in ApexGuru response)
+ * - startColumn = 1 (required by Code Analyzer, reasonable default)
+ * - endLine/endColumn are left undefined (optional fields)
+ */
+function normalizeLocation(location: ApexGuruLocation, filePath: string): CodeLocation {
+    const startLine = location.startLine ?? 1;
+    const startColumn = location.startColumn ?? 1;  // Default to column 1 if not provided
+
+    return {
+        file: filePath,
+        startLine,
+        startColumn,
+        endLine: location.endLine,      // undefined if not provided (optional)
+        endColumn: location.endColumn,  // undefined if not provided (optional)
+        comment: location.comment
+    };
 }
