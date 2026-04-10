@@ -88,9 +88,10 @@ export class ApexGuruEngine extends EngineEventEmitter implements Engine {
         // Initialize authentication
         try {
             await this.apexGuruService.initialize(targetOrg);
-        } catch (error: any) {
+        } catch (error) {
+            const message = error instanceof Error ? error.message : String(error);
             throw new Error(
-                `Failed to authenticate: ${error.message}\n` +
+                `Failed to authenticate: ${message}\n` +
                 'Please authenticate with: sf org login web'
             );
         }
@@ -162,10 +163,11 @@ export class ApexGuruEngine extends EngineEventEmitter implements Engine {
                     filesProcessed++;
                     const endProgress = (filesProcessed / apexFiles.length) * 100;
                     this.emitRunRulesProgressEvent(endProgress);
-                } catch (error: any) {
+                } catch (error) {
+                    const message = error instanceof Error ? error.message : String(error);
                     this.emitLogEvent(
                         LogLevel.Warn,
-                        `Failed to analyze ${path.basename(filePath)}: ${error.message}`
+                        `Failed to analyze ${path.basename(filePath)}: ${message}`
                     );
                     // Continue with other files
                 }
