@@ -642,3 +642,140 @@ describe("Tests for glob pattern validation in ignores", () => {
         })).toThrow(getMessage('InvalidGlobPattern', 'ignores.files[2]', '**/invalid{pattern', 'unclosed brace {'));
     });
 });
+
+describe("Tests for bulk suppressions configuration", () => {
+    it("When suppressions.disable_suppressions is set correctly, config is valid", () => {
+        const conf: CodeAnalyzerConfig = CodeAnalyzerConfig.fromYamlString(`
+suppressions:
+  disable_suppressions: true
+`);
+        expect(conf.getSuppressions().disable_suppressions).toEqual(true);
+    });
+
+    it("When bulk suppressions are configured with valid values, config is valid", () => {
+        const conf: CodeAnalyzerConfig = CodeAnalyzerConfig.fromYamlString(`
+suppressions:
+  disable_suppressions: false
+  "src/file.js":
+    - rule_selector: "eslint:no-console"
+      max_suppressed_violations: 5
+      reason: "Legacy code"
+`);
+        expect(conf.getBulkSuppressions()).toEqual({
+            "src/file.js": [{
+                rule_selector: "eslint:no-console",
+                max_suppressed_violations: 5,
+                reason: "Legacy code"
+            }]
+        });
+    });
+
+    it("When max_suppressed_violations is null, config is valid", () => {
+        const conf: CodeAnalyzerConfig = CodeAnalyzerConfig.fromYamlString(`
+suppressions:
+  "src/file.js":
+    - rule_selector: "eslint:no-console"
+      max_suppressed_violations: null
+`);
+        expect(conf.getBulkSuppressions()["src/file.js"][0].max_suppressed_violations).toBeNull();
+    });
+
+    it("When max_suppressed_violations is 0, config is valid", () => {
+        const conf: CodeAnalyzerConfig = CodeAnalyzerConfig.fromYamlString(`
+suppressions:
+  "src/file.js":
+    - rule_selector: "eslint:no-console"
+      max_suppressed_violations: 0
+`);
+        expect(conf.getBulkSuppressions()["src/file.js"][0].max_suppressed_violations).toEqual(0);
+    });
+
+    it("When max_suppressed_violations is negative, then we throw an error", () => {
+        expect(() => CodeAnalyzerConfig.fromYamlString(`
+suppressions:
+  "src/file.js":
+    - rule_selector: "eslint:no-console"
+      max_suppressed_violations: -1
+`)).toThrow('max_suppressed_violations must be a non-negative number');
+    });
+
+    it("When max_suppressed_violations is negative decimal, then we throw an error", () => {
+        expect(() => CodeAnalyzerConfig.fromYamlString(`
+suppressions:
+  "src/utils/":
+    - rule_selector: "pmd:UnusedMethod"
+      max_suppressed_violations: -5.5
+`)).toThrow('max_suppressed_violations must be a non-negative number');
+    });
+
+    it("When max_suppressed_violations is a large negative number, then we throw an error", () => {
+        expect(() => CodeAnalyzerConfig.fromObject({
+            suppressions: {
+                "file.js": [{
+                    rule_selector: "all",
+                    max_suppressed_violations: -9999
+                }]
+            }
+        })).toThrow('max_suppressed_violations must be a non-negative number');
+    });
+
+    it("When rule_selector is missing, then we throw an error", () => {
+        expect(() => CodeAnalyzerConfig.fromYamlString(`
+suppressions:
+  "src/file.js":
+    - max_suppressed_violations: 5
+`)).toThrow('rule_selector is required and must be a string');
+    });
+
+    it("When rule_selector is not a string, then we throw an error", () => {
+        expect(() => CodeAnalyzerConfig.fromObject({
+            suppressions: {
+                "file.js": [{
+                    rule_selector: 123,
+                    max_suppressed_violations: 5
+                }]
+            }
+        })).toThrow('rule_selector is required and must be a string');
+    });
+
+    it("When max_suppressed_violations is not a number or null, then we throw an error", () => {
+        expect(() => CodeAnalyzerConfig.fromObject({
+            suppressions: {
+                "file.js": [{
+                    rule_selector: "all",
+                    max_suppressed_violations: "invalid"
+                }]
+            }
+        })).toThrow('max_suppressed_violations must be a number or null');
+    });
+
+    it("When reason is not a string, then we throw an error", () => {
+        expect(() => CodeAnalyzerConfig.fromObject({
+            suppressions: {
+                "file.js": [{
+                    rule_selector: "all",
+                    max_suppressed_violations: 5,
+                    reason: 123
+                }]
+            }
+        })).toThrow('reason must be a string');
+    });
+
+    it("When bulk suppression rule is not an object, then we throw an error", () => {
+        expect(() => CodeAnalyzerConfig.fromObject({
+            suppressions: {
+                "file.js": ["invalid"]
+            }
+        })).toThrow('Expected an object');
+    });
+
+    it("When bulk suppression value for file is not an array, then we throw an error", () => {
+        expect(() => CodeAnalyzerConfig.fromObject({
+            suppressions: {
+                "file.js": {
+                    rule_selector: "all"
+                }
+            }
+        })).toThrow("must be of type 'array'");
+    });
+});

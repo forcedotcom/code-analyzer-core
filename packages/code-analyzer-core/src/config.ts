@@ -64,7 +64,7 @@ export type BulkSuppressionRule = {
  */
 export type Suppressions = {
     disable_suppressions: boolean;
-    bulk_suppressions: Record<string, BulkSuppressionRule[]>;
+    bulk_suppressions?: Record<string, BulkSuppressionRule[]>;
 }
 
 type TopLevelConfig = {
@@ -85,7 +85,7 @@ export const DEFAULT_CONFIG: TopLevelConfig = {
     config_root: process.cwd(),
     log_folder: os.tmpdir(),
     log_level: LogLevel.Debug,
-    suppressions: { disable_suppressions: false, bulk_suppressions: {} }, // Suppressions enabled by default, no bulk suppressions by default
+    suppressions: { disable_suppressions: false }, // Suppressions enabled by default, no bulk suppressions by default
     rules: {},
     engines: {},
     ignores: { files: [] },
@@ -287,7 +287,7 @@ export class CodeAnalyzerConfig {
      * Returns the bulk suppressions configuration (file paths mapped to suppression rules).
      */
     public getBulkSuppressions(): Record<string, BulkSuppressionRule[]> {
-        return this.config.suppressions.bulk_suppressions;
+        return this.config.suppressions.bulk_suppressions || {};
     }
 
     /**
@@ -463,6 +463,11 @@ function validateBulkSuppressionRule(value: unknown, fieldPath: string): BulkSup
         rule.max_suppressed_violations !== null &&
         typeof rule.max_suppressed_violations !== 'number') {
         throw new Error(getMessage('InvalidBulkSuppressionRule', fieldPath, 'max_suppressed_violations must be a number or null'));
+    }
+
+    // max_suppressed_violations must be non-negative if specified
+    if (typeof rule.max_suppressed_violations === 'number' && rule.max_suppressed_violations < 0) {
+        throw new Error(getMessage('InvalidBulkSuppressionRule', fieldPath, 'max_suppressed_violations must be a non-negative number'));
     }
 
     // reason is optional
