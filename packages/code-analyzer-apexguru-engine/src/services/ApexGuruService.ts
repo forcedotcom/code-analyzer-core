@@ -1,0 +1,313 @@
+
+
+import { AuthInfo, Connection } from '@salesforce/core';
+import { LogLevel } from '@salesforce/code-analyzer-engine-api';
+import {
+    ApexGuruInitialResponse,
+    ApexGuruQueryResponse,
+    ApexGuruResponseStatus,
+    ApexGuruViolation
+} from '../types';
+import * as http from 'node:http';
+import * as https from 'node:https';
+
+/**
+ * TEMPORARY: Hardcoded credentials for testing
+ * TODO: Extract to proper auth service in future PR
+ * NEVER commit real credentials - use 'YOUR_ACCESS_TOKEN_HERE' as placeholder
+ */
+const HARDCODED_ACCESS_TOKEN = 'YOUR_ACCESS_TOKEN_HERE';  // Get from: sf org display --verbose
+const HARDCODED_INSTANCE_URL = 'https://yourorg.my.salesforce.com';  // e.g., https://yourorg.my.salesforce.com
+
+/**
+ * Service for interacting with ApexGuru APIs
+ */
+export class ApexGuruService {
+    private connection?: Connection;
+    private readonly emitLogEvent: (logLevel: LogLevel, message: string) => void;
+    private readonly maxTimeoutMs: number;
+    private readonly initialRetryMs: number;
+    private readonly maxRetryMs: number;
+    private readonly backoffMultiplier: number;
+    private progressCallback?: (progress: number) => void;
+    private isCancelled = false;
+
+    constructor(
+        emitLogEvent: (logLevel: LogLevel, message: string) => void,
+        maxTimeoutMs: number,
+        initialRetryMs: number,
+        maxRetryMs: number,
+        backoffMultiplier: number
+    ) {
+        this.emitLogEvent = emitLogEvent;
+        this.maxTimeoutMs = maxTimeoutMs;
+        this.initialRetryMs = initialRetryMs;
+        this.maxRetryMs = maxRetryMs;
+        this.backoffMultiplier = backoffMultiplier;
+    }
+
+    /**
+     * Initialize authentication with hardcoded credentials
+     * TODO: Replace with proper auth service in future PR
+     */
+    async initialize(_targetOrg?: string): Promise<void> {
+        this.emitLogEvent(LogLevel.Warn, '⚠️  Using HARDCODED authentication credentials (for testing)');
+
+        // Validate that credentials were actually set
+        if (!HARDCODED_ACCESS_TOKEN || HARDCODED_ACCESS_TOKEN.includes('YOUR_ACCESS_TOKEN')) {
+            throw new Error(
+                'Hardcoded credentials not set! Edit ApexGuruService.ts and set:\n' +
+                '  - HARDCODED_ACCESS_TOKEN (get from: sf org display --verbose)\n' +
+                '  - HARDCODED_INSTANCE_URL (e.g., https://yourorg.my.salesforce.com)'
+            );
+        }
+
+        this.connection = await Connection.create({
+            authInfo: await AuthInfo.create({
+                accessTokenOptions: {
+                    accessToken: HARDCODED_ACCESS_TOKEN,
+                    instanceUrl: HARDCODED_INSTANCE_URL
+                }
+            })
+        });
+    }
+
+    /**
+     * Set progress callback for polling updates
+     */
+    setProgressCallback(callback: (progress: number) => void): void {
+        this.progressCallback = callback;
+    }
+
+    /**
+     * Cleanup resources - force close all HTTP connections
+     * This is critical to allow the Node.js process to exit, especially when timeouts occur
+     * and underlying HTTP requests are still pending
+     */
+    cleanup(): void {
+        try {
+            // TODO: This destroys process-wide HTTP agents, which could interfere with
+            // concurrent HTTP work in the Code Analyzer process. We should investigate
+            // using custom agents specific to ApexGuru's Connection and destroy only
+            // those agents instead of the global ones. For now, this approach works
+            // because Node.js automatically recreates destroyed agents when needed.
+            // To be addressed in a future PR.
+            http.globalAgent.destroy();
+            https.globalAgent.destroy();
+        } catch {
+            // Ignore cleanup errors - best effort
+        }
+    }
+
+    /**
+     * Validate ApexGuru access
+     * Throws error with specific context if validation fails
+     */
+    async validate(): Promise<void> {
+        let timeoutId: NodeJS.Timeout;
+        const validatePromise = this.performValidate();
+        const timeoutPromise = new Promise<never>((_, reject) => {
+            timeoutId = setTimeout(() => reject(new Error(`Validate request timed out after ${this.maxTimeoutMs}ms`)), this.maxTimeoutMs);
+        });
+
+        try {
+            await Promise.race([validatePromise, timeoutPromise]);
+        } finally {
+            clearTimeout(timeoutId!);
+        }
+    }
+
+    /**
+     * Internal validate implementation (without timeout wrapper)
+     */
+    private async performValidate(): Promise<void> {
+        if (!this.connection) {
+            throw new Error('ApexGuruService not initialized. Call initialize() first.');
+        }
+
+        const apiVersion = this.connection.version || '64.0';
+        const url = `/services/data/v${apiVersion}/apexguru/validate`;
+
+        const response = await this.connection.request({
+            method: 'GET',
+            url
+        }) as { status?: string };
+
+        if (response.status && response.status.toLowerCase() === ApexGuruResponseStatus.SUCCESS) {
+            return;
+        }
+
+        throw new Error(
+            `ApexGuru is not available for this org (status: ${response.status ?? 'unknown'}).\n` +
+            'Please check that ApexGuru is enabled and you have the required permissions.'
+        );
+    }
+
+    /**
+     * Submit Apex class for analysis and wait for results
+     * Wraps submit + poll together with a single timeout (api_timeout_ms)
+     */
+    async analyzeApexClass(classContent: string, filePath: string): Promise<ApexGuruViolation[]> {
+        this.isCancelled = false;
+        let timeoutId: NodeJS.Timeout;
+        const analysisPromise = this.performAnalysis(classContent);
+        const timeoutPromise = new Promise<never>((_, reject) => {
+            timeoutId = setTimeout(() => {
+                this.isCancelled = true;
+                reject(new Error(`Analysis timed out after ${this.maxTimeoutMs}ms for file: ${filePath}`));
+            }, this.maxTimeoutMs);
+        });
+
+        try {
+            return await Promise.race([analysisPromise, timeoutPromise]);
+        } finally {
+            clearTimeout(timeoutId!);
+        }
+    }
+
+    /**
+     * Internal analysis implementation (without timeout wrapper)
+     * Performs submit + poll
+     */
+    private async performAnalysis(classContent: string): Promise<ApexGuruViolation[]> {
+        // Step 1: Submit request
+        const requestId = await this.submitAnalysis(classContent);
+
+        // Step 2: Poll for results
+        const violations = await this.pollForResults(requestId);
+
+        return violations;
+    }
+
+    /**
+     * Submit Apex class for analysis
+     */
+    private async submitAnalysis(classContent: string): Promise<string> {
+        if (!this.connection) {
+            throw new Error('ApexGuruService not initialized. Call initialize() first.');
+        }
+
+        const apiVersion = this.connection.version || '64.0';
+        const url = `/services/data/v${apiVersion}/apexguru/request`;
+
+        const base64Content = Buffer.from(classContent, 'utf-8').toString('base64');
+        const requestBody = { classContent: base64Content };
+
+        try {
+            const response: ApexGuruInitialResponse = await this.connection.request({
+                method: 'POST',
+                url,
+                body: JSON.stringify(requestBody),
+                headers: { 'Content-Type': 'application/json' }
+            });
+
+            // Normalize status to lowercase
+            if (response.status) {
+                response.status = response.status.toLowerCase();
+            }
+
+            if (response.status === ApexGuruResponseStatus.FAILED) {
+                throw new Error(`ApexGuru analysis failed: ${response.message || 'Unknown error'}`);
+            }
+
+            if (response.status !== ApexGuruResponseStatus.NEW && response.status !== ApexGuruResponseStatus.SUCCESS) {
+                throw new Error(`Unexpected response status: ${response.status}`);
+            }
+
+            return response.requestId || 'pending';
+        } catch (error) {
+            const message = error instanceof Error ? error.message : String(error);
+            throw new Error(`Failed to submit analysis request: ${message}`);
+        }
+    }
+
+    /**
+     * Poll for analysis results with exponential backoff
+     * Note: Timeout is handled by analyzeApexClass wrapper, not here
+     */
+    private async pollForResults(requestId: string): Promise<ApexGuruViolation[]> {
+        if (!this.connection) {
+            throw new Error('ApexGuruService not initialized. Call initialize() first.');
+        }
+
+        const apiVersion = this.connection.version || '64.0';
+        const url = requestId === 'pending'
+            ? `/services/data/v${apiVersion}/apexguru/request`
+            : `/services/data/v${apiVersion}/apexguru/request/${requestId}`;
+
+        let delay = this.initialRetryMs;
+        let attempts = 0;
+
+        while (true) {
+            if (this.isCancelled) {
+                throw new Error('Analysis cancelled due to timeout');
+            }
+
+            if (attempts > 0) {
+                await this.sleep(delay);
+            }
+
+            attempts++;
+
+            // Emit asymptotic progress (approaches 95% but never quite reaches it)
+            // Formula: 95 * (1 - e^(-attempts/4))
+            if (this.progressCallback) {
+                const asymptoticProgress = 95 * (1 - Math.exp(-attempts / 4));
+                this.progressCallback(asymptoticProgress);
+            }
+
+            const response: ApexGuruQueryResponse = await this.connection.request({
+                method: 'GET',
+                url
+            });
+
+            // Normalize status
+            if (response.status) {
+                response.status = response.status.toLowerCase();
+            }
+
+            // Check if analysis is complete
+            if (response.status === ApexGuruResponseStatus.SUCCESS && response.report) {
+                return this.parseReport(response.report);
+            }
+
+            // Check for failures
+            if (response.status === ApexGuruResponseStatus.FAILED) {
+                throw new Error(`Analysis failed: ${response.message || 'Unknown error'}`);
+            }
+
+            if (response.status === ApexGuruResponseStatus.ERROR) {
+                throw new Error(`Analysis error: ${response.message || 'Unknown error'}`);
+            }
+
+            // Still processing, continue polling with exponential backoff
+            delay = Math.min(delay * this.backoffMultiplier, this.maxRetryMs);
+        }
+    }
+
+    /**
+     * Parse Base64-encoded report
+     */
+    private parseReport(reportBase64: string): ApexGuruViolation[] {
+        try {
+            const reportJson = Buffer.from(reportBase64, 'base64').toString('utf-8');
+            const violations: ApexGuruViolation[] = JSON.parse(reportJson);
+
+            if (!Array.isArray(violations)) {
+                throw new Error('Report is not an array of violations');
+            }
+
+            return violations;
+        } catch (error) {
+            const message = error instanceof Error ? error.message : String(error);
+            throw new Error(`Failed to parse ApexGuru report: ${message}`);
+        }
+    }
+
+    /**
+     * Sleep utility for polling
+     */
+    private sleep(ms: number): Promise<void> {
+        return new Promise(resolve => setTimeout(resolve, ms));
+    }
+}
