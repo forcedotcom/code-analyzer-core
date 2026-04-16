@@ -29,9 +29,14 @@ export type BulkSuppressionResult = {
 
 /**
  * Applies bulk suppressions to violations based on config, updating quota tracking
+ *
+ * IMPORTANT: This function mutates the quotas Map as a side effect. The Map tracks
+ * suppression counts across multiple calls and should be shared across all engines
+ * in a single analysis run to maintain accurate quota limits.
+ *
  * @param violations List of violations to process
  * @param bulkConfig Bulk suppression configuration from YAML
- * @param quotas Shared quota tracker (mutated by this function)
+ * @param quotas Shared quota tracker (MUTATED by this function - maintains state across calls)
  * @param workspaceRoot Root directory for resolving relative paths
  * @returns Object containing unsuppressed violations and count of suppressions applied
  */
