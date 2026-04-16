@@ -47,6 +47,11 @@ on:
         type: boolean
         required: false
         default: false
+      code-analyzer-apexguru-engine:
+        description: Should the code-analyzer-apexguru-engine package be released?
+        type: boolean
+        required: false
+        default: false
       dryrun:
         description: Add --dry-run to npm publish step? (Uncheck to actually publish)
         type: boolean
@@ -101,6 +106,9 @@ jobs:
           fi
           if [ "${{ inputs.code-analyzer-sfge-engine }}" == "true" ]; then
             PACKAGES_TO_CHECK_ARR+=('code-analyzer-sfge-engine')
+          fi
+          if [ "${{ inputs.code-analyzer-apexguru-engine }}" == "true" ]; then
+            PACKAGES_TO_CHECK_ARR+=('code-analyzer-apexguru-engine')
           fi
           PACKAGES_TO_CHECK_STR=$(IFS=' '; echo "${PACKAGES_TO_CHECK_ARR[*]}")
           node ./.github/workflows/publish-package-to-npm/validate-packages-as-releasable.js "$PACKAGES_TO_CHECK_STR"
