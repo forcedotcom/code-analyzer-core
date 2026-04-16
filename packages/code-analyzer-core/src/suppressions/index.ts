@@ -23,3 +23,12 @@ export {
 } from './suppression-processor';
 
 export type { LoggerCallback } from './suppression-processor';
+
+export {
+    applyBulkSuppressions
+} from './bulk-suppression-processor';
+
+export type {
+    BulkSuppressionQuotas,
+    BulkSuppressionResult
+} from './bulk-suppression-processor';

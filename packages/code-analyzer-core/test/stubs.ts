@@ -13,6 +13,10 @@ export class StubWorkspace implements Workspace {
         return "dummyId";
     }
 
+    getWorkspaceRoot(): string | null {
+        return SAMPLE_WORKSPACE_FOLDER;
+    }
+
     getRawFilesAndFolders(): string[] {
         return [path.join(SAMPLE_WORKSPACE_FOLDER)];
     }

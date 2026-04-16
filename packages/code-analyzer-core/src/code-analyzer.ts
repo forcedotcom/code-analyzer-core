@@ -10,6 +10,7 @@ import {
     Violation
 } from "./results"
 import {processSuppressions, extractSuppressionsFromFiles, SuppressionsMap, LoggerCallback} from "./suppressions"
+import {applyBulkSuppressions, BulkSuppressionQuotas} from "./suppressions/bulk-suppression-processor"
 import {SemVer} from 'semver';
 import {
     EngineLogEvent,
@@ -47,6 +48,14 @@ export interface Workspace {
      * Returns the identifier associated with the workspace
      */
     getWorkspaceId(): string
+
+    /**
+     * Returns the longest root folder that contains all the workspace paths or null if one does not exist.
+     * For example, if the workspace was constructed with "/some/folder/subFolder/file1.txt" and
+     * "/some/folder/file2.txt", then the workspace root folder would be equal to "/some/folder".
+     * Returns null if a root folder does not exist (e.g., paths from different drives).
+     */
+    getWorkspaceRoot(): string | null
 
     /**
      * Returns the unique list of files and folders that were used to construct the workspace.
@@ -123,8 +132,13 @@ export class CodeAnalyzer {
     // Caching for per-engine suppression processing to avoid duplicate file processing
     private readonly suppressionsMap: SuppressionsMap = new Map();
     private readonly fileProcessingPromises: Map<string, Promise<void>> = new Map();
-    // Track total suppressed violations for aggregate logging
-    private totalSuppressedViolations: number = 0;
+    // Track suppressed violations for aggregate logging (separated by type)
+    private totalInlineSuppressedViolations: number = 0;
+    private totalBulkSuppressedViolations: number = 0;
+    // Bulk suppression quota tracking (shared across files, scoped to config paths)
+    private readonly bulkSuppressionQuotas: BulkSuppressionQuotas = new Map();
+    // Current workspace root (set during run, used for bulk suppression path resolution)
+    private currentWorkspaceRoot: string | null = null;
 
     constructor(config: CodeAnalyzerConfig, fileSystem: FileSystem = new RealFileSystem(), nodeVersion: string = process.version) {
         this.validateEnvironment(nodeVersion);
@@ -353,14 +367,20 @@ export class CodeAnalyzer {
         //  up a bunch of RunResults promises and then does a Promise.all on them. Otherwise, the progress events may
         //  override each other.
 
-        // Reset suppression counter for this run
-        this.totalSuppressedViolations = 0;
+        // Reset suppression counters for this run
+        this.totalInlineSuppressedViolations = 0;
+        this.totalBulkSuppressedViolations = 0;
 
         // Clear suppression caches from previous runs to prevent unbounded memory growth
         // Each run typically analyzes a different workspace, so caching across runs provides minimal benefit
         // while keeping stale data in memory.
         this.suppressionsMap.clear();
         this.fileProcessingPromises.clear();
+        this.bulkSuppressionQuotas.clear();
+
+        // Store workspace root for bulk suppression path resolution (consistent with ignores feature)
+        // Falls back to config root if workspace root is null (e.g., files from different drives)
+        this.currentWorkspaceRoot = runOptions.workspace.getWorkspaceRoot() || this.config.getConfigRoot();
 
         this.emitLogEvent(LogLevel.Debug, getMessage('RunningWithWorkspace', JSON.stringify({
             filesAndFolders: runOptions.workspace.getRawFilesAndFolders(),
@@ -408,12 +428,16 @@ export class CodeAnalyzer {
         for (const [uninstantiableEngine, error] of this.uninstantiableEnginesMap.entries()) {
             runResults.addEngineRunResults(new UninstantiableEngineRunResults(uninstantiableEngine, error));
         }
-
-        // Note: Inline suppressions are now applied per-engine in runEngineAndValidateResults() before EngineResultsEvent is emitted
-
-        // Log aggregate suppression count if any violations were suppressed
-        if (this.config.getSuppressionsEnabled() && this.totalSuppressedViolations > 0) {
-            this.emitLogEvent(LogLevel.Info, getMessage('SuppressedViolationsCount', this.totalSuppressedViolations));
+        if (!this.config.getSuppressionsEnabled()) {
+            return runResults;
+        }
+        // Note: Inline and bulk suppressions are now applied per-engine in runEngineAndValidateResults() before EngineResultsEvent is emitted
+        // Log aggregate suppression counts if any violations were suppressed (separate messages for inline vs bulk)
+        if (this.totalInlineSuppressedViolations > 0) {
+            this.emitLogEvent(LogLevel.Info, getMessage('InlineSuppressedViolationsCount', this.totalInlineSuppressedViolations));
+        }
+        if (this.totalBulkSuppressedViolations > 0) {
+            this.emitLogEvent(LogLevel.Info, getMessage('BulkSuppressedViolationsCount', this.totalBulkSuppressedViolations));
         }
 
         return runResults;
@@ -473,8 +497,8 @@ export class CodeAnalyzer {
             return engineRunResults;
         }
 
-        // Track suppressed violations for aggregate logging
-        this.totalSuppressedViolations += suppressedCount;
+        // Track inline suppressed violations for aggregate logging
+        this.totalInlineSuppressedViolations += suppressedCount;
 
         // Return filtered results using FilteredEngineRunResults wrapper
         return this.createFilteredEngineRunResults(engineRunResults, filteredViolations);
@@ -498,6 +522,55 @@ export class CodeAnalyzer {
                 filteredViolations.filter(v => v.getRule().getSeverityLevel() === severity).length,
             getViolations: () => filteredViolations
         };
+    }
+
+    /**
+     * Applies bulk suppression filtering to a single engine's results
+     * This processes bulk suppression rules from config and returns a filtered version of the engine results
+     * @param engineRunResults The engine run results to apply bulk suppressions to
+     * @returns Filtered engine run results with bulk suppressions applied
+     */
+    private applyBulkSuppressionsToEngineResults(
+        engineRunResults: EngineRunResults
+    ): EngineRunResults {
+        // Check if suppressions are enabled
+        if (!this.config.getSuppressionsEnabled()) {
+            return engineRunResults;
+        }
+
+        const violations = engineRunResults.getViolations();
+        if (violations.length === 0) {
+            return engineRunResults;
+        }
+
+        const bulkConfig = this.config.getBulkSuppressions();
+        if (Object.keys(bulkConfig).length === 0) {
+            return engineRunResults; // No bulk suppressions configured
+        }
+
+        // Use workspace root for path resolution (consistent with ignores feature)
+        // This is set during run() and should never be null at this point
+        const workspaceRoot = this.currentWorkspaceRoot || this.config.getConfigRoot();
+
+        const bulkResult = applyBulkSuppressions(
+            violations,
+            bulkConfig,
+            this.bulkSuppressionQuotas,
+            workspaceRoot
+        );
+
+        const suppressedCount = bulkResult.suppressedCount;
+
+        // If nothing was suppressed, return original results
+        if (suppressedCount === 0) {
+            return engineRunResults;
+        }
+
+        // Track bulk suppressed violations for aggregate logging
+        this.totalBulkSuppressedViolations += suppressedCount;
+
+        // Return filtered results
+        return this.createFilteredEngineRunResults(engineRunResults, bulkResult.unsuppressedViolations);
     }
 
     /**
@@ -672,6 +745,9 @@ export class CodeAnalyzer {
         // Apply inline suppressions per-engine BEFORE emitting EngineResultsEvent
         engineRunResults = await this.applyInlineSuppressionsToEngineResults(engineRunResults);
 
+        // Apply bulk suppressions per-engine AFTER inline suppressions, still BEFORE emitting EngineResultsEvent
+        engineRunResults = this.applyBulkSuppressionsToEngineResults(engineRunResults);
+
         this.emitEvent<EngineRunProgressEvent>({
             type: EventType.EngineRunProgressEvent, timestamp: this.clock.now(), engineName: engineName, percentComplete: 100
         });
@@ -843,6 +919,10 @@ class WorkspaceImpl implements Workspace {
 
     getWorkspaceId(): string {
         return this.delegate.getWorkspaceId();
+    }
+
+    getWorkspaceRoot(): string | null {
+        return this.delegate.getWorkspaceRoot();
     }
 
     getRawFilesAndFolders(): string[] {

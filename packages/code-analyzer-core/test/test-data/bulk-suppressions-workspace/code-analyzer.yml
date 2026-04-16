@@ -1,0 +1,17 @@
+suppressions:
+  disable_suppressions: false
+  # Suppress 2 violations in file1.js
+  file1.js:
+    - rule_selector: all
+      max_suppressed_violations: 2
+      reason: Test file-level suppression with quota
+  # Suppress all violations in file2.js
+  file2.js:
+    - rule_selector: all
+      max_suppressed_violations: null
+      reason: Test unlimited suppression
+  # Suppress 2 violations across all files in src/controllers folder
+  src/controllers/:
+    - rule_selector: all
+      max_suppressed_violations: 2
+      reason: Test folder-level shared quota

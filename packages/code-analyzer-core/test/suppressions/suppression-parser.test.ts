@@ -306,6 +306,41 @@ describe('buildSuppressionRanges', () => {
         });
     });
 
+    it('should create unsuppression range when closing broader suppress (exception behavior)', () => {
+        const markers: SuppressionMarker[] = [
+            createMarker('suppress', 'all', 1),
+            createMarker('suppress', 'pmd:UnusedMethod', 5),
+            createMarker('unsuppress', 'pmd:UnusedMethod', 10)
+        ];
+
+        const ranges = buildSuppressionRanges(markers, '/test/file.apex');
+
+        // Critical: unsuppress must create a range to act as exception against broader suppress(all)
+        expect(ranges).toHaveLength(3);
+
+        // Sort ranges by startLine for deterministic test assertions
+        const sortedRanges = ranges.sort((a, b) => a.startLine - b.startLine);
+
+        expect(sortedRanges[0]).toMatchObject({
+            startLine: 1,
+            endLine: undefined,
+            ruleSelectorString: 'all',
+            isSuppressed: true
+        });
+        expect(sortedRanges[1]).toMatchObject({
+            startLine: 5,
+            endLine: 9,
+            ruleSelectorString: 'pmd:UnusedMethod',
+            isSuppressed: true
+        });
+        expect(sortedRanges[2]).toMatchObject({
+            startLine: 10,
+            endLine: undefined,
+            ruleSelectorString: 'pmd:UnusedMethod',
+            isSuppressed: false
+        });
+    });
+
     it('should handle empty markers array', () => {
         const markers: SuppressionMarker[] = [];
 
