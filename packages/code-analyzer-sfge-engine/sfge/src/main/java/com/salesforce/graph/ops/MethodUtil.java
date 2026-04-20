@@ -28,6 +28,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.TreeMap;
 import java.util.stream.Collectors;
 import org.apache.commons.lang3.tuple.Pair;
@@ -42,6 +43,19 @@ import org.apache.tinkerpop.gremlin.structure.Vertex;
 @SuppressWarnings("PMD") // Heavily used and risky to fix at the moment
 public final class MethodUtil {
     private static final Logger LOGGER = LogManager.getLogger(MethodUtil.class);
+
+    /**
+     * Cache for CFG (Control Flow Graph) paths of methods. Keyed by the method vertex ID,
+     * stores the structural paths through each method. These paths are deterministic since
+     * they are retrieved with expandMethodCalls=false, so caching is safe. This avoids
+     * repeatedly querying the graph for the same method's paths during path expansion,
+     * which can happen thousands of times for frequently-called utility methods.
+     *
+     * TODO: Add bounded cache with LRU eviction policy to prevent unbounded memory growth
+     * for large codebases. Cache is cleared between scan runs via clearPathCache().
+     */
+    private static final ConcurrentHashMap<Long, List<ApexPath>> METHOD_PATH_CACHE =
+            new ConcurrentHashMap<>();
 
     public static List<MethodVertex> getTargetedMethods(
             GraphTraversalSource g, List<RuleRunnerTarget> targets) {
@@ -731,10 +745,38 @@ public final class MethodUtil {
             if (LOGGER.isTraceEnabled()) {
                 LOGGER.trace("Finding forward path. vertex=" + vertex + ", invoked=" + invoked);
             }
-            List<ApexPath> paths = ApexPathUtil.getForwardPaths(g, invoked, false);
+            final MethodVertex finalInvoked = invoked;
+            final Long methodId = finalInvoked.getId();
+            // Use computeIfAbsent to prevent race condition where multiple threads compute paths
+            List<ApexPath> paths = METHOD_PATH_CACHE.computeIfAbsent(methodId, id -> {
+                if (LOGGER.isInfoEnabled()) {
+                    LOGGER.info(
+                            "CFG path cache MISS for method="
+                                    + finalInvoked.toSimpleString());
+                }
+                return ApexPathUtil.getForwardPaths(g, finalInvoked, false);
+            });
+            if (LOGGER.isDebugEnabled()) {
+                LOGGER.debug(
+                        "CFG path cache access for method="
+                                + finalInvoked.toSimpleString()
+                                + ", paths="
+                                + paths.size()
+                                + ", cacheSize="
+                                + METHOD_PATH_CACHE.size());
+            }
             return paths;
         } else {
             return Collections.emptyList();
+        }
+    }
+
+    /** Clears the CFG path cache. Should be called between independent scan runs. */
+    public static void clearPathCache() {
+        final int size = METHOD_PATH_CACHE.size();
+        METHOD_PATH_CACHE.clear();
+        if (LOGGER.isInfoEnabled()) {
+            LOGGER.info("CFG path cache cleared. Evicted " + size + " entries");
         }
     }
 

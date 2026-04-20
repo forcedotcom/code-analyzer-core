@@ -29,6 +29,9 @@ public interface SfgeConfig {
     /** Stack depth upto which Graph Engine attempts to walk. */
     int getStackDepthLimit();
 
+    /** Maximum depth for method call expansion to prevent combinatorial explosion. */
+    int getMethodCallDepthLimit();
+
     /** Limit to control the growth of path expansion to help alleviate OutOfMemoryError. */
     int getPathExpansionLimit();
 

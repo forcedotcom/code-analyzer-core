@@ -37,6 +37,16 @@ public class ThreadableRuleExecutor {
         Result result = new Result();
 
         try {
+            LOGGER.info(
+                    "Starting ThreadableRuleExecutor with "
+                            + submissions.size()
+                            + " submissions, threadCount="
+                            + THREAD_COUNT
+                            + ", timeout="
+                            + TIMEOUT
+                            + " ms ("
+                            + (TIMEOUT / 60000)
+                            + " min)");
             // Create a threadpool and a completion service to monitor it.
             ExecutorService pool = Executors.newWorkStealingPool(THREAD_COUNT);
             CompletionService<Result> completionService = new ExecutorCompletionService(pool);
@@ -134,6 +144,9 @@ public class ThreadableRuleExecutor {
         public Result call() {
             Timer timer = new Timer(this.getClass().getSimpleName() + " Timer");
             Result result = new Result();
+            long callStartTime = System.currentTimeMillis();
+            String methodName = submission.getPathEntry().toSimpleString();
+            LOGGER.info("Starting entry point: " + methodName);
             try (CloseableThreadContext.Instance closeable = LogUtil.startRuleRun()) {
                 submission.initializeThreadLocals();
                 submission.beforeRun();
@@ -210,9 +223,8 @@ public class ThreadableRuleExecutor {
                 // TODO: This should be in a method similar to initializeThreadLocals
                 JustInTimeGraphProvider.remove();
             }
-            if (LOGGER.isInfoEnabled()) {
-                LOGGER.info("Finished. method=" + submission.getPathEntry().toSimpleString());
-            }
+            long elapsed = System.currentTimeMillis() - callStartTime;
+            LOGGER.info("Finished entry point: " + methodName + " in " + elapsed + " ms");
             submission.afterRun(result);
             return result;
         }

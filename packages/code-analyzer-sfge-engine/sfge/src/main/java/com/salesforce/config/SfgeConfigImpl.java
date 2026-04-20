@@ -36,6 +36,11 @@ public final class SfgeConfigImpl implements SfgeConfig {
     }
 
     @Override
+    public int getMethodCallDepthLimit() {
+        return EnvUtil.getMethodCallDepthLimit();
+    }
+
+    @Override
     public int getPathExpansionLimit() {
         return EnvUtil.getPathExpansionLimit();
     }

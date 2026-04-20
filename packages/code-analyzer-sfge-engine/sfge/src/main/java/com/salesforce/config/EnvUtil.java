@@ -14,6 +14,7 @@ public final class EnvUtil {
     private static final String ENV_PROGRESS_INCREMENTS = "SFGE_PROGRESS_INCREMENTS";
     private static final String ENV_STACK_DEPTH_LIMIT = "SFGE_STACK_DEPTH_LIMIT";
     private static final String ENV_PATH_EXPANSION_LIMIT = "SFGE_PATH_EXPANSION_LIMIT";
+    private static final String ENV_METHOD_CALL_DEPTH_LIMIT = "SFGE_METHOD_CALL_DEPTH_LIMIT";
     private static final String ENV_FILES_TO_ENTRIES_CACHE_LOCATION =
             "SFGE_FILES_TO_ENTRIES_CACHE_LOCATION";
     private static final String ENV_DISABLE_CACHING = "SFGE_DISABLE_CACHING";
@@ -33,6 +34,15 @@ public final class EnvUtil {
 
     /** Artificial stack depth limit to keep path expansion under control. */
     @VisibleForTesting static final int DEFAULT_STACK_DEPTH_LIMIT = 450;
+
+    /**
+     * Maximum depth for method call expansion during path analysis. Limits how many levels
+     * of nested method calls the engine will resolve. Prevents combinatorial explosion when
+     * deeply nested utility methods each have multiple paths (e.g., 3 x 6 x 6 x 2 = hundreds
+     * of combinations). The existing stackDepthLimit (450) prevents StackOverflow; this limit
+     * prevents the exponential growth of path combinations at a much lower threshold.
+     */
+    @VisibleForTesting static final int DEFAULT_METHOD_CALL_DEPTH_LIMIT = 5;
 
     @VisibleForTesting
     static final int DEFAULT_PATH_EXPANSION_LIMIT =
@@ -100,6 +110,14 @@ public final class EnvUtil {
      */
     static int getStackDepthLimit() {
         return getIntOrDefault(ENV_STACK_DEPTH_LIMIT, DEFAULT_STACK_DEPTH_LIMIT);
+    }
+
+    /**
+     * Returns the maximum depth for method call expansion. Depths beyond this are skipped
+     * to prevent combinatorial explosion during path analysis.
+     */
+    static int getMethodCallDepthLimit() {
+        return getIntOrDefault(ENV_METHOD_CALL_DEPTH_LIMIT, DEFAULT_METHOD_CALL_DEPTH_LIMIT);
     }
 
     /**

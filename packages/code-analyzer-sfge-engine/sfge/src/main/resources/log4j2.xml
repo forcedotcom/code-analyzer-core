@@ -42,6 +42,21 @@
 		<Logger name="com.salesforce.rules.ThreadableRuleExecutor" level="INFO" additivity="false">
 			<AppenderRef ref="LogToFile"/>
 		</Logger>
+		<Logger name="com.salesforce.rules.AbstractRuleRunner" level="INFO" additivity="false">
+			<AppenderRef ref="LogToFile"/>
+		</Logger>
+		<Logger name="com.salesforce.rules.PathBasedRuleRunner" level="INFO" additivity="false">
+			<AppenderRef ref="LogToFile"/>
+		</Logger>
+		<Logger name="com.salesforce.graph.ops.ApexPathUtil" level="INFO" additivity="false">
+			<AppenderRef ref="LogToFile"/>
+		</Logger>
+		<Logger name="com.salesforce.graph.ops.MethodUtil" level="INFO" additivity="false">
+			<AppenderRef ref="LogToFile"/>
+		</Logger>
+		<Logger name="com.salesforce.graph.ops.expander.ApexPathExpander" level="INFO" additivity="false">
+			<AppenderRef ref="LogToFile"/>
+		</Logger>
 		<Logger name="com.salesforce.metainfo.VisualForceHandlerImpl" level="INFO" additivity="false">
 			<AppenderRef ref="LogToFile"/>
 		</Logger>

@@ -23,6 +23,8 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.apache.tinkerpop.gremlin.process.traversal.Path;
 import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversal;
 import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversalSource;
@@ -30,6 +32,7 @@ import org.apache.tinkerpop.gremlin.structure.T;
 import org.apache.tinkerpop.gremlin.structure.Vertex;
 
 public final class ApexPathUtil {
+    private static final Logger LOGGER = LogManager.getLogger(ApexPathUtil.class);
 
     /**
      * Only allow forward path traversal form a method boundary. This helps ensure that all stacks
@@ -135,6 +138,7 @@ public final class ApexPathUtil {
                                 ? out(Schema.CFG_PATH)
                                 : in(Schema.CFG_PATH);
 
+        long cfgStart = System.currentTimeMillis();
         List<Path> paths =
                 g.V(startingVertex.getId())
                         .repeat(repeatTraversal.get())
@@ -143,6 +147,9 @@ public final class ApexPathUtil {
                         // TODO: Why is the dedup necessary?
                         .dedup()
                         .toList();
+        long cfgTime = System.currentTimeMillis() - cfgStart;
+        LOGGER.info("Method=" + method.toSimpleString()
+                + "; CFG traversal: " + cfgTime + " ms, paths found: " + paths.size());
 
         if (paths.isEmpty()) {
             // This can happen with an empty method
@@ -197,9 +204,25 @@ public final class ApexPathUtil {
             // If we're expected to expand paths, add the results of each path expansion to the
             // summary.
             ApexPathRetrievalSummary summary = new ApexPathRetrievalSummary();
-            for (ApexPath path : results) {
+            LOGGER.info("Method=" + method.toSimpleString()
+                    + "; Starting path expansion for " + results.size() + " initial paths");
+            long expandStart = System.currentTimeMillis();
+            for (int i = 0; i < results.size(); i++) {
+                ApexPath path = results.get(i);
+                long singleStart = System.currentTimeMillis();
                 summary.addExpansionResults(ApexPathExpanderUtil.expand(g, path, expanderConfig));
+                long singleTime = System.currentTimeMillis() - singleStart;
+                if (singleTime > 5000) {
+                    LOGGER.info("Method=" + method.toSimpleString()
+                            + "; SLOW path expansion " + (i + 1) + "/" + results.size()
+                            + " took " + singleTime + " ms");
+                }
             }
+            long expandTime = System.currentTimeMillis() - expandStart;
+            LOGGER.info("Method=" + method.toSimpleString()
+                    + "; Path expansion complete: " + expandTime + " ms"
+                    + ", accepted=" + summary.getAcceptedPaths().size()
+                    + ", rejected=" + summary.getRejectionReasons().size());
             return summary;
         } else {
             // If we don't have to expand, then the paths we already have can be put into a summary

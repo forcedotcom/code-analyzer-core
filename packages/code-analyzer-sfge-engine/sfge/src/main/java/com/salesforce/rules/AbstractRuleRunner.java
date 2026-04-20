@@ -86,9 +86,11 @@ public abstract class AbstractRuleRunner {
         if (rules.isEmpty()) {
             return new Result();
         }
+        long startTime = System.currentTimeMillis();
         List<ApexPathSource> sources = ApexPathSource.getApexPathSources(g, rules, targets);
+        long entryPointTime = System.currentTimeMillis() - startTime;
+        LOGGER.info("Found " + sources.size() + " path entry points in " + entryPointTime + " ms");
         if (sources.isEmpty()) {
-            LOGGER.info("No path-based entry points found");
             return new Result();
         }
 
@@ -111,7 +113,10 @@ public abstract class AbstractRuleRunner {
                                     .collect(Collectors.toList());
             submissions.add(getRuleRunnerSubmission(g, source.getMethodVertex(), interestedRules));
         }
+        long execStartTime = System.currentTimeMillis();
         Result res = ThreadableRuleExecutor.run(submissions);
+        long execTime = System.currentTimeMillis() - execStartTime;
+        LOGGER.info("Path-based rule execution completed in " + execTime + " ms. Violations: " + res.getOrderedViolations().size());
         for (AbstractPathBasedRule rule : rules) {
             res.addViolations(rule.postProcess(g));
         }

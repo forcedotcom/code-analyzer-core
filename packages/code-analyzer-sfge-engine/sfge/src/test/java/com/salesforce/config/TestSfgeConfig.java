@@ -36,6 +36,11 @@ public class TestSfgeConfig implements SfgeConfig {
     }
 
     @Override
+    public int getMethodCallDepthLimit() {
+        return SfgeConfigImpl.getInstance().getMethodCallDepthLimit();
+    }
+
+    @Override
     public int getPathExpansionLimit() {
         return SfgeConfigImpl.getInstance().getPathExpansionLimit();
     }

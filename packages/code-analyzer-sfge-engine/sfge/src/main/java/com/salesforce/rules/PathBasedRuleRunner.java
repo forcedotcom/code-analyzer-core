@@ -77,7 +77,13 @@ public class PathBasedRuleRunner {
         final ApexPathExpanderConfig expanderConfig = getApexPathExpanderConfig(taintedFileTracker);
 
         // Get all the paths that originate in the entry point
+        long pathStart = System.currentTimeMillis();
         final ApexPathRetrievalSummary pathSummary = getPathSummary(expanderConfig);
+        long pathTime = System.currentTimeMillis() - pathStart;
+        LOGGER.info("EntryPoint=" + methodVertex.toSimpleString()
+                + "; Path expansion: " + pathTime + " ms"
+                + ", accepted=" + pathSummary.getAcceptedPaths().size()
+                + ", rejected=" + pathSummary.getRejectionReasons().size());
 
         extractFileEntryMapping(taintedFileTracker, methodVertex, result);
 

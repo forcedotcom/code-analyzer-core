@@ -164,7 +164,10 @@ export class RuntimeSfgeWrapper {
     }
 
     private async createSfgeInputFile(filePath: string, rules: string[], targets: string[], allWorkspaceFiles: string[]): Promise<void> {
-        const sfgeTargets: SfgeTarget[] = targets.map(target => {
+        const apexTargets = targets.filter(t =>
+            t.toLowerCase().endsWith('.cls') || t.toLowerCase().endsWith('.trigger')
+        );
+        const sfgeTargets: SfgeTarget[] = apexTargets.map(target => {
             return {
                 targetFile: target,
                 targetMethods: []

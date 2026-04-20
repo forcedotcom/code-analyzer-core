@@ -79,6 +79,9 @@ class ApexPathExpander
     /** Allowed stack depth limit */
     public final int stackDepthLimit;
 
+    /** Maximum depth for method call expansion to prevent combinatorial explosion */
+    private final int methodCallDepthLimit;
+
     /** Used to give each object a unique id */
     private static final AtomicLong ID_GENERATOR = new AtomicLong();
 
@@ -97,6 +100,9 @@ class ApexPathExpander
     private final Long id;
 
     private int stackDepth;
+
+    /** Tracks how many method expansions were skipped due to depth limit. Logged on completion. */
+    private int depthLimitSkipCount;
 
     /**
      * The vertex that caused a {@link MethodPathForkedException} to be thrown and the ForkEvent
@@ -202,6 +208,7 @@ class ApexPathExpander
         this.topMostPath.push(topMostPath);
         this.config = config;
         this.stackDepthLimit = SfgeConfigProvider.get().getStackDepthLimit();
+        this.methodCallDepthLimit = SfgeConfigProvider.get().getMethodCallDepthLimit();
         this.stackDepth = 0;
         this.symbolProviderVisitor =
                 new DefaultSymbolProviderVertexVisitor(
@@ -251,8 +258,11 @@ class ApexPathExpander
         this.config = CloneUtil.cloneImmutable(other.config);
 
         this.stackDepthLimit = SfgeConfigProvider.get().getStackDepthLimit();
+        this.methodCallDepthLimit = SfgeConfigProvider.get().getMethodCallDepthLimit();
         // Reset stack depth
         this.stackDepth = 0;
+        // Initialize skip count (cloned expanders start fresh)
+        this.depthLimitSkipCount = 0;
 
         // Find the method call that caused the fork and hook up the path
         BaseSFVertex topLevelVertex = ex.getTopLevelVertex();
@@ -262,8 +272,8 @@ class ApexPathExpander
         if (!methodPath.getMethodVertex().isPresent()) {
             throw new UnexpectedException("Wrong constructor");
         }
-        if (LOGGER.isInfoEnabled()) {
-            LOGGER.info(
+        if (LOGGER.isDebugEnabled()) {
+            LOGGER.debug(
                     "Creating fork. pathIndex="
                             + pathIndex
                             + ", of="
@@ -749,8 +759,8 @@ class ApexPathExpander
                 }
             }
 
-            if (LOGGER.isInfoEnabled()) {
-                LOGGER.info(
+            if (LOGGER.isDebugEnabled()) {
+                LOGGER.debug(
                         "Path isValid="
                                 + isValid
                                 + ", method="
@@ -845,6 +855,23 @@ class ApexPathExpander
         Optional<ApexPath> result = path.resolveInvocableCall(invocable);
 
         if (!result.isPresent()) {
+            // Check method call depth limit before expanding further.
+            // This prevents combinatorial explosion where deeply nested utility methods
+            // each have multiple paths (e.g., depth 7 with 3 paths each = 3^7 = 2187 combinations).
+            if (stackDepth >= methodCallDepthLimit) {
+                depthLimitSkipCount++;
+                if (depthLimitSkipCount == 1 && LOGGER.isInfoEnabled()) {
+                    LOGGER.info(
+                            "Method call depth limit ("
+                                    + methodCallDepthLimit
+                                    + ") reached at stackDepth="
+                                    + stackDepth
+                                    + ". Skipping expansion of: "
+                                    + invocable);
+                }
+                return Optional.empty();
+            }
+
             List<ApexPath> paths =
                     MethodUtil.getPaths(
                             g,
@@ -857,8 +884,8 @@ class ApexPathExpander
                                 .orElseThrow(() -> new UnexpectedException(invocable));
 
                 if (paths.size() > 1) {
-                    if (LOGGER.isInfoEnabled()) {
-                        LOGGER.info(
+                    if (LOGGER.isDebugEnabled()) {
+                        LOGGER.debug(
                                 "Forking. invocableExpression="
                                         + invocable
                                         + ", paths="
