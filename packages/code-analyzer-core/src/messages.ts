@@ -62,11 +62,15 @@ const MESSAGE_CATALOG : MessageCatalog = {
         `-------------------------------------------`,
 
     ConfigFieldDescription_suppressions:
-        `Configuration for inline suppression markers in source code.\n` +
+        `Configuration for inline and bulk suppressions.\n` +
         `  disable_suppressions: Boolean to disable processing of suppression markers.\n` +
+        `  {file_path}: Array of bulk suppression rules for specific files or folders.\n` +
         `---- [Example usage]: ---------------------\n` +
         `suppressions:\n` +
         `  disable_suppressions: false\n` +
+        `  "src/legacy.js":\n` +
+        `    - rule_selector: "eslint:no-console"\n` +
+        `      max_suppressed_violations: 5\n` +
         `-------------------------------------------`,
 
     GenericEngineConfigOverview:
