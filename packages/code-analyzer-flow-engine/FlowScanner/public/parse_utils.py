@@ -141,7 +141,7 @@ DIRECT_REF_HOLDERS = [
         "eventSource",
         "field",
         "inputReference",
-        "leftValueReference"
+        "leftValueReference",
         "objectFieldReference",
         "outputFieldApiName",
         "outputReference",
