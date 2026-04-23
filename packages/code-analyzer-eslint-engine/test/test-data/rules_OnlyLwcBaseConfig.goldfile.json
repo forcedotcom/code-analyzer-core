@@ -363,7 +363,7 @@
     "description": "suggest newer versions of module imports when available",
     "name": "@lwc/lwc/newer-version-available",
     "resourceUrls": [
-      "https://github.com/salesforce/eslint-plugin-lwc/blob/v3.4.0/docs/rules/newer-version-available.md"
+      "https://github.com/salesforce/eslint-plugin-lwc/blob/v3.5.0/docs/rules/newer-version-available.md"
     ],
     "severityLevel": 3,
     "tags": [
@@ -378,7 +378,7 @@
     "description": "prevent public property reassignments",
     "name": "@lwc/lwc/no-api-reassignments",
     "resourceUrls": [
-      "https://github.com/salesforce/eslint-plugin-lwc/blob/v3.4.0/docs/rules/no-api-reassignments.md"
+      "https://github.com/salesforce/eslint-plugin-lwc/blob/v3.5.0/docs/rules/no-api-reassignments.md"
     ],
     "severityLevel": 3,
     "tags": [
@@ -392,7 +392,7 @@
     "description": "restrict usage of async operations",
     "name": "@lwc/lwc/no-async-operation",
     "resourceUrls": [
-      "https://github.com/salesforce/eslint-plugin-lwc/blob/v3.4.0/docs/rules/no-async-operation.md"
+      "https://github.com/salesforce/eslint-plugin-lwc/blob/v3.5.0/docs/rules/no-async-operation.md"
     ],
     "severityLevel": 3,
     "tags": [
@@ -406,7 +406,7 @@
     "description": "no attributes during construction",
     "name": "@lwc/lwc/no-attributes-during-construction",
     "resourceUrls": [
-      "https://github.com/salesforce/eslint-plugin-lwc/blob/v3.4.0/docs/rules/no-attributes-during-construction.md"
+      "https://github.com/salesforce/eslint-plugin-lwc/blob/v3.5.0/docs/rules/no-attributes-during-construction.md"
     ],
     "severityLevel": 3,
     "tags": [
@@ -420,7 +420,7 @@
     "description": "disallow usage of deprecated LWC APIs",
     "name": "@lwc/lwc/no-deprecated",
     "resourceUrls": [
-      "https://github.com/salesforce/eslint-plugin-lwc/blob/v3.4.0/docs/rules/no-deprecated.md"
+      "https://github.com/salesforce/eslint-plugin-lwc/blob/v3.5.0/docs/rules/no-deprecated.md"
     ],
     "severityLevel": 3,
     "tags": [
@@ -434,7 +434,7 @@
     "description": "restrict unexpected imports from the lwc package",
     "name": "@lwc/lwc/no-disallowed-lwc-imports",
     "resourceUrls": [
-      "https://github.com/salesforce/eslint-plugin-lwc/blob/v3.4.0/docs/rules/no-disallowed-lwc-imports.md"
+      "https://github.com/salesforce/eslint-plugin-lwc/blob/v3.5.0/docs/rules/no-disallowed-lwc-imports.md"
     ],
     "severityLevel": 3,
     "tags": [
@@ -448,7 +448,7 @@
     "description": "disallow DOM query at the document level.",
     "name": "@lwc/lwc/no-document-query",
     "resourceUrls": [
-      "https://github.com/salesforce/eslint-plugin-lwc/blob/v3.4.0/docs/rules/no-document-query.md"
+      "https://github.com/salesforce/eslint-plugin-lwc/blob/v3.5.0/docs/rules/no-document-query.md"
     ],
     "severityLevel": 3,
     "tags": [
@@ -462,7 +462,7 @@
     "description": "disallow usage of \"innerHtml\"",
     "name": "@lwc/lwc/no-inner-html",
     "resourceUrls": [
-      "https://github.com/salesforce/eslint-plugin-lwc/blob/v3.4.0/docs/rules/no-inner-html.md"
+      "https://github.com/salesforce/eslint-plugin-lwc/blob/v3.5.0/docs/rules/no-inner-html.md"
     ],
     "severityLevel": 2,
     "tags": [
@@ -476,7 +476,7 @@
     "description": "disallow public property to start with an upper case character",
     "name": "@lwc/lwc/no-leading-uppercase-api-name",
     "resourceUrls": [
-      "https://github.com/salesforce/eslint-plugin-lwc/blob/v3.4.0/docs/rules/no-leading-uppercase-api-name.md"
+      "https://github.com/salesforce/eslint-plugin-lwc/blob/v3.5.0/docs/rules/no-leading-uppercase-api-name.md"
     ],
     "severityLevel": 3,
     "tags": [
@@ -490,7 +490,7 @@
     "description": "prevent accessing the immediate children of this.template",
     "name": "@lwc/lwc/no-template-children",
     "resourceUrls": [
-      "https://github.com/salesforce/eslint-plugin-lwc/blob/v3.4.0/docs/rules/no-template-children.md"
+      "https://github.com/salesforce/eslint-plugin-lwc/blob/v3.5.0/docs/rules/no-template-children.md"
     ],
     "severityLevel": 3,
     "tags": [
@@ -504,7 +504,7 @@
     "description": "restrict unexpected wire adapter usages",
     "name": "@lwc/lwc/no-unexpected-wire-adapter-usages",
     "resourceUrls": [
-      "https://github.com/salesforce/eslint-plugin-lwc/blob/v3.4.0/docs/rules/no-unexpected-wire-adapter-usages.md"
+      "https://github.com/salesforce/eslint-plugin-lwc/blob/v3.5.0/docs/rules/no-unexpected-wire-adapter-usages.md"
     ],
     "severityLevel": 3,
     "tags": [
@@ -518,7 +518,7 @@
     "description": "restrict usage of unknown wire adapters",
     "name": "@lwc/lwc/no-unknown-wire-adapters",
     "resourceUrls": [
-      "https://github.com/salesforce/eslint-plugin-lwc/blob/v3.4.0/docs/rules/no-unknown-wire-adapters.md"
+      "https://github.com/salesforce/eslint-plugin-lwc/blob/v3.5.0/docs/rules/no-unknown-wire-adapters.md"
     ],
     "severityLevel": 3,
     "tags": [
@@ -532,7 +532,7 @@
     "description": "suggest usage of \"CustomEvent\" over \"Event\" constructor",
     "name": "@lwc/lwc/prefer-custom-event",
     "resourceUrls": [
-      "https://github.com/salesforce/eslint-plugin-lwc/blob/v3.4.0/docs/rules/prefer-custom-event.md"
+      "https://github.com/salesforce/eslint-plugin-lwc/blob/v3.5.0/docs/rules/prefer-custom-event.md"
     ],
     "severityLevel": 3,
     "tags": [
@@ -546,7 +546,7 @@
     "description": "validate api decorator usage",
     "name": "@lwc/lwc/valid-api",
     "resourceUrls": [
-      "https://github.com/salesforce/eslint-plugin-lwc/blob/v3.4.0/docs/rules/valid-api.md"
+      "https://github.com/salesforce/eslint-plugin-lwc/blob/v3.5.0/docs/rules/valid-api.md"
     ],
     "severityLevel": 3,
     "tags": [
@@ -560,7 +560,7 @@
     "description": "validate graphql error callback parameter",
     "name": "@lwc/lwc/valid-graphql-wire-adapter-callback-parameters",
     "resourceUrls": [
-      "https://github.com/salesforce/eslint-plugin-lwc/blob/v3.4.0/docs/rules/valid-graphql-wire-adapter-callback-parameters.md"
+      "https://github.com/salesforce/eslint-plugin-lwc/blob/v3.5.0/docs/rules/valid-graphql-wire-adapter-callback-parameters.md"
     ],
     "severityLevel": 3,
     "tags": [
@@ -574,7 +574,7 @@
     "description": "validate track decorator usage",
     "name": "@lwc/lwc/valid-track",
     "resourceUrls": [
-      "https://github.com/salesforce/eslint-plugin-lwc/blob/v3.4.0/docs/rules/valid-track.md"
+      "https://github.com/salesforce/eslint-plugin-lwc/blob/v3.5.0/docs/rules/valid-track.md"
     ],
     "severityLevel": 3,
     "tags": [
@@ -588,7 +588,7 @@
     "description": "validate wire decorator usage",
     "name": "@lwc/lwc/valid-wire",
     "resourceUrls": [
-      "https://github.com/salesforce/eslint-plugin-lwc/blob/v3.4.0/docs/rules/valid-wire.md"
+      "https://github.com/salesforce/eslint-plugin-lwc/blob/v3.5.0/docs/rules/valid-wire.md"
     ],
     "severityLevel": 3,
     "tags": [
@@ -672,7 +672,7 @@
     "description": "Enforce assertion to be made in a test body",
     "name": "jest/expect-expect",
     "resourceUrls": [
-      "https://github.com/jest-community/eslint-plugin-jest/blob/v29.15.0/docs/rules/expect-expect.md"
+      "https://github.com/jest-community/eslint-plugin-jest/blob/v29.15.2/docs/rules/expect-expect.md"
     ],
     "severityLevel": 5,
     "tags": [
@@ -686,7 +686,7 @@
     "description": "Disallow alias methods",
     "name": "jest/no-alias-methods",
     "resourceUrls": [
-      "https://github.com/jest-community/eslint-plugin-jest/blob/v29.15.0/docs/rules/no-alias-methods.md"
+      "https://github.com/jest-community/eslint-plugin-jest/blob/v29.15.2/docs/rules/no-alias-methods.md"
     ],
     "severityLevel": 3,
     "tags": [
@@ -701,7 +701,7 @@
     "description": "Disallow commented out tests",
     "name": "jest/no-commented-out-tests",
     "resourceUrls": [
-      "https://github.com/jest-community/eslint-plugin-jest/blob/v29.15.0/docs/rules/no-commented-out-tests.md"
+      "https://github.com/jest-community/eslint-plugin-jest/blob/v29.15.2/docs/rules/no-commented-out-tests.md"
     ],
     "severityLevel": 5,
     "tags": [
@@ -715,7 +715,7 @@
     "description": "Disallow calling `expect` conditionally",
     "name": "jest/no-conditional-expect",
     "resourceUrls": [
-      "https://github.com/jest-community/eslint-plugin-jest/blob/v29.15.0/docs/rules/no-conditional-expect.md"
+      "https://github.com/jest-community/eslint-plugin-jest/blob/v29.15.2/docs/rules/no-conditional-expect.md"
     ],
     "severityLevel": 2,
     "tags": [
@@ -729,7 +729,7 @@
     "description": "Disallow disabled tests",
     "name": "jest/no-disabled-tests",
     "resourceUrls": [
-      "https://github.com/jest-community/eslint-plugin-jest/blob/v29.15.0/docs/rules/no-disabled-tests.md"
+      "https://github.com/jest-community/eslint-plugin-jest/blob/v29.15.2/docs/rules/no-disabled-tests.md"
     ],
     "severityLevel": 5,
     "tags": [
@@ -743,7 +743,7 @@
     "description": "Disallow using a callback in asynchronous tests and hooks",
     "name": "jest/no-done-callback",
     "resourceUrls": [
-      "https://github.com/jest-community/eslint-plugin-jest/blob/v29.15.0/docs/rules/no-done-callback.md"
+      "https://github.com/jest-community/eslint-plugin-jest/blob/v29.15.2/docs/rules/no-done-callback.md"
     ],
     "severityLevel": 3,
     "tags": [
@@ -757,7 +757,7 @@
     "description": "Disallow using `exports` in files containing tests",
     "name": "jest/no-export",
     "resourceUrls": [
-      "https://github.com/jest-community/eslint-plugin-jest/blob/v29.15.0/docs/rules/no-export.md"
+      "https://github.com/jest-community/eslint-plugin-jest/blob/v29.15.2/docs/rules/no-export.md"
     ],
     "severityLevel": 3,
     "tags": [
@@ -771,7 +771,7 @@
     "description": "Disallow focused tests",
     "name": "jest/no-focused-tests",
     "resourceUrls": [
-      "https://github.com/jest-community/eslint-plugin-jest/blob/v29.15.0/docs/rules/no-focused-tests.md"
+      "https://github.com/jest-community/eslint-plugin-jest/blob/v29.15.2/docs/rules/no-focused-tests.md"
     ],
     "severityLevel": 3,
     "tags": [
@@ -785,7 +785,7 @@
     "description": "Disallow identical titles",
     "name": "jest/no-identical-title",
     "resourceUrls": [
-      "https://github.com/jest-community/eslint-plugin-jest/blob/v29.15.0/docs/rules/no-identical-title.md"
+      "https://github.com/jest-community/eslint-plugin-jest/blob/v29.15.2/docs/rules/no-identical-title.md"
     ],
     "severityLevel": 3,
     "tags": [
@@ -799,7 +799,7 @@
     "description": "Disallow string interpolation inside snapshots",
     "name": "jest/no-interpolation-in-snapshots",
     "resourceUrls": [
-      "https://github.com/jest-community/eslint-plugin-jest/blob/v29.15.0/docs/rules/no-interpolation-in-snapshots.md"
+      "https://github.com/jest-community/eslint-plugin-jest/blob/v29.15.2/docs/rules/no-interpolation-in-snapshots.md"
     ],
     "severityLevel": 2,
     "tags": [
@@ -813,7 +813,7 @@
     "description": "Disallow Jasmine globals",
     "name": "jest/no-jasmine-globals",
     "resourceUrls": [
-      "https://github.com/jest-community/eslint-plugin-jest/blob/v29.15.0/docs/rules/no-jasmine-globals.md"
+      "https://github.com/jest-community/eslint-plugin-jest/blob/v29.15.2/docs/rules/no-jasmine-globals.md"
     ],
     "severityLevel": 3,
     "tags": [
@@ -828,7 +828,7 @@
     "description": "Disallow manually importing from `__mocks__`",
     "name": "jest/no-mocks-import",
     "resourceUrls": [
-      "https://github.com/jest-community/eslint-plugin-jest/blob/v29.15.0/docs/rules/no-mocks-import.md"
+      "https://github.com/jest-community/eslint-plugin-jest/blob/v29.15.2/docs/rules/no-mocks-import.md"
     ],
     "severityLevel": 2,
     "tags": [
@@ -842,7 +842,7 @@
     "description": "Disallow using `expect` outside of `it` or `test` blocks",
     "name": "jest/no-standalone-expect",
     "resourceUrls": [
-      "https://github.com/jest-community/eslint-plugin-jest/blob/v29.15.0/docs/rules/no-standalone-expect.md"
+      "https://github.com/jest-community/eslint-plugin-jest/blob/v29.15.2/docs/rules/no-standalone-expect.md"
     ],
     "severityLevel": 3,
     "tags": [
@@ -856,7 +856,7 @@
     "description": "Require using `.only` and `.skip` over `f` and `x`",
     "name": "jest/no-test-prefixes",
     "resourceUrls": [
-      "https://github.com/jest-community/eslint-plugin-jest/blob/v29.15.0/docs/rules/no-test-prefixes.md"
+      "https://github.com/jest-community/eslint-plugin-jest/blob/v29.15.2/docs/rules/no-test-prefixes.md"
     ],
     "severityLevel": 3,
     "tags": [
@@ -871,7 +871,7 @@
     "description": "Enforce valid `describe()` callback",
     "name": "jest/valid-describe-callback",
     "resourceUrls": [
-      "https://github.com/jest-community/eslint-plugin-jest/blob/v29.15.0/docs/rules/valid-describe-callback.md"
+      "https://github.com/jest-community/eslint-plugin-jest/blob/v29.15.2/docs/rules/valid-describe-callback.md"
     ],
     "severityLevel": 2,
     "tags": [
@@ -885,7 +885,7 @@
     "description": "Enforce valid `expect()` usage",
     "name": "jest/valid-expect",
     "resourceUrls": [
-      "https://github.com/jest-community/eslint-plugin-jest/blob/v29.15.0/docs/rules/valid-expect.md"
+      "https://github.com/jest-community/eslint-plugin-jest/blob/v29.15.2/docs/rules/valid-expect.md"
     ],
     "severityLevel": 3,
     "tags": [
@@ -900,7 +900,7 @@
     "description": "Require promises that have expectations in their chain to be valid",
     "name": "jest/valid-expect-in-promise",
     "resourceUrls": [
-      "https://github.com/jest-community/eslint-plugin-jest/blob/v29.15.0/docs/rules/valid-expect-in-promise.md"
+      "https://github.com/jest-community/eslint-plugin-jest/blob/v29.15.2/docs/rules/valid-expect-in-promise.md"
     ],
     "severityLevel": 3,
     "tags": [
@@ -914,7 +914,7 @@
     "description": "Enforce valid titles",
     "name": "jest/valid-title",
     "resourceUrls": [
-      "https://github.com/jest-community/eslint-plugin-jest/blob/v29.15.0/docs/rules/valid-title.md"
+      "https://github.com/jest-community/eslint-plugin-jest/blob/v29.15.2/docs/rules/valid-title.md"
     ],
     "severityLevel": 3,
     "tags": [
