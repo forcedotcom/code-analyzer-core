@@ -14,7 +14,7 @@
   "types": "dist/index.d.ts",
   "dependencies": {
     "@salesforce/code-analyzer-engine-api": "0.37.0-SNAPSHOT",
-    "@types/node": "^20.19.39",
+    "@types/node": "^20.0.0",
     "isbinaryfile": "^5.0.7",
     "node-stream-zip": "^1.15.0",
     "retire": "^5.4.2"
