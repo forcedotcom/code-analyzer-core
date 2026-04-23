@@ -543,6 +543,8 @@ export class CodeAnalyzer {
             return engineRunResults;
         }
 
+        
+
         const bulkConfig = this.config.getBulkSuppressions();
         if (Object.keys(bulkConfig).length === 0) {
             return engineRunResults; // No bulk suppressions configured
