@@ -1,7 +1,7 @@
 {
   "name": "@salesforce/code-analyzer-retirejs-engine",
   "description": "Plugin package that adds 'retire-js' as an engine into Salesforce Code Analyzer",
-  "version": "0.33.0",
+  "version": "0.34.0-SNAPSHOT",
   "author": "The Salesforce Code Analyzer Team",
   "license": "BSD-3-Clause",
   "homepage": "https://developer.salesforce.com/docs/platform/salesforce-code-analyzer/overview",
@@ -13,21 +13,21 @@
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "dependencies": {
-    "@salesforce/code-analyzer-engine-api": "0.36.0",
+    "@salesforce/code-analyzer-engine-api": "0.37.0-SNAPSHOT",
     "@types/node": "^20.0.0",
     "isbinaryfile": "^5.0.0",
     "node-stream-zip": "^1.15.0",
     "retire": "^5.4.2"
   },
   "devDependencies": {
-    "@eslint/js": "^9.39.2",
+    "@eslint/js": "^9.39.4",
     "@types/jest": "^30.0.0",
-    "eslint": "^9.39.2",
+    "eslint": "^9.39.4",
     "jest": "^30.3.0",
     "rimraf": "^6.1.3",
-    "ts-jest": "^29.4.6",
+    "ts-jest": "^29.4.9",
     "typescript": "^5.9.3",
-    "typescript-eslint": "^8.57.1"
+    "typescript-eslint": "^8.59.0"
   },
   "engines": {
     "node": ">=20.0.0"
