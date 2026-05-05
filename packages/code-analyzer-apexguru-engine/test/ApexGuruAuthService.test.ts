@@ -36,18 +36,12 @@ describe('ApexGuruAuthService', () => {
             expect(authService.getInstanceUrl()).toBe('https://test.salesforce.com');
         });
 
-        it('should initialize with direct credentials', async () => {
-            const mockCreateConnection = jest.fn().mockResolvedValue(mockConnection);
+        it('should throw error when targetOrg authentication fails', async () => {
+            (Org.create as jest.Mock).mockRejectedValue(new Error('Org not found'));
 
-            // Mock Connection.create
-            (Connection.create as jest.Mock).mockImplementation(mockCreateConnection);
-
-            await authService.initialize({
-                accessToken: 'test_token',
-                instanceUrl: 'https://test.salesforce.com'
-            });
-
-            expect(mockCreateConnection).toHaveBeenCalled();
+            await expect(authService.initialize({ targetOrg: 'invalid-org' }))
+                .rejects
+                .toThrow("Failed to authenticate with org 'invalid-org'");
         });
 
         it('should initialize with default org when no config provided', async () => {

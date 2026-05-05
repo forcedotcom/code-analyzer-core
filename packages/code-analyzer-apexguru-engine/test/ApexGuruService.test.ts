@@ -28,7 +28,8 @@ describe('ApexGuruService', () => {
             getConnection: jest.fn().mockReturnValue(mockConnection),
             getAccessToken: jest.fn().mockReturnValue('test-token'),
             getInstanceUrl: jest.fn().mockReturnValue('https://test.salesforce.com'),
-            getApiVersion: jest.fn().mockReturnValue('64.0')
+            getApiVersion: jest.fn().mockReturnValue('64.0'),
+            mintOrgJwt: jest.fn().mockResolvedValue('mock-jwt-token')
         } as any;
 
         (ApexGuruAuthService as jest.Mock).mockImplementation(() => mockAuthService);
