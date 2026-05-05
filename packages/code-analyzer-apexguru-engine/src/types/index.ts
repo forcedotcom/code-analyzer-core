@@ -99,3 +99,8 @@ export type ApexGuruFix = {
 export type ApexGuruRequestBody = {
     classContent: string;  // Base64 encoded Apex class
 };
+
+export type OrgJwtResponse = {
+    jwt: string;
+    message?: string | null;
+};

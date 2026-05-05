@@ -41,10 +41,23 @@ export class ApexGuruService {
     }
 
     /**
-     * Initialize authentication
+     * Initialize authentication and mint Org JWT
      */
     async initialize(targetOrg?: string): Promise<void> {
+        // Initialize auth service with SF CLI
         await this.authService.initialize({ targetOrg });
+
+        // Mint Org JWT for SFAP API access
+        const orgJwt = await this.authService.mintOrgJwt();
+
+        try {
+            const jwtParts = orgJwt.split('.');
+            if (jwtParts.length === 3) {
+                //const payload = JSON.parse(Buffer.from(jwtParts[1], 'base64').toString());
+            }
+        } catch (error) {
+            this.emitLogEvent(LogLevel.Warn, `Could not decode JWT payload: ${error}`);
+        }
     }
 
     /**

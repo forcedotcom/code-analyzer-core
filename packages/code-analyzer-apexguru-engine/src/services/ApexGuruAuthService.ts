@@ -1,23 +1,13 @@
-
-
-import { AuthInfo, Connection } from '@salesforce/core';
+import { Connection, Org } from '@salesforce/core';
 import { LogLevel } from '@salesforce/code-analyzer-engine-api';
-import { AuthConfig } from '../types';
+import { AuthConfig, OrgJwtResponse } from '../types';
 
 /**
- * TEMPORARY: Hardcoded credentials for testing
- * TODO: Implement SF CLI, env vars, and OAuth in future PR
- * NEVER commit real credentials - use 'YOUR_ACCESS_TOKEN_HERE' as placeholder
- */
-const HARDCODED_ACCESS_TOKEN = 'YOUR_ACCESS_TOKEN_HERE';  // Get from: sf org display --verbose
-const HARDCODED_INSTANCE_URL = 'https://yourorg.my.salesforce.com';  // e.g., https://yourorg.my.salesforce.com
-
-/**
- * Handles authentication to Salesforce orgs for ApexGuru API access
- * TODO: Currently uses hardcoded credentials only. Implement proper auth in future PR.
+ * Handles authentication to Salesforce orgs for ApexGuru API access.
  */
 export class ApexGuruAuthService {
     private connection?: Connection;
+    private orgJwt?: string;
     private readonly emitLogEvent: (logLevel: LogLevel, message: string) => void;
 
     constructor(emitLogEvent: (logLevel: LogLevel, message: string) => void = () => {}) {
@@ -25,31 +15,51 @@ export class ApexGuruAuthService {
     }
 
     /**
-     * Initialize connection to Salesforce org
-     * TODO: Implement SF CLI, env vars, and OAuth in future PR
-     * @param _config - Auth configuration (currently unused, for future implementation)
+     * Initialize connection to Salesforce org using one of two methods:
+     *
+     * Method 1: SF CLI org with --target-org flag
+     *   config.targetOrg = 'myorg' or 'user@example.com'
+     *
+     * Method 2: SF CLI default org (fallback)
+     *   No config provided - uses SF CLI default org
+     *
+     * @param config - Auth configuration
      */
-    async initialize(_config: AuthConfig): Promise<void> {
-        // Use hardcoded credentials (temporary implementation)
-        this.emitLogEvent(LogLevel.Warn, '⚠️  Using HARDCODED authentication credentials (for testing)');
-
-        // Validate that credentials were actually set
-        if (!HARDCODED_ACCESS_TOKEN || HARDCODED_ACCESS_TOKEN.includes('YOUR_ACCESS_TOKEN')) {
-            throw new Error(
-                'Hardcoded credentials not set! Edit ApexGuruAuthService.ts and set:\n' +
-                '  - HARDCODED_ACCESS_TOKEN (get from: sf org display --verbose)\n' +
-                '  - HARDCODED_INSTANCE_URL (e.g., https://yourorg.my.salesforce.com)'
-            );
+    async initialize(config: AuthConfig): Promise<void> {
+        // Method 1: SF CLI org (alias or username) via --target-org flag
+        if (config.targetOrg) {
+            this.emitLogEvent(LogLevel.Fine, `Authenticating with org: ${config.targetOrg}`);
+            try {
+                const org = await Org.create({ aliasOrUsername: config.targetOrg });
+                this.connection = org.getConnection();
+                this.emitLogEvent(LogLevel.Fine, `Successfully authenticated to org`);
+                return;
+            } catch {
+                this.emitLogEvent(LogLevel.Error, `Failed to authenticate with org: ${config.targetOrg}`);
+                throw new Error(
+                    `Failed to authenticate with org '${config.targetOrg}'. ` +
+                    'Please verify the org alias/username and ensure you are authenticated:\n' +
+                    '  sf org list\n' +
+                    '  sf org login web'
+                );
+            }
         }
 
-        this.connection = await Connection.create({
-            authInfo: await AuthInfo.create({
-                accessTokenOptions: {
-                    accessToken: HARDCODED_ACCESS_TOKEN,
-                    instanceUrl: HARDCODED_INSTANCE_URL
-                }
-            })
-        });
+        // Method 2: SF CLI default org (fallback)
+        this.emitLogEvent(LogLevel.Fine, 'No target org specified, using default org');
+        try {
+            const org = await Org.create({});
+            this.connection = org.getConnection();
+            this.emitLogEvent(LogLevel.Fine, 'Successfully authenticated to default org');
+        } catch {
+            this.emitLogEvent(LogLevel.Error, 'Failed to authenticate: No default org found');
+            throw new Error(
+                'No default org found. Please either:\n' +
+                '  1. Set a default org: sf config set target-org <org-alias>\n' +
+                '  2. Pass --target-org flag: sf code-analyzer run --target-org <org-alias> ...\n' +
+                '  3. Authenticate to an org: sf org login web'
+            );
+        }
     }
 
     /**
@@ -85,5 +95,77 @@ export class ApexGuruAuthService {
      */
     getApiVersion(): string {
         return this.getConnection().version || '64.0';
+    }
+
+    /**
+     * Mint an Org JWT token for SFAP API access
+     *
+     * @param featureId - Feature ID for tracking (default: 'VibesService')
+     * @returns Promise<string> - The Org JWT token
+     * @throws Error if minting fails
+     */
+    async mintOrgJwt(featureId: string = 'VibesService'): Promise<string> {
+        const accessToken = this.getAccessToken();
+        const instanceUrl = this.getInstanceUrl();
+
+        const endpoint = `${instanceUrl}/ide/auth`;
+        this.emitLogEvent(LogLevel.Fine, 'Minting Org JWT for SFAP API access');
+
+        try {
+            const response = await fetch(endpoint, {
+                method: 'POST',
+                headers: {
+                    'Accept': 'application/json',
+                    'Authorization': `Bearer ${accessToken}`,
+                    'X-Feature-Id': featureId,
+                    'Content-Type': 'application/json'
+                }
+            });
+
+            if (!response.ok) {
+                const errorText = await response.text();
+                this.emitLogEvent(LogLevel.Error, `Failed to mint Org JWT: HTTP ${response.status}`);
+                throw new Error(
+                    `Failed to mint Org JWT: ${response.status} ${response.statusText}. ` +
+                    `Response: ${errorText}`
+                );
+            }
+
+            const data = await response.json() as OrgJwtResponse;
+
+            if (!data.jwt) {
+                this.emitLogEvent(LogLevel.Error, 'Org JWT response missing jwt field');
+                throw new Error('Org JWT response missing jwt field');
+            }
+
+            this.orgJwt = data.jwt;
+            this.emitLogEvent(LogLevel.Fine, 'Successfully minted Org JWT');
+            return data.jwt;
+
+        } catch (error) {
+            const errorMessage = error instanceof Error ? error.message : String(error);
+            this.emitLogEvent(LogLevel.Error, 'Org JWT minting failed');
+            throw new Error(`Org JWT minting failed: ${errorMessage}`);
+        }
+    }
+
+    /**
+     * Get the cached Org JWT token
+     * @returns The Org JWT if available, undefined otherwise
+     */
+    getOrgJwt(): string | undefined {
+        return this.orgJwt;
+    }
+
+    /**
+     * Get or mint the Org JWT token
+     * If already minted, returns the cached token. Otherwise, mints a new one.
+     * @returns Promise<string> - The Org JWT token
+     */
+    async getOrMintOrgJwt(): Promise<string> {
+        if (this.orgJwt) {
+            return this.orgJwt;
+        }
+        return await this.mintOrgJwt();
     }
 }
