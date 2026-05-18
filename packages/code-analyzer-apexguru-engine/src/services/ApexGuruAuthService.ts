@@ -6,6 +6,10 @@ import { AuthConfig, OrgJwtResponse } from '../types';
  * Handles authentication to Salesforce orgs for ApexGuru API access.
  */
 export class ApexGuruAuthService {
+    // Configuration constants
+    private static readonly DEFAULT_FEATURE_ID = 'CodeAnalyzer';
+    private static readonly ORG_JWT_ENDPOINT_PATH = '/ide/auth';
+
     private connection?: Connection;
     private orgJwt?: string;
     private readonly emitLogEvent: (logLevel: LogLevel, message: string) => void;
@@ -98,21 +102,37 @@ export class ApexGuruAuthService {
     }
 
     /**
+     * Helper method to perform fetch with logging
+     * @param endpoint - The endpoint URL
+     * @param logMessage - Log message to emit before fetch
+     * @param options - Fetch options
+     * @returns Promise<Response> - The fetch response
+     */
+    private async fetchWithLogging(
+        endpoint: string,
+        logMessage: string,
+        options: RequestInit
+    ): Promise<Response> {
+        this.emitLogEvent(LogLevel.Fine, logMessage);
+        return await fetch(endpoint, options);
+    }
+
+    /**
      * Mint an Org JWT token for SFAP API access
      *
-     * @param featureId - Feature ID for tracking (default: 'VibesService')
+     * @param featureId - Feature ID for tracking (default: CodeAnalyzer)
      * @returns Promise<string> - The Org JWT token
      * @throws Error if minting fails
      */
-    async mintOrgJwt(featureId: string = 'VibesService'): Promise<string> {
+    async mintOrgJwt(featureId: string = ApexGuruAuthService.DEFAULT_FEATURE_ID): Promise<string> {
         const accessToken = this.getAccessToken();
         const instanceUrl = this.getInstanceUrl();
+        const endpoint = `${instanceUrl}${ApexGuruAuthService.ORG_JWT_ENDPOINT_PATH}`;
 
-        const endpoint = `${instanceUrl}/ide/auth`;
-        this.emitLogEvent(LogLevel.Fine, 'Minting Org JWT for SFAP API access');
-
-        try {
-            const response = await fetch(endpoint, {
+        const response = await this.fetchWithLogging(
+            endpoint,
+            'Minting Org JWT for SFAP API access',
+            {
                 method: 'POST',
                 headers: {
                     'Accept': 'application/json',
@@ -120,7 +140,10 @@ export class ApexGuruAuthService {
                     'X-Feature-Id': featureId,
                     'Content-Type': 'application/json'
                 }
-            });
+            }
+        );
+
+        try {
 
             if (!response.ok) {
                 const errorText = await response.text();
