@@ -32,7 +32,7 @@ describe('ApexGuruService', () => {
             mintOrgJwt: jest.fn().mockResolvedValue('mock-jwt-token')
         } as any;
 
-        (ApexGuruAuthService as jest.Mock).mockImplementation(() => mockAuthService);
+        jest.mocked(ApexGuruAuthService).mockImplementation(() => mockAuthService);
 
         apexGuruService = new ApexGuruService(
             mockEmitLogEvent,
