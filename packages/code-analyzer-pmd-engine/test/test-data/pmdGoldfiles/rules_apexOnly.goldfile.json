@@ -428,6 +428,19 @@
     ]
   },
   {
+    "name": "AvoidInterfaceAsMapKey",
+    "severityLevel": 3,
+    "tags": [
+      "Recommended",
+      "ErrorProne",
+      "Apex"
+    ],
+    "description": "In Apex, when a `Map` uses an interface as key and an abstract class implements that interface and defines `equals`/`hashCode`, methods like `containsKey` do not dispatch to the correct implementation. This results in potentially duplicated map entries or not being able to get entries by key. This rule reports `Map` declarations (fields, variables, parameters) whose key type is an... Learn more: https://docs.pmd-code.org/pmd-doc-{{PMD_VERSION}}/pmd_rules_apex_errorprone.html#avoidinterfaceasmapkey",
+    "resourceUrls": [
+      "https://docs.pmd-code.org/pmd-doc-{{PMD_VERSION}}/pmd_rules_apex_errorprone.html#avoidinterfaceasmapkey"
+    ]
+  },
+  {
     "name": "AvoidInvalidCrudContentDistribution",
     "severityLevel": 3,
     "tags": [
@@ -1041,7 +1054,7 @@
       "Design",
       "Apex"
     ],
-    "description": "Avoid having unused methods since they make understanding and maintaining code harder. This rule finds not only unused private methods, but public methods as well, as long as the class itself is not entirely unused. A class is considered used, if it contains at least one other method/variable declaration that is used, as shown in the test project file Foo.cls. ApexLink is used to make this possible... Learn more: https://docs.pmd-code.org/pmd-doc-{{PMD_VERSION}}/pmd_rules_apex_design.html#unusedmethod",
+    "description": "Avoid having unused methods since they make understanding and maintaining code harder. This rule finds not only unused private methods, but public methods as well, as long as the class itself is not entirely unused. A class is considered used, if it contains at least one other method/variable declaration that is used, as shown in the test project file Foo.cls. Apex Language Server is used to make this... Learn more: https://docs.pmd-code.org/pmd-doc-{{PMD_VERSION}}/pmd_rules_apex_design.html#unusedmethod",
     "resourceUrls": [
       "https://docs.pmd-code.org/pmd-doc-{{PMD_VERSION}}/pmd_rules_apex_design.html#unusedmethod"
     ]
