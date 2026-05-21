@@ -195,13 +195,9 @@ export class ApexGuruEngine extends EngineEventEmitter implements Engine {
      * Target org can be set via SF_TARGET_ORG environment variable.
      */
     private getTargetOrgFromEnvironment(): string | undefined {
-        // Check environment variable
-        if (process.env.SF_TARGET_ORG) {
-            return process.env.SF_TARGET_ORG;
-        }
-
-        // Return undefined to use default org from SF CLI
-        return undefined;
+        // Return target_org from config (set via CLI --target-org flag or config file)
+        // If undefined, ApexGuruAuthService will use default SF CLI org
+        return this.config.target_org;
     }
 
 }

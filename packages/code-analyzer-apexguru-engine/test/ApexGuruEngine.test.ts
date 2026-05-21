@@ -369,17 +369,21 @@ describe('ApexGuruEngine', () => {
         });
 
         it('should extract targetOrg from environment', async () => {
-            process.env.SF_TARGET_ORG = 'my-org';
+            // Set environment variable BEFORE creating the engine
+            process.env.CODE_ANALYZER_TARGET_ORG = 'my-org';
+
+            // Create new engine with config that includes target_org from environment
+            const engineWithConfig = new ApexGuruEngine({ target_org: 'my-org', api_timeout_ms: 120000, api_initial_retry_ms: 2000, api_max_retry_ms: 60000, api_backoff_multiplier: 2 });
 
             mockWorkspace.getTargetedFiles.mockResolvedValue(['/test/Test.cls']);
             mockApexGuruService.analyzeApexClass.mockResolvedValue([]);
             (fs.readFile as jest.Mock).mockResolvedValue('public class Test {}');
 
-            await engine.runRules(['SoqlInALoop'], mockRunOptions);
+            await engineWithConfig.runRules(['SoqlInALoop'], mockRunOptions);
 
             expect(mockApexGuruService.initialize).toHaveBeenCalledWith('my-org');
 
-            delete process.env.SF_TARGET_ORG;
+            delete process.env.CODE_ANALYZER_TARGET_ORG;
         });
 
         it('should aggregate violations from multiple files', async () => {

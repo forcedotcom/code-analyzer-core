@@ -6,6 +6,12 @@ import { ConfigDescription, ConfigValueExtractor } from '@salesforce/code-analyz
  */
 export type ApexGuruEngineConfig = {
     /**
+     * Target Salesforce org username or alias
+     * If not specified, uses the default SF CLI org
+     */
+    target_org?: string;
+
+    /**
      * Maximum time to wait for ApexGuru API response (in milliseconds)
      * Default: 120000 (2 minutes)
      */
@@ -46,7 +52,7 @@ export const DEFAULT_APEXGURU_ENGINE_CONFIG: ApexGuruEngineConfig = {
  * Configuration schema description for ApexGuru Engine
  */
 export const APEXGURU_ENGINE_CONFIG_DESCRIPTION: ConfigDescription = {
-    overview: 'Configuration for ApexGuru Engine. Authentication is handled via Salesforce CLI (sf org login web).',
+    overview: 'Configuration for ApexGuru Engine. Authentication is handled via Salesforce CLI (sf org login web). Use --target-org flag to specify the org.',
     fieldDescriptions: {
         api_timeout_ms: {
             descriptionText: 'Maximum time to wait for ApexGuru API response (in milliseconds). Default: 120000 (2 minutes)',
@@ -84,6 +90,11 @@ export async function validateAndNormalizeConfig(
         'api_max_retry_ms',
         'api_backoff_multiplier'
     ]);
+
+    // Extract target org from CLI flag only
+    // - If user passes --target-org: use that org
+    // - If user doesn't pass --target-org: undefined (auth service uses default SF CLI org)
+    const targetOrg: string | undefined = process.env.CODE_ANALYZER_TARGET_ORG;
 
     // Extract and validate timeout
     const apiTimeoutMs: number = configValueExtractor.extractNumber(
@@ -130,6 +141,7 @@ export async function validateAndNormalizeConfig(
     }
 
     return {
+        target_org: targetOrg,
         api_timeout_ms: apiTimeoutMs,
         api_initial_retry_ms: apiInitialRetryMs,
         api_max_retry_ms: apiMaxRetryMs,
