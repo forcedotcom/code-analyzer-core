@@ -256,7 +256,7 @@ function getExpectedJQueryResults(detection: string): Component[] {
                     severity: "medium"
                 },
                 {
-                    atOrAbove: "1.2.0",
+                    atOrAbove: "1.12.0",
                     below: "3.5.0",
                     cwe: [
                         "CWE-79",
