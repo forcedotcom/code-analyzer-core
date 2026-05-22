@@ -256,6 +256,13 @@ export class CodeAnalyzer {
                     (err instanceof Error) ? (err as Error).stack || (err as Error).message : (err as string));
                 resolvedModulePath = path.resolve(this.config.getConfigRoot(), enginePluginModulePath);
             }
+
+            // Validate file extension before attempting dynamic import (Jest 30.4+ tries to parse non-JS files as ESM)
+            const validExtensions = ['.js', '.mjs', '.cjs', '.ts', '.tsx'];
+            if (!validExtensions.includes(path.extname(resolvedModulePath))) {
+                throw new Error(`File is not a JavaScript module: ${resolvedModulePath}`);
+            }
+
             pluginModule = await dynamicallyImport(resolvedModulePath);
         } catch (err) {
             throw new Error(getMessage('FailedToDynamicallyLoadModule', enginePluginModulePath, (err as Error).message), {cause: err});
