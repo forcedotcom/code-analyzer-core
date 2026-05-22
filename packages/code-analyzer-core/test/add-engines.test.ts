@@ -163,8 +163,8 @@ describe("Tests for adding engines to Code Analyzer", () => {
     });
 
     it('When calling dynamicallyAddEnginePlugin on a file that is not a module, then an error is thrown', async () => {
-        const nonModuleFile: string = path.resolve('LICENSE');
-        const expectedErrorMessageSubstring: string = getMessage('FailedToDynamicallyLoadModule', nonModuleFile, '');
+        const nonModuleFile: string = path.resolve('package.json');
+        const expectedErrorMessageSubstring: string = getMessage('FailedToDynamicallyAddEnginePlugin', nonModuleFile);
         await expect(codeAnalyzer.dynamicallyAddEnginePlugin(nonModuleFile)).rejects.toThrow(expectedErrorMessageSubstring);
     });
 

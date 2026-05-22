@@ -256,6 +256,7 @@ export class CodeAnalyzer {
                     (err instanceof Error) ? (err as Error).stack || (err as Error).message : (err as string));
                 resolvedModulePath = path.resolve(this.config.getConfigRoot(), enginePluginModulePath);
             }
+
             pluginModule = await dynamicallyImport(resolvedModulePath);
         } catch (err) {
             throw new Error(getMessage('FailedToDynamicallyLoadModule', enginePluginModulePath, (err as Error).message), {cause: err});
