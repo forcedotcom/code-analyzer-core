@@ -33,7 +33,7 @@ function toSarifRun(engineRunResults: EngineRunResults, runDir: string): sarif.R
     const rules: Rule[] = [... new Set(violations.map(v => v.getRule()))];
     const ruleNames: string[] = rules.map(r => r.getName());
 
-    return {
+    const run: sarif.Run = {
         tool: {
             driver: {
                 name: engineRunResults.getEngineName(),
@@ -52,6 +52,13 @@ function toSarifRun(engineRunResults: EngineRunResults, runDir: string): sarif.R
             },
         ],
     };
+
+    const insights = engineRunResults.getInsights();
+    if (insights) {
+        run.properties = { insights };
+    }
+
+    return run;
 }
 
 function toSarifResult(violation: Violation, runDir: string, ruleIndex: number) : sarif.Result {

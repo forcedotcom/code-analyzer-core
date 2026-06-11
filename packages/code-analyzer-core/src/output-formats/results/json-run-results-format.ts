@@ -123,7 +123,7 @@ export class JsonRunResultsFormatter implements RunResultsFormatter {
 }
 
 export function toJsonResultsOutput(results: RunResults, sanitizeFcn: (text: string) => string = t => t): JsonResultsOutput {
-    return {
+    const output: JsonResultsOutput = {
         runDir: results.getRunDirectory(),
         violationCounts: {
             total: results.getViolationCount(),
@@ -136,6 +136,22 @@ export function toJsonResultsOutput(results: RunResults, sanitizeFcn: (text: str
         versions: toJsonVersionObject(results),
         violations: toJsonViolationOutputArray(results.getViolations(), results.getRunDirectory(), sanitizeFcn)
     };
+    const insightsByEngine = toJsonInsightsObject(results);
+    if (insightsByEngine) {
+        output.insights = insightsByEngine;
+    }
+    return output;
+}
+
+function toJsonInsightsObject(results: RunResults): { [engineName: string]: Record<string, unknown> } | undefined {
+    const insightsByEngine: { [engineName: string]: Record<string, unknown> } = {};
+    for (const engineName of results.getEngineNames()) {
+        const insights = results.getEngineInsights(engineName);
+        if (insights) {
+            insightsByEngine[engineName] = insights;
+        }
+    }
+    return Object.keys(insightsByEngine).length > 0 ? insightsByEngine : undefined;
 }
 
 function toJsonVersionObject(results: RunResults): JsonVersionOutput {

@@ -383,3 +383,69 @@ async function createRulesWithEmptyTags(): Promise<RuleSelection> {
     await codeAnalyzer.addEnginePlugin(new stubs.EmptyTagEnginePlugin());
     return codeAnalyzer.selectRules(['all'])
 }
+
+describe('Insights in output formatters', () => {
+    it('When engine provides insights, then JSON output includes insights field', async () => {
+        const codeAnalyzer = new CodeAnalyzer(CodeAnalyzerConfig.withDefaults());
+        const stubPlugin = new stubs.StubEnginePlugin();
+        await codeAnalyzer.addEnginePlugin(stubPlugin);
+        const mockInsights = {
+            '/path/to/Test.cls': {
+                analysis_mode: 'full',
+                files_scanned: 1,
+                violation_breakdown: {},
+                violation_count: 0,
+                report_generated_ms: 1234567890
+            }
+        };
+        (stubPlugin.getCreatedEngine('stubEngine1') as stubs.StubEngine1).resultsToReturn = {
+            violations: [],
+            insights: mockInsights
+        };
+        const rules = await codeAnalyzer.selectRules(['stubEngine1']);
+        const results = await codeAnalyzer.run(rules, {workspace: await codeAnalyzer.createWorkspace(['test'])});
+        const jsonOutput = JSON.parse(results.toFormattedOutput(OutputFormat.JSON));
+
+        expect(jsonOutput.insights).toBeDefined();
+        expect(jsonOutput.insights['stubEngine1']).toEqual(mockInsights);
+    });
+
+    it('When engine provides insights, then SARIF output includes insights in run properties', async () => {
+        const codeAnalyzer = new CodeAnalyzer(CodeAnalyzerConfig.withDefaults());
+        const stubPlugin = new stubs.StubEnginePlugin();
+        await codeAnalyzer.addEnginePlugin(stubPlugin);
+        const mockInsights = {
+            '/path/to/Test.cls': {
+                analysis_mode: 'full',
+                files_scanned: 1,
+                violation_breakdown: { 'stubRule1A': 1 },
+                violation_count: 1,
+                report_generated_ms: 9876543210
+            }
+        };
+        (stubPlugin.getCreatedEngine('stubEngine1') as stubs.StubEngine1).resultsToReturn = {
+            violations: [stubs.getSampleViolationForStub1RuleA()],
+            insights: mockInsights
+        };
+        const rules = await codeAnalyzer.selectRules(['stubEngine1']);
+        const results = await codeAnalyzer.run(rules, {workspace: await codeAnalyzer.createWorkspace(['test'])});
+        const sarifOutput = JSON.parse(results.toFormattedOutput(OutputFormat.SARIF));
+
+        expect(sarifOutput.runs[0].properties).toBeDefined();
+        expect(sarifOutput.runs[0].properties.insights).toEqual(mockInsights);
+    });
+
+    it('When engine provides no insights, then JSON output has no insights field', async () => {
+        const codeAnalyzer = new CodeAnalyzer(CodeAnalyzerConfig.withDefaults());
+        const stubPlugin = new stubs.StubEnginePlugin();
+        await codeAnalyzer.addEnginePlugin(stubPlugin);
+        (stubPlugin.getCreatedEngine('stubEngine1') as stubs.StubEngine1).resultsToReturn = {
+            violations: []
+        };
+        const rules = await codeAnalyzer.selectRules(['stubEngine1']);
+        const results = await codeAnalyzer.run(rules, {workspace: await codeAnalyzer.createWorkspace(['test'])});
+        const jsonOutput = JSON.parse(results.toFormattedOutput(OutputFormat.JSON));
+
+        expect(jsonOutput.insights).toBeUndefined();
+    });
+});
