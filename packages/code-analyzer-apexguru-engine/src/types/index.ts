@@ -104,3 +104,24 @@ export type OrgJwtResponse = {
     jwt: string;
     message?: string | null;
 };
+
+/**
+ * Scan metadata from SFAP ApexGuru API response
+ * Provides insights about the analysis run
+ */
+export type ApexGuruScanMetadata = {
+    /** Analysis mode used: 'full' or 'static' */
+    analysis_mode: 'full' | 'static';
+
+    /** Number of files scanned in this analysis */
+    files_scanned: number;
+
+    /** Breakdown of violation counts by rule name */
+    violation_breakdown: { [ruleName: string]: number };
+
+    /** Total number of violations found */
+    violation_count: number;
+
+    /** Timestamp when report was generated (milliseconds since epoch) */
+    report_generated_ms: number;
+};
