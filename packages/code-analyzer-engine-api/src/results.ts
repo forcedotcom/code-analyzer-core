@@ -75,4 +75,7 @@ export type Suggestion = {
 export type EngineRunResults = {
     /** The array of {@link Violation} instances for the engine */
     violations: Violation[]
+
+    /** Optional insights metadata from the engine about the analysis run */
+    insights?: Record<string, unknown>
 }
