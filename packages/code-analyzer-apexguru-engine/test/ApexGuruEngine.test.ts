@@ -161,7 +161,7 @@ describe('ApexGuruEngine', () => {
 
         it('should authenticate and validate', async () => {
             mockWorkspace.getTargetedFiles.mockResolvedValue(['/test/Test.cls']);
-            mockApexGuruService.analyzeApexClass.mockResolvedValue([]);
+            mockApexGuruService.analyzeApexClass.mockResolvedValue({violations: []});
             (fs.readFile as jest.Mock).mockResolvedValue('public class Test {}');
 
             await engine.runRules(['SoqlInALoop'], mockRunOptions);
@@ -201,7 +201,7 @@ describe('ApexGuruEngine', () => {
                 '/test/Test.cls',
                 '/test/Controller.cls'
             ]);
-            mockApexGuruService.analyzeApexClass.mockResolvedValue([]);
+            mockApexGuruService.analyzeApexClass.mockResolvedValue({violations: []});
             (fs.readFile as jest.Mock).mockResolvedValue('public class Test {}');
 
             await engine.runRules(['SoqlInALoop'], mockRunOptions);
@@ -215,7 +215,7 @@ describe('ApexGuruEngine', () => {
             mockWorkspace.getTargetedFiles.mockResolvedValue(['/test/Test.cls']);
 
             // ApexGuru API returns 3 violations but only 2 match selected rules
-            mockApexGuruService.analyzeApexClass.mockResolvedValue([
+            mockApexGuruService.analyzeApexClass.mockResolvedValue({violations: [
                 {
                     rule: 'SoqlInALoop',
                     message: 'SOQL in loop',
@@ -240,7 +240,7 @@ describe('ApexGuruEngine', () => {
                     severity: 2,
                     resources: []
                 }
-            ]);
+            ]});
 
             (fs.readFile as jest.Mock).mockResolvedValue('public class Test {}');
 
@@ -257,7 +257,7 @@ describe('ApexGuruEngine', () => {
 
         it('should include suggestions when includeSuggestions is true', async () => {
             mockWorkspace.getTargetedFiles.mockResolvedValue(['/test/Test.cls']);
-            mockApexGuruService.analyzeApexClass.mockResolvedValue([
+            mockApexGuruService.analyzeApexClass.mockResolvedValue({violations: [
                 {
                     rule: 'SoqlInALoop',
                     message: 'SOQL in loop',
@@ -272,7 +272,7 @@ describe('ApexGuruEngine', () => {
                         }
                     ]
                 }
-            ]);
+            ]});
             (fs.readFile as jest.Mock).mockResolvedValue('public class Test {}');
 
             const results = await engine.runRules(['SoqlInALoop'], {
@@ -287,7 +287,7 @@ describe('ApexGuruEngine', () => {
 
         it('should emit progress events', async () => {
             mockWorkspace.getTargetedFiles.mockResolvedValue(['/test/Test.cls']);
-            mockApexGuruService.analyzeApexClass.mockResolvedValue([]);
+            mockApexGuruService.analyzeApexClass.mockResolvedValue({violations: []});
             (fs.readFile as jest.Mock).mockResolvedValue('public class Test {}');
 
             const progressSpy = jest.spyOn(engine as any, 'emitRunRulesProgressEvent');
@@ -300,7 +300,7 @@ describe('ApexGuruEngine', () => {
 
         it('should set progress callback on ApexGuru service', async () => {
             mockWorkspace.getTargetedFiles.mockResolvedValue(['/test/Test.cls']);
-            mockApexGuruService.analyzeApexClass.mockResolvedValue([]);
+            mockApexGuruService.analyzeApexClass.mockResolvedValue({violations: []});
             (fs.readFile as jest.Mock).mockResolvedValue('public class Test {}');
 
             await engine.runRules(['SoqlInALoop'], mockRunOptions);
@@ -319,9 +319,9 @@ describe('ApexGuruEngine', () => {
 
             // Second file fails
             mockApexGuruService.analyzeApexClass
-                .mockResolvedValueOnce([])
+                .mockResolvedValueOnce({violations: []})
                 .mockRejectedValueOnce(new Error('Analysis failed'))
-                .mockResolvedValueOnce([]);
+                .mockResolvedValueOnce({violations: []});
 
 
             const results = await engine.runRules(['SoqlInALoop'], mockRunOptions);
@@ -333,7 +333,7 @@ describe('ApexGuruEngine', () => {
 
         it('should always cleanup resources', async () => {
             mockWorkspace.getTargetedFiles.mockResolvedValue(['/test/Test.cls']);
-            mockApexGuruService.analyzeApexClass.mockResolvedValue([]);
+            mockApexGuruService.analyzeApexClass.mockResolvedValue({violations: []});
             (fs.readFile as jest.Mock).mockResolvedValue('public class Test {}');
 
             await engine.runRules(['SoqlInALoop'], mockRunOptions);
@@ -360,7 +360,7 @@ describe('ApexGuruEngine', () => {
             mockWorkspace.getTargetedFiles.mockResolvedValue([
                 '/test/AccountTrigger.trigger'
             ]);
-            mockApexGuruService.analyzeApexClass.mockResolvedValue([]);
+            mockApexGuruService.analyzeApexClass.mockResolvedValue({violations: []});
             (fs.readFile as jest.Mock).mockResolvedValue('trigger AccountTrigger on Account {}');
 
             await engine.runRules(['SoqlInALoop'], mockRunOptions);
@@ -376,7 +376,7 @@ describe('ApexGuruEngine', () => {
             const engineWithConfig = new ApexGuruEngine({ target_org: 'my-org', api_timeout_ms: 120000, api_initial_retry_ms: 2000, api_max_retry_ms: 60000, api_backoff_multiplier: 2 });
 
             mockWorkspace.getTargetedFiles.mockResolvedValue(['/test/Test.cls']);
-            mockApexGuruService.analyzeApexClass.mockResolvedValue([]);
+            mockApexGuruService.analyzeApexClass.mockResolvedValue({violations: []});
             (fs.readFile as jest.Mock).mockResolvedValue('public class Test {}');
 
             await engineWithConfig.runRules(['SoqlInALoop'], mockRunOptions);
@@ -394,7 +394,7 @@ describe('ApexGuruEngine', () => {
 
             // First file returns 1 violation, second file returns 2 violations
             mockApexGuruService.analyzeApexClass
-                .mockResolvedValueOnce([
+                .mockResolvedValueOnce({violations: [
                     {
                         rule: 'SoqlInALoop',
                         message: 'Violation 1',
@@ -403,8 +403,8 @@ describe('ApexGuruEngine', () => {
                         severity: 1,
                         resources: []
                     }
-                ])
-                .mockResolvedValueOnce([
+                ]})
+                .mockResolvedValueOnce({violations: [
                     {
                         rule: 'SoqlInALoop',
                         message: 'Violation 2',
@@ -421,7 +421,7 @@ describe('ApexGuruEngine', () => {
                         severity: 1,
                         resources: []
                     }
-                ]);
+                ]});
 
             (fs.readFile as jest.Mock).mockResolvedValue('public class Test {}');
 

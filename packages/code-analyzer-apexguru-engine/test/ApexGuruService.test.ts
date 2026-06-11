@@ -139,10 +139,45 @@ describe('ApexGuruService', () => {
                 report: Buffer.from(JSON.stringify(mockViolations)).toString('base64')
             });
 
-            const violations = await apexGuruService.analyzeApexClass(testClassContent, testFilePath);
+            const result = await apexGuruService.analyzeApexClass(testClassContent, testFilePath);
 
-            expect(violations).toEqual(mockViolations);
+            expect(result.violations).toEqual(mockViolations);
+            expect(result.scanMetadata).toBeUndefined();
             expect(mockConnection.request).toHaveBeenCalledTimes(2);
+        });
+
+        it('should return scanMetadata when API response includes it', async () => {
+            const mockViolations = [{
+                rule: 'SoqlInALoop',
+                message: 'SOQL in loop',
+                locations: [{ startLine: 5 }],
+                primaryLocationIndex: 0,
+                resources: [],
+                severity: 3
+            }];
+            const mockScanMetadata = {
+                analysis_mode: 'full' as const,
+                files_scanned: 1,
+                violation_breakdown: { SoqlInALoop: 1 },
+                violation_count: 1,
+                report_generated_ms: 1234567890
+            };
+
+            (mockConnection.request as jest.Mock).mockResolvedValueOnce({
+                status: ApexGuruResponseStatus.NEW,
+                requestId: 'req-123'
+            });
+
+            (mockConnection.request as jest.Mock).mockResolvedValueOnce({
+                status: ApexGuruResponseStatus.SUCCESS,
+                report: Buffer.from(JSON.stringify(mockViolations)).toString('base64'),
+                scanMetadata: mockScanMetadata
+            });
+
+            const result = await apexGuruService.analyzeApexClass(testClassContent, testFilePath);
+
+            expect(result.violations).toEqual(mockViolations);
+            expect(result.scanMetadata).toEqual(mockScanMetadata);
         });
 
         it('should submit base64 encoded content', async () => {
@@ -198,9 +233,9 @@ describe('ApexGuruService', () => {
                 report: Buffer.from(JSON.stringify(mockViolations)).toString('base64')
             });
 
-            const violations = await apexGuruService.analyzeApexClass(testClassContent, testFilePath);
+            const result = await apexGuruService.analyzeApexClass(testClassContent, testFilePath);
 
-            expect(violations).toEqual(mockViolations);
+            expect(result.violations).toEqual(mockViolations);
         });
 
         it('should throw error when analysis fails', async () => {
@@ -298,11 +333,11 @@ describe('ApexGuruService', () => {
                 report: Buffer.from(JSON.stringify(mockViolations)).toString('base64')
             });
 
-            const violations = await apexGuruService.analyzeApexClass(testClassContent, testFilePath);
+            const result = await apexGuruService.analyzeApexClass(testClassContent, testFilePath);
 
-            expect(violations).toHaveLength(2);
-            expect(violations[0].rule).toBe('SoqlInALoop');
-            expect(violations[1].rule).toBe('DmlInALoop');
+            expect(result.violations).toHaveLength(2);
+            expect(result.violations[0].rule).toBe('SoqlInALoop');
+            expect(result.violations[1].rule).toBe('DmlInALoop');
         });
 
         it('should stop polling when timeout occurs', async () => {
@@ -332,6 +367,46 @@ describe('ApexGuruService', () => {
             expect((apexGuruService as any).isCancelled).toBe(true);
 
             jest.useRealTimers();
+        });
+
+        it('When parseReport extracts scanMetadata from API response, then both violations and scanMetadata are returned', async () => {
+            const mockViolations = [
+                {
+                    rule: 'SoqlInALoop',
+                    message: 'SOQL in loop',
+                    locations: [{ startLine: 5 }],
+                    primaryLocationIndex: 0,
+                    resources: ['https://example.com'],
+                    severity: 3
+                }
+            ];
+
+            const mockScanMetadata = {
+                analysis_mode: 'full' as const,
+                files_scanned: 5,
+                violation_breakdown: { 'SoqlInALoop': 1 },
+                violation_count: 1,
+                report_generated_ms: 1234567890
+            };
+
+            (mockConnection.request as jest.Mock).mockResolvedValueOnce({
+                status: ApexGuruResponseStatus.NEW,
+                requestId: 'req-123'
+            });
+
+            (mockConnection.request as jest.Mock).mockResolvedValueOnce({
+                status: ApexGuruResponseStatus.SUCCESS,
+                report: Buffer.from(JSON.stringify(mockViolations)).toString('base64'),
+                scanMetadata: mockScanMetadata
+            });
+
+            const result = await apexGuruService.analyzeApexClass(testClassContent, testFilePath);
+
+            // Test will fail until we update return type and parseReport
+            expect(result).toHaveProperty('violations');
+            expect(result).toHaveProperty('scanMetadata');
+            expect((result as any).violations).toEqual(mockViolations);
+            expect((result as any).scanMetadata).toEqual(mockScanMetadata);
         });
     });
 

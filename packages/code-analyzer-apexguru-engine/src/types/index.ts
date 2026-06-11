@@ -45,6 +45,7 @@ export type ApexGuruInitialResponse = ApexGuruResponse & {
  */
 export type ApexGuruQueryResponse = ApexGuruResponse & {
     report?: string;  // Base64 encoded JSON array of violations
+    scanMetadata?: ApexGuruScanMetadata;
 };
 
 /**

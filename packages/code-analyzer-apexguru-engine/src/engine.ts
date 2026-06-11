@@ -14,7 +14,7 @@ import {
     LogLevel
 } from '@salesforce/code-analyzer-engine-api';
 import { ApexGuruService } from './services/ApexGuruService';
-import { ApexGuruViolation, ApexGuruLocation, ApexGuruFix, ApexGuruSuggestion } from './types';
+import { ApexGuruViolation, ApexGuruLocation, ApexGuruFix, ApexGuruSuggestion, ApexGuruScanMetadata } from './types';
 import { ApexGuruEngineConfig, DEFAULT_APEXGURU_ENGINE_CONFIG } from './config';
 import { ENGINE_NAME, APEXGURU_FILE_EXTENSIONS } from './constants';
 import { APEXGURU_RULES, isKnownRule, FALLBACK_RULE_NAME } from './apexguru-rules';
@@ -122,6 +122,7 @@ export class ApexGuruEngine extends EngineEventEmitter implements Engine {
         try {
             // Analyze each file
             const allViolations: Violation[] = [];
+            const scanMetadataByFile: { [filePath: string]: ApexGuruScanMetadata } = {};
             let filesProcessed = 0;
 
             for (let i = 0; i < apexFiles.length; i++) {
@@ -142,10 +143,14 @@ export class ApexGuruEngine extends EngineEventEmitter implements Engine {
                     });
 
                     const fileContent = await fs.readFile(filePath, 'utf-8');
-                    const apexGuruViolations: ApexGuruViolation[] = await this.apexGuruService.analyzeApexClass(
+                    const { violations: apexGuruViolations, scanMetadata } = await this.apexGuruService.analyzeApexClass(
                         fileContent,
                         filePath
                     );
+
+                    if (scanMetadata) {
+                        scanMetadataByFile[filePath] = scanMetadata;
+                    }
 
                     const violations = apexGuruViolations.map(av =>
                         toViolation(av, filePath, runOptions.includeFixes ?? false, runOptions.includeSuggestions ?? false)
@@ -175,7 +180,11 @@ export class ApexGuruEngine extends EngineEventEmitter implements Engine {
                 }
             }
 
-            return { violations: allViolations };
+            const insights: Record<string, unknown> | undefined = Object.keys(scanMetadataByFile).length > 0
+                ? scanMetadataByFile
+                : undefined;
+
+            return { violations: allViolations, insights };
         } finally {
             // Always cleanup resources to allow process to exit
             this.apexGuruService.cleanup();

@@ -7,6 +7,7 @@ import {
     ApexGuruInitialResponse,
     ApexGuruQueryResponse,
     ApexGuruResponseStatus,
+    ApexGuruScanMetadata,
     ApexGuruViolation
 } from '../types';
 import * as http from 'node:http';
@@ -132,7 +133,7 @@ export class ApexGuruService {
      * Submit Apex class for analysis and wait for results
      * Wraps submit + poll together with a single timeout (api_timeout_ms)
      */
-    async analyzeApexClass(classContent: string, filePath: string): Promise<ApexGuruViolation[]> {
+    async analyzeApexClass(classContent: string, filePath: string): Promise<{violations: ApexGuruViolation[], scanMetadata?: ApexGuruScanMetadata}> {
         this.isCancelled = false;
         let timeoutId: NodeJS.Timeout;
         const analysisPromise = this.performAnalysis(classContent);
@@ -154,14 +155,12 @@ export class ApexGuruService {
      * Internal analysis implementation (without timeout wrapper)
      * Performs submit + poll
      */
-    private async performAnalysis(classContent: string): Promise<ApexGuruViolation[]> {
+    private async performAnalysis(classContent: string): Promise<{violations: ApexGuruViolation[], scanMetadata?: ApexGuruScanMetadata}> {
         // Step 1: Submit request
         const requestId = await this.submitAnalysis(classContent);
 
         // Step 2: Poll for results
-        const violations = await this.pollForResults(requestId);
-
-        return violations;
+        return await this.pollForResults(requestId);
     }
 
     /**
@@ -207,7 +206,7 @@ export class ApexGuruService {
      * Poll for analysis results with exponential backoff
      * Note: Timeout is handled by analyzeApexClass wrapper, not here
      */
-    private async pollForResults(requestId: string): Promise<ApexGuruViolation[]> {
+    private async pollForResults(requestId: string): Promise<{violations: ApexGuruViolation[], scanMetadata?: ApexGuruScanMetadata}> {
         const connection: Connection = this.authService.getConnection();
         const apiVersion = this.authService.getApiVersion();
         const url = requestId === 'pending'
@@ -247,7 +246,8 @@ export class ApexGuruService {
 
             // Check if analysis is complete
             if (response.status === ApexGuruResponseStatus.SUCCESS && response.report) {
-                return this.parseReport(response.report);
+                const violations = this.parseReport(response.report);
+                return { violations, scanMetadata: response.scanMetadata };
             }
 
             // Check for failures
