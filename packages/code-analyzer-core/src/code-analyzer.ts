@@ -521,7 +521,8 @@ export class CodeAnalyzer {
             getViolationCount: () => filteredViolations.length,
             getViolationCountOfSeverity: (severity: number) =>
                 filteredViolations.filter(v => v.getRule().getSeverityLevel() === severity).length,
-            getViolations: () => filteredViolations
+            getViolations: () => filteredViolations,
+            getInsights: () => originalResults.getInsights()
         };
     }
 

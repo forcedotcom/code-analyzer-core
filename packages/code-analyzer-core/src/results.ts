@@ -102,6 +102,9 @@ export interface EngineRunResults {
 
     /** Returns the array of {@link Violation} instances for the engine */
     getViolations(): Violation[]
+
+    /** Returns optional insights metadata provided by the engine about its analysis run */
+    getInsights(): Record<string, unknown> | undefined
 }
 
 /**
@@ -134,6 +137,12 @@ export interface RunResults {
      * @param engineName the name of the engine to return results for
      */
     getEngineRunResults(engineName: string): EngineRunResults
+
+    /**
+     * Returns the insights metadata for the specified engine, if any
+     * @param engineName the name of the engine to return insights for
+     */
+    getEngineInsights(engineName: string): Record<string, unknown> | undefined
 
     /**
      * Returns a formatted string of the results using the specified {@link OutputFormat}
@@ -386,6 +395,10 @@ export class EngineRunResultsImpl implements EngineRunResults {
         }
         return this.cachedViolations;
     }
+
+    getInsights(): Record<string, unknown> | undefined {
+        return this.apiEngineRunResults.insights;
+    }
 }
 
 abstract class AbstractErroneousEngineRunResults implements EngineRunResults {
@@ -417,6 +430,10 @@ abstract class AbstractErroneousEngineRunResults implements EngineRunResults {
 
     public getViolations(): Violation[] {
         return [this.violation];
+    }
+
+    public getInsights(): Record<string, unknown> | undefined {
+        return undefined;
     }
 }
 
@@ -462,6 +479,10 @@ class FilteredEngineRunResults implements EngineRunResults {
 
     getViolations(): Violation[] {
         return this.filteredViolations;
+    }
+
+    getInsights(): Record<string, unknown> | undefined {
+        return this.originalResults.getInsights();
     }
 }
 
@@ -521,6 +542,10 @@ export class RunResultsImpl implements RunResults {
             throw new Error(getMessage('EngineRunResultsMissing', engineName));
         }
         return engineRunResults;
+    }
+
+    getEngineInsights(engineName: string): Record<string, unknown> | undefined {
+        return this.engineRunResultsMap.get(engineName)?.getInsights();
     }
 
     toFormattedOutput(format: OutputFormat): string {

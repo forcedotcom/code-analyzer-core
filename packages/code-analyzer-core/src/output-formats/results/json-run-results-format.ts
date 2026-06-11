@@ -18,6 +18,9 @@ export type JsonResultsOutput = {
 
     // Array of objects containing information about the violations detected
     violations: JsonViolationOutput[]
+
+    // Optional insights metadata from each engine, keyed by engine name
+    insights?: { [engineName: string]: Record<string, unknown> }
 }
 /**
  * Type representing violation counts by severity level; this is specifically exported externally.

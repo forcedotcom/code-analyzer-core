@@ -429,5 +429,36 @@ describe('ApexGuruEngine', () => {
 
             expect(results.violations).toHaveLength(3);
         });
+
+        it('should populate insights in results when scanMetadata is returned', async () => {
+            mockWorkspace.getTargetedFiles.mockResolvedValue(['/test/Test.cls']);
+            const mockScanMetadata = {
+                analysis_mode: 'full' as const,
+                files_scanned: 1,
+                violation_breakdown: { SoqlInALoop: 1 },
+                violation_count: 1,
+                report_generated_ms: 1234567890
+            };
+            mockApexGuruService.analyzeApexClass.mockResolvedValue({
+                violations: [],
+                scanMetadata: mockScanMetadata
+            });
+            (fs.readFile as jest.Mock).mockResolvedValue('public class Test {}');
+
+            const results = await engine.runRules(['SoqlInALoop'], mockRunOptions);
+
+            expect(results.insights).toBeDefined();
+            expect(results.insights!['/test/Test.cls']).toEqual(mockScanMetadata);
+        });
+
+        it('should not include insights in results when no scanMetadata is returned', async () => {
+            mockWorkspace.getTargetedFiles.mockResolvedValue(['/test/Test.cls']);
+            mockApexGuruService.analyzeApexClass.mockResolvedValue({violations: []});
+            (fs.readFile as jest.Mock).mockResolvedValue('public class Test {}');
+
+            const results = await engine.runRules(['SoqlInALoop'], mockRunOptions);
+
+            expect(results.insights).toBeUndefined();
+        });
     });
 });
