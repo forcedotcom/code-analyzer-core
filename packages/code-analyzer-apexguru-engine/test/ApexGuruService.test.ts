@@ -411,6 +411,90 @@ describe('ApexGuruService', () => {
         });
     });
 
+    describe('curl integration', () => {
+        it('should use curlRequest for all ApexGuru API calls', async () => {
+            const mockViolations = [{
+                rule: 'TestRule',
+                message: 'test',
+                locations: [{ startLine: 1 }],
+                primaryLocationIndex: 0,
+                resources: [],
+                severity: 1
+            }];
+
+            // Mock validate
+            mockAuthService.curlRequest.mockResolvedValueOnce({
+                status: 'success'
+            });
+
+            // Mock submit
+            mockAuthService.curlRequest.mockResolvedValueOnce({
+                status: 'new',
+                requestId: 'req-123'
+            });
+
+            // Mock poll
+            mockAuthService.curlRequest.mockResolvedValueOnce({
+                status: 'success',
+                report: Buffer.from(JSON.stringify(mockViolations)).toString('base64')
+            });
+
+            await apexGuruService.validate();
+            const result = await apexGuruService.analyzeApexClass('public class Test {}', 'Test.cls');
+
+            // Verify curlRequest was called for all operations (validate, submit, poll)
+            expect(mockAuthService.curlRequest).toHaveBeenCalledTimes(3);
+
+            // Verify validate call
+            expect(mockAuthService.curlRequest).toHaveBeenNthCalledWith(
+                1,
+                'GET',
+                '/services/data/v64.0/apexguru/validate'
+            );
+
+            // Verify submit call
+            expect(mockAuthService.curlRequest).toHaveBeenNthCalledWith(
+                2,
+                'POST',
+                '/services/data/v64.0/apexguru/request',
+                expect.objectContaining({
+                    classContent: Buffer.from('public class Test {}').toString('base64')
+                })
+            );
+
+            // Verify poll call
+            expect(mockAuthService.curlRequest).toHaveBeenNthCalledWith(
+                3,
+                'GET',
+                '/services/data/v64.0/apexguru/request/req-123'
+            );
+
+            // Verify result
+            expect(result.violations).toEqual(mockViolations);
+        });
+
+        it('should pass base64-encoded content in POST body', async () => {
+            const classContent = 'public class MyClass { void method() {} }';
+
+            mockAuthService.curlRequest.mockResolvedValueOnce({
+                status: 'new',
+                requestId: 'req-123'
+            });
+
+            mockAuthService.curlRequest.mockResolvedValueOnce({
+                status: 'success',
+                report: Buffer.from(JSON.stringify([])).toString('base64')
+            });
+
+            await apexGuruService.analyzeApexClass(classContent, 'MyClass.cls');
+
+            // Verify base64 encoding in submit call
+            const submitCall = mockAuthService.curlRequest.mock.calls[0];
+            const requestBody = submitCall[2] as { classContent: string };
+            expect(requestBody.classContent).toBe(Buffer.from(classContent, 'utf-8').toString('base64'));
+        });
+    });
+
     describe('cleanup', () => {
         it('should not throw error', () => {
             expect(() => apexGuruService.cleanup()).not.toThrow();
