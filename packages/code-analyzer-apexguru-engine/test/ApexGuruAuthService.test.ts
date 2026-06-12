@@ -118,4 +118,84 @@ describe('ApexGuruAuthService', () => {
         // - Should mint new JWT if not cached
         // - Should return cached JWT if available
     });
+
+    describe('curlRequest', () => {
+        beforeEach(async () => {
+            const mockOrg = {
+                getConnection: jest.fn().mockReturnValue(mockConnection)
+            };
+            (Org.create as jest.Mock).mockResolvedValue(mockOrg);
+            await authService.initialize({ targetOrg: 'myorg' });
+        });
+
+        it('should perform GET request with correct headers and URL', async () => {
+            const mockFetch = jest.fn().mockResolvedValue({
+                ok: true,
+                json: jest.fn().mockResolvedValue({ status: 'success' })
+            });
+            global.fetch = mockFetch as any;
+
+            const result = await (authService as any).curlRequest('GET', '/services/data/v64.0/apexguru/validate');
+
+            expect(mockFetch).toHaveBeenCalledWith(
+                'https://test.salesforce.com/services/data/v64.0/apexguru/validate',
+                {
+                    method: 'GET',
+                    headers: {
+                        'Authorization': 'Bearer mock_access_token',
+                        'Content-Type': 'application/json'
+                    },
+                    body: undefined
+                }
+            );
+            expect(result).toEqual({ status: 'success' });
+        });
+
+        it('should perform POST request with body', async () => {
+            const mockFetch = jest.fn().mockResolvedValue({
+                ok: true,
+                json: jest.fn().mockResolvedValue({ requestId: '12345' })
+            });
+            global.fetch = mockFetch as any;
+
+            const requestBody = { classContent: 'base64string' };
+            const result = await (authService as any).curlRequest('POST', '/services/data/v64.0/apexguru/request', requestBody);
+
+            expect(mockFetch).toHaveBeenCalledWith(
+                'https://test.salesforce.com/services/data/v64.0/apexguru/request',
+                {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': 'Bearer mock_access_token',
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(requestBody)
+                }
+            );
+            expect(result).toEqual({ requestId: '12345' });
+        });
+
+        it('should throw error for non-200 response', async () => {
+            const mockFetch = jest.fn().mockResolvedValue({
+                ok: false,
+                status: 401,
+                statusText: 'Unauthorized',
+                text: jest.fn().mockResolvedValue('Invalid token')
+            });
+            global.fetch = mockFetch as any;
+
+            await expect((authService as any).curlRequest('GET', '/services/data/v64.0/apexguru/validate'))
+                .rejects
+                .toThrow('HTTP 401 Unauthorized at /services/data/v64.0/apexguru/validate: Invalid token');
+        });
+
+        it('should handle network errors', async () => {
+            const mockFetch = jest.fn().mockRejectedValue(new Error('Network failure'));
+            global.fetch = mockFetch as any;
+
+            await expect((authService as any).curlRequest('GET', '/services/data/v64.0/apexguru/validate'))
+                .rejects
+                .toThrow('Request failed for /services/data/v64.0/apexguru/validate: Network failure');
+        });
+    });
 });

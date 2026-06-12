@@ -191,4 +191,43 @@ export class ApexGuruAuthService {
         }
         return await this.mintOrgJwt();
     }
+
+    /**
+     * Perform HTTP request using fetch with Authorization Bearer token
+     * @param method - HTTP method (GET, POST, etc.)
+     * @param path - API path (e.g., '/services/data/v64.0/apexguru/validate')
+     * @param body - Optional request body
+     * @returns Promise<T> - Parsed JSON response
+     * @throws Error if request fails or returns non-200 status
+     */
+    private async curlRequest<T>(method: string, path: string, body?: unknown): Promise<T> {
+        try {
+            const url = `${this.getInstanceUrl()}${path}`;
+            const accessToken = this.getAccessToken();
+
+            const response = await fetch(url, {
+                method,
+                headers: {
+                    'Authorization': `Bearer ${accessToken}`,
+                    'Content-Type': 'application/json'
+                },
+                body: body ? JSON.stringify(body) : undefined
+            });
+
+            if (!response.ok) {
+                const errorText = await response.text();
+                throw new Error(
+                    `HTTP ${response.status} ${response.statusText} at ${path}: ${errorText}`
+                );
+            }
+
+            return await response.json() as T;
+        } catch (error) {
+            if (error instanceof Error && error.message.startsWith('HTTP ')) {
+                throw error;
+            }
+            const errorMessage = error instanceof Error ? error.message : String(error);
+            throw new Error(`Request failed for ${path}: ${errorMessage}`);
+        }
+    }
 }
