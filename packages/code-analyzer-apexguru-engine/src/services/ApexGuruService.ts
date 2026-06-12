@@ -1,6 +1,5 @@
 
 
-import { Connection } from '@salesforce/core';
 import { LogLevel } from '@salesforce/code-analyzer-engine-api';
 import { ApexGuruAuthService } from './ApexGuruAuthService';
 import {
