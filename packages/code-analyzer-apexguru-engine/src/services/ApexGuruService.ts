@@ -89,6 +89,50 @@ export class ApexGuruService {
     }
 
     /**
+     * Export curl commands for debugging/documentation purposes
+     * Returns curl commands for validate, submit, and query endpoints
+     * Note: Requires initialize() to be called first for valid authentication
+     */
+    exportCurlCommands(): {
+        validate: string;
+        submit: (classContent: string) => string;
+        query: (requestId: string) => string;
+    } {
+        try {
+            const apiVersion = this.authService.getApiVersion();
+
+            return {
+                validate: this.generateCurlCommand(
+                    'GET',
+                    `/services/data/v${apiVersion}/apexguru/validate`
+                ),
+                submit: (classContent: string) => {
+                    const base64Content = Buffer.from(classContent, 'utf-8').toString('base64');
+                    const requestBody = { classContent: base64Content };
+                    return this.generateCurlCommand(
+                        'POST',
+                        `/services/data/v${apiVersion}/apexguru/request`,
+                        JSON.stringify(requestBody)
+                    );
+                },
+                query: (requestId: string) => {
+                    const url = requestId === 'pending'
+                        ? `/services/data/v${apiVersion}/apexguru/request`
+                        : `/services/data/v${apiVersion}/apexguru/request/${requestId}`;
+                    return this.generateCurlCommand('GET', url);
+                }
+            };
+        } catch {
+            const notInitialized = '# Connection not initialized';
+            return {
+                validate: notInitialized,
+                submit: () => notInitialized,
+                query: () => notInitialized
+            };
+        }
+    }
+
+    /**
      * Validate ApexGuru access
      * Throws error with specific context if validation fails
      */
@@ -113,6 +157,11 @@ export class ApexGuruService {
         const connection: Connection = this.authService.getConnection();
         const apiVersion = this.authService.getApiVersion();
         const url = `/services/data/v${apiVersion}/apexguru/validate`;
+
+        if (process.env.APEXGURU_DEBUG_CURL) {
+            const curlCmd = this.generateCurlCommand('GET', url);
+            this.emitLogEvent(LogLevel.Fine, `Equivalent curl command:\n${curlCmd}`);
+        }
 
         const response = await connection.request({
             method: 'GET',
@@ -173,12 +222,18 @@ export class ApexGuruService {
 
         const base64Content = Buffer.from(classContent, 'utf-8').toString('base64');
         const requestBody = { classContent: base64Content };
+        const body = JSON.stringify(requestBody);
+
+        if (process.env.APEXGURU_DEBUG_CURL) {
+            const curlCmd = this.generateCurlCommand('POST', url, body);
+            this.emitLogEvent(LogLevel.Fine, `Equivalent curl command:\n${curlCmd}`);
+        }
 
         try {
             const response: ApexGuruInitialResponse = await connection.request({
                 method: 'POST',
                 url,
-                body: JSON.stringify(requestBody),
+                body,
                 headers: { 'Content-Type': 'application/json' }
             });
 
@@ -232,6 +287,11 @@ export class ApexGuruService {
             if (this.progressCallback) {
                 const asymptoticProgress = 95 * (1 - Math.exp(-attempts / 4));
                 this.progressCallback(asymptoticProgress);
+            }
+
+            if (process.env.APEXGURU_DEBUG_CURL) {
+                const curlCmd = this.generateCurlCommand('GET', url);
+                this.emitLogEvent(LogLevel.Fine, `Equivalent curl command:\n${curlCmd}`);
             }
 
             const response: ApexGuruQueryResponse = await connection.request({
@@ -288,5 +348,32 @@ export class ApexGuruService {
      */
     private sleep(ms: number): Promise<void> {
         return new Promise(resolve => setTimeout(resolve, ms));
+    }
+
+    /**
+     * Generate equivalent curl command for debugging
+     */
+    private generateCurlCommand(method: string, url: string, body?: string): string {
+        try {
+            const connection = this.authService.getConnection();
+            if (!connection || !connection.instanceUrl || !connection.accessToken) {
+                return '# Connection not initialized';
+            }
+
+            const fullUrl = `${connection.instanceUrl}${url}`;
+            const lines: string[] = [`curl -X ${method}`];
+            lines.push(`  '${fullUrl}'`);
+            lines.push(`  -H "Authorization: Bearer ${connection.accessToken}"`);
+
+            if (body) {
+                lines.push(`  -H "Content-Type: application/json"`);
+                const escapedBody = body.replace(/'/g, "'\\''");
+                lines.push(`  -d '${escapedBody}'`);
+            }
+
+            return lines.join(' \\\n');
+        } catch {
+            return '# Connection not initialized';
+        }
     }
 }

@@ -415,4 +415,239 @@ describe('ApexGuruService', () => {
             expect(() => apexGuruService.cleanup()).not.toThrow();
         });
     });
+
+    describe('generateCurlCommand', () => {
+        beforeEach(async () => {
+            // Initialize to set up connection
+            await apexGuruService.initialize();
+        });
+
+        it('should generate valid curl command for GET validate endpoint', () => {
+            const curlCmd = (apexGuruService as any).generateCurlCommand(
+                'GET',
+                '/services/data/v64.0/apexguru/validate'
+            );
+
+            expect(curlCmd).toContain('curl -X GET');
+            expect(curlCmd).toContain('https://test.salesforce.com/services/data/v64.0/apexguru/validate');
+            expect(curlCmd).toContain('-H "Authorization: Bearer test-token"');
+        });
+
+        it('should generate valid curl command for POST submit endpoint with body', () => {
+            const testContent = 'public class Test { }';
+            const base64Content = Buffer.from(testContent, 'utf-8').toString('base64');
+            const requestBody = { classContent: base64Content };
+
+            const curlCmd = (apexGuruService as any).generateCurlCommand(
+                'POST',
+                '/services/data/v64.0/apexguru/request',
+                JSON.stringify(requestBody)
+            );
+
+            expect(curlCmd).toContain('curl -X POST');
+            expect(curlCmd).toContain('https://test.salesforce.com/services/data/v64.0/apexguru/request');
+            expect(curlCmd).toContain('-H "Authorization: Bearer test-token"');
+            expect(curlCmd).toContain('-H "Content-Type: application/json"');
+            expect(curlCmd).toContain(`-d '${JSON.stringify(requestBody)}'`);
+        });
+
+        it('should generate valid curl command for GET query endpoint with requestId', () => {
+            const requestId = 'req-123';
+            const curlCmd = (apexGuruService as any).generateCurlCommand(
+                'GET',
+                `/services/data/v64.0/apexguru/request/${requestId}`
+            );
+
+            expect(curlCmd).toContain('curl -X GET');
+            expect(curlCmd).toContain(`https://test.salesforce.com/services/data/v64.0/apexguru/request/${requestId}`);
+            expect(curlCmd).toContain('-H "Authorization: Bearer test-token"');
+        });
+
+        it('should properly escape single quotes in body', () => {
+            const bodyWithQuotes = JSON.stringify({ data: "It's a test" });
+            const curlCmd = (apexGuruService as any).generateCurlCommand(
+                'POST',
+                '/services/data/v64.0/apexguru/request',
+                bodyWithQuotes
+            );
+
+            expect(curlCmd).toContain(`-d '${bodyWithQuotes.replace(/'/g, "'\\''")}'`);
+        });
+
+        it('should return graceful message when connection not initialized', () => {
+            const uninitializedAuthService = {
+                initialize: jest.fn(),
+                getConnection: jest.fn().mockReturnValue(null),
+                getAccessToken: jest.fn(),
+                getInstanceUrl: jest.fn(),
+                getApiVersion: jest.fn(),
+                mintOrgJwt: jest.fn()
+            } as any;
+
+            jest.mocked(ApexGuruAuthService).mockImplementationOnce(() => uninitializedAuthService);
+
+            const uninitializedService = new ApexGuruService(
+                mockEmitLogEvent,
+                120000,
+                2000,
+                60000,
+                2
+            );
+
+            const curlCmd = (uninitializedService as any).generateCurlCommand(
+                'GET',
+                '/services/data/v64.0/apexguru/validate'
+            );
+
+            expect(curlCmd).toBe('# Connection not initialized');
+        });
+    });
+
+    describe('debug curl logging', () => {
+        const originalEnv = process.env.APEXGURU_DEBUG_CURL;
+
+        afterEach(() => {
+            if (originalEnv !== undefined) {
+                process.env.APEXGURU_DEBUG_CURL = originalEnv;
+            } else {
+                delete process.env.APEXGURU_DEBUG_CURL;
+            }
+        });
+
+        beforeEach(async () => {
+            await apexGuruService.initialize();
+        });
+
+        it('should log curl command for validate when APEXGURU_DEBUG_CURL is set', async () => {
+            process.env.APEXGURU_DEBUG_CURL = '1';
+
+            (mockConnection.request as jest.Mock).mockResolvedValue({
+                status: ApexGuruResponseStatus.SUCCESS
+            });
+
+            await apexGuruService.validate();
+
+            expect(mockEmitLogEvent).toHaveBeenCalledWith(
+                expect.anything(),
+                expect.stringContaining('Equivalent curl command:')
+            );
+            expect(mockEmitLogEvent).toHaveBeenCalledWith(
+                expect.anything(),
+                expect.stringContaining('curl -X GET')
+            );
+        });
+
+        it('should not log curl command for validate when APEXGURU_DEBUG_CURL is not set', async () => {
+            delete process.env.APEXGURU_DEBUG_CURL;
+
+            (mockConnection.request as jest.Mock).mockResolvedValue({
+                status: ApexGuruResponseStatus.SUCCESS
+            });
+
+            await apexGuruService.validate();
+
+            const curlLogs = mockEmitLogEvent.mock.calls.filter((call: any[]) =>
+                call[1] && call[1].includes('curl')
+            );
+            expect(curlLogs).toHaveLength(0);
+        });
+
+        it('should log curl command for submit when APEXGURU_DEBUG_CURL is set', async () => {
+            process.env.APEXGURU_DEBUG_CURL = '1';
+
+            (mockConnection.request as jest.Mock).mockResolvedValueOnce({
+                status: ApexGuruResponseStatus.NEW,
+                requestId: 'req-123'
+            });
+
+            (mockConnection.request as jest.Mock).mockResolvedValueOnce({
+                status: ApexGuruResponseStatus.SUCCESS,
+                report: Buffer.from(JSON.stringify([])).toString('base64')
+            });
+
+            await apexGuruService.analyzeApexClass('public class Test { }', '/test/Test.cls');
+
+            const curlLogs = mockEmitLogEvent.mock.calls.filter((call: any[]) =>
+                call[1] && call[1].includes('Equivalent curl command:')
+            );
+            expect(curlLogs.length).toBeGreaterThanOrEqual(2); // At least submit and poll
+        });
+
+        it('should log curl command for poll when APEXGURU_DEBUG_CURL is set', async () => {
+            process.env.APEXGURU_DEBUG_CURL = '1';
+
+            (mockConnection.request as jest.Mock).mockResolvedValueOnce({
+                status: ApexGuruResponseStatus.NEW,
+                requestId: 'req-123'
+            });
+
+            (mockConnection.request as jest.Mock).mockResolvedValueOnce({
+                status: ApexGuruResponseStatus.SUCCESS,
+                report: Buffer.from(JSON.stringify([])).toString('base64')
+            });
+
+            await apexGuruService.analyzeApexClass('public class Test { }', '/test/Test.cls');
+
+            const curlWithRequestId = mockEmitLogEvent.mock.calls.filter((call: any[]) =>
+                call[1] && call[1].includes('curl') && call[1].includes('req-123')
+            );
+            expect(curlWithRequestId.length).toBeGreaterThan(0);
+        });
+    });
+
+    describe('exportCurlCommands', () => {
+        beforeEach(async () => {
+            await apexGuruService.initialize();
+        });
+
+        it('should return object with validate, submit, and query curl commands', () => {
+            const exported = apexGuruService.exportCurlCommands();
+
+            expect(exported).toHaveProperty('validate');
+            expect(exported).toHaveProperty('submit');
+            expect(exported).toHaveProperty('query');
+            expect(typeof exported.validate).toBe('string');
+            expect(typeof exported.submit).toBe('function');
+            expect(typeof exported.query).toBe('function');
+        });
+
+        it('should generate valid validate curl command', () => {
+            const exported = apexGuruService.exportCurlCommands();
+
+            expect(exported.validate).toContain('curl -X GET');
+            expect(exported.validate).toContain('https://test.salesforce.com/services/data/v64.0/apexguru/validate');
+            expect(exported.validate).toContain('Authorization: Bearer test-token');
+        });
+
+        it('should generate valid submit curl command with class content', () => {
+            const exported = apexGuruService.exportCurlCommands();
+            const testContent = 'public class Test { }';
+            const submitCmd = exported.submit(testContent);
+
+            expect(submitCmd).toContain('curl -X POST');
+            expect(submitCmd).toContain('https://test.salesforce.com/services/data/v64.0/apexguru/request');
+            expect(submitCmd).toContain('Authorization: Bearer test-token');
+            expect(submitCmd).toContain('Content-Type: application/json');
+            expect(submitCmd).toContain(Buffer.from(testContent).toString('base64'));
+        });
+
+        it('should generate valid query curl command with requestId', () => {
+            const exported = apexGuruService.exportCurlCommands();
+            const requestId = 'req-123';
+            const queryCmd = exported.query(requestId);
+
+            expect(queryCmd).toContain('curl -X GET');
+            expect(queryCmd).toContain(`https://test.salesforce.com/services/data/v64.0/apexguru/request/${requestId}`);
+            expect(queryCmd).toContain('Authorization: Bearer test-token');
+        });
+
+        it('should handle pending requestId for query', () => {
+            const exported = apexGuruService.exportCurlCommands();
+            const queryCmd = exported.query('pending');
+
+            expect(queryCmd).toContain('curl -X GET');
+            expect(queryCmd).toContain('https://test.salesforce.com/services/data/v64.0/apexguru/request');
+            expect(queryCmd).not.toContain('request/pending');
+        });
+    });
 });
