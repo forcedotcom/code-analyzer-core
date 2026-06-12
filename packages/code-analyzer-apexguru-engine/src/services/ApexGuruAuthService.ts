@@ -200,7 +200,7 @@ export class ApexGuruAuthService {
      * @returns Promise<T> - Parsed JSON response
      * @throws Error if request fails or returns non-200 status
      */
-    private async curlRequest<T>(method: string, path: string, body?: unknown): Promise<T> {
+    async curlRequest<T>(method: string, path: string, body?: unknown): Promise<T> {
         try {
             const url = `${this.getInstanceUrl()}${path}`;
             const accessToken = this.getAccessToken();

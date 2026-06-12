@@ -110,14 +110,10 @@ export class ApexGuruService {
      * Internal validate implementation (without timeout wrapper)
      */
     private async performValidate(): Promise<void> {
-        const connection: Connection = this.authService.getConnection();
         const apiVersion = this.authService.getApiVersion();
         const url = `/services/data/v${apiVersion}/apexguru/validate`;
 
-        const response = await connection.request({
-            method: 'GET',
-            url
-        }) as { status?: string };
+        const response: { status?: string } = await (this.authService as any).curlRequest('GET', url);
 
         if (response.status && response.status.toLowerCase() === ApexGuruResponseStatus.SUCCESS) {
             return;

@@ -29,7 +29,8 @@ describe('ApexGuruService', () => {
             getAccessToken: jest.fn().mockReturnValue('test-token'),
             getInstanceUrl: jest.fn().mockReturnValue('https://test.salesforce.com'),
             getApiVersion: jest.fn().mockReturnValue('64.0'),
-            mintOrgJwt: jest.fn().mockResolvedValue('mock-jwt-token')
+            mintOrgJwt: jest.fn().mockResolvedValue('mock-jwt-token'),
+            curlRequest: jest.fn()
         } as any;
 
         jest.mocked(ApexGuruAuthService).mockImplementation(() => mockAuthService);
@@ -59,20 +60,20 @@ describe('ApexGuruService', () => {
 
     describe('validate', () => {
         it('should succeed when validation returns success status', async () => {
-            (mockConnection.request as jest.Mock).mockResolvedValue({
+            mockAuthService.curlRequest.mockResolvedValue({
                 status: ApexGuruResponseStatus.SUCCESS
             });
 
             await expect(apexGuruService.validate()).resolves.toBeUndefined();
 
-            expect(mockConnection.request).toHaveBeenCalledWith({
-                method: 'GET',
-                url: '/services/data/v64.0/apexguru/validate'
-            });
+            expect(mockAuthService.curlRequest).toHaveBeenCalledWith(
+                'GET',
+                '/services/data/v64.0/apexguru/validate'
+            );
         });
 
         it('should succeed for uppercase SUCCESS status', async () => {
-            (mockConnection.request as jest.Mock).mockResolvedValue({
+            mockAuthService.curlRequest.mockResolvedValue({
                 status: 'SUCCESS'
             });
 
@@ -80,7 +81,7 @@ describe('ApexGuruService', () => {
         });
 
         it('should throw error when validation fails', async () => {
-            (mockConnection.request as jest.Mock).mockResolvedValue({
+            mockAuthService.curlRequest.mockResolvedValue({
                 status: ApexGuruResponseStatus.FAILED
             });
 
@@ -89,7 +90,7 @@ describe('ApexGuruService', () => {
         });
 
         it('should throw error on network failure', async () => {
-            (mockConnection.request as jest.Mock).mockRejectedValue(new Error('Network error'));
+            mockAuthService.curlRequest.mockRejectedValue(new Error('Network error'));
 
             await expect(apexGuruService.validate())
                 .rejects.toThrow('Network error');
@@ -98,7 +99,7 @@ describe('ApexGuruService', () => {
         it('should throw timeout error when validation takes too long', async () => {
             jest.useFakeTimers();
 
-            (mockConnection.request as jest.Mock).mockImplementation(() =>
+            mockAuthService.curlRequest.mockImplementation(() =>
                 new Promise(resolve => setTimeout(() => resolve({ status: ApexGuruResponseStatus.SUCCESS }), 200000))
             );
 
