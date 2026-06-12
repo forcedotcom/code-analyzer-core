@@ -129,13 +129,13 @@ describe('ApexGuruService', () => {
             }];
 
             // Mock submit response
-            (mockConnection.request as jest.Mock).mockResolvedValueOnce({
+            mockAuthService.curlRequest.mockResolvedValueOnce({
                 status: ApexGuruResponseStatus.NEW,
                 requestId: mockRequestId
             });
 
             // Mock poll response with success
-            (mockConnection.request as jest.Mock).mockResolvedValueOnce({
+            mockAuthService.curlRequest.mockResolvedValueOnce({
                 status: ApexGuruResponseStatus.SUCCESS,
                 report: Buffer.from(JSON.stringify(mockViolations)).toString('base64')
             });
@@ -144,7 +144,7 @@ describe('ApexGuruService', () => {
 
             expect(result.violations).toEqual(mockViolations);
             expect(result.scanMetadata).toBeUndefined();
-            expect(mockConnection.request).toHaveBeenCalledTimes(2);
+            expect(mockAuthService.curlRequest).toHaveBeenCalledTimes(2);
         });
 
         it('should return scanMetadata when API response includes it', async () => {
@@ -164,12 +164,12 @@ describe('ApexGuruService', () => {
                 report_generated_ms: 1234567890
             };
 
-            (mockConnection.request as jest.Mock).mockResolvedValueOnce({
+            mockAuthService.curlRequest.mockResolvedValueOnce({
                 status: ApexGuruResponseStatus.NEW,
                 requestId: 'req-123'
             });
 
-            (mockConnection.request as jest.Mock).mockResolvedValueOnce({
+            mockAuthService.curlRequest.mockResolvedValueOnce({
                 status: ApexGuruResponseStatus.SUCCESS,
                 report: Buffer.from(JSON.stringify(mockViolations)).toString('base64'),
                 scanMetadata: mockScanMetadata
@@ -182,34 +182,34 @@ describe('ApexGuruService', () => {
         });
 
         it('should submit base64 encoded content', async () => {
-            (mockConnection.request as jest.Mock).mockResolvedValueOnce({
+            mockAuthService.curlRequest.mockResolvedValueOnce({
                 status: ApexGuruResponseStatus.NEW,
                 requestId: 'req-123'
             });
 
-            (mockConnection.request as jest.Mock).mockResolvedValueOnce({
+            mockAuthService.curlRequest.mockResolvedValueOnce({
                 status: ApexGuruResponseStatus.SUCCESS,
                 report: Buffer.from(JSON.stringify([])).toString('base64')
             });
 
             await apexGuruService.analyzeApexClass(testClassContent, testFilePath);
 
-            const submitCall = (mockConnection.request as jest.Mock).mock.calls[0][0];
-            expect(submitCall.method).toBe('POST');
-            expect(submitCall.url).toBe('/services/data/v64.0/apexguru/request');
+            const submitCall = mockAuthService.curlRequest.mock.calls[0];
+            expect(submitCall[0]).toBe('POST');
+            expect(submitCall[1]).toBe('/services/data/v64.0/apexguru/request');
 
-            const body = JSON.parse(submitCall.body);
+            const body = submitCall[2] as { classContent: string };
             expect(body.classContent).toBe(Buffer.from(testClassContent).toString('base64'));
         });
 
         it('should poll multiple times until success', async () => {
-            (mockConnection.request as jest.Mock).mockResolvedValueOnce({
+            mockAuthService.curlRequest.mockResolvedValueOnce({
                 status: ApexGuruResponseStatus.NEW,
                 requestId: 'req-123'
             });
 
             // First poll returns "new", second returns success
-            (mockConnection.request as jest.Mock)
+            mockAuthService.curlRequest
                 .mockResolvedValueOnce({ status: ApexGuruResponseStatus.NEW })
                 .mockResolvedValueOnce({
                     status: ApexGuruResponseStatus.SUCCESS,
@@ -218,18 +218,18 @@ describe('ApexGuruService', () => {
 
             await apexGuruService.analyzeApexClass(testClassContent, testFilePath);
 
-            expect(mockConnection.request).toHaveBeenCalledTimes(3); // 1 submit + 2 polls
+            expect(mockAuthService.curlRequest).toHaveBeenCalledTimes(3); // 1 submit + 2 polls
         }, 15000);
 
         it('should handle immediate success response', async () => {
             const mockViolations = [{ rule: 'Test', message: 'test', locations: [{ startLine: 1 }], primaryLocationIndex: 0, resources: [], severity: 1 }];
 
-            (mockConnection.request as jest.Mock).mockResolvedValueOnce({
+            mockAuthService.curlRequest.mockResolvedValueOnce({
                 status: ApexGuruResponseStatus.SUCCESS,
                 requestId: 'req-123'
             });
 
-            (mockConnection.request as jest.Mock).mockResolvedValueOnce({
+            mockAuthService.curlRequest.mockResolvedValueOnce({
                 status: ApexGuruResponseStatus.SUCCESS,
                 report: Buffer.from(JSON.stringify(mockViolations)).toString('base64')
             });
@@ -240,7 +240,7 @@ describe('ApexGuruService', () => {
         });
 
         it('should throw error when analysis fails', async () => {
-            (mockConnection.request as jest.Mock).mockResolvedValueOnce({
+            mockAuthService.curlRequest.mockResolvedValueOnce({
                 status: ApexGuruResponseStatus.FAILED,
                 message: 'Analysis failed'
             });
@@ -250,12 +250,12 @@ describe('ApexGuruService', () => {
         });
 
         it('should throw error on poll failure', async () => {
-            (mockConnection.request as jest.Mock).mockResolvedValueOnce({
+            mockAuthService.curlRequest.mockResolvedValueOnce({
                 status: ApexGuruResponseStatus.NEW,
                 requestId: 'req-123'
             });
 
-            (mockConnection.request as jest.Mock).mockResolvedValueOnce({
+            mockAuthService.curlRequest.mockResolvedValueOnce({
                 status: ApexGuruResponseStatus.FAILED,
                 message: 'Processing failed'
             });
@@ -265,12 +265,12 @@ describe('ApexGuruService', () => {
         });
 
         it('should throw error on poll error status', async () => {
-            (mockConnection.request as jest.Mock).mockResolvedValueOnce({
+            mockAuthService.curlRequest.mockResolvedValueOnce({
                 status: ApexGuruResponseStatus.NEW,
                 requestId: 'req-123'
             });
 
-            (mockConnection.request as jest.Mock).mockResolvedValueOnce({
+            mockAuthService.curlRequest.mockResolvedValueOnce({
                 status: ApexGuruResponseStatus.ERROR,
                 message: 'Internal error'
             });
@@ -286,12 +286,12 @@ describe('ApexGuruService', () => {
             const progressCallback = jest.fn();
             apexGuruService.setProgressCallback(progressCallback);
 
-            (mockConnection.request as jest.Mock).mockResolvedValueOnce({
+            mockAuthService.curlRequest.mockResolvedValueOnce({
                 status: ApexGuruResponseStatus.NEW,
                 requestId: 'req-123'
             });
 
-            (mockConnection.request as jest.Mock)
+            mockAuthService.curlRequest
                 .mockResolvedValueOnce({ status: ApexGuruResponseStatus.NEW })
                 .mockResolvedValueOnce({
                     status: ApexGuruResponseStatus.SUCCESS,
@@ -324,12 +324,12 @@ describe('ApexGuruService', () => {
                 }
             ];
 
-            (mockConnection.request as jest.Mock).mockResolvedValueOnce({
+            mockAuthService.curlRequest.mockResolvedValueOnce({
                 status: ApexGuruResponseStatus.NEW,
                 requestId: 'req-123'
             });
 
-            (mockConnection.request as jest.Mock).mockResolvedValueOnce({
+            mockAuthService.curlRequest.mockResolvedValueOnce({
                 status: ApexGuruResponseStatus.SUCCESS,
                 report: Buffer.from(JSON.stringify(mockViolations)).toString('base64')
             });
@@ -345,13 +345,13 @@ describe('ApexGuruService', () => {
             jest.useFakeTimers();
 
             // Mock submit response
-            (mockConnection.request as jest.Mock).mockResolvedValueOnce({
+            mockAuthService.curlRequest.mockResolvedValueOnce({
                 status: ApexGuruResponseStatus.NEW,
                 requestId: 'req-123'
             });
 
             // Mock never-ending polling (keeps returning "processing")
-            (mockConnection.request as jest.Mock).mockImplementation(() =>
+            mockAuthService.curlRequest.mockImplementation(() =>
                 new Promise(resolve => {
                     setTimeout(() => resolve({ status: ApexGuruResponseStatus.NEW }), 100);
                 })
@@ -390,12 +390,12 @@ describe('ApexGuruService', () => {
                 report_generated_ms: 1234567890
             };
 
-            (mockConnection.request as jest.Mock).mockResolvedValueOnce({
+            mockAuthService.curlRequest.mockResolvedValueOnce({
                 status: ApexGuruResponseStatus.NEW,
                 requestId: 'req-123'
             });
 
-            (mockConnection.request as jest.Mock).mockResolvedValueOnce({
+            mockAuthService.curlRequest.mockResolvedValueOnce({
                 status: ApexGuruResponseStatus.SUCCESS,
                 report: Buffer.from(JSON.stringify(mockViolations)).toString('base64'),
                 scanMetadata: mockScanMetadata

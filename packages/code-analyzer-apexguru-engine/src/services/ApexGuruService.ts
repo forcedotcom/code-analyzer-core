@@ -163,7 +163,6 @@ export class ApexGuruService {
      * Submit Apex class for analysis
      */
     private async submitAnalysis(classContent: string): Promise<string> {
-        const connection: Connection = this.authService.getConnection();
         const apiVersion = this.authService.getApiVersion();
         const url = `/services/data/v${apiVersion}/apexguru/request`;
 
@@ -171,12 +170,7 @@ export class ApexGuruService {
         const requestBody = { classContent: base64Content };
 
         try {
-            const response: ApexGuruInitialResponse = await connection.request({
-                method: 'POST',
-                url,
-                body: JSON.stringify(requestBody),
-                headers: { 'Content-Type': 'application/json' }
-            });
+            const response: ApexGuruInitialResponse = await (this.authService as any).curlRequest('POST', url, requestBody);
 
             // Normalize status to lowercase
             if (response.status) {
@@ -203,7 +197,6 @@ export class ApexGuruService {
      * Note: Timeout is handled by analyzeApexClass wrapper, not here
      */
     private async pollForResults(requestId: string): Promise<{violations: ApexGuruViolation[], scanMetadata?: ApexGuruScanMetadata}> {
-        const connection: Connection = this.authService.getConnection();
         const apiVersion = this.authService.getApiVersion();
         const url = requestId === 'pending'
             ? `/services/data/v${apiVersion}/apexguru/request`
@@ -230,10 +223,7 @@ export class ApexGuruService {
                 this.progressCallback(asymptoticProgress);
             }
 
-            const response: ApexGuruQueryResponse = await connection.request({
-                method: 'GET',
-                url
-            });
+            const response: ApexGuruQueryResponse = await (this.authService as any).curlRequest('GET', url);
 
             // Normalize status
             if (response.status) {
