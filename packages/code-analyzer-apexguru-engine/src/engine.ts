@@ -9,12 +9,11 @@ import {
     EngineRunResults,
     Violation,
     CodeLocation,
-    Fix,
     Suggestion,
     LogLevel
 } from '@salesforce/code-analyzer-engine-api';
 import { ApexGuruService } from './services/ApexGuruService';
-import { ApexGuruViolation, ApexGuruLocation, ApexGuruFix, ApexGuruSuggestion, ApexGuruScanMetadata } from './types';
+import { ApexGuruViolation, ApexGuruLocation, ApexGuruSuggestion, ApexGuruScanMetadata } from './types';
 import { ApexGuruEngineConfig, DEFAULT_APEXGURU_ENGINE_CONFIG } from './config';
 import { ENGINE_NAME, APEXGURU_FILE_EXTENSIONS } from './constants';
 import { APEXGURU_RULES, isKnownRule, FALLBACK_RULE_NAME } from './apexguru-rules';
@@ -80,7 +79,7 @@ export class ApexGuruEngine extends EngineEventEmitter implements Engine {
             return { violations: [] };
         }
 
-        // Note: ApexGuru API analyzes code and returns ALL detected violations.
+        // Note: SFAP ApexGuru API analyzes entire workspace and returns ALL detected violations.
         // Individual rules cannot be enabled/disabled via the API.
         // We filter violations to match the selected rules after analysis completes.
 
@@ -101,92 +100,57 @@ export class ApexGuruEngine extends EngineEventEmitter implements Engine {
             );
         }
 
-        // Validate ApexGuru access
-        try {
-            await this.apexGuruService.validate();
-        } catch (error) {
-            const message = error instanceof Error ? error.message : String(error);
-            throw new Error(`Failed to validate ApexGuru access: ${message}`);
-        }
+        // Get workspace root path
+        const workspaceRoot = runOptions.workspace.getWorkspaceRoot();
 
-        // Get targeted files from workspace and filter for Apex files
+        // Get targeted files to verify we have Apex files
         const targetedFiles = await runOptions.workspace.getTargetedFiles();
         const apexFiles = targetedFiles.filter(file => this.isApexFile(path.basename(file)));
 
         if (apexFiles.length === 0) {
             this.emitLogEvent(LogLevel.Warn, 'No Apex class files found to analyze');
-            this.apexGuruService.cleanup(); // Cleanup even on early return
+            this.apexGuruService.cleanup();
             return { violations: [] };
         }
 
+        // Workspace root is null when files come from different drives/roots — ApexGuru requires a single zip
+        if (!workspaceRoot) {
+            this.apexGuruService.cleanup();
+            throw new Error('ApexGuru requires a common workspace root, but the targeted files do not share one.');
+        }
+
         try {
-            // Analyze each file
-            const allViolations: Violation[] = [];
-            const scanMetadataByFile: { [filePath: string]: ApexGuruScanMetadata } = {};
-            let filesProcessed = 0;
+            // Set up progress callback for polling
+            this.apexGuruService.setProgressCallback((pollingProgress: number) => {
+                this.emitRunRulesProgressEvent(pollingProgress);
+            });
 
-            for (let i = 0; i < apexFiles.length; i++) {
-                const filePath = apexFiles[i];
+            // Scan entire workspace (creates zip -> submits -> polls -> decodes)
+            const { violations: apexGuruViolations, scanMetadata } = await this.apexGuruService.scanWorkspace(workspaceRoot);
 
-                try {
-                    // Emit progress at start of file
-                    const baseProgress = (filesProcessed / apexFiles.length) * 100;
-                    this.emitRunRulesProgressEvent(baseProgress);
+            // Convert all ApexGuru violations to Code Analyzer format
+            const allViolations = apexGuruViolations.map(av => {
+                // SFAP response includes file path in location.file
+                const filePath = av.locations[0]?.file ?? 'unknown';
+                return toViolation(av, filePath, runOptions.includeSuggestions ?? false);
+            });
 
-                    // Set up progress callback for polling
-                    // Each file gets a slice of the total progress (0-95% of that slice during polling)
-                    const progressSlicePerFile = 100 / apexFiles.length;
-                    this.apexGuruService.setProgressCallback((pollingProgress: number) => {
-                        // Map polling progress (0-95) to this file's slice
-                        const fileProgress = baseProgress + (pollingProgress / 100) * progressSlicePerFile;
-                        this.emitRunRulesProgressEvent(fileProgress);
-                    });
+            // Filter violations to only include selected rules
+            const filteredViolations = allViolations.filter(v => selectedRulesSet.has(v.ruleName));
 
-                    const fileContent = await fs.readFile(filePath, 'utf-8');
-                    const { violations: apexGuruViolations, scanMetadata } = await this.apexGuruService.analyzeApexClass(
-                        fileContent,
-                        filePath
-                    );
-
-                    if (scanMetadata) {
-                        scanMetadataByFile[filePath] = scanMetadata;
-                    }
-
-                    const violations = apexGuruViolations.map(av =>
-                        toViolation(av, filePath, runOptions.includeFixes ?? false, runOptions.includeSuggestions ?? false)
-                    );
-
-                    // Filter violations to only include selected rules
-                    const filteredViolations = violations.filter(v => selectedRulesSet.has(v.ruleName));
-                    allViolations.push(...filteredViolations);
-
-                    if (violations.length !== filteredViolations.length) {
-                        this.emitLogEvent(
-                            LogLevel.Fine,
-                            `Filtered ${violations.length - filteredViolations.length} violation(s) for unselected rules`
-                        );
-                    }
-
-                    filesProcessed++;
-                    const endProgress = (filesProcessed / apexFiles.length) * 100;
-                    this.emitRunRulesProgressEvent(endProgress);
-                } catch (error) {
-                    const message = error instanceof Error ? error.message : String(error);
-                    this.emitLogEvent(
-                        LogLevel.Warn,
-                        `Failed to analyze ${path.basename(filePath)}: ${message}`
-                    );
-                    // Continue with other files
-                }
+            if (allViolations.length !== filteredViolations.length) {
+                this.emitLogEvent(
+                    LogLevel.Fine,
+                    `Filtered ${allViolations.length - filteredViolations.length} violation(s) for unselected rules`
+                );
             }
 
-            const insights: Record<string, unknown> | undefined = Object.keys(scanMetadataByFile).length > 0
-                ? scanMetadataByFile
-                : undefined;
+            // Return insights as scan metadata (workspace-level)
+            const insights: Record<string, unknown> | undefined = scanMetadata ? { scan: scanMetadata } : undefined;
 
-            return { violations: allViolations, insights };
+            return { violations: filteredViolations, insights };
         } finally {
-            // Always cleanup resources to allow process to exit
+            // Always cleanup resources
             this.apexGuruService.cleanup();
         }
     }
@@ -223,7 +187,6 @@ export class ApexGuruEngine extends EngineEventEmitter implements Engine {
 function toViolation(
     av: ApexGuruViolation,
     filePath: string,
-    includeFixes: boolean,
     includeSuggestions: boolean
 ): Violation {
     // Map unknown rules to fallback to ensure Core validation passes
@@ -237,28 +200,12 @@ function toViolation(
         resourceUrls: av.resources
     };
 
-    // Add fixes if requested and available
-    if (includeFixes && av.fixes?.length) {
-        violation.fixes = av.fixes.map(fix => toFix(fix, filePath));
-    }
-
     // Add suggestions if requested and available
     if (includeSuggestions && av.suggestions?.length) {
         violation.suggestions = av.suggestions.map(suggestion => toSuggestion(suggestion, filePath));
     }
 
     return violation;
-}
-
-/**
- * Convert ApexGuru fix to Code Analyzer Fix format
- * Note: ApexGuru API does not currently return fixes, only suggestions
- */
-function toFix(apexGuruFix: ApexGuruFix, filePath: string): Fix {
-    return {
-        location: normalizeLocation(apexGuruFix.location, filePath),
-        fixedCode: apexGuruFix.fixedCode
-    };
 }
 
 /**
@@ -275,13 +222,14 @@ function toSuggestion(apexGuruSuggestion: ApexGuruSuggestion, filePath: string):
 /**
  * Normalize location by filling in required fields
  *
- * ApexGuru API only provides:
+ * SFAP ApexGuru API provides:
+ * - file (from SFAP response, workspace-relative path)
  * - startLine (required)
  * - comment (optional)
  *
  * We fill in:
- * - file (required by Code Analyzer, not in ApexGuru response)
- * - startColumn = 1 (required by Code Analyzer, reasonable default)
+ * - startColumn = 1 (required by Code Analyzer, reasonable default if not provided)
+ * - Use file from location if provided, else use filePath parameter
  * - endLine/endColumn are left undefined (optional fields)
  */
 function normalizeLocation(location: ApexGuruLocation, filePath: string): CodeLocation {
@@ -289,7 +237,7 @@ function normalizeLocation(location: ApexGuruLocation, filePath: string): CodeLo
     const startColumn = location.startColumn ?? 1;  // Default to column 1 if not provided
 
     return {
-        file: filePath,
+        file: location.file ?? filePath,  // SFAP includes file path in response
         startLine,
         startColumn,
         endLine: location.endLine,      // undefined if not provided (optional)
