@@ -140,6 +140,11 @@ export class BaseConfigFactory {
             }
         };
 
+        // Add SSR processor to enable SSR-only linting for SSR-enabled components
+        // The processor checks -meta.xml files for SSR capabilities and only creates virtual .ssrjs files
+        // for components with lightning__ServerRenderable or lightning__ServerRenderableWithHydration
+        configs[0].processor = '@lwc/lwc/ssr';
+
         // File patterns for different config types
         const allJsExtensions = this.engineConfig.file_extensions.javascript;
         const lwcExtensions = allJsExtensions.filter(ext => ext !== '.jsx');
@@ -194,6 +199,7 @@ export class BaseConfigFactory {
         // we can work with the original index [4] instead of [3] to avoid confusion.
         configs.splice(1, 1);
 
+        // The SSR processor is already configured in configs[0] by createJavascriptPlusLwcConfigArray()
         return configs;
     }
 
