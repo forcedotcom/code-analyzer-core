@@ -56,7 +56,8 @@ export const APEXGURU_ENGINE_CONFIG_DESCRIPTION: ConfigDescription = {
     fieldDescriptions: {
         target_org: {
             descriptionText: 'Target Salesforce org alias or username. If not specified, uses the default SF CLI org. This value is typically set by the CLI --target-org flag.',
-            valueType: 'string'
+            valueType: 'string',
+            defaultValue: null
         },
         api_timeout_ms: {
             descriptionText: 'Maximum time to wait for ApexGuru API response (in milliseconds). Default: 120000 (2 minutes)',
