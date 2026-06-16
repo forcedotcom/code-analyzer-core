@@ -70,12 +70,14 @@ export class ApexGuruService {
     }
 
     /**
-     * Scan workspace Apex files and return violations with insights
+     * Zip the given paths and scan them. workspaceRoot is used to compute zip-entry names so
+     * the archive preserves project structure (e.g. force-app/main/default/classes/Foo.cls).
+     * Each path in pathsToZip may be a file or a folder; contents are not inspected or filtered.
      */
-    async scanWorkspace(workspacePath: string): Promise<{violations: ApexGuruViolation[], scanMetadata?: ApexGuruScanMetadata}> {
+    async scanWorkspace(workspaceRoot: string, pathsToZip: string[]): Promise<{violations: ApexGuruViolation[], scanMetadata?: ApexGuruScanMetadata}> {
         this.isCancelled = false;
         let timeoutId: NodeJS.Timeout;
-        const scanPromise = this.performScan(workspacePath);
+        const scanPromise = this.performScan(workspaceRoot, pathsToZip);
         const timeoutPromise = new Promise<never>((_, reject) => {
             timeoutId = setTimeout(() => {
                 this.isCancelled = true;
@@ -93,9 +95,9 @@ export class ApexGuruService {
     /**
      * Perform the full scan workflow: create zip -> submit -> poll -> decode
      */
-    private async performScan(workspacePath: string): Promise<{violations: ApexGuruViolation[], scanMetadata?: ApexGuruScanMetadata}> {
+    private async performScan(workspaceRoot: string, pathsToZip: string[]): Promise<{violations: ApexGuruViolation[], scanMetadata?: ApexGuruScanMetadata}> {
         // Step 1: Create zip of workspace
-        const zipBuffer = await this.createWorkspaceZip(workspacePath);
+        const zipBuffer = await this.createWorkspaceZip(workspaceRoot, pathsToZip);
 
         // Step 2: Submit scan
         const { scanId } = await this.submitScan(zipBuffer);
@@ -108,9 +110,10 @@ export class ApexGuruService {
     }
 
     /**
-     * Create a zip file of workspace Apex files
+     * Zip the given paths as-is. Each path may be a file or a folder.
+     * Entry names are computed relative to workspaceRoot so the archive mirrors the project layout.
      */
-    private async createWorkspaceZip(workspacePath: string): Promise<Buffer> {
+    private async createWorkspaceZip(workspaceRoot: string, pathsToZip: string[]): Promise<Buffer> {
         return new Promise((resolve, reject) => {
             const chunks: Buffer[] = [];
             const archive = archiver('zip', { zlib: { level: 9 } });
@@ -119,18 +122,17 @@ export class ApexGuruService {
             archive.on('end', () => resolve(Buffer.concat(chunks)));
             archive.on('error', reject);
 
-            // Find force-app directory
-            const forceAppPath = path.join(workspacePath, 'force-app');
-            if (!fs.existsSync(forceAppPath)) {
-                reject(new Error(`force-app directory not found at ${forceAppPath}`));
-                return;
+            for (const absPath of pathsToZip) {
+                const stat = fs.statSync(absPath);
+                const entryName = absPath === workspaceRoot
+                    ? ''
+                    : path.relative(workspaceRoot, absPath);
+                if (stat.isDirectory()) {
+                    archive.directory(absPath, entryName || false);
+                } else {
+                    archive.file(absPath, { name: entryName || path.basename(absPath) });
+                }
             }
-
-            // Add all .cls and .trigger files, exclude hidden/temp files
-            archive.glob('**/*.{cls,trigger}', {
-                cwd: forceAppPath,
-                ignore: ['**/__MACOSX/**', '**/.*', '**/.sfdx/**', '**/.DS_Store']
-            }, { prefix: 'force-app' });
 
             archive.finalize();
         });

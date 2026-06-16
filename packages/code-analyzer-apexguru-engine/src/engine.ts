@@ -13,7 +13,7 @@ import {
     LogLevel
 } from '@salesforce/code-analyzer-engine-api';
 import { ApexGuruService } from './services/ApexGuruService';
-import { ApexGuruViolation, ApexGuruLocation, ApexGuruSuggestion, ApexGuruScanMetadata } from './types';
+import { ApexGuruViolation, ApexGuruLocation, ApexGuruSuggestion } from './types';
 import { ApexGuruEngineConfig, DEFAULT_APEXGURU_ENGINE_CONFIG } from './config';
 import { ENGINE_NAME, APEXGURU_FILE_EXTENSIONS } from './constants';
 import { APEXGURU_RULES, isKnownRule, FALLBACK_RULE_NAME } from './apexguru-rules';
@@ -119,14 +119,17 @@ export class ApexGuruEngine extends EngineEventEmitter implements Engine {
             throw new Error('ApexGuru requires a common workspace root, but the targeted files do not share one.');
         }
 
+        // If the user passed --target, zip only those paths; otherwise zip the whole workspace.
+        const pathsToZip = runOptions.workspace.getRawTargets() ?? [workspaceRoot];
+
         try {
             // Set up progress callback for polling
             this.apexGuruService.setProgressCallback((pollingProgress: number) => {
                 this.emitRunRulesProgressEvent(pollingProgress);
             });
 
-            // Scan entire workspace (creates zip -> submits -> polls -> decodes)
-            const { violations: apexGuruViolations, scanMetadata } = await this.apexGuruService.scanWorkspace(workspaceRoot);
+            // Scan (creates zip -> submits -> polls -> decodes)
+            const { violations: apexGuruViolations, scanMetadata } = await this.apexGuruService.scanWorkspace(workspaceRoot, pathsToZip);
 
             // Convert all ApexGuru violations to Code Analyzer format
             const allViolations = apexGuruViolations.map(av => {
