@@ -368,11 +368,9 @@ describe('ApexGuruEngine', () => {
             expect(mockApexGuruService.analyzeApexClass).toHaveBeenCalled();
         });
 
-        it('should extract targetOrg from environment', async () => {
-            // Set environment variable BEFORE creating the engine
-            process.env.CODE_ANALYZER_TARGET_ORG = 'my-org';
-
-            // Create new engine with config that includes target_org from environment
+        it('should pass target_org from config to auth service', async () => {
+            // target_org is passed through config (set by CLI --target-org flag)
+            // Core resolves credentials internally via @salesforce/core
             const engineWithConfig = new ApexGuruEngine({ target_org: 'my-org', api_timeout_ms: 120000, api_initial_retry_ms: 2000, api_max_retry_ms: 60000, api_backoff_multiplier: 2 });
 
             mockWorkspace.getTargetedFiles.mockResolvedValue(['/test/Test.cls']);
@@ -382,8 +380,6 @@ describe('ApexGuruEngine', () => {
             await engineWithConfig.runRules(['SoqlInALoop'], mockRunOptions);
 
             expect(mockApexGuruService.initialize).toHaveBeenCalledWith('my-org');
-
-            delete process.env.CODE_ANALYZER_TARGET_ORG;
         });
 
         it('should aggregate violations from multiple files', async () => {

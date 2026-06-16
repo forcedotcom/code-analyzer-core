@@ -86,8 +86,8 @@ export class ApexGuruEngine extends EngineEventEmitter implements Engine {
         // Create a Set for faster rule name lookup
         const selectedRulesSet = new Set(ruleNames);
 
-        // Extract targetOrg from environment
-        const targetOrg = this.getTargetOrgFromEnvironment();
+        // Get target org alias/username from config (passed by CLI --target-org flag)
+        const targetOrg = this.getTargetOrg();
 
         // Initialize authentication
         try {
@@ -166,13 +166,12 @@ export class ApexGuruEngine extends EngineEventEmitter implements Engine {
     }
 
     /**
-     * Extract target org from environment
-     * Note: Workspace does not currently expose org configuration through the Engine API.
-     * Target org can be set via SF_TARGET_ORG environment variable.
+     * Get the target org alias/username from engine config.
+     * The CLI passes this through as a plain string (alias or username).
+     * Core resolves credentials internally via @salesforce/core.
+     * If undefined, ApexGuruAuthService will fall back to the default SF CLI org.
      */
-    private getTargetOrgFromEnvironment(): string | undefined {
-        // Return target_org from config (set via CLI --target-org flag or config file)
-        // If undefined, ApexGuruAuthService will use default SF CLI org
+    private getTargetOrg(): string | undefined {
         return this.config.target_org;
     }
 
