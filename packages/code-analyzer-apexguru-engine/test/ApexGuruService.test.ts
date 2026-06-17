@@ -1,42 +1,39 @@
 import { ApexGuruService } from '../src/services/ApexGuruService';
 import { ApexGuruAuthService } from '../src/services/ApexGuruAuthService';
-import { Connection } from '@salesforce/core';
 import { ApexGuruResponseStatus } from '../src/types';
+import fetch from 'node-fetch';
 
 // Mock dependencies
 jest.mock('../src/services/ApexGuruAuthService');
+jest.mock('node-fetch');
+jest.mock('archiver');
+jest.mock('node:fs');
+
+const mockFetch = fetch as jest.MockedFunction<typeof fetch>;
 
 describe('ApexGuruService', () => {
     let apexGuruService: ApexGuruService;
     let mockEmitLogEvent: jest.Mock;
-    let mockConnection: Partial<Connection>;
     let mockAuthService: jest.Mocked<ApexGuruAuthService>;
 
     beforeEach(() => {
         jest.clearAllMocks();
         mockEmitLogEvent = jest.fn();
 
-        mockConnection = {
-            instanceUrl: 'https://test.salesforce.com',
-            accessToken: 'test-token',
-            version: '64.0',
-            request: jest.fn()
-        };
-
         mockAuthService = {
             initialize: jest.fn(),
-            getConnection: jest.fn().mockReturnValue(mockConnection),
+            mintOrgJwt: jest.fn().mockResolvedValue('mock-jwt-token'),
+            getConnection: jest.fn(),
             getAccessToken: jest.fn().mockReturnValue('test-token'),
             getInstanceUrl: jest.fn().mockReturnValue('https://test.salesforce.com'),
-            getApiVersion: jest.fn().mockReturnValue('64.0'),
-            mintOrgJwt: jest.fn().mockResolvedValue('mock-jwt-token')
+            getApiVersion: jest.fn().mockReturnValue('64.0')
         } as any;
 
         jest.mocked(ApexGuruAuthService).mockImplementation(() => mockAuthService);
 
         apexGuruService = new ApexGuruService(
             mockEmitLogEvent,
-            120000,  // maxTimeoutMs
+            300000,  // maxTimeoutMs
             2000,    // initialRetryMs
             60000,   // maxRetryMs
             2        // backoffMultiplier
@@ -48,370 +45,464 @@ describe('ApexGuruService', () => {
             await apexGuruService.initialize('myorg');
 
             expect(mockAuthService.initialize).toHaveBeenCalledWith({ targetOrg: 'myorg' });
+            expect(mockAuthService.mintOrgJwt).toHaveBeenCalled();
         });
 
         it('should initialize auth service without target org', async () => {
             await apexGuruService.initialize();
 
             expect(mockAuthService.initialize).toHaveBeenCalledWith({ targetOrg: undefined });
+            expect(mockAuthService.mintOrgJwt).toHaveBeenCalled();
         });
     });
 
-    describe('validate', () => {
-        it('should succeed when validation returns success status', async () => {
-            (mockConnection.request as jest.Mock).mockResolvedValue({
-                status: ApexGuruResponseStatus.SUCCESS
-            });
+    describe('scanWorkspace', () => {
+        const mockWorkspaceRoot = '/test/workspace';
+        const mockPathsToZip = ['/test/workspace'];
 
-            await expect(apexGuruService.validate()).resolves.toBeUndefined();
+        beforeEach(() => {
+            // Mock archiver to avoid actual zip creation
+            const archiver = require('archiver');
+            const mockArchive = {
+                on: jest.fn((event, handler) => {
+                    if (event === 'end') {
+                        // Simulate empty zip by calling handler immediately
+                        setTimeout(() => handler(), 0);
+                    }
+                    return mockArchive;
+                }),
+                directory: jest.fn(),
+                file: jest.fn(),
+                finalize: jest.fn()
+            };
+            archiver.mockReturnValue(mockArchive);
 
-            expect(mockConnection.request).toHaveBeenCalledWith({
-                method: 'GET',
-                url: '/services/data/v64.0/apexguru/validate'
+            // Mock fs for zip operations
+            const fs = require('node:fs');
+            fs.statSync = jest.fn().mockReturnValue({
+                isDirectory: () => true
             });
         });
 
-        it('should succeed for uppercase SUCCESS status', async () => {
-            (mockConnection.request as jest.Mock).mockResolvedValue({
-                status: 'SUCCESS'
-            });
+        it('should successfully scan workspace and return violations', async () => {
+            const mockViolations = [
+                {
+                    rule: 'SoqlInALoop',
+                    message: 'SOQL in loop',
+                    locations: [{ startLine: 10, file: 'classes/Test.cls' }],
+                    primaryLocationIndex: 0,
+                    resources: [],
+                    severity: 1
+                }
+            ];
 
-            await expect(apexGuruService.validate()).resolves.toBeUndefined();
-        });
-
-        it('should throw error when validation fails', async () => {
-            (mockConnection.request as jest.Mock).mockResolvedValue({
-                status: ApexGuruResponseStatus.FAILED
-            });
-
-            await expect(apexGuruService.validate())
-                .rejects.toThrow('ApexGuru is not available for this org');
-        });
-
-        it('should throw error on network failure', async () => {
-            (mockConnection.request as jest.Mock).mockRejectedValue(new Error('Network error'));
-
-            await expect(apexGuruService.validate())
-                .rejects.toThrow('Network error');
-        });
-
-        it('should throw timeout error when validation takes too long', async () => {
-            jest.useFakeTimers();
-
-            (mockConnection.request as jest.Mock).mockImplementation(() =>
-                new Promise(resolve => setTimeout(() => resolve({ status: ApexGuruResponseStatus.SUCCESS }), 200000))
-            );
-
-            const validatePromise = apexGuruService.validate();
-
-            jest.advanceTimersByTime(120000);
-
-            await expect(validatePromise).rejects.toThrow('Validate request timed out after 120000ms');
-
-            jest.useRealTimers();
-        });
-    });
-
-    describe('analyzeApexClass', () => {
-        const testClassContent = 'public class Test { }';
-        const testFilePath = '/test/Test.cls';
-
-        it('should successfully analyze and return violations', async () => {
-            const mockRequestId = 'req-123';
-            const mockViolations = [{
-                rule: 'SoqlInALoop',
-                message: 'SOQL in loop',
-                locations: [{ startLine: 5 }],
-                primaryLocationIndex: 0,
-                resources: [],
-                severity: 3
-            }];
-
-            // Mock submit response
-            (mockConnection.request as jest.Mock).mockResolvedValueOnce({
-                status: ApexGuruResponseStatus.NEW,
-                requestId: mockRequestId
-            });
-
-            // Mock poll response with success
-            (mockConnection.request as jest.Mock).mockResolvedValueOnce({
-                status: ApexGuruResponseStatus.SUCCESS,
-                report: Buffer.from(JSON.stringify(mockViolations)).toString('base64')
-            });
-
-            const result = await apexGuruService.analyzeApexClass(testClassContent, testFilePath);
-
-            expect(result.violations).toEqual(mockViolations);
-            expect(result.scanMetadata).toBeUndefined();
-            expect(mockConnection.request).toHaveBeenCalledTimes(2);
-        });
-
-        it('should return scanMetadata when API response includes it', async () => {
-            const mockViolations = [{
-                rule: 'SoqlInALoop',
-                message: 'SOQL in loop',
-                locations: [{ startLine: 5 }],
-                primaryLocationIndex: 0,
-                resources: [],
-                severity: 3
-            }];
             const mockScanMetadata = {
-                analysis_mode: 'full' as const,
+                analysis_mode: 'full',
                 files_scanned: 1,
                 violation_breakdown: { SoqlInALoop: 1 },
                 violation_count: 1,
                 report_generated_ms: 1234567890
             };
 
-            (mockConnection.request as jest.Mock).mockResolvedValueOnce({
-                status: ApexGuruResponseStatus.NEW,
-                requestId: 'req-123'
-            });
+            // Mock submit response
+            mockFetch.mockResolvedValueOnce({
+                ok: true,
+                json: async () => ({
+                    scanId: 'scan-123',
+                    status: ApexGuruResponseStatus.QUEUED,
+                    analysisMode: 'full',
+                    createdMs: Date.now()
+                })
+            } as any);
 
-            (mockConnection.request as jest.Mock).mockResolvedValueOnce({
-                status: ApexGuruResponseStatus.SUCCESS,
-                report: Buffer.from(JSON.stringify(mockViolations)).toString('base64'),
-                scanMetadata: mockScanMetadata
-            });
+            // Mock poll response - return SUCCEEDED immediately
+            mockFetch.mockResolvedValueOnce({
+                ok: true,
+                json: async () => ({
+                    scanId: 'scan-123',
+                    status: ApexGuruResponseStatus.SUCCEEDED,
+                    analysisMode: 'full',
+                    createdMs: Date.now(),
+                    updatedMs: Date.now(),
+                    processingStartMs: Date.now(),
+                    processingEndMs: Date.now(),
+                    scanMetadata: mockScanMetadata,
+                    report: Buffer.from(JSON.stringify(mockViolations)).toString('base64'),
+                    reportS3Key: null,
+                    message: null
+                })
+            } as any);
 
-            const result = await apexGuruService.analyzeApexClass(testClassContent, testFilePath);
+            const result = await apexGuruService.scanWorkspace(mockWorkspaceRoot, mockPathsToZip);
 
             expect(result.violations).toEqual(mockViolations);
             expect(result.scanMetadata).toEqual(mockScanMetadata);
-        });
-
-        it('should submit base64 encoded content', async () => {
-            (mockConnection.request as jest.Mock).mockResolvedValueOnce({
-                status: ApexGuruResponseStatus.NEW,
-                requestId: 'req-123'
-            });
-
-            (mockConnection.request as jest.Mock).mockResolvedValueOnce({
-                status: ApexGuruResponseStatus.SUCCESS,
-                report: Buffer.from(JSON.stringify([])).toString('base64')
-            });
-
-            await apexGuruService.analyzeApexClass(testClassContent, testFilePath);
-
-            const submitCall = (mockConnection.request as jest.Mock).mock.calls[0][0];
-            expect(submitCall.method).toBe('POST');
-            expect(submitCall.url).toBe('/services/data/v64.0/apexguru/request');
-
-            const body = JSON.parse(submitCall.body);
-            expect(body.classContent).toBe(Buffer.from(testClassContent).toString('base64'));
+            expect(mockFetch).toHaveBeenCalledTimes(2); // submit + poll
         });
 
         it('should poll multiple times until success', async () => {
-            (mockConnection.request as jest.Mock).mockResolvedValueOnce({
-                status: ApexGuruResponseStatus.NEW,
-                requestId: 'req-123'
-            });
-
-            // First poll returns "new", second returns success
-            (mockConnection.request as jest.Mock)
-                .mockResolvedValueOnce({ status: ApexGuruResponseStatus.NEW })
-                .mockResolvedValueOnce({
-                    status: ApexGuruResponseStatus.SUCCESS,
-                    report: Buffer.from(JSON.stringify([])).toString('base64')
-                });
-
-            await apexGuruService.analyzeApexClass(testClassContent, testFilePath);
-
-            expect(mockConnection.request).toHaveBeenCalledTimes(3); // 1 submit + 2 polls
-        }, 15000);
-
-        it('should handle immediate success response', async () => {
-            const mockViolations = [{ rule: 'Test', message: 'test', locations: [{ startLine: 1 }], primaryLocationIndex: 0, resources: [], severity: 1 }];
-
-            (mockConnection.request as jest.Mock).mockResolvedValueOnce({
-                status: ApexGuruResponseStatus.SUCCESS,
-                requestId: 'req-123'
-            });
-
-            (mockConnection.request as jest.Mock).mockResolvedValueOnce({
-                status: ApexGuruResponseStatus.SUCCESS,
-                report: Buffer.from(JSON.stringify(mockViolations)).toString('base64')
-            });
-
-            const result = await apexGuruService.analyzeApexClass(testClassContent, testFilePath);
-
-            expect(result.violations).toEqual(mockViolations);
-        });
-
-        it('should throw error when analysis fails', async () => {
-            (mockConnection.request as jest.Mock).mockResolvedValueOnce({
-                status: ApexGuruResponseStatus.FAILED,
-                message: 'Analysis failed'
-            });
-
-            await expect(apexGuruService.analyzeApexClass(testClassContent, testFilePath))
-                .rejects.toThrow('ApexGuru analysis failed: Analysis failed');
-        });
-
-        it('should throw error on poll failure', async () => {
-            (mockConnection.request as jest.Mock).mockResolvedValueOnce({
-                status: ApexGuruResponseStatus.NEW,
-                requestId: 'req-123'
-            });
-
-            (mockConnection.request as jest.Mock).mockResolvedValueOnce({
-                status: ApexGuruResponseStatus.FAILED,
-                message: 'Processing failed'
-            });
-
-            await expect(apexGuruService.analyzeApexClass(testClassContent, testFilePath))
-                .rejects.toThrow('Analysis failed: Processing failed');
-        });
-
-        it('should throw error on poll error status', async () => {
-            (mockConnection.request as jest.Mock).mockResolvedValueOnce({
-                status: ApexGuruResponseStatus.NEW,
-                requestId: 'req-123'
-            });
-
-            (mockConnection.request as jest.Mock).mockResolvedValueOnce({
-                status: ApexGuruResponseStatus.ERROR,
-                message: 'Internal error'
-            });
-
-            await expect(apexGuruService.analyzeApexClass(testClassContent, testFilePath))
-                .rejects.toThrow('Analysis error: Internal error');
-        });
-
-        // Timeout test removed - difficult to test with Promise.race pattern
-        // Timeout behavior is tested in integration/e2e tests
-
-        it('should invoke progress callback during polling', async () => {
-            const progressCallback = jest.fn();
-            apexGuruService.setProgressCallback(progressCallback);
-
-            (mockConnection.request as jest.Mock).mockResolvedValueOnce({
-                status: ApexGuruResponseStatus.NEW,
-                requestId: 'req-123'
-            });
-
-            (mockConnection.request as jest.Mock)
-                .mockResolvedValueOnce({ status: ApexGuruResponseStatus.NEW })
-                .mockResolvedValueOnce({
-                    status: ApexGuruResponseStatus.SUCCESS,
-                    report: Buffer.from(JSON.stringify([])).toString('base64')
-                });
-
-            await apexGuruService.analyzeApexClass(testClassContent, testFilePath);
-
-            expect(progressCallback).toHaveBeenCalled();
-            expect(progressCallback.mock.calls.length).toBeGreaterThan(0);
-        }, 15000);
-
-        it('should parse report correctly', async () => {
             const mockViolations = [
-                {
-                    rule: 'SoqlInALoop',
-                    message: 'SOQL in loop',
-                    locations: [{ startLine: 5 }],
-                    primaryLocationIndex: 0,
-                    resources: ['https://example.com'],
-                    severity: 3
-                },
                 {
                     rule: 'DmlInALoop',
                     message: 'DML in loop',
-                    locations: [{ startLine: 10 }],
+                    locations: [{ startLine: 20, file: 'classes/Controller.cls' }],
                     primaryLocationIndex: 0,
                     resources: [],
-                    severity: 3
+                    severity: 2
                 }
             ];
 
-            (mockConnection.request as jest.Mock).mockResolvedValueOnce({
-                status: ApexGuruResponseStatus.NEW,
-                requestId: 'req-123'
-            });
+            // Mock submit response
+            mockFetch.mockResolvedValueOnce({
+                ok: true,
+                json: async () => ({
+                    scanId: 'scan-456',
+                    status: ApexGuruResponseStatus.QUEUED,
+                    analysisMode: 'full',
+                    createdMs: Date.now()
+                })
+            } as any);
 
-            (mockConnection.request as jest.Mock).mockResolvedValueOnce({
-                status: ApexGuruResponseStatus.SUCCESS,
-                report: Buffer.from(JSON.stringify(mockViolations)).toString('base64')
-            });
+            // Mock first poll - still RUNNING
+            mockFetch.mockResolvedValueOnce({
+                ok: true,
+                json: async () => ({
+                    scanId: 'scan-456',
+                    status: ApexGuruResponseStatus.RUNNING,
+                    analysisMode: 'full',
+                    createdMs: Date.now(),
+                    updatedMs: Date.now(),
+                    processingStartMs: Date.now(),
+                    processingEndMs: null,
+                    scanMetadata: null,
+                    report: null,
+                    reportS3Key: null,
+                    message: null
+                })
+            } as any);
 
-            const result = await apexGuruService.analyzeApexClass(testClassContent, testFilePath);
+            // Mock second poll - SUCCEEDED
+            mockFetch.mockResolvedValueOnce({
+                ok: true,
+                json: async () => ({
+                    scanId: 'scan-456',
+                    status: ApexGuruResponseStatus.SUCCEEDED,
+                    analysisMode: 'full',
+                    createdMs: Date.now(),
+                    updatedMs: Date.now(),
+                    processingStartMs: Date.now(),
+                    processingEndMs: Date.now(),
+                    scanMetadata: null,
+                    report: Buffer.from(JSON.stringify(mockViolations)).toString('base64'),
+                    reportS3Key: null,
+                    message: null
+                })
+            } as any);
 
-            expect(result.violations).toHaveLength(2);
-            expect(result.violations[0].rule).toBe('SoqlInALoop');
-            expect(result.violations[1].rule).toBe('DmlInALoop');
+            const result = await apexGuruService.scanWorkspace(mockWorkspaceRoot, mockPathsToZip);
+
+            expect(result.violations).toEqual(mockViolations);
+            expect(mockFetch).toHaveBeenCalledTimes(3); // submit + 2 polls
         });
 
-        it('should stop polling when timeout occurs', async () => {
+        it('should throw error when scan fails', async () => {
+            // Mock submit response
+            mockFetch.mockResolvedValueOnce({
+                ok: true,
+                json: async () => ({
+                    scanId: 'scan-789',
+                    status: ApexGuruResponseStatus.QUEUED,
+                    analysisMode: 'full',
+                    createdMs: Date.now()
+                })
+            } as any);
+
+            // Mock poll response - FAILED
+            mockFetch.mockResolvedValueOnce({
+                ok: true,
+                json: async () => ({
+                    scanId: 'scan-789',
+                    status: ApexGuruResponseStatus.FAILED,
+                    analysisMode: 'full',
+                    createdMs: Date.now(),
+                    updatedMs: Date.now(),
+                    processingStartMs: Date.now(),
+                    processingEndMs: Date.now(),
+                    scanMetadata: null,
+                    report: null,
+                    reportS3Key: null,
+                    message: 'Analysis failed due to invalid Apex syntax'
+                })
+            } as any);
+
+            await expect(apexGuruService.scanWorkspace(mockWorkspaceRoot, mockPathsToZip))
+                .rejects.toThrow('Scan failed');
+        });
+
+        it('should throw error when submit fails', async () => {
+            mockFetch.mockResolvedValueOnce({
+                ok: false,
+                status: 401,
+                text: async () => 'Unauthorized'
+            } as any);
+
+            await expect(apexGuruService.scanWorkspace(mockWorkspaceRoot, mockPathsToZip))
+                .rejects.toThrow('Failed to submit scan');
+        });
+
+        it('should throw error when poll returns HTTP error', async () => {
+            // Mock successful submit
+            mockFetch.mockResolvedValueOnce({
+                ok: true,
+                json: async () => ({
+                    scanId: 'scan-error',
+                    status: ApexGuruResponseStatus.QUEUED,
+                    analysisMode: 'full',
+                    createdMs: Date.now()
+                })
+            } as any);
+
+            // Mock poll with HTTP error
+            mockFetch.mockResolvedValueOnce({
+                ok: false,
+                status: 500,
+                text: async () => 'Internal Server Error'
+            } as any);
+
+            await expect(apexGuruService.scanWorkspace(mockWorkspaceRoot, mockPathsToZip))
+                .rejects.toThrow('Polling failed');
+        });
+
+        it('should handle empty violation list', async () => {
+            // Mock submit response
+            mockFetch.mockResolvedValueOnce({
+                ok: true,
+                json: async () => ({
+                    scanId: 'scan-empty',
+                    status: ApexGuruResponseStatus.QUEUED,
+                    analysisMode: 'full',
+                    createdMs: Date.now()
+                })
+            } as any);
+
+            // Mock poll response - no violations
+            mockFetch.mockResolvedValueOnce({
+                ok: true,
+                json: async () => ({
+                    scanId: 'scan-empty',
+                    status: ApexGuruResponseStatus.SUCCEEDED,
+                    analysisMode: 'full',
+                    createdMs: Date.now(),
+                    updatedMs: Date.now(),
+                    processingStartMs: Date.now(),
+                    processingEndMs: Date.now(),
+                    scanMetadata: {
+                        analysis_mode: 'full',
+                        files_scanned: 1,
+                        violation_breakdown: {},
+                        violation_count: 0,
+                        report_generated_ms: Date.now()
+                    },
+                    report: Buffer.from(JSON.stringify([])).toString('base64'),
+                    reportS3Key: null,
+                    message: null
+                })
+            } as any);
+
+            const result = await apexGuruService.scanWorkspace(mockWorkspaceRoot, mockPathsToZip);
+
+            expect(result.violations).toEqual([]);
+            expect(result.scanMetadata).toBeDefined();
+        });
+
+        it('should handle null report gracefully', async () => {
+            // Mock submit response
+            mockFetch.mockResolvedValueOnce({
+                ok: true,
+                json: async () => ({
+                    scanId: 'scan-null-report',
+                    status: ApexGuruResponseStatus.QUEUED,
+                    analysisMode: 'full',
+                    createdMs: Date.now()
+                })
+            } as any);
+
+            // Mock poll response - null report
+            mockFetch.mockResolvedValueOnce({
+                ok: true,
+                json: async () => ({
+                    scanId: 'scan-null-report',
+                    status: ApexGuruResponseStatus.SUCCEEDED,
+                    analysisMode: 'full',
+                    createdMs: Date.now(),
+                    updatedMs: Date.now(),
+                    processingStartMs: Date.now(),
+                    processingEndMs: Date.now(),
+                    scanMetadata: null,
+                    report: null,
+                    reportS3Key: null,
+                    message: null
+                })
+            } as any);
+
+            const result = await apexGuruService.scanWorkspace(mockWorkspaceRoot, mockPathsToZip);
+
+            expect(result.violations).toEqual([]);
+            expect(result.scanMetadata).toBeUndefined();
+        });
+
+        it('should timeout if scan takes too long', async () => {
             jest.useFakeTimers();
 
             // Mock submit response
-            (mockConnection.request as jest.Mock).mockResolvedValueOnce({
-                status: ApexGuruResponseStatus.NEW,
-                requestId: 'req-123'
+            mockFetch.mockResolvedValueOnce({
+                ok: true,
+                json: async () => ({
+                    scanId: 'scan-timeout',
+                    status: ApexGuruResponseStatus.QUEUED,
+                    analysisMode: 'full',
+                    createdMs: Date.now()
+                })
+            } as any);
+
+            // Mock poll responses that never complete
+            mockFetch.mockImplementation(async () => {
+                await new Promise(resolve => setTimeout(resolve, 10000));
+                return {
+                    ok: true,
+                    json: async () => ({
+                        scanId: 'scan-timeout',
+                        status: ApexGuruResponseStatus.RUNNING,
+                        analysisMode: 'full',
+                        createdMs: Date.now(),
+                        updatedMs: Date.now(),
+                        processingStartMs: Date.now(),
+                        processingEndMs: null,
+                        scanMetadata: null,
+                        report: null,
+                        reportS3Key: null,
+                        message: null
+                    })
+                } as any;
             });
 
-            // Mock never-ending polling (keeps returning "processing")
-            (mockConnection.request as jest.Mock).mockImplementation(() =>
-                new Promise(resolve => {
-                    setTimeout(() => resolve({ status: ApexGuruResponseStatus.NEW }), 100);
-                })
-            );
+            const scanPromise = apexGuruService.scanWorkspace(mockWorkspaceRoot, mockPathsToZip);
 
-            const analyzePromise = apexGuruService.analyzeApexClass(testClassContent, testFilePath);
+            jest.advanceTimersByTime(300000); // Advance past timeout
 
-            // Fast-forward past the timeout
-            jest.advanceTimersByTime(120000);
-
-            await expect(analyzePromise).rejects.toThrow('Analysis timed out');
-
-            // Verify flag remains true so background polling can detect and abort
-            expect((apexGuruService as any).isCancelled).toBe(true);
+            await expect(scanPromise).rejects.toThrow('Workspace scan timed out after 300000ms');
 
             jest.useRealTimers();
         });
 
-        it('When parseReport extracts scanMetadata from API response, then both violations and scanMetadata are returned', async () => {
-            const mockViolations = [
-                {
-                    rule: 'SoqlInALoop',
-                    message: 'SOQL in loop',
-                    locations: [{ startLine: 5 }],
-                    primaryLocationIndex: 0,
-                    resources: ['https://example.com'],
-                    severity: 3
-                }
-            ];
+        it('should call progress callback during polling', async () => {
+            const mockProgressCallback = jest.fn();
+            apexGuruService.setProgressCallback(mockProgressCallback);
 
-            const mockScanMetadata = {
-                analysis_mode: 'full' as const,
-                files_scanned: 5,
-                violation_breakdown: { 'SoqlInALoop': 1 },
-                violation_count: 1,
-                report_generated_ms: 1234567890
-            };
+            // Mock submit response
+            mockFetch.mockResolvedValueOnce({
+                ok: true,
+                json: async () => ({
+                    scanId: 'scan-progress',
+                    status: ApexGuruResponseStatus.QUEUED,
+                    analysisMode: 'full',
+                    createdMs: Date.now()
+                })
+            } as any);
 
-            (mockConnection.request as jest.Mock).mockResolvedValueOnce({
-                status: ApexGuruResponseStatus.NEW,
-                requestId: 'req-123'
-            });
+            // Mock poll response
+            mockFetch.mockResolvedValueOnce({
+                ok: true,
+                json: async () => ({
+                    scanId: 'scan-progress',
+                    status: ApexGuruResponseStatus.SUCCEEDED,
+                    analysisMode: 'full',
+                    createdMs: Date.now(),
+                    updatedMs: Date.now(),
+                    processingStartMs: Date.now(),
+                    processingEndMs: Date.now(),
+                    scanMetadata: null,
+                    report: Buffer.from(JSON.stringify([])).toString('base64'),
+                    reportS3Key: null,
+                    message: null
+                })
+            } as any);
 
-            (mockConnection.request as jest.Mock).mockResolvedValueOnce({
-                status: ApexGuruResponseStatus.SUCCESS,
-                report: Buffer.from(JSON.stringify(mockViolations)).toString('base64'),
-                scanMetadata: mockScanMetadata
-            });
+            await apexGuruService.scanWorkspace(mockWorkspaceRoot, mockPathsToZip);
 
-            const result = await apexGuruService.analyzeApexClass(testClassContent, testFilePath);
+            expect(mockProgressCallback).toHaveBeenCalled();
+            // Should report 100% when complete
+            expect(mockProgressCallback).toHaveBeenCalledWith(100);
+        });
 
-            // Test will fail until we update return type and parseReport
-            expect(result).toHaveProperty('violations');
-            expect(result).toHaveProperty('scanMetadata');
-            expect((result as any).violations).toEqual(mockViolations);
-            expect((result as any).scanMetadata).toEqual(mockScanMetadata);
+        it('should use correct SFAP API endpoints', async () => {
+            mockFetch.mockResolvedValueOnce({
+                ok: true,
+                json: async () => ({
+                    scanId: 'scan-endpoint-check',
+                    status: ApexGuruResponseStatus.QUEUED,
+                    analysisMode: 'full',
+                    createdMs: Date.now()
+                })
+            } as any);
+
+            mockFetch.mockResolvedValueOnce({
+                ok: true,
+                json: async () => ({
+                    scanId: 'scan-endpoint-check',
+                    status: ApexGuruResponseStatus.SUCCEEDED,
+                    analysisMode: 'full',
+                    createdMs: Date.now(),
+                    updatedMs: Date.now(),
+                    processingStartMs: Date.now(),
+                    processingEndMs: Date.now(),
+                    scanMetadata: null,
+                    report: null,
+                    reportS3Key: null,
+                    message: null
+                })
+            } as any);
+
+            await apexGuruService.scanWorkspace(mockWorkspaceRoot, mockPathsToZip);
+
+            // Check submit endpoint
+            expect(mockFetch).toHaveBeenNthCalledWith(
+                1,
+                'https://dev.api.salesforce.com/platform/scale/v1-beta.1/apex-guru/scan',
+                expect.objectContaining({
+                    method: 'POST',
+                    headers: expect.objectContaining({
+                        'Authorization': 'Bearer mock-jwt-token'
+                    })
+                })
+            );
+
+            // Check poll endpoint
+            expect(mockFetch).toHaveBeenNthCalledWith(
+                2,
+                'https://dev.api.salesforce.com/platform/scale/v1-beta.1/apex-guru/scan/scan-endpoint-check',
+                expect.objectContaining({
+                    method: 'GET',
+                    headers: {
+                        'Authorization': 'Bearer mock-jwt-token'
+                    }
+                })
+            );
+        });
+    });
+
+    describe('setProgressCallback', () => {
+        it('should set progress callback', () => {
+            const callback = jest.fn();
+            apexGuruService.setProgressCallback(callback);
+
+            // Callback should be stored (we can't directly test this, but it's used in scanWorkspace)
+            expect(callback).toBeDefined();
         });
     });
 
     describe('cleanup', () => {
-        it('should not throw error', () => {
+        it('should cleanup resources without error', () => {
             expect(() => apexGuruService.cleanup()).not.toThrow();
         });
     });

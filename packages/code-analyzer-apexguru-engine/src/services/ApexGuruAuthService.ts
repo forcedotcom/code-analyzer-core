@@ -107,17 +107,17 @@ export class ApexGuruAuthService {
         const instanceUrl = this.getInstanceUrl();
         const endpoint = `${instanceUrl}${ApexGuruAuthService.ORG_JWT_ENDPOINT_PATH}`;
 
-        const response = await fetch(endpoint, {
-            method: 'POST',
-            headers: {
-                'Accept': 'application/json',
-                'Authorization': `Bearer ${accessToken}`,
-                'X-Feature-Id': featureId,
-                'Content-Type': 'application/json'
-            }
-        });
-
         try {
+            const response = await fetch(endpoint, {
+                method: 'POST',
+                headers: {
+                    'Accept': 'application/json',
+                    'Authorization': `Bearer ${accessToken}`,
+                    'X-Feature-Id': featureId,
+                    'Content-Type': 'application/json'
+                }
+            });
+
             if (!response.ok) {
                 const errorText = await response.text();
                 throw new Error(
