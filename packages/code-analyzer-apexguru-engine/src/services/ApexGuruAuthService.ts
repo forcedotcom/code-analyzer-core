@@ -32,14 +32,11 @@ export class ApexGuruAuthService {
     async initialize(config: AuthConfig): Promise<void> {
         // Method 1: SF CLI org (alias or username) via --target-org flag
         if (config.targetOrg) {
-            this.emitLogEvent(LogLevel.Fine, `Authenticating with org: ${config.targetOrg}`);
             try {
                 const org = await Org.create({ aliasOrUsername: config.targetOrg });
                 this.connection = org.getConnection();
-                this.emitLogEvent(LogLevel.Fine, `Successfully authenticated to org`);
                 return;
-            } catch {
-                this.emitLogEvent(LogLevel.Error, `Failed to authenticate with org: ${config.targetOrg}`);
+            } catch (_err) {
                 throw new Error(
                     `Failed to authenticate with org '${config.targetOrg}'. ` +
                     'Please verify the org alias/username and ensure you are authenticated:\n' +
@@ -50,13 +47,10 @@ export class ApexGuruAuthService {
         }
 
         // Method 2: SF CLI default org (fallback)
-        this.emitLogEvent(LogLevel.Fine, 'No target org specified, using default org');
         try {
             const org = await Org.create({});
             this.connection = org.getConnection();
-            this.emitLogEvent(LogLevel.Fine, 'Successfully authenticated to default org');
-        } catch {
-            this.emitLogEvent(LogLevel.Error, 'Failed to authenticate: No default org found');
+        } catch (_err) {
             throw new Error(
                 'No default org found. Please either:\n' +
                 '  1. Set a default org: sf config set target-org <org-alias>\n' +
@@ -102,22 +96,6 @@ export class ApexGuruAuthService {
     }
 
     /**
-     * Helper method to perform fetch with logging
-     * @param endpoint - The endpoint URL
-     * @param logMessage - Log message to emit before fetch
-     * @param options - Fetch options
-     * @returns Promise<Response> - The fetch response
-     */
-    private async fetchWithLogging(
-        endpoint: string,
-        logMessage: string,
-        options: RequestInit
-    ): Promise<Response> {
-        this.emitLogEvent(LogLevel.Fine, logMessage);
-        return await fetch(endpoint, options);
-    }
-
-    /**
      * Mint an Org JWT token for SFAP API access
      *
      * @param featureId - Feature ID for tracking (default: CodeAnalyzer)
@@ -129,10 +107,8 @@ export class ApexGuruAuthService {
         const instanceUrl = this.getInstanceUrl();
         const endpoint = `${instanceUrl}${ApexGuruAuthService.ORG_JWT_ENDPOINT_PATH}`;
 
-        const response = await this.fetchWithLogging(
-            endpoint,
-            'Minting Org JWT for SFAP API access',
-            {
+        try {
+            const response = await fetch(endpoint, {
                 method: 'POST',
                 headers: {
                     'Accept': 'application/json',
@@ -140,14 +116,10 @@ export class ApexGuruAuthService {
                     'X-Feature-Id': featureId,
                     'Content-Type': 'application/json'
                 }
-            }
-        );
-
-        try {
+            });
 
             if (!response.ok) {
                 const errorText = await response.text();
-                this.emitLogEvent(LogLevel.Error, `Failed to mint Org JWT: HTTP ${response.status}`);
                 throw new Error(
                     `Failed to mint Org JWT: ${response.status} ${response.statusText}. ` +
                     `Response: ${errorText}`
@@ -157,17 +129,14 @@ export class ApexGuruAuthService {
             const data = await response.json() as OrgJwtResponse;
 
             if (!data.jwt) {
-                this.emitLogEvent(LogLevel.Error, 'Org JWT response missing jwt field');
                 throw new Error('Org JWT response missing jwt field');
             }
 
             this.orgJwt = data.jwt;
-            this.emitLogEvent(LogLevel.Fine, 'Successfully minted Org JWT');
             return data.jwt;
 
         } catch (error) {
             const errorMessage = error instanceof Error ? error.message : String(error);
-            this.emitLogEvent(LogLevel.Error, 'Org JWT minting failed');
             throw new Error(`Org JWT minting failed: ${errorMessage}`);
         }
     }

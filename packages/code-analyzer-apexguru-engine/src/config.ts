@@ -13,7 +13,7 @@ export type ApexGuruEngineConfig = {
 
     /**
      * Maximum time to wait for ApexGuru API response (in milliseconds)
-     * Default: 120000 (2 minutes)
+     * Default: 300000 (5 minutes)
      */
     api_timeout_ms: number;
 
@@ -42,7 +42,7 @@ export type ApexGuruEngineConfig = {
  * Default configuration values
  */
 export const DEFAULT_APEXGURU_ENGINE_CONFIG: ApexGuruEngineConfig = {
-    api_timeout_ms: 120000,         // 2 minutes
+    api_timeout_ms: 300000,         // 5 minutes
     api_initial_retry_ms: 2000,     // 2 seconds
     api_max_retry_ms: 60000,        // 60 seconds
     api_backoff_multiplier: 2       // 2x exponential backoff
@@ -54,10 +54,15 @@ export const DEFAULT_APEXGURU_ENGINE_CONFIG: ApexGuruEngineConfig = {
 export const APEXGURU_ENGINE_CONFIG_DESCRIPTION: ConfigDescription = {
     overview: 'Configuration for ApexGuru Engine. Authentication is handled via Salesforce CLI (sf org login web). Use --target-org flag to specify the org.',
     fieldDescriptions: {
+        target_org: {
+            descriptionText: 'Target Salesforce org alias or username. If not specified, uses the default SF CLI org. This value is typically set by the CLI --target-org flag.',
+            valueType: 'string',
+            defaultValue: null
+        },
         api_timeout_ms: {
-            descriptionText: 'Maximum time to wait for ApexGuru API response (in milliseconds). Default: 120000 (2 minutes)',
+            descriptionText: 'Maximum time to wait for ApexGuru API response (in milliseconds). Default: 300000 (5 minutes)',
             valueType: 'number',
-            defaultValue: 120000
+            defaultValue: 300000
         },
         api_initial_retry_ms: {
             descriptionText: 'Initial retry delay for polling ApexGuru API (in milliseconds). Default: 2000 (2 seconds)',
@@ -85,16 +90,18 @@ export async function validateAndNormalizeConfig(
 ): Promise<ApexGuruEngineConfig> {
     // Validate only expected keys are present
     configValueExtractor.validateContainsOnlySpecifiedKeys([
+        'target_org',
         'api_timeout_ms',
         'api_initial_retry_ms',
         'api_max_retry_ms',
         'api_backoff_multiplier'
     ]);
 
-    // Extract target org from CLI flag only
-    // - If user passes --target-org: use that org
-    // - If user doesn't pass --target-org: undefined (auth service uses default SF CLI org)
-    const targetOrg: string | undefined = process.env.CODE_ANALYZER_TARGET_ORG;
+    // Extract target org from config (passed by CLI via --target-org flag)
+    // - If user passes --target-org: CLI sets this in engine config as the alias/username string
+    // - If not provided: undefined (auth service will fall back to default SF CLI org)
+    // Core resolves credentials internally via @salesforce/core (Org.create → getConnection)
+    const targetOrg: string | undefined = configValueExtractor.extractString('target_org');
 
     // Extract and validate timeout
     const apiTimeoutMs: number = configValueExtractor.extractNumber(

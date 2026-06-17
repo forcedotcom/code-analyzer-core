@@ -15,40 +15,44 @@ export type AuthConfig = {
 };
 
 /**
- * ApexGuru API response statuses
+ * SFAP ApexGuru API response statuses
  */
 export enum ApexGuruResponseStatus {
-    NEW = "new",
-    PROCESSING = "processing",
-    SUCCESS = "success",
-    FAILED = "failed",
-    ERROR = "error"
+    QUEUED = "QUEUED",
+    RUNNING = "RUNNING",
+    SUCCEEDED = "SUCCEEDED",
+    FAILED = "FAILED"
 }
 
 /**
- * Base ApexGuru API response
+ * Response from POST https://dev.api.salesforce.com/platform/scale/v1-beta.1/apex-guru/scan
  */
-export type ApexGuruResponse = {
+export type ApexGuruSubmitResponse = {
+    scanId: string;
     status: string;
-    message?: string;
+    analysisMode: string;
+    createdMs: number;
 };
 
 /**
- * Response from initial POST /apexguru/request
+ * Response from GET https://dev.api.salesforce.com/platform/scale/v1-beta.1/apex-guru/scan/{scanId}
  */
-export type ApexGuruInitialResponse = ApexGuruResponse & {
-    requestId?: string;
+export type ApexGuruPollResponse = {
+    scanId: string;
+    status: string;
+    analysisMode: string;
+    createdMs: number;
+    updatedMs: number;
+    processingStartMs: number | null;
+    processingEndMs: number | null;
+    scanMetadata: ApexGuruScanMetadata | null;
+    report: string | null;  // Base64 encoded JSON array of violations
+    reportS3Key: string | null;
+    message: string | null;
 };
 
 /**
- * Response from GET /apexguru/request/{id}
- */
-export type ApexGuruQueryResponse = ApexGuruResponse & {
-    report?: string;  // Base64 encoded JSON array of violations
-};
-
-/**
- * ApexGuru violation structure (matches API response)
+ * ApexGuru violation structure from decoded report (matches SFAP API response)
  */
 export type ApexGuruViolation = {
     rule: string;
@@ -58,16 +62,15 @@ export type ApexGuruViolation = {
     resources: string[];
     severity: number;
     suggestions?: ApexGuruSuggestion[];
-    fixes?: ApexGuruFix[];
     metadata?: {
         original_code: string;
         class_name: string;
-        category: string;
+        file: string;
     };
 };
 
 /**
- * Location in ApexGuru response (no file field)
+ * Location in ApexGuru response (includes file field from SFAP)
  */
 export type ApexGuruLocation = {
     startLine: number;
@@ -75,6 +78,7 @@ export type ApexGuruLocation = {
     endLine?: number;
     endColumn?: number;
     comment?: string;
+    file?: string;  // File path from SFAP response
 };
 
 /**
@@ -82,25 +86,31 @@ export type ApexGuruLocation = {
  */
 export type ApexGuruSuggestion = {
     location: ApexGuruLocation;
-    message: string;  // Contains "// explanation\ncode"
-};
-
-/**
- * Fix in ApexGuru response
- */
-export type ApexGuruFix = {
-    location: ApexGuruLocation;
-    fixedCode: string;
-};
-
-/**
- * Request body for POST /apexguru/request
- */
-export type ApexGuruRequestBody = {
-    classContent: string;  // Base64 encoded Apex class
+    message: string;  // Code suggestion
 };
 
 export type OrgJwtResponse = {
     jwt: string;
     message?: string | null;
+};
+
+/**
+ * Scan metadata from SFAP ApexGuru API response
+ * Provides insights about the analysis run
+ */
+export type ApexGuruScanMetadata = {
+    /** Analysis mode used: 'full' or 'static' */
+    analysis_mode: 'full' | 'static';
+
+    /** Number of files scanned in this analysis */
+    files_scanned: number;
+
+    /** Breakdown of violation counts by rule name */
+    violation_breakdown: { [ruleName: string]: number };
+
+    /** Total number of violations found */
+    violation_count: number;
+
+    /** Timestamp when report was generated (milliseconds since epoch) */
+    report_generated_ms: number;
 };
