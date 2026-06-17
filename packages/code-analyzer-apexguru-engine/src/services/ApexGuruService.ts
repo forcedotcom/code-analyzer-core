@@ -1,5 +1,6 @@
 
 
+
 import { LogLevel } from '@salesforce/code-analyzer-engine-api';
 import { ApexGuruAuthService } from './ApexGuruAuthService';
 import {
@@ -100,19 +101,20 @@ export class ApexGuruService {
         const zipBuffer = await this.createWorkspaceZip(workspaceRoot, pathsToZip);
 
         // Step 2: Submit scan
-        const { scanId } = await this.submitScan(zipBuffer);
+        const submitResponse = await this.submitScan(zipBuffer);
+        const { scanId } = submitResponse;
 
         // Step 3: Poll for results
         const pollResponse = await this.pollForResults(scanId);
 
         // Step 4: Decode and return
-        return this.decodeResults(pollResponse);
+        const results = this.decodeResults(pollResponse);
+
+        return results;
     }
 
-    /**
-     * Zip the given paths as-is. Each path may be a file or a folder.
-     * Entry names are computed relative to workspaceRoot so the archive mirrors the project layout.
-     */
+    // Zip the given paths. Each path may be a file or a folder.
+    // Entry names are computed relative to workspaceRoot so the archive mirrors the project layout.
     private async createWorkspaceZip(workspaceRoot: string, pathsToZip: string[]): Promise<Buffer> {
         return new Promise((resolve, reject) => {
             const chunks: Buffer[] = [];
@@ -122,13 +124,20 @@ export class ApexGuruService {
             archive.on('end', () => resolve(Buffer.concat(chunks)));
             archive.on('error', reject);
 
+            const skipEntry = (entry: archiver.EntryData): false | archiver.EntryData => {
+                return shouldExcludeFromZip(entry.name) ? false : entry;
+            };
+
             for (const absPath of pathsToZip) {
+                if (shouldExcludeFromZip(path.basename(absPath))) {
+                    continue;
+                }
                 const stat = fs.statSync(absPath);
                 const entryName = absPath === workspaceRoot
                     ? ''
                     : path.relative(workspaceRoot, absPath);
                 if (stat.isDirectory()) {
-                    archive.directory(absPath, entryName || false);
+                    archive.directory(absPath, entryName || false, skipEntry);
                 } else {
                     archive.file(absPath, { name: entryName || path.basename(absPath) });
                 }
@@ -164,7 +173,8 @@ export class ApexGuruService {
                 throw new Error(`SFAP API returned ${response.status}: ${errorText}`);
             }
 
-            return await response.json() as ApexGuruSubmitResponse;
+            const submitResponse = await response.json() as ApexGuruSubmitResponse;
+            return submitResponse;
         } catch (error) {
             const errorMessage = error instanceof Error ? error.message : String(error);
             throw new Error(`Failed to submit scan: ${errorMessage}`);
@@ -239,7 +249,6 @@ export class ApexGuruService {
         }
 
         try {
-            // Decode base64 report
             const decodedReport = Buffer.from(pollResponse.report, 'base64').toString('utf-8');
             const violations: ApexGuruViolation[] = JSON.parse(decodedReport);
 
@@ -259,4 +268,30 @@ export class ApexGuruService {
     private sleep(ms: number): Promise<void> {
         return new Promise(resolve => setTimeout(resolve, ms));
     }
+}
+
+/**
+ * Returns true if a zip entry path should be excluded.
+ *
+ *
+ * Excludes any path segment that:
+ * - is or starts with "__MACOSX"
+ * - is ".DS_Store"
+ * - starts with "._" (AppleDouble metadata)
+ * - starts with "." (any dotfile/dotfolder, e.g. .sfdx, .git, .vscode)
+ * - is "node_modules" (npm dependencies — can be hundreds of MB and are not source code)
+ */
+function shouldExcludeFromZip(entryPath: string): boolean {
+    if (!entryPath) {
+        return false;
+    }
+    const segments = entryPath.split(/[\\/]/).filter(Boolean);
+    return segments.some(segment =>
+        segment === '__MACOSX' ||
+        segment.startsWith('__MACOSX') ||
+        segment === '.DS_Store' ||
+        segment.startsWith('._') ||
+        segment.startsWith('.') ||
+        segment === 'node_modules'
+    );
 }

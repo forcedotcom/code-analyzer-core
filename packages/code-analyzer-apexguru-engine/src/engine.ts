@@ -108,7 +108,6 @@ export class ApexGuruEngine extends EngineEventEmitter implements Engine {
         const apexFiles = targetedFiles.filter(file => this.isApexFile(path.basename(file)));
 
         if (apexFiles.length === 0) {
-            this.emitLogEvent(LogLevel.Warn, 'No Apex class files found to analyze');
             this.apexGuruService.cleanup();
             return { violations: [] };
         }
@@ -119,8 +118,7 @@ export class ApexGuruEngine extends EngineEventEmitter implements Engine {
             throw new Error('ApexGuru requires a common workspace root, but the targeted files do not share one.');
         }
 
-        // If the user passed --target, zip only those paths; otherwise zip the whole workspace.
-        const pathsToZip = runOptions.workspace.getRawTargets() ?? [workspaceRoot];
+        const pathsToZip = [workspaceRoot];
 
         try {
             // Set up progress callback for polling
@@ -140,13 +138,6 @@ export class ApexGuruEngine extends EngineEventEmitter implements Engine {
 
             // Filter violations to only include selected rules
             const filteredViolations = allViolations.filter(v => selectedRulesSet.has(v.ruleName));
-
-            if (allViolations.length !== filteredViolations.length) {
-                this.emitLogEvent(
-                    LogLevel.Fine,
-                    `Filtered ${allViolations.length - filteredViolations.length} violation(s) for unselected rules`
-                );
-            }
 
             // Return insights as scan metadata (workspace-level)
             const insights: Record<string, unknown> | undefined = scanMetadata ? { scan: scanMetadata } : undefined;
@@ -174,7 +165,6 @@ export class ApexGuruEngine extends EngineEventEmitter implements Engine {
     private getTargetOrg(): string | undefined {
         return this.config.target_org;
     }
-
 }
 
 /**
