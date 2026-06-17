@@ -63,8 +63,8 @@ describe('ApexGuruService', () => {
         beforeEach(() => {
             // Mock archiver to avoid actual zip creation
             const archiver = require('archiver');
-            const mockArchive = {
-                on: jest.fn((event, handler) => {
+            const mockArchive: any = {
+                on: jest.fn((event: string, handler: () => void): any => {
                     if (event === 'end') {
                         // Simulate empty zip by calling handler immediately
                         setTimeout(() => handler(), 0);
