@@ -89,8 +89,15 @@ export type ApexGuruSuggestion = {
     message: string;  // Code suggestion
 };
 
+/**
+ * Response from the Org JWT minting endpoint (POST /ide/auth)
+ * Used to authenticate against the SFAP ApexGuru API
+ */
 export type OrgJwtResponse = {
+    /** The minted Org JWT token */
     jwt: string;
+
+    /** Optional message from the auth endpoint (e.g., error details) */
     message?: string | null;
 };
 

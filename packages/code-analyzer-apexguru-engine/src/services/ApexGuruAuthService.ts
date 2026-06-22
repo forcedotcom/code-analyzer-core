@@ -32,11 +32,15 @@ export class ApexGuruAuthService {
     async initialize(config: AuthConfig): Promise<void> {
         // Method 1: SF CLI org (alias or username) via --target-org flag
         if (config.targetOrg) {
+            this.emitLogEvent(LogLevel.Fine, `Authenticating with org: ${config.targetOrg}`);
             try {
                 const org = await Org.create({ aliasOrUsername: config.targetOrg });
                 this.connection = org.getConnection();
+                this.emitLogEvent(LogLevel.Fine, `Successfully authenticated to org`);
                 return;
-            } catch (_err) {
+            } catch (err) {
+                const errorMessage = err instanceof Error ? err.message : String(err);
+                this.emitLogEvent(LogLevel.Error, `Failed to authenticate with org '${config.targetOrg}': ${errorMessage}`);
                 throw new Error(
                     `Failed to authenticate with org '${config.targetOrg}'. ` +
                     'Please verify the org alias/username and ensure you are authenticated:\n' +
@@ -47,10 +51,14 @@ export class ApexGuruAuthService {
         }
 
         // Method 2: SF CLI default org (fallback)
+        this.emitLogEvent(LogLevel.Fine, 'No target org specified, using default org');
         try {
             const org = await Org.create({});
             this.connection = org.getConnection();
-        } catch (_err) {
+            this.emitLogEvent(LogLevel.Fine, 'Successfully authenticated to default org');
+        } catch (err) {
+            const errorMessage = err instanceof Error ? err.message : String(err);
+            this.emitLogEvent(LogLevel.Error, `Failed to authenticate: No default org found: ${errorMessage}`);
             throw new Error(
                 'No default org found. Please either:\n' +
                 '  1. Set a default org: sf config set target-org <org-alias>\n' +
