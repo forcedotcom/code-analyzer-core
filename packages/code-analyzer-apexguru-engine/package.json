@@ -16,15 +16,13 @@
     "@salesforce/code-analyzer-engine-api": "0.39.0-SNAPSHOT",
     "@salesforce/core": "^8.28.3",
     "archiver": "^7.0.0",
-    "form-data": "^4.0.0",
-    "node-fetch": "^2.7.0"
+    "form-data": "^4.0.6"
   },
   "devDependencies": {
     "@eslint/js": "^9.39.4",
     "@types/archiver": "^6.0.0",
     "@types/jest": "^30.0.0",
     "@types/node": "^20.0.0",
-    "@types/node-fetch": "^2.6.0",
     "eslint": "^9.39.4",
     "jest": "^30.4.2",
     "rimraf": "^6.1.3",

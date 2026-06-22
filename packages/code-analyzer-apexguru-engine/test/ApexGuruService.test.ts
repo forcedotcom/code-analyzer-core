@@ -1,15 +1,14 @@
 import { ApexGuruService } from '../src/services/ApexGuruService';
 import { ApexGuruAuthService } from '../src/services/ApexGuruAuthService';
 import { ApexGuruResponseStatus } from '../src/types';
-import fetch from 'node-fetch';
 
 // Mock dependencies
 jest.mock('../src/services/ApexGuruAuthService');
-jest.mock('node-fetch');
 jest.mock('archiver');
 jest.mock('node:fs');
 
-const mockFetch = fetch as jest.MockedFunction<typeof fetch>;
+const mockFetch = jest.fn();
+globalThis.fetch = mockFetch as unknown as typeof globalThis.fetch;
 
 describe('ApexGuruService', () => {
     let apexGuruService: ApexGuruService;

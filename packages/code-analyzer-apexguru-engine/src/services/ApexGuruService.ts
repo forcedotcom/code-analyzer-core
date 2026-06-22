@@ -14,7 +14,6 @@ import * as fs from 'node:fs';
 import * as path from 'node:path';
 import archiver from 'archiver';
 import FormData from 'form-data';
-import fetch from 'node-fetch';
 
 /**
  * Service for interacting with SFAP ApexGuru workspace scan APIs
@@ -165,7 +164,7 @@ export class ApexGuruService {
                     'Authorization': `Bearer ${orgJwt}`,
                     ...form.getHeaders()
                 },
-                body: form
+                body: form.getBuffer()
             });
 
             if (!response.ok) {
