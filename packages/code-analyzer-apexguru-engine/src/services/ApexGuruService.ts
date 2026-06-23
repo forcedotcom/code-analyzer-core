@@ -15,6 +15,8 @@ import * as path from 'node:path';
 import archiver from 'archiver';
 import FormData from 'form-data';
 
+const MAX_ZIP_SIZE_BYTES = 20 * 1024 * 1024;
+
 /**
  * Service for interacting with SFAP ApexGuru workspace scan APIs
  */
@@ -99,6 +101,15 @@ export class ApexGuruService {
         // Step 1: Create zip of workspace
         const zipBuffer = await this.createWorkspaceZip(workspaceRoot, pathsToZip);
 
+        if (zipBuffer.length > MAX_ZIP_SIZE_BYTES) {
+            const actualMb = (zipBuffer.length / (1024 * 1024)).toFixed(2);
+            const limitMb = MAX_ZIP_SIZE_BYTES / (1024 * 1024);
+            throw new Error(
+                `Project is too large to scan: zipped Apex sources are ${actualMb} MB, ` +
+                `which exceeds the ${limitMb} MB limit. Please scan a smaller subset of the workspace.`
+            );
+        }
+
         // Step 2: Submit scan
         const submitResponse = await this.submitScan(zipBuffer);
         const { scanId } = submitResponse;
@@ -112,7 +123,8 @@ export class ApexGuruService {
         return results;
     }
 
-    // Zip the given paths. Each path may be a file or a folder.
+    // Zip the given paths, including only Apex source files (.cls and .trigger).
+    // Each path may be a file or a folder; folders are walked and filtered.
     // Entry names are computed relative to workspaceRoot so the archive mirrors the project layout.
     private async createWorkspaceZip(workspaceRoot: string, pathsToZip: string[]): Promise<Buffer> {
         return new Promise((resolve, reject) => {
@@ -123,21 +135,18 @@ export class ApexGuruService {
             archive.on('end', () => resolve(Buffer.concat(chunks)));
             archive.on('error', reject);
 
-            const skipEntry = (entry: archiver.EntryData): false | archiver.EntryData => {
-                return shouldExcludeFromZip(entry.name) ? false : entry;
+            const skipNonApex = (entry: archiver.EntryData): false | archiver.EntryData => {
+                return isApexSourceFile(entry.name) ? entry : false;
             };
 
             for (const absPath of pathsToZip) {
-                if (shouldExcludeFromZip(path.basename(absPath))) {
-                    continue;
-                }
                 const stat = fs.statSync(absPath);
                 const entryName = absPath === workspaceRoot
                     ? ''
                     : path.relative(workspaceRoot, absPath);
                 if (stat.isDirectory()) {
-                    archive.directory(absPath, entryName || false, skipEntry);
-                } else {
+                    archive.directory(absPath, entryName || false, skipNonApex);
+                } else if (isApexSourceFile(absPath)) {
                     archive.file(absPath, { name: entryName || path.basename(absPath) });
                 }
             }
@@ -270,27 +279,14 @@ export class ApexGuruService {
 }
 
 /**
- * Returns true if a zip entry path should be excluded.
- *
- *
- * Excludes any path segment that:
- * - is or starts with "__MACOSX"
- * - is ".DS_Store"
- * - starts with "._" (AppleDouble metadata)
- * - starts with "." (any dotfile/dotfolder, e.g. .sfdx, .git, .vscode)
- * - is "node_modules" (npm dependencies — can be hundreds of MB and are not source code)
+ * Returns true if the given path points to an Apex source file (.cls or .trigger).
+ * Used to restrict the workspace zip to Apex sources only — every other file type
+ * (meta-xml, objects, flows, etc.) is excluded.
  */
-function shouldExcludeFromZip(entryPath: string): boolean {
+function isApexSourceFile(entryPath: string): boolean {
     if (!entryPath) {
         return false;
     }
-    const segments = entryPath.split(/[\\/]/).filter(Boolean);
-    return segments.some(segment =>
-        segment === '__MACOSX' ||
-        segment.startsWith('__MACOSX') ||
-        segment === '.DS_Store' ||
-        segment.startsWith('._') ||
-        segment.startsWith('.') ||
-        segment === 'node_modules'
-    );
+    const lower = entryPath.toLowerCase();
+    return lower.endsWith('.cls') || lower.endsWith('.trigger');
 }
