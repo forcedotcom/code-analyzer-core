@@ -11,14 +11,16 @@ describe('ApexGuruEngine', () => {
     let engine: ApexGuruEngine;
     let mockApexGuruService: jest.Mocked<ApexGuruService>;
     let mockWorkspace: jest.Mocked<Workspace>;
+    let originalSfapBaseUrl: string | undefined;
 
     beforeEach(() => {
         jest.clearAllMocks();
+        originalSfapBaseUrl = process.env.SFAP_API_BASE_URL;
+        process.env.SFAP_API_BASE_URL = 'https://example.test/sfap';
 
         mockApexGuruService = {
             initialize: jest.fn(),
-            validate: jest.fn(),
-            analyzeApexClass: jest.fn(),
+            scanWorkspace: jest.fn(),
             cleanup: jest.fn(),
             setProgressCallback: jest.fn()
         } as any;
@@ -29,10 +31,19 @@ describe('ApexGuruEngine', () => {
             getTargetedFiles: jest.fn(),
             getAllFilesAndFolders: jest.fn(),
             getWorkspaceId: jest.fn().mockReturnValue('test-workspace'),
+            getWorkspaceRoot: jest.fn().mockReturnValue('/test/workspace'),
             targetOrg: undefined
         } as any;
 
         engine = new ApexGuruEngine();
+    });
+
+    afterEach(() => {
+        if (originalSfapBaseUrl === undefined) {
+            delete process.env.SFAP_API_BASE_URL;
+        } else {
+            process.env.SFAP_API_BASE_URL = originalSfapBaseUrl;
+        }
     });
 
     describe('getName', () => {
@@ -52,6 +63,17 @@ describe('ApexGuruEngine', () => {
     });
 
     describe('describeRules', () => {
+        it('should return empty array when SFAP_API_BASE_URL is not set', async () => {
+            delete process.env.SFAP_API_BASE_URL;
+
+            const rules = await engine.describeRules({
+                logFolder: '/tmp/logs',
+                workingFolder: '/tmp/working'
+            });
+
+            expect(rules).toEqual([]);
+        });
+
         it('should return all ApexGuru rules', async () => {
             const rules = await engine.describeRules({
                 logFolder: '/tmp/logs',
@@ -147,7 +169,7 @@ describe('ApexGuruEngine', () => {
                 includeSuggestions: false
             };
             mockApexGuruService.initialize.mockResolvedValue();
-            mockApexGuruService.validate.mockResolvedValue();
+            mockApexGuruService.scanWorkspace.mockResolvedValue({ violations: [] });
         });
 
         it('should return empty results immediately when no rules selected', async () => {
@@ -155,33 +177,24 @@ describe('ApexGuruEngine', () => {
 
             expect(results.violations).toEqual([]);
             expect(mockApexGuruService.initialize).not.toHaveBeenCalled();
-            expect(mockApexGuruService.validate).not.toHaveBeenCalled();
             expect(mockWorkspace.getTargetedFiles).not.toHaveBeenCalled();
         });
 
-        it('should authenticate and validate', async () => {
-            mockWorkspace.getTargetedFiles.mockResolvedValue(['/test/Test.cls']);
-            mockApexGuruService.analyzeApexClass.mockResolvedValue([]);
-            (fs.readFile as jest.Mock).mockResolvedValue('public class Test {}');
+        it('should authenticate and scan workspace', async () => {
+            mockWorkspace.getTargetedFiles.mockResolvedValue(['/test/workspace/Test.cls']);
 
             await engine.runRules(['SoqlInALoop'], mockRunOptions);
 
             expect(mockApexGuruService.initialize).toHaveBeenCalledWith(undefined);
-            expect(mockApexGuruService.validate).toHaveBeenCalled();
+            expect(mockApexGuruService.scanWorkspace).toHaveBeenCalledWith('/test/workspace', ['/test/workspace']);
         });
 
         it('should throw error if authentication fails', async () => {
             mockApexGuruService.initialize.mockRejectedValue(new Error('Auth failed'));
+            mockWorkspace.getTargetedFiles.mockResolvedValue(['/test/workspace/Test.cls']);
 
             await expect(engine.runRules(['SoqlInALoop'], mockRunOptions))
                 .rejects.toThrow('Failed to authenticate');
-        });
-
-        it('should throw error if validation fails', async () => {
-            mockApexGuruService.validate.mockRejectedValue(new Error('ApexGuru is not available for this org'));
-
-            await expect(engine.runRules(['SoqlInALoop'], mockRunOptions))
-                .rejects.toThrow('Failed to validate ApexGuru access');
         });
 
         it('should return empty results if no Apex files found', async () => {
@@ -196,53 +209,59 @@ describe('ApexGuruEngine', () => {
             expect(mockApexGuruService.cleanup).toHaveBeenCalled();
         });
 
-        it('should analyze Apex class files', async () => {
+        it('should throw error if workspace root is null', async () => {
+            mockWorkspace.getTargetedFiles.mockResolvedValue(['/test/Test.cls']);
+            mockWorkspace.getWorkspaceRoot.mockReturnValue(null);
+
+            await expect(engine.runRules(['SoqlInALoop'], mockRunOptions))
+                .rejects.toThrow('ApexGuru requires a common workspace root');
+
+            expect(mockApexGuruService.cleanup).toHaveBeenCalled();
+        });
+
+        it('should scan workspace with all Apex files', async () => {
             mockWorkspace.getTargetedFiles.mockResolvedValue([
-                '/test/Test.cls',
-                '/test/Controller.cls'
+                '/test/workspace/classes/Test.cls',
+                '/test/workspace/triggers/AccountTrigger.trigger'
             ]);
-            mockApexGuruService.analyzeApexClass.mockResolvedValue([]);
-            (fs.readFile as jest.Mock).mockResolvedValue('public class Test {}');
 
             await engine.runRules(['SoqlInALoop'], mockRunOptions);
 
-            expect(mockApexGuruService.analyzeApexClass).toHaveBeenCalledTimes(2);
-            expect(fs.readFile).toHaveBeenCalledWith('/test/Test.cls', 'utf-8');
-            expect(fs.readFile).toHaveBeenCalledWith('/test/Controller.cls', 'utf-8');
+            expect(mockApexGuruService.scanWorkspace).toHaveBeenCalledWith('/test/workspace', ['/test/workspace']);
         });
 
         it('should filter violations by selected rules', async () => {
-            mockWorkspace.getTargetedFiles.mockResolvedValue(['/test/Test.cls']);
+            mockWorkspace.getTargetedFiles.mockResolvedValue(['/test/workspace/Test.cls']);
 
-            // ApexGuru API returns 3 violations but only 2 match selected rules
-            mockApexGuruService.analyzeApexClass.mockResolvedValue([
-                {
-                    rule: 'SoqlInALoop',
-                    message: 'SOQL in loop',
-                    locations: [{ startLine: 10 }],
-                    primaryLocationIndex: 0,
-                    severity: 1,
-                    resources: []
-                },
-                {
-                    rule: 'DmlInALoop',
-                    message: 'DML in loop',
-                    locations: [{ startLine: 20 }],
-                    primaryLocationIndex: 0,
-                    severity: 1,
-                    resources: []
-                },
-                {
-                    rule: 'SoqlWithWildcardFilter',
-                    message: 'Wildcard filter',
-                    locations: [{ startLine: 30 }],
-                    primaryLocationIndex: 0,
-                    severity: 2,
-                    resources: []
-                }
-            ]);
-
-            (fs.readFile as jest.Mock).mockResolvedValue('public class Test {}');
+            // SFAP API returns 3 violations but only 2 match selected rules
+            mockApexGuruService.scanWorkspace.mockResolvedValue({
+                violations: [
+                    {
+                        rule: 'SoqlInALoop',
+                        message: 'SOQL in loop',
+                        locations: [{ startLine: 10, file: 'classes/Test.cls' }],
+                        primaryLocationIndex: 0,
+                        severity: 1,
+                        resources: []
+                    },
+                    {
+                        rule: 'DmlInALoop',
+                        message: 'DML in loop',
+                        locations: [{ startLine: 20, file: 'classes/Test.cls' }],
+                        primaryLocationIndex: 0,
+                        severity: 1,
+                        resources: []
+                    },
+                    {
+                        rule: 'SoqlWithWildcardFilter',
+                        message: 'Wildcard filter',
+                        locations: [{ startLine: 30, file: 'classes/Test.cls' }],
+                        primaryLocationIndex: 0,
+                        severity: 2,
+                        resources: []
+                    }
+                ]
+            });
 
             const results = await engine.runRules(
                 ['SoqlInALoop', 'DmlInALoop'],
@@ -256,24 +275,25 @@ describe('ApexGuruEngine', () => {
         });
 
         it('should include suggestions when includeSuggestions is true', async () => {
-            mockWorkspace.getTargetedFiles.mockResolvedValue(['/test/Test.cls']);
-            mockApexGuruService.analyzeApexClass.mockResolvedValue([
-                {
-                    rule: 'SoqlInALoop',
-                    message: 'SOQL in loop',
-                    locations: [{ startLine: 10 }],
-                    primaryLocationIndex: 0,
-                    severity: 1,
-                    resources: [],
-                    suggestions: [
-                        {
-                            location: { startLine: 10 },
-                            message: '// Move query outside loop\nList<Account> accounts = [SELECT Id FROM Account];'
-                        }
-                    ]
-                }
-            ]);
-            (fs.readFile as jest.Mock).mockResolvedValue('public class Test {}');
+            mockWorkspace.getTargetedFiles.mockResolvedValue(['/test/workspace/Test.cls']);
+            mockApexGuruService.scanWorkspace.mockResolvedValue({
+                violations: [
+                    {
+                        rule: 'SoqlInALoop',
+                        message: 'SOQL in loop',
+                        locations: [{ startLine: 10, file: 'classes/Test.cls' }],
+                        primaryLocationIndex: 0,
+                        severity: 1,
+                        resources: [],
+                        suggestions: [
+                            {
+                                location: { startLine: 10, file: 'classes/Test.cls' },
+                                message: '// Move query outside loop\nList<Account> accounts = [SELECT Id FROM Account];'
+                            }
+                        ]
+                    }
+                ]
+            });
 
             const results = await engine.runRules(['SoqlInALoop'], {
                 ...mockRunOptions,
@@ -286,9 +306,18 @@ describe('ApexGuruEngine', () => {
         });
 
         it('should emit progress events', async () => {
-            mockWorkspace.getTargetedFiles.mockResolvedValue(['/test/Test.cls']);
-            mockApexGuruService.analyzeApexClass.mockResolvedValue([]);
-            (fs.readFile as jest.Mock).mockResolvedValue('public class Test {}');
+            mockWorkspace.getTargetedFiles.mockResolvedValue(['/test/workspace/Test.cls']);
+
+            // Mock scanWorkspace to call the progress callback
+            mockApexGuruService.scanWorkspace.mockImplementation(async () => {
+                // Simulate progress callback being called
+                const callback = mockApexGuruService.setProgressCallback.mock.calls[0]?.[0];
+                if (callback) {
+                    callback(50);  // Simulate 50% progress
+                    callback(100); // Simulate 100% progress
+                }
+                return { violations: [] };
+            });
 
             const progressSpy = jest.spyOn(engine as any, 'emitRunRulesProgressEvent');
 
@@ -298,43 +327,16 @@ describe('ApexGuruEngine', () => {
             expect(progressSpy.mock.calls.length).toBeGreaterThan(0);
         });
 
-        it('should set progress callback on ApexGuru service', async () => {
-            mockWorkspace.getTargetedFiles.mockResolvedValue(['/test/Test.cls']);
-            mockApexGuruService.analyzeApexClass.mockResolvedValue([]);
-            (fs.readFile as jest.Mock).mockResolvedValue('public class Test {}');
+        it('should set progress callback on SFAP service', async () => {
+            mockWorkspace.getTargetedFiles.mockResolvedValue(['/test/workspace/Test.cls']);
 
             await engine.runRules(['SoqlInALoop'], mockRunOptions);
 
             expect(mockApexGuruService.setProgressCallback).toHaveBeenCalled();
         });
 
-        it('should continue analyzing after single file failure', async () => {
-            mockWorkspace.getTargetedFiles.mockResolvedValue([
-                '/test/Test1.cls',
-                '/test/Test2.cls',
-                '/test/Test3.cls'
-            ]);
-
-            (fs.readFile as jest.Mock).mockResolvedValue('public class Test {}');
-
-            // Second file fails
-            mockApexGuruService.analyzeApexClass
-                .mockResolvedValueOnce([])
-                .mockRejectedValueOnce(new Error('Analysis failed'))
-                .mockResolvedValueOnce([]);
-
-
-            const results = await engine.runRules(['SoqlInALoop'], mockRunOptions);
-
-            // Should still return results from files 1 and 3
-            expect(mockApexGuruService.analyzeApexClass).toHaveBeenCalledTimes(3);
-            expect(results.violations).toBeDefined();
-        });
-
         it('should always cleanup resources', async () => {
-            mockWorkspace.getTargetedFiles.mockResolvedValue(['/test/Test.cls']);
-            mockApexGuruService.analyzeApexClass.mockResolvedValue([]);
-            (fs.readFile as jest.Mock).mockResolvedValue('public class Test {}');
+            mockWorkspace.getTargetedFiles.mockResolvedValue(['/test/workspace/Test.cls']);
 
             await engine.runRules(['SoqlInALoop'], mockRunOptions);
 
@@ -342,92 +344,94 @@ describe('ApexGuruEngine', () => {
         });
 
         it('should cleanup even when error occurs within try block', async () => {
-            mockWorkspace.getTargetedFiles.mockResolvedValue(['/test/Test.cls']);
-            (fs.readFile as jest.Mock).mockResolvedValue('public class Test {}');
+            mockWorkspace.getTargetedFiles.mockResolvedValue(['/test/workspace/Test.cls']);
 
-            // Make analyzeApexClass throw an error
-            mockApexGuruService.analyzeApexClass.mockRejectedValue(new Error('Fatal API error'));
+            // Make scanWorkspace throw an error
+            mockApexGuruService.scanWorkspace.mockRejectedValue(new Error('Fatal API error'));
 
-            // Even though analysis fails, cleanup should still be called
-            const result = await engine.runRules(['SoqlInALoop'], mockRunOptions);
+            await expect(engine.runRules(['SoqlInALoop'], mockRunOptions))
+                .rejects.toThrow('Fatal API error');
 
-            // The engine catches individual file errors and continues, so result is returned
-            expect(result.violations).toEqual([]);
             expect(mockApexGuruService.cleanup).toHaveBeenCalled();
         });
 
         it('should handle .trigger files', async () => {
             mockWorkspace.getTargetedFiles.mockResolvedValue([
-                '/test/AccountTrigger.trigger'
+                '/test/workspace/triggers/AccountTrigger.trigger'
             ]);
-            mockApexGuruService.analyzeApexClass.mockResolvedValue([]);
-            (fs.readFile as jest.Mock).mockResolvedValue('trigger AccountTrigger on Account {}');
 
             await engine.runRules(['SoqlInALoop'], mockRunOptions);
 
-            expect(mockApexGuruService.analyzeApexClass).toHaveBeenCalled();
+            expect(mockApexGuruService.scanWorkspace).toHaveBeenCalled();
         });
 
-        it('should extract targetOrg from environment', async () => {
-            // Set environment variable BEFORE creating the engine
-            process.env.CODE_ANALYZER_TARGET_ORG = 'my-org';
+        it('should pass target_org from config to auth service', async () => {
+            // target_org is passed through config (set by CLI --target-org flag)
+            // Core resolves credentials internally via @salesforce/core
+            const engineWithConfig = new ApexGuruEngine({
+                target_org: 'my-org',
+                api_timeout_ms: 300000,
+                api_initial_retry_ms: 2000,
+                api_max_retry_ms: 60000,
+                api_backoff_multiplier: 2
+            });
 
-            // Create new engine with config that includes target_org from environment
-            const engineWithConfig = new ApexGuruEngine({ target_org: 'my-org', api_timeout_ms: 120000, api_initial_retry_ms: 2000, api_max_retry_ms: 60000, api_backoff_multiplier: 2 });
-
-            mockWorkspace.getTargetedFiles.mockResolvedValue(['/test/Test.cls']);
-            mockApexGuruService.analyzeApexClass.mockResolvedValue([]);
-            (fs.readFile as jest.Mock).mockResolvedValue('public class Test {}');
+            mockWorkspace.getTargetedFiles.mockResolvedValue(['/test/workspace/Test.cls']);
 
             await engineWithConfig.runRules(['SoqlInALoop'], mockRunOptions);
 
             expect(mockApexGuruService.initialize).toHaveBeenCalledWith('my-org');
-
-            delete process.env.CODE_ANALYZER_TARGET_ORG;
         });
 
-        it('should aggregate violations from multiple files', async () => {
-            mockWorkspace.getTargetedFiles.mockResolvedValue([
-                '/test/Test1.cls',
-                '/test/Test2.cls'
-            ]);
+        it('should populate insights in results when scanMetadata is returned', async () => {
+            mockWorkspace.getTargetedFiles.mockResolvedValue(['/test/workspace/Test.cls']);
+            const mockScanMetadata = {
+                analysis_mode: 'full' as const,
+                files_scanned: 1,
+                violation_breakdown: { SoqlInALoop: 1 },
+                violation_count: 1,
+                report_generated_ms: 1234567890
+            };
+            mockApexGuruService.scanWorkspace.mockResolvedValue({
+                violations: [],
+                scanMetadata: mockScanMetadata
+            });
 
-            // First file returns 1 violation, second file returns 2 violations
-            mockApexGuruService.analyzeApexClass
-                .mockResolvedValueOnce([
+            const results = await engine.runRules(['SoqlInALoop'], mockRunOptions);
+
+            expect(results.insights).toBeDefined();
+            expect(results.insights!['scan']).toEqual(mockScanMetadata);
+        });
+
+        it('should not include insights in results when no scanMetadata is returned', async () => {
+            mockWorkspace.getTargetedFiles.mockResolvedValue(['/test/workspace/Test.cls']);
+            mockApexGuruService.scanWorkspace.mockResolvedValue({ violations: [] });
+
+            const results = await engine.runRules(['SoqlInALoop'], mockRunOptions);
+
+            expect(results.insights).toBeUndefined();
+        });
+
+        it('should use file path from SFAP violation location', async () => {
+            mockWorkspace.getTargetedFiles.mockResolvedValue(['/test/workspace/Test.cls']);
+            mockApexGuruService.scanWorkspace.mockResolvedValue({
+                violations: [
                     {
                         rule: 'SoqlInALoop',
-                        message: 'Violation 1',
-                        locations: [{ startLine: 10 }],
+                        message: 'SOQL in loop',
+                        locations: [{ startLine: 10, file: 'force-app/main/default/classes/Test.cls' }],
                         primaryLocationIndex: 0,
                         severity: 1,
                         resources: []
                     }
-                ])
-                .mockResolvedValueOnce([
-                    {
-                        rule: 'SoqlInALoop',
-                        message: 'Violation 2',
-                        locations: [{ startLine: 20 }],
-                        primaryLocationIndex: 0,
-                        severity: 1,
-                        resources: []
-                    },
-                    {
-                        rule: 'DmlInALoop',
-                        message: 'Violation 3',
-                        locations: [{ startLine: 30 }],
-                        primaryLocationIndex: 0,
-                        severity: 1,
-                        resources: []
-                    }
-                ]);
+                ]
+            });
 
-            (fs.readFile as jest.Mock).mockResolvedValue('public class Test {}');
+            const results = await engine.runRules(['SoqlInALoop'], mockRunOptions);
 
-            const results = await engine.runRules(['SoqlInALoop', 'DmlInALoop'], mockRunOptions);
-
-            expect(results.violations).toHaveLength(3);
+            expect(results.violations).toHaveLength(1);
+            expect(results.violations[0].primaryLocationIndex).toBe(0);
+            expect(results.violations[0].codeLocations[0].file).toBe('force-app/main/default/classes/Test.cls');
         });
     });
 });
