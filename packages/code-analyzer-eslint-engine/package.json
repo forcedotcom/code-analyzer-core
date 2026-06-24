@@ -13,7 +13,7 @@
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "dependencies": {
-    "@babel/preset-react": "^7.28.5",
+    "@babel/preset-react": "^7.29.7",
     "@eslint/js": "^9.39.4",
     "@lwc/eslint-plugin-lwc": "^3.5.0",
     "@lwc/eslint-plugin-lwc-platform": "^6.3.0",
@@ -23,18 +23,18 @@
     "@salesforce/eslint-config-lwc": "^4.1.2",
     "@salesforce/eslint-plugin-lightning": "^2.0.0",
     "@types/node": "^20.0.0",
-    "@typescript-eslint/eslint-plugin": "^8.59.4",
-    "@typescript-eslint/parser": "^8.59.4",
+    "@typescript-eslint/eslint-plugin": "^8.61.1",
+    "@typescript-eslint/parser": "^8.61.1",
     "eslint": "^9.39.4",
     "eslint-plugin-import": "^2.32.0",
     "eslint-plugin-jest": "^29.15.2",
     "eslint-plugin-jsx-a11y": "^6.10.2",
     "eslint-plugin-react": "^7.37.5",
     "eslint-plugin-react-hooks": "^7.1.1",
-    "globals": "^17.5.0",
-    "semver": "^7.7.4",
+    "globals": "^17.6.0",
+    "semver": "^7.8.4",
     "typescript": "^5.9.3",
-    "typescript-eslint": "^8.59.4"
+    "typescript-eslint": "^8.61.1"
   },
   "devDependencies": {
     "@types/jest": "^30.0.0",
