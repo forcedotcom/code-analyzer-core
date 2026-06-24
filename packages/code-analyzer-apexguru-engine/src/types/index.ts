@@ -25,7 +25,7 @@ export enum ApexGuruResponseStatus {
 }
 
 /**
- * Response from POST https://dev.api.salesforce.com/platform/scale/v1-beta.1/apex-guru/scan
+ * Response from the SFAP ApexGuru scan-submit endpoint.
  */
 export type ApexGuruSubmitResponse = {
     scanId: string;
@@ -35,7 +35,7 @@ export type ApexGuruSubmitResponse = {
 };
 
 /**
- * Response from GET https://dev.api.salesforce.com/platform/scale/v1-beta.1/apex-guru/scan/{scanId}
+ * Response from the SFAP ApexGuru scan-status polling endpoint.
  */
 export type ApexGuruPollResponse = {
     scanId: string;

@@ -11,9 +11,12 @@ describe('ApexGuruEngine', () => {
     let engine: ApexGuruEngine;
     let mockApexGuruService: jest.Mocked<ApexGuruService>;
     let mockWorkspace: jest.Mocked<Workspace>;
+    let originalSfapBaseUrl: string | undefined;
 
     beforeEach(() => {
         jest.clearAllMocks();
+        originalSfapBaseUrl = process.env.SFAP_API_BASE_URL;
+        process.env.SFAP_API_BASE_URL = 'https://example.test/sfap';
 
         mockApexGuruService = {
             initialize: jest.fn(),
@@ -35,6 +38,14 @@ describe('ApexGuruEngine', () => {
         engine = new ApexGuruEngine();
     });
 
+    afterEach(() => {
+        if (originalSfapBaseUrl === undefined) {
+            delete process.env.SFAP_API_BASE_URL;
+        } else {
+            process.env.SFAP_API_BASE_URL = originalSfapBaseUrl;
+        }
+    });
+
     describe('getName', () => {
         it('should return engine name', () => {
             expect(engine.getName()).toBe('apexguru');
@@ -52,6 +63,17 @@ describe('ApexGuruEngine', () => {
     });
 
     describe('describeRules', () => {
+        it('should return empty array when SFAP_API_BASE_URL is not set', async () => {
+            delete process.env.SFAP_API_BASE_URL;
+
+            const rules = await engine.describeRules({
+                logFolder: '/tmp/logs',
+                workingFolder: '/tmp/working'
+            });
+
+            expect(rules).toEqual([]);
+        });
+
         it('should return all ApexGuru rules', async () => {
             const rules = await engine.describeRules({
                 logFolder: '/tmp/logs',

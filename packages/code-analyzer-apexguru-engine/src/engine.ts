@@ -53,6 +53,14 @@ export class ApexGuruEngine extends EngineEventEmitter implements Engine {
     async describeRules(describeOptions: DescribeOptions): Promise<RuleDescription[]> {
         this.emitDescribeRulesProgressEvent(0);
 
+        // The SFAP API endpoint is environment-specific and supplied externally.
+        // When unset, this engine has nowhere to scan against, so it advertises no rules.
+        if (!process.env.SFAP_API_BASE_URL) {
+            this.emitLogEvent(LogLevel.Debug, 'SFAP API base URL not configured. ApexGuru engine is disabled.');
+            this.emitDescribeRulesProgressEvent(100);
+            return [];
+        }
+
         // Check if targeted files contain any Apex files
         if (describeOptions.workspace) {
             const targetedFiles = await describeOptions.workspace.getTargetedFiles();

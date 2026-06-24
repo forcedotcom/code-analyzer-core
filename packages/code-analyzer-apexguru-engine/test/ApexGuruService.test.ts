@@ -7,6 +7,8 @@ jest.mock('../src/services/ApexGuruAuthService');
 jest.mock('archiver');
 jest.mock('node:fs');
 
+const TEST_SFAP_BASE_URL = 'https://example.test/sfap';
+
 const mockFetch = jest.fn();
 globalThis.fetch = mockFetch as unknown as typeof globalThis.fetch;
 
@@ -14,9 +16,12 @@ describe('ApexGuruService', () => {
     let apexGuruService: ApexGuruService;
     let mockEmitLogEvent: jest.Mock;
     let mockAuthService: jest.Mocked<ApexGuruAuthService>;
+    let originalSfapBaseUrl: string | undefined;
 
     beforeEach(() => {
         jest.clearAllMocks();
+        originalSfapBaseUrl = process.env.SFAP_API_BASE_URL;
+        process.env.SFAP_API_BASE_URL = TEST_SFAP_BASE_URL;
         mockEmitLogEvent = jest.fn();
 
         mockAuthService = {
@@ -37,6 +42,14 @@ describe('ApexGuruService', () => {
             60000,   // maxRetryMs
             2        // backoffMultiplier
         );
+    });
+
+    afterEach(() => {
+        if (originalSfapBaseUrl === undefined) {
+            delete process.env.SFAP_API_BASE_URL;
+        } else {
+            process.env.SFAP_API_BASE_URL = originalSfapBaseUrl;
+        }
     });
 
     describe('initialize', () => {
@@ -467,7 +480,7 @@ describe('ApexGuruService', () => {
             // Check submit endpoint
             expect(mockFetch).toHaveBeenNthCalledWith(
                 1,
-                'https://dev.api.salesforce.com/platform/scale/v1-beta.1/apex-guru/scan',
+                `${TEST_SFAP_BASE_URL}/apex-guru/scan`,
                 expect.objectContaining({
                     method: 'POST',
                     headers: expect.objectContaining({
@@ -479,7 +492,7 @@ describe('ApexGuruService', () => {
             // Check poll endpoint
             expect(mockFetch).toHaveBeenNthCalledWith(
                 2,
-                'https://dev.api.salesforce.com/platform/scale/v1-beta.1/apex-guru/scan/scan-endpoint-check',
+                `${TEST_SFAP_BASE_URL}/apex-guru/scan/scan-endpoint-check`,
                 expect.objectContaining({
                     method: 'GET',
                     headers: {
