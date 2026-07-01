@@ -97,15 +97,20 @@ export class ApexGuruEngine extends EngineEventEmitter implements Engine {
         // Get target org alias/username from config (passed by CLI --target-org flag)
         const targetOrg = this.getTargetOrg();
 
-        // Initialize authentication
+        // Initialize authentication — skip gracefully if user is not authenticated
         try {
             await this.apexGuruService.initialize(targetOrg);
         } catch (error) {
-            const message = error instanceof Error ? error.message : String(error);
-            throw new Error(
-                `Failed to authenticate: ${message}\n` +
-                'Please authenticate with: sf org login web'
-            );
+            const detail = error instanceof Error ? error.message : String(error);
+            const message = `ApexGuru skipped: user is not authenticated (${detail}). ` +
+                'Run "sf org login web" to authenticate, then re-run the scan.';
+            this.emitLogEvent(LogLevel.Warn, message);
+            this.emitRunRulesProgressEvent(100);
+            this.apexGuruService.cleanup();
+            return {
+                violations: [],
+                insights: { skipped: true, skipReason: 'AUTHENTICATION_REQUIRED', message }
+            };
         }
 
         // Get workspace root path

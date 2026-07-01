@@ -1,6 +1,6 @@
 import { ApexGuruEngine } from '../src/engine';
 import { ApexGuruService } from '../src/services/ApexGuruService';
-import { RunOptions, Workspace } from '@salesforce/code-analyzer-engine-api';
+import { LogLevel, RunOptions, Workspace } from '@salesforce/code-analyzer-engine-api';
 import * as fs from 'node:fs/promises';
 
 // Mock dependencies
@@ -189,12 +189,26 @@ describe('ApexGuruEngine', () => {
             expect(mockApexGuruService.scanWorkspace).toHaveBeenCalledWith('/test/workspace', ['/test/workspace']);
         });
 
-        it('should throw error if authentication fails', async () => {
-            mockApexGuruService.initialize.mockRejectedValue(new Error('Auth failed'));
+        it('should gracefully skip when authentication fails and return empty violations with skip insights', async () => {
+            mockApexGuruService.initialize.mockRejectedValue(new Error('No default org found'));
             mockWorkspace.getTargetedFiles.mockResolvedValue(['/test/workspace/Test.cls']);
+            const logSpy = jest.spyOn(engine as any, 'emitLogEvent');
+            const progressSpy = jest.spyOn(engine as any, 'emitRunRulesProgressEvent');
 
-            await expect(engine.runRules(['SoqlInALoop'], mockRunOptions))
-                .rejects.toThrow('Failed to authenticate');
+            const results = await engine.runRules(['SoqlInALoop'], mockRunOptions);
+
+            expect(results.violations).toEqual([]);
+            expect(results.insights).toEqual({
+                skipped: true,
+                skipReason: 'AUTHENTICATION_REQUIRED',
+                message: expect.any(String)
+            });
+            expect(logSpy).toHaveBeenCalledWith(
+                LogLevel.Warn,
+                expect.stringContaining('not authenticated')
+            );
+            expect(mockApexGuruService.cleanup).toHaveBeenCalled();
+            expect(progressSpy).toHaveBeenCalledWith(100);
         });
 
         it('should return empty results if no Apex files found', async () => {
