@@ -156,6 +156,18 @@ describe('ApexGuruEngine', () => {
             expect(rules.length).toBeGreaterThan(0);
             expect(rules.find(r => r.name === 'SoqlInALoop')).toBeDefined();
         });
+
+        it('should return rules without attempting authentication regardless of auth state', async () => {
+            const rules = await engine.describeRules({
+                logFolder: '/tmp/logs',
+                workingFolder: '/tmp/working'
+            });
+
+            expect(rules.length).toBeGreaterThan(0);
+            expect(rules.find(r => r.name === 'SoqlInALoop')).toBeDefined();
+            expect(rules.find(r => r.name === 'DmlInALoop')).toBeDefined();
+            expect(mockApexGuruService.initialize).not.toHaveBeenCalled();
+        });
     });
 
     describe('runRules', () => {
