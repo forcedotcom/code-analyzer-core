@@ -56,14 +56,6 @@ function toSarifRun(engineRunResults: EngineRunResults, runDir: string): sarif.R
     const insights = engineRunResults.getInsights();
     if (insights) {
         run.properties = { insights };
-        if (insights['skipped'] === true) {
-            const notification: sarif.Notification = {
-                level: 'warning',
-                message: { text: String(insights['message'] ?? `Engine ${engineRunResults.getEngineName()} was skipped.`) },
-                descriptor: { id: String(insights['skipReason'] ?? 'UNKNOWN') }
-            };
-            run.invocations![0].toolConfigurationNotifications = [notification];
-        }
     }
 
     return run;

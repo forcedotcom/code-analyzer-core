@@ -410,31 +410,6 @@ describe('Insights in output formatters', () => {
         expect(jsonOutput.insights['stubEngine1']).toEqual(mockInsights);
     });
 
-    it('When engine insights contain skipped:true, SARIF output includes toolConfigurationNotification', async () => {
-        const codeAnalyzer = new CodeAnalyzer(CodeAnalyzerConfig.withDefaults());
-        const stubPlugin = new stubs.StubEnginePlugin();
-        await codeAnalyzer.addEnginePlugin(stubPlugin);
-        (stubPlugin.getCreatedEngine('stubEngine1') as stubs.StubEngine1).resultsToReturn = {
-            violations: [stubs.getSampleViolationForStub1RuleA()],
-            insights: {
-                skipped: true,
-                skipReason: 'AUTHENTICATION_REQUIRED',
-                message: 'ApexGuru skipped: user is not authenticated.'
-            }
-        };
-        const rules = await codeAnalyzer.selectRules(['stubEngine1']);
-        const results = await codeAnalyzer.run(rules, {workspace: await codeAnalyzer.createWorkspace(['test'])});
-        const sarifOutput = JSON.parse(results.toFormattedOutput(OutputFormat.SARIF));
-
-        const run = sarifOutput.runs[0];
-        expect(run.invocations[0].toolConfigurationNotifications).toBeDefined();
-        expect(run.invocations[0].toolConfigurationNotifications).toHaveLength(1);
-        const notification = run.invocations[0].toolConfigurationNotifications[0];
-        expect(notification.level).toBe('warning');
-        expect(notification.message.text).toBe('ApexGuru skipped: user is not authenticated.');
-        expect(notification.descriptor.id).toBe('AUTHENTICATION_REQUIRED');
-    });
-
     it('When engine provides insights, then SARIF output includes insights in run properties', async () => {
         const codeAnalyzer = new CodeAnalyzer(CodeAnalyzerConfig.withDefaults());
         const stubPlugin = new stubs.StubEnginePlugin();
@@ -472,47 +447,5 @@ describe('Insights in output formatters', () => {
         const jsonOutput = JSON.parse(results.toFormattedOutput(OutputFormat.JSON));
 
         expect(jsonOutput.insights).toBeUndefined();
-    });
-});
-
-describe('Warnings in JSON output from skipped engine insights', () => {
-    it('When engine insights contain skipped:true, JSON output includes warnings array', async () => {
-        const codeAnalyzer = new CodeAnalyzer(CodeAnalyzerConfig.withDefaults());
-        const stubPlugin = new stubs.StubEnginePlugin();
-        await codeAnalyzer.addEnginePlugin(stubPlugin);
-        (stubPlugin.getCreatedEngine('stubEngine1') as stubs.StubEngine1).resultsToReturn = {
-            violations: [],
-            insights: {
-                skipped: true,
-                skipReason: 'AUTHENTICATION_REQUIRED',
-                message: 'ApexGuru skipped: user is not authenticated.'
-            }
-        };
-        const rules = await codeAnalyzer.selectRules(['stubEngine1']);
-        const results = await codeAnalyzer.run(rules, {workspace: await codeAnalyzer.createWorkspace(['test'])});
-        const jsonOutput = JSON.parse(results.toFormattedOutput(OutputFormat.JSON));
-
-        expect(jsonOutput.warnings).toBeDefined();
-        expect(jsonOutput.warnings).toHaveLength(1);
-        expect(jsonOutput.warnings[0]).toEqual({
-            engine: 'stubEngine1',
-            code: 'AUTHENTICATION_REQUIRED',
-            message: 'ApexGuru skipped: user is not authenticated.'
-        });
-    });
-
-    it('When no engine insights contain skipped:true, JSON output has no warnings array', async () => {
-        const codeAnalyzer = new CodeAnalyzer(CodeAnalyzerConfig.withDefaults());
-        const stubPlugin = new stubs.StubEnginePlugin();
-        await codeAnalyzer.addEnginePlugin(stubPlugin);
-        (stubPlugin.getCreatedEngine('stubEngine1') as stubs.StubEngine1).resultsToReturn = {
-            violations: [],
-            insights: { scan: { files_scanned: 5 } }
-        };
-        const rules = await codeAnalyzer.selectRules(['stubEngine1']);
-        const results = await codeAnalyzer.run(rules, {workspace: await codeAnalyzer.createWorkspace(['test'])});
-        const jsonOutput = JSON.parse(results.toFormattedOutput(OutputFormat.JSON));
-
-        expect(jsonOutput.warnings).toBeUndefined();
     });
 });
