@@ -7,7 +7,7 @@ jest.mock('../src/services/ApexGuruAuthService');
 jest.mock('archiver');
 jest.mock('node:fs');
 
-const TEST_SFAP_BASE_URL = 'https://example.test/sfap';
+const TEST_SFAP_BASE_URL = 'https://dev.api.salesforce.com/platform/scale/v1-beta.1';
 
 const mockFetch = jest.fn();
 globalThis.fetch = mockFetch as unknown as typeof globalThis.fetch;
@@ -16,12 +16,9 @@ describe('ApexGuruService', () => {
     let apexGuruService: ApexGuruService;
     let mockEmitLogEvent: jest.Mock;
     let mockAuthService: jest.Mocked<ApexGuruAuthService>;
-    let originalSfapBaseUrl: string | undefined;
 
     beforeEach(() => {
         jest.clearAllMocks();
-        originalSfapBaseUrl = process.env.SFAP_API_BASE_URL;
-        process.env.SFAP_API_BASE_URL = TEST_SFAP_BASE_URL;
         mockEmitLogEvent = jest.fn();
 
         mockAuthService = {
@@ -45,11 +42,7 @@ describe('ApexGuruService', () => {
     });
 
     afterEach(() => {
-        if (originalSfapBaseUrl === undefined) {
-            delete process.env.SFAP_API_BASE_URL;
-        } else {
-            process.env.SFAP_API_BASE_URL = originalSfapBaseUrl;
-        }
+        jest.restoreAllMocks();
     });
 
     describe('initialize', () => {
