@@ -102,15 +102,10 @@ export class ApexGuruEngine extends EngineEventEmitter implements Engine {
             await this.apexGuruService.initialize(targetOrg);
         } catch (error) {
             const detail = error instanceof Error ? error.message : String(error);
-            const message = `ApexGuru skipped: user is not authenticated (${detail}). ` +
-                'Run "sf org login web" to authenticate, then re-run the scan.';
-            this.emitLogEvent(LogLevel.Warn, message);
-            this.emitRunRulesProgressEvent(100);
             this.apexGuruService.cleanup();
-            return {
-                violations: [],
-                insights: { skipped: true, skipReason: 'AUTHENTICATION_REQUIRED', message }
-            };
+            return this.skipWithError('NO_ORG_CONNECTION',
+                `Failed to authenticate: ${detail}`,
+                "Please authenticate with 'sf org login web' or pass --target-org");
         }
 
         // Get workspace root path
@@ -152,14 +147,57 @@ export class ApexGuruEngine extends EngineEventEmitter implements Engine {
             // Filter violations to only include selected rules
             const filteredViolations = allViolations.filter(v => selectedRulesSet.has(v.ruleName));
 
-            // Return insights as scan metadata (workspace-level)
-            const insights: Record<string, unknown> | undefined = scanMetadata ? { scan: scanMetadata } : undefined;
+            // Return insights with status: "completed" and scan metadata
+            const insights: Record<string, unknown> = {
+                status: 'completed',
+                ...(scanMetadata ? { scan: scanMetadata } : {})
+            };
 
             return { violations: filteredViolations, insights };
+        } catch (error) {
+            // Catch API failures (5xx, timeout, connection refused) and unexpected errors
+            const detail = error instanceof Error ? error.message : String(error);
+            if (this.isApiUnavailableError(error)) {
+                return this.skipWithError('API_UNAVAILABLE',
+                    `ApexGuru service is unavailable: ${detail}`,
+                    'The ApexGuru service is temporarily unavailable. Please try again later.');
+            }
+            return this.skipWithError('UNEXPECTED_ERROR',
+                `An unexpected error occurred: ${detail}`,
+                'An unexpected error occurred. Please try again or file a support ticket if the issue persists.');
         } finally {
             // Always cleanup resources
             this.apexGuruService.cleanup();
         }
+    }
+
+    /**
+     * Returns a graceful skip result with structured error insights.
+     * Emits a warn-level log event and completes progress before returning.
+     * NOTE: Caller is responsible for cleanup() — do NOT call cleanup here since
+     * this may be invoked from within a try-finally that already handles cleanup.
+     */
+    private skipWithError(code: string, message: string, remediation: string): EngineRunResults {
+        this.emitLogEvent(LogLevel.Warn, `ApexGuru skipped: ${message}`);
+        this.emitRunRulesProgressEvent(100);
+        return {
+            violations: [],
+            insights: {
+                status: 'skipped',
+                error: { code, message, remediation }
+            }
+        };
+    }
+
+    /**
+     * Determines whether an error is an API unavailability issue (network/timeout/5xx).
+     */
+    private isApiUnavailableError(error: unknown): boolean {
+        if (!(error instanceof Error)) return false;
+        const msg = error.message.toLowerCase();
+        const networkIndicators = ['econnrefused', 'etimedout', 'enotfound', 'socket hang up',
+            'connection refused', 'timeout', 'network', '502', '503', '504', '500'];
+        return networkIndicators.some(indicator => msg.includes(indicator));
     }
 
     /**

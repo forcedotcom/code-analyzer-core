@@ -201,7 +201,7 @@ describe('ApexGuruEngine', () => {
             expect(mockApexGuruService.scanWorkspace).toHaveBeenCalledWith('/test/workspace', ['/test/workspace']);
         });
 
-        it('should gracefully skip when authentication fails and return empty violations with skip insights', async () => {
+        it('should gracefully skip with NO_ORG_CONNECTION when authentication fails', async () => {
             mockApexGuruService.initialize.mockRejectedValue(new Error('No default org found'));
             mockWorkspace.getTargetedFiles.mockResolvedValue(['/test/workspace/Test.cls']);
             const logSpy = jest.spyOn(engine as any, 'emitLogEvent');
@@ -211,16 +211,83 @@ describe('ApexGuruEngine', () => {
 
             expect(results.violations).toEqual([]);
             expect(results.insights).toEqual({
-                skipped: true,
-                skipReason: 'AUTHENTICATION_REQUIRED',
-                message: expect.any(String)
+                status: 'skipped',
+                error: {
+                    code: 'NO_ORG_CONNECTION',
+                    message: expect.stringContaining('No default org found'),
+                    remediation: expect.stringContaining('sf org login web')
+                }
             });
             expect(logSpy).toHaveBeenCalledWith(
                 LogLevel.Warn,
-                expect.stringContaining('not authenticated')
+                expect.stringContaining('Failed to authenticate')
             );
             expect(mockApexGuruService.cleanup).toHaveBeenCalled();
             expect(progressSpy).toHaveBeenCalledWith(100);
+            // No SFAP calls should be made after auth failure
+            expect(mockApexGuruService.scanWorkspace).not.toHaveBeenCalled();
+        });
+
+        it('should gracefully skip with API_UNAVAILABLE when API is unreachable', async () => {
+            mockWorkspace.getTargetedFiles.mockResolvedValue(['/test/workspace/Test.cls']);
+            mockApexGuruService.scanWorkspace.mockRejectedValue(new Error('connect ECONNREFUSED 127.0.0.1:443'));
+            const logSpy = jest.spyOn(engine as any, 'emitLogEvent');
+
+            const results = await engine.runRules(['SoqlInALoop'], mockRunOptions);
+
+            expect(results.violations).toEqual([]);
+            expect(results.insights).toEqual({
+                status: 'skipped',
+                error: {
+                    code: 'API_UNAVAILABLE',
+                    message: expect.stringContaining('ECONNREFUSED'),
+                    remediation: expect.stringContaining('temporarily unavailable')
+                }
+            });
+            expect(logSpy).toHaveBeenCalledWith(
+                LogLevel.Warn,
+                expect.stringContaining('unavailable')
+            );
+            expect(mockApexGuruService.cleanup).toHaveBeenCalled();
+        });
+
+        it('should gracefully skip with API_UNAVAILABLE on timeout', async () => {
+            mockWorkspace.getTargetedFiles.mockResolvedValue(['/test/workspace/Test.cls']);
+            mockApexGuruService.scanWorkspace.mockRejectedValue(new Error('Request timeout after 300000ms'));
+            const logSpy = jest.spyOn(engine as any, 'emitLogEvent');
+
+            const results = await engine.runRules(['SoqlInALoop'], mockRunOptions);
+
+            expect(results.violations).toEqual([]);
+            expect(results.insights).toEqual({
+                status: 'skipped',
+                error: {
+                    code: 'API_UNAVAILABLE',
+                    message: expect.stringContaining('timeout'),
+                    remediation: expect.stringContaining('try again later')
+                }
+            });
+            expect(logSpy).toHaveBeenCalledWith(LogLevel.Warn, expect.any(String));
+        });
+
+        it('should gracefully skip with UNEXPECTED_ERROR on non-network errors', async () => {
+            mockWorkspace.getTargetedFiles.mockResolvedValue(['/test/workspace/Test.cls']);
+            mockApexGuruService.scanWorkspace.mockRejectedValue(new Error('Unexpected internal failure'));
+            const logSpy = jest.spyOn(engine as any, 'emitLogEvent');
+
+            const results = await engine.runRules(['SoqlInALoop'], mockRunOptions);
+
+            expect(results.violations).toEqual([]);
+            expect(results.insights).toEqual({
+                status: 'skipped',
+                error: {
+                    code: 'UNEXPECTED_ERROR',
+                    message: expect.stringContaining('Unexpected internal failure'),
+                    remediation: expect.stringContaining('file a support ticket')
+                }
+            });
+            expect(logSpy).toHaveBeenCalledWith(LogLevel.Warn, expect.any(String));
+            expect(mockApexGuruService.cleanup).toHaveBeenCalled();
         });
 
         it('should return empty results if no Apex files found', async () => {
@@ -372,12 +439,17 @@ describe('ApexGuruEngine', () => {
         it('should cleanup even when error occurs within try block', async () => {
             mockWorkspace.getTargetedFiles.mockResolvedValue(['/test/workspace/Test.cls']);
 
-            // Make scanWorkspace throw an error
+            // Make scanWorkspace throw an error — should be caught and return skip result
             mockApexGuruService.scanWorkspace.mockRejectedValue(new Error('Fatal API error'));
 
-            await expect(engine.runRules(['SoqlInALoop'], mockRunOptions))
-                .rejects.toThrow('Fatal API error');
+            const results = await engine.runRules(['SoqlInALoop'], mockRunOptions);
 
+            // Should not throw — error is caught and returned as UNEXPECTED_ERROR skip
+            expect(results.violations).toEqual([]);
+            expect(results.insights).toEqual({
+                status: 'skipped',
+                error: expect.objectContaining({ code: 'UNEXPECTED_ERROR' })
+            });
             expect(mockApexGuruService.cleanup).toHaveBeenCalled();
         });
 
@@ -409,7 +481,7 @@ describe('ApexGuruEngine', () => {
             expect(mockApexGuruService.initialize).toHaveBeenCalledWith('my-org');
         });
 
-        it('should populate insights in results when scanMetadata is returned', async () => {
+        it('should return insights with status completed and scan metadata on success', async () => {
             mockWorkspace.getTargetedFiles.mockResolvedValue(['/test/workspace/Test.cls']);
             const mockScanMetadata = {
                 analysis_mode: 'full' as const,
@@ -426,16 +498,19 @@ describe('ApexGuruEngine', () => {
             const results = await engine.runRules(['SoqlInALoop'], mockRunOptions);
 
             expect(results.insights).toBeDefined();
+            expect(results.insights!['status']).toBe('completed');
             expect(results.insights!['scan']).toEqual(mockScanMetadata);
         });
 
-        it('should not include insights in results when no scanMetadata is returned', async () => {
+        it('should return insights with status completed even without scan metadata', async () => {
             mockWorkspace.getTargetedFiles.mockResolvedValue(['/test/workspace/Test.cls']);
             mockApexGuruService.scanWorkspace.mockResolvedValue({ violations: [] });
 
             const results = await engine.runRules(['SoqlInALoop'], mockRunOptions);
 
-            expect(results.insights).toBeUndefined();
+            expect(results.insights).toBeDefined();
+            expect(results.insights!['status']).toBe('completed');
+            expect(results.insights!['scan']).toBeUndefined();
         });
 
         it('should use file path from SFAP violation location', async () => {
