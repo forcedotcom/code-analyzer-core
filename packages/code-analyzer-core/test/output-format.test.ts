@@ -449,3 +449,45 @@ describe('Insights in output formatters', () => {
         expect(jsonOutput.insights).toBeUndefined();
     });
 });
+
+describe('Warnings in JSON output from skipped engine insights', () => {
+    it('When engine insights contain skipped:true, JSON output includes warnings array', async () => {
+        const codeAnalyzer = new CodeAnalyzer(CodeAnalyzerConfig.withDefaults());
+        const stubPlugin = new stubs.StubEnginePlugin();
+        await codeAnalyzer.addEnginePlugin(stubPlugin);
+        (stubPlugin.getCreatedEngine('stubEngine1') as stubs.StubEngine1).resultsToReturn = {
+            violations: [],
+            insights: {
+                skipped: true,
+                skipReason: 'AUTHENTICATION_REQUIRED',
+                message: 'ApexGuru skipped: user is not authenticated.'
+            }
+        };
+        const rules = await codeAnalyzer.selectRules(['stubEngine1']);
+        const results = await codeAnalyzer.run(rules, {workspace: await codeAnalyzer.createWorkspace(['test'])});
+        const jsonOutput = JSON.parse(results.toFormattedOutput(OutputFormat.JSON));
+
+        expect(jsonOutput.warnings).toBeDefined();
+        expect(jsonOutput.warnings).toHaveLength(1);
+        expect(jsonOutput.warnings[0]).toEqual({
+            engine: 'stubEngine1',
+            code: 'AUTHENTICATION_REQUIRED',
+            message: 'ApexGuru skipped: user is not authenticated.'
+        });
+    });
+
+    it('When no engine insights contain skipped:true, JSON output has no warnings array', async () => {
+        const codeAnalyzer = new CodeAnalyzer(CodeAnalyzerConfig.withDefaults());
+        const stubPlugin = new stubs.StubEnginePlugin();
+        await codeAnalyzer.addEnginePlugin(stubPlugin);
+        (stubPlugin.getCreatedEngine('stubEngine1') as stubs.StubEngine1).resultsToReturn = {
+            violations: [],
+            insights: { scan: { files_scanned: 5 } }
+        };
+        const rules = await codeAnalyzer.selectRules(['stubEngine1']);
+        const results = await codeAnalyzer.run(rules, {workspace: await codeAnalyzer.createWorkspace(['test'])});
+        const jsonOutput = JSON.parse(results.toFormattedOutput(OutputFormat.JSON));
+
+        expect(jsonOutput.warnings).toBeUndefined();
+    });
+});

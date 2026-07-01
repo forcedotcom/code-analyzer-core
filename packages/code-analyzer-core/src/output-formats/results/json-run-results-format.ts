@@ -21,6 +21,20 @@ export type JsonResultsOutput = {
 
     // Optional insights metadata from each engine, keyed by engine name
     insights?: { [engineName: string]: Record<string, unknown> }
+
+    // Optional warnings from engines that were skipped (e.g. due to auth failure)
+    warnings?: JsonWarningOutput[]
+}
+
+export type JsonWarningOutput = {
+    // The engine that emitted the warning
+    engine: string
+
+    // A machine-readable code identifying the warning type
+    code: string
+
+    // A human-readable message describing the warning
+    message: string
 }
 /**
  * Type representing violation counts by severity level; this is specifically exported externally.
@@ -140,6 +154,10 @@ export function toJsonResultsOutput(results: RunResults, sanitizeFcn: (text: str
     if (insightsByEngine) {
         output.insights = insightsByEngine;
     }
+    const warnings = toJsonWarningsArray(results);
+    if (warnings.length > 0) {
+        output.warnings = warnings;
+    }
     return output;
 }
 
@@ -152,6 +170,21 @@ function toJsonInsightsObject(results: RunResults): { [engineName: string]: Reco
         }
     }
     return Object.keys(insightsByEngine).length > 0 ? insightsByEngine : undefined;
+}
+
+function toJsonWarningsArray(results: RunResults): JsonWarningOutput[] {
+    const warnings: JsonWarningOutput[] = [];
+    for (const engineName of results.getEngineNames()) {
+        const insights = results.getEngineInsights(engineName);
+        if (insights && insights['skipped'] === true) {
+            warnings.push({
+                engine: engineName,
+                code: String(insights['skipReason'] ?? 'UNKNOWN'),
+                message: String(insights['message'] ?? `Engine ${engineName} was skipped.`)
+            });
+        }
+    }
+    return warnings;
 }
 
 function toJsonVersionObject(results: RunResults): JsonVersionOutput {

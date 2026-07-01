@@ -1,3 +1,4 @@
 export type {
-    ViolationCounts
+    ViolationCounts,
+    JsonWarningOutput
 } from "./results/json-run-results-format"
