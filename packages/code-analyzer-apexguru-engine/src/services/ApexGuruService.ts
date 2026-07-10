@@ -31,7 +31,7 @@ export class ApexGuruService {
     private readonly initialRetryMs: number;
     private readonly maxRetryMs: number;
     private readonly backoffMultiplier: number;
-    private readonly sfapBaseUrl = 'https://dev.api.salesforce.com//platform/scale/v1-beta.1';
+    private readonly sfapBaseUrl = 'https://dev.api.salesforce.com/platform/scale/v1-beta.1';
     private progressCallback?: (progress: number) => void;
     private isCancelled = false;
 
