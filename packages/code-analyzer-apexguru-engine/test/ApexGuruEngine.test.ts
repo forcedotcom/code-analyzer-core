@@ -2,10 +2,15 @@ import { ApexGuruEngine } from '../src/engine';
 import { ApexGuruService } from '../src/services/ApexGuruService';
 import { LogLevel, RunOptions, Workspace } from '@salesforce/code-analyzer-engine-api';
 import * as fs from 'node:fs/promises';
+import * as fsSync from 'node:fs';
 
 // Mock dependencies
 jest.mock('../src/services/ApexGuruService');
 jest.mock('node:fs/promises');
+jest.mock('node:fs', () => ({
+    ...jest.requireActual('node:fs'),
+    existsSync: jest.fn().mockReturnValue(true)
+}));
 
 describe('ApexGuruEngine', () => {
     let engine: ApexGuruEngine;
@@ -179,7 +184,7 @@ describe('ApexGuruEngine', () => {
             await engine.runRules(['SoqlInALoop'], mockRunOptions);
 
             expect(mockApexGuruService.initialize).toHaveBeenCalledWith(undefined);
-            expect(mockApexGuruService.scanWorkspace).toHaveBeenCalledWith('/test/workspace', ['/test/workspace']);
+            expect(mockApexGuruService.scanWorkspace).toHaveBeenCalledWith('/test/workspace', ['/test/workspace/Test.cls']);
         });
 
         it('should gracefully skip with NO_ORG_CONNECTION when authentication fails', async () => {
@@ -293,7 +298,7 @@ describe('ApexGuruEngine', () => {
             expect(mockApexGuruService.cleanup).toHaveBeenCalled();
         });
 
-        it('should scan workspace with all Apex files', async () => {
+        it('should zip only the targeted Apex files', async () => {
             mockWorkspace.getTargetedFiles.mockResolvedValue([
                 '/test/workspace/classes/Test.cls',
                 '/test/workspace/triggers/AccountTrigger.trigger'
@@ -301,7 +306,24 @@ describe('ApexGuruEngine', () => {
 
             await engine.runRules(['SoqlInALoop'], mockRunOptions);
 
-            expect(mockApexGuruService.scanWorkspace).toHaveBeenCalledWith('/test/workspace', ['/test/workspace']);
+            expect(mockApexGuruService.scanWorkspace).toHaveBeenCalledWith('/test/workspace', [
+                '/test/workspace/classes/Test.cls',
+                '/test/workspace/triggers/AccountTrigger.trigger'
+            ]);
+        });
+
+        it('should exclude non-Apex targeted files from the zip', async () => {
+            mockWorkspace.getTargetedFiles.mockResolvedValue([
+                '/test/workspace/classes/Test.cls',
+                '/test/workspace/README.md',
+                '/test/workspace/lwc/foo/foo.js'
+            ]);
+
+            await engine.runRules(['SoqlInALoop'], mockRunOptions);
+
+            expect(mockApexGuruService.scanWorkspace).toHaveBeenCalledWith('/test/workspace', [
+                '/test/workspace/classes/Test.cls'
+            ]);
         });
 
         it('should filter violations by selected rules', async () => {
@@ -462,7 +484,7 @@ describe('ApexGuruEngine', () => {
             expect(mockApexGuruService.initialize).toHaveBeenCalledWith('my-org');
         });
 
-        it('should return insights with status completed and scan metadata on success', async () => {
+        it('should return insights with status completed, analysis mode, and scan metadata on success', async () => {
             mockWorkspace.getTargetedFiles.mockResolvedValue(['/test/workspace/Test.cls']);
             const mockScanMetadata = {
                 analysis_mode: 'full' as const,
@@ -473,17 +495,19 @@ describe('ApexGuruEngine', () => {
             };
             mockApexGuruService.scanWorkspace.mockResolvedValue({
                 violations: [],
-                scanMetadata: mockScanMetadata
+                scanMetadata: mockScanMetadata,
+                analysisMode: 'full'
             });
 
             const results = await engine.runRules(['SoqlInALoop'], mockRunOptions);
 
             expect(results.insights).toBeDefined();
             expect(results.insights!['status']).toBe('completed');
+            expect(results.insights!['analysisMode']).toBe('full');
             expect(results.insights!['scan']).toEqual(mockScanMetadata);
         });
 
-        it('should return insights with status completed even without scan metadata', async () => {
+        it('should return insights with status completed even without scan metadata or analysis mode', async () => {
             mockWorkspace.getTargetedFiles.mockResolvedValue(['/test/workspace/Test.cls']);
             mockApexGuruService.scanWorkspace.mockResolvedValue({ violations: [] });
 
@@ -491,6 +515,7 @@ describe('ApexGuruEngine', () => {
 
             expect(results.insights).toBeDefined();
             expect(results.insights!['status']).toBe('completed');
+            expect(results.insights!['analysisMode']).toBeUndefined();
             expect(results.insights!['scan']).toBeUndefined();
         });
 
@@ -513,7 +538,65 @@ describe('ApexGuruEngine', () => {
 
             expect(results.violations).toHaveLength(1);
             expect(results.violations[0].primaryLocationIndex).toBe(0);
-            expect(results.violations[0].codeLocations[0].file).toBe('force-app/main/default/classes/Test.cls');
+            expect(results.violations[0].codeLocations[0].file).toBe('/test/workspace/force-app/main/default/classes/Test.cls');
+        });
+
+        it('should reconstruct the real absolute path when SFAP strips a common leading directory', async () => {
+            // Simulate the NPSP case: user targeted files under .../NPSP/unpackaged/,
+            // SFAP stripped "unpackaged/" from the returned path.
+            mockWorkspace.getWorkspaceRoot.mockReturnValue('/test/workspace');
+            const zippedFile = '/test/workspace/unpackaged/config/foo/classes/Bar.cls';
+            mockWorkspace.getTargetedFiles.mockResolvedValue([zippedFile]);
+            (fsSync.existsSync as jest.Mock).mockImplementation((p: string) => p === zippedFile);
+            mockApexGuruService.scanWorkspace.mockResolvedValue({
+                violations: [
+                    {
+                        rule: 'SoqlInALoop',
+                        message: 'stripped path',
+                        locations: [{ startLine: 5, file: 'config/foo/classes/Bar.cls' }],
+                        primaryLocationIndex: 0,
+                        severity: 1,
+                        resources: []
+                    }
+                ]
+            });
+
+            const results = await engine.runRules(['SoqlInALoop'], mockRunOptions);
+
+            expect(results.violations).toHaveLength(1);
+            expect(results.violations[0].codeLocations[0].file).toBe(zippedFile);
+        });
+
+        it('should drop violations whose primary location file does not exist on disk', async () => {
+            mockWorkspace.getTargetedFiles.mockResolvedValue(['/test/workspace/Test.cls']);
+            // existsSync returns true only for the real file, false for the synthetic inner-class path
+            (fsSync.existsSync as jest.Mock).mockImplementation((p: string) =>
+                p === '/test/workspace/force-app/main/default/classes/Real.cls');
+            mockApexGuruService.scanWorkspace.mockResolvedValue({
+                violations: [
+                    {
+                        rule: 'SoqlInALoop',
+                        message: 'real file',
+                        locations: [{ startLine: 10, file: 'force-app/main/default/classes/Real.cls' }],
+                        primaryLocationIndex: 0,
+                        severity: 1,
+                        resources: []
+                    },
+                    {
+                        rule: 'SoqlInALoop',
+                        message: 'synthetic inner-class path',
+                        locations: [{ startLine: 20, file: 'force-app/main/default/classes/Foo.InnerHelper.cls' }],
+                        primaryLocationIndex: 0,
+                        severity: 1,
+                        resources: []
+                    }
+                ]
+            });
+
+            const results = await engine.runRules(['SoqlInALoop'], mockRunOptions);
+
+            expect(results.violations).toHaveLength(1);
+            expect(results.violations[0].codeLocations[0].file).toBe('/test/workspace/force-app/main/default/classes/Real.cls');
         });
     });
 });

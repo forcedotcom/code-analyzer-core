@@ -142,6 +142,7 @@ describe('ApexGuruService', () => {
 
             expect(result.violations).toEqual(mockViolations);
             expect(result.scanMetadata).toEqual(mockScanMetadata);
+            expect(result.analysisMode).toBe('full');
             expect(mockFetch).toHaveBeenCalledTimes(2); // submit + poll
         });
 
@@ -477,7 +478,8 @@ describe('ApexGuruService', () => {
                 expect.objectContaining({
                     method: 'POST',
                     headers: expect.objectContaining({
-                        'Authorization': 'Bearer mock-jwt-token'
+                        'Authorization': 'Bearer mock-jwt-token',
+                        'x-apexguru-client': 'CodeAnalyzer'
                     })
                 })
             );
@@ -488,9 +490,10 @@ describe('ApexGuruService', () => {
                 `${TEST_SFAP_BASE_URL}/apex-guru/scan/scan-endpoint-check`,
                 expect.objectContaining({
                     method: 'GET',
-                    headers: {
-                        'Authorization': 'Bearer mock-jwt-token'
-                    }
+                    headers: expect.objectContaining({
+                        'Authorization': 'Bearer mock-jwt-token',
+                        'x-apexguru-client': 'CodeAnalyzer'
+                    })
                 })
             );
         });

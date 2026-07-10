@@ -1,5 +1,3 @@
-
-
 import {
     Engine,
     EngineEventEmitter,
@@ -18,6 +16,7 @@ import { ApexGuruEngineConfig, DEFAULT_APEXGURU_ENGINE_CONFIG } from './config';
 import { ENGINE_NAME, APEXGURU_FILE_EXTENSIONS } from './constants';
 import { APEXGURU_RULES, isKnownRule, FALLBACK_RULE_NAME } from './apexguru-rules';
 import * as fs from 'node:fs/promises';
+import { existsSync } from 'node:fs';
 import * as path from 'node:path';
 
 /**
@@ -118,7 +117,15 @@ export class ApexGuruEngine extends EngineEventEmitter implements Engine {
             throw new Error('ApexGuru requires a common workspace root, but the targeted files do not share one.');
         }
 
-        const pathsToZip = [workspaceRoot];
+        // Zip only the Apex files the user actually targeted (via --target or the workspace itself).
+        // Entry names are computed relative to workspaceRoot in createWorkspaceZip so project layout is preserved.
+        const pathsToZip = apexFiles;
+
+        // TEMP DIAGNOSTIC: log the exact set of files being zipped and shipped to SFAP.
+        // Pair this with the [apexguru-diag] "Raw SFAP violation paths" log to confirm
+        // that only what we zipped comes back in violations. Remove once verified.
+        this.emitLogEvent(LogLevel.Info,
+            `[apexguru-diag] Zipping ${pathsToZip.length} file(s) for SFAP: ${JSON.stringify(pathsToZip)}`);
 
         try {
             // Set up progress callback for polling
@@ -127,21 +134,60 @@ export class ApexGuruEngine extends EngineEventEmitter implements Engine {
             });
 
             // Scan (creates zip -> submits -> polls -> decodes)
-            const { violations: apexGuruViolations, scanMetadata } = await this.apexGuruService.scanWorkspace(workspaceRoot, pathsToZip);
+            const { violations: apexGuruViolations, scanMetadata, analysisMode } = await this.apexGuruService.scanWorkspace(workspaceRoot, pathsToZip);
+
+            // TEMP DIAGNOSTIC: dump the raw file paths ApexGuru returned so we can see
+            // exactly what SFAP is sending back (inner-class notation? relative? absolute?).
+            // Remove once the "file does not exist" edge case is fully understood.
+            const rawFilePaths = apexGuruViolations.map(av => ({
+                rule: av.rule,
+                file: av.locations[av.primaryLocationIndex]?.file ?? av.locations[0]?.file,
+                startLine: av.locations[av.primaryLocationIndex]?.startLine ?? av.locations[0]?.startLine
+            }));
+            this.emitLogEvent(LogLevel.Info,
+                `[apexguru-diag] Raw SFAP violation paths (${rawFilePaths.length}): ${JSON.stringify(rawFilePaths)}`);
+
+            // SFAP normalizes the paths it returns — it strips the longest common leading directory
+            // shared by all files in the zip. e.g. if we zip `unpackaged/config/foo.cls` and
+            // `unpackaged/config/bar.cls`, SFAP returns `foo.cls` and `bar.cls`. Reconstruct the
+            // real absolute path by matching each returned path as a suffix of what we actually zipped.
+            const resolveReturnedPath = (returnedFile: string | undefined): string | undefined => {
+                if (!returnedFile) return undefined;
+                const normalized = returnedFile.replace(/\\/g, '/');
+                const match = pathsToZip.find(absPath => {
+                    const absNormalized = absPath.replace(/\\/g, '/');
+                    return absNormalized === normalized || absNormalized.endsWith(`/${normalized}`);
+                });
+                return match;
+            };
 
             // Convert all ApexGuru violations to Code Analyzer format
             const allViolations = apexGuruViolations.map(av => {
-                // SFAP response includes file path in location.file
-                const filePath = av.locations[0]?.file ?? 'unknown';
-                return toViolation(av, filePath, runOptions.includeSuggestions ?? false);
+                const returnedFile = av.locations[av.primaryLocationIndex]?.file ?? av.locations[0]?.file;
+                const resolvedFile = resolveReturnedPath(returnedFile) ?? returnedFile ?? 'unknown';
+                return toViolation(av, resolvedFile, workspaceRoot, runOptions.includeSuggestions ?? false, resolveReturnedPath);
+            });
+
+            // Drop violations whose primary code location points at a non-existent file.
+            // Safety net for edge cases the suffix-match couldn't resolve (e.g. synthetic paths
+            // like inner-class notation `Foo.InnerHelper.cls`) so we never hand Core a bad path.
+            const validViolations = allViolations.filter(v => {
+                const file = v.codeLocations[v.primaryLocationIndex]?.file;
+                if (file && existsSync(file)) {
+                    return true;
+                }
+                this.emitLogEvent(LogLevel.Warn,
+                    `Dropping ${v.ruleName} violation: primary location file does not exist on disk: ${file ?? '(missing)'}`);
+                return false;
             });
 
             // Filter violations to only include selected rules
-            const filteredViolations = allViolations.filter(v => selectedRulesSet.has(v.ruleName));
+            const filteredViolations = validViolations.filter(v => selectedRulesSet.has(v.ruleName));
 
-            // Return insights with status: "completed" and scan metadata
+            // Return insights with status: "completed", analysis mode, and scan metadata
             const insights: Record<string, unknown> = {
                 status: 'completed',
+                ...(analysisMode ? { analysisMode } : {}),
                 ...(scanMetadata ? { scan: scanMetadata } : {})
             };
 
@@ -222,7 +268,9 @@ export class ApexGuruEngine extends EngineEventEmitter implements Engine {
 function toViolation(
     av: ApexGuruViolation,
     filePath: string,
-    includeSuggestions: boolean
+    workspaceRoot: string,
+    includeSuggestions: boolean,
+    resolveReturnedPath: (returnedFile: string | undefined) => string | undefined
 ): Violation {
     // Map unknown rules to fallback to ensure Core validation passes
     const ruleName = isKnownRule(av.rule) ? av.rule : FALLBACK_RULE_NAME;
@@ -230,14 +278,14 @@ function toViolation(
     const violation: Violation = {
         ruleName,
         message: av.message,
-        codeLocations: av.locations.map(loc => normalizeLocation(loc, filePath)),
+        codeLocations: av.locations.map(loc => normalizeLocation(loc, filePath, workspaceRoot, resolveReturnedPath)),
         primaryLocationIndex: av.primaryLocationIndex,
         resourceUrls: av.resources
     };
 
     // Add suggestions if requested and available
     if (includeSuggestions && av.suggestions?.length) {
-        violation.suggestions = av.suggestions.map(suggestion => toSuggestion(suggestion, filePath));
+        violation.suggestions = av.suggestions.map(suggestion => toSuggestion(suggestion, filePath, workspaceRoot, resolveReturnedPath));
     }
 
     return violation;
@@ -247,9 +295,14 @@ function toViolation(
  * Convert ApexGuru suggestion to Code Analyzer Suggestion format
  * Note: suggestion.message contains "// explanation\ncode" - we keep it as-is
  */
-function toSuggestion(apexGuruSuggestion: ApexGuruSuggestion, filePath: string): Suggestion {
+function toSuggestion(
+    apexGuruSuggestion: ApexGuruSuggestion,
+    filePath: string,
+    workspaceRoot: string,
+    resolveReturnedPath: (returnedFile: string | undefined) => string | undefined
+): Suggestion {
     return {
-        location: normalizeLocation(apexGuruSuggestion.location, filePath),
+        location: normalizeLocation(apexGuruSuggestion.location, filePath, workspaceRoot, resolveReturnedPath),
         message: apexGuruSuggestion.message  // Keep "// explanation\ncode" as-is
     };
 }
@@ -258,21 +311,31 @@ function toSuggestion(apexGuruSuggestion: ApexGuruSuggestion, filePath: string):
  * Normalize location by filling in required fields
  *
  * SFAP ApexGuru API provides:
- * - file (from SFAP response, workspace-relative path)
+ * - file (from SFAP response, path normalized against zip contents — may have common leading dirs stripped)
  * - startLine (required)
  * - comment (optional)
  *
  * We fill in:
  * - startColumn = 1 (required by Code Analyzer, reasonable default if not provided)
- * - Use file from location if provided, else use filePath parameter
+ * - Prefer the fallback filePath (already resolved via suffix-match against zipped files);
+ *   if the location's own file matches a zipped path by suffix, use that instead
+ * - Resolve any remaining workspace-relative paths against workspaceRoot
  * - endLine/endColumn are left undefined (optional fields)
  */
-function normalizeLocation(location: ApexGuruLocation, filePath: string): CodeLocation {
+function normalizeLocation(
+    location: ApexGuruLocation,
+    filePath: string,
+    workspaceRoot: string,
+    resolveReturnedPath: (returnedFile: string | undefined) => string | undefined
+): CodeLocation {
     const startLine = location.startLine ?? 1;
     const startColumn = location.startColumn ?? 1;  // Default to column 1 if not provided
+    const locationResolved = resolveReturnedPath(location.file);
+    const rawFile = locationResolved ?? location.file ?? filePath;
+    const resolvedFile = path.isAbsolute(rawFile) ? rawFile : path.resolve(workspaceRoot, rawFile);
 
     return {
-        file: location.file ?? filePath,  // SFAP includes file path in response
+        file: resolvedFile,
         startLine,
         startColumn,
         endLine: location.endLine,      // undefined if not provided (optional)
