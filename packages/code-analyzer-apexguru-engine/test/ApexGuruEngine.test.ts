@@ -3,6 +3,7 @@ import { ApexGuruService } from '../src/services/ApexGuruService';
 import { LogLevel, RunOptions, Workspace } from '@salesforce/code-analyzer-engine-api';
 import * as fs from 'node:fs/promises';
 import * as fsSync from 'node:fs';
+import * as path from 'node:path';
 
 // Mock dependencies
 jest.mock('../src/services/ApexGuruService');
@@ -538,7 +539,8 @@ describe('ApexGuruEngine', () => {
 
             expect(results.violations).toHaveLength(1);
             expect(results.violations[0].primaryLocationIndex).toBe(0);
-            expect(results.violations[0].codeLocations[0].file).toBe('/test/workspace/force-app/main/default/classes/Test.cls');
+            expect(results.violations[0].codeLocations[0].file).toBe(
+                path.resolve('/test/workspace', 'force-app/main/default/classes/Test.cls'));
         });
 
         it('should reconstruct the real absolute path when SFAP strips a common leading directory', async () => {
@@ -569,9 +571,10 @@ describe('ApexGuruEngine', () => {
 
         it('should drop violations whose primary location file does not exist on disk', async () => {
             mockWorkspace.getTargetedFiles.mockResolvedValue(['/test/workspace/Test.cls']);
+            const realFilePath = path.resolve('/test/workspace', 'force-app/main/default/classes/Real.cls');
             // existsSync returns true only for the real file, false for the synthetic inner-class path
             (fsSync.existsSync as jest.Mock).mockImplementation((p: string) =>
-                p === '/test/workspace/force-app/main/default/classes/Real.cls');
+                p === realFilePath);
             mockApexGuruService.scanWorkspace.mockResolvedValue({
                 violations: [
                     {
@@ -596,7 +599,7 @@ describe('ApexGuruEngine', () => {
             const results = await engine.runRules(['SoqlInALoop'], mockRunOptions);
 
             expect(results.violations).toHaveLength(1);
-            expect(results.violations[0].codeLocations[0].file).toBe('/test/workspace/force-app/main/default/classes/Real.cls');
+            expect(results.violations[0].codeLocations[0].file).toBe(realFilePath);
         });
     });
 });
