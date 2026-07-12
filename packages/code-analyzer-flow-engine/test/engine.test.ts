@@ -65,6 +65,7 @@ const TEST_DATA_FOLDER: string = path.resolve(__dirname, 'test-data');
 const PATH_TO_NO_FLOWS_WORKSPACE = path.resolve(TEST_DATA_FOLDER, 'example workspaces', 'contains-no-flows');
 const PATH_TO_MULTIPLE_FLOWS_WORKSPACE = path.resolve(TEST_DATA_FOLDER, 'example workspaces', 'contains-multiple-flows');
 const PATH_TO_ONE_FLOW_NO_VIOLATIONS_WORKSPACE = path.resolve(TEST_DATA_FOLDER, 'example workspaces', 'contains-one-flow-no-violations');
+const PATH_TO_NEW_RULE_VIOLATIONS_WORKSPACE = path.resolve(TEST_DATA_FOLDER, 'example workspaces', 'contains-new-rule-violations');
 const PARENT_WITH_SOURCE_CALLS_SUB_WITH_SINK_WORKSPACE: string = path.resolve(TEST_DATA_FOLDER, 'example workspaces', 'parent-with-source-calls-sub-with-sink');
 const PARENT_WITH_SINK_CALLS_SUB_WITH_SOURCE_WORKSPACE: string = path.resolve(TEST_DATA_FOLDER, 'example workspaces', 'parent-with-sink-calls-sub-with-source');
 const PATH_TO_EXAMPLE1: string = path.join(PATH_TO_MULTIPLE_FLOWS_WORKSPACE, 'example1_containsWithoutSharingViolations.flow-meta.xml');
@@ -106,7 +107,7 @@ describe('Tests for the FlowScannerEngine', () => {
             const ruleDescriptors: RuleDescription[] = await engine.describeRules(createDescribeOptions(workspace));
             // No need to do in-depth examination of the rules, since other tests already do that. Just make sure we got
             // the right number of rules.
-            expect(ruleDescriptors).toHaveLength(15);
+            expect(ruleDescriptors).toHaveLength(21);
             expect(describeProgressEvents.map(e => e.percentComplete)).toEqual([0, 75, 100]);
 
             // Part 2: Running production rules.
@@ -124,6 +125,8 @@ describe('Tests for the FlowScannerEngine', () => {
                 return acc;
             }, {});
             expect(countsPerRule).toEqual({
+                GetRecordAllFields: 3,
+                InactiveFlow: 4,
                 MissingDescription: 56,
                 MissingFaultHandler: 9,
                 PreventPassingUserDataIntoElementWithoutSharing: 5,
@@ -724,6 +727,35 @@ describe('Tests for the FlowScannerEngine', () => {
                 const version: string = await engine.getEngineVersion();
 
                 expect(version).toMatch(/\d+\.\d+\.\d+.*/);
+            });
+        });
+
+        describe('Batch A lexical rules each detect their own violation', () => {
+            const engine: FlowScannerEngine = new FlowScannerEngine(flowScannerCommandWrapper);
+            const workspace: Workspace = new Workspace('id', [PATH_TO_NEW_RULE_VIOLATIONS_WORKSPACE]);
+
+            it.each([
+                {ruleName: 'HardcodedUrl', file: 'hardcoded_url.flow-meta.xml'},
+                {ruleName: 'GetRecordAllFields', file: 'get_all_fields.flow-meta.xml'},
+                {ruleName: 'ProcessBuilder', file: 'process_builder.flow-meta.xml'},
+                {ruleName: 'InvalidApiVersion', file: 'old_api.flow-meta.xml'},
+                {ruleName: 'MissingTriggerOrder', file: 'missing_trigger_order.flow-meta.xml'},
+            ])('When running $ruleName, then it flags its violating fixture', async ({ruleName, file}) => {
+                const engineResults: EngineRunResults = await engine.runRules([ruleName], createRunOptions(workspace));
+
+                expect(engineResults.violations.length).toBeGreaterThan(0);
+                // Only the selected rule fires, and it flags the expected fixture.
+                for (const violation of engineResults.violations) {
+                    expect(violation.ruleName).toEqual(ruleName);
+                }
+                expect(engineResults.violations.some(v =>
+                    v.codeLocations[v.primaryLocationIndex].file.endsWith(file))).toEqual(true);
+            });
+
+            it('When running InactiveFlow on an all-active workspace, then it reports no violations', async () => {
+                // Every fixture in this workspace is Active, so InactiveFlow must stay silent here.
+                const engineResults: EngineRunResults = await engine.runRules(['InactiveFlow'], createRunOptions(workspace));
+                expect(engineResults.violations).toHaveLength(0);
             });
         });
     });

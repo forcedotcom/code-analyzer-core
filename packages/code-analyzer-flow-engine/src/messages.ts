@@ -93,7 +93,25 @@ const MESSAGE_CATALOG: {[key: string]: string} = {
         `This rule identifies elements that have not been connected to the start element of the flow. Unreachable elements are usually due to incomplete flows or developer error.`,
 
     UnusedResourceRuleDescription:
-        `This rule detects redundant variables that are not used in the flow. This can be a sign of developer error.`
+        `This rule detects redundant variables that are not used in the flow. This can be a sign of developer error.`,
+
+    HardcodedUrlRuleDescription:
+        `This rule detects hardcoded URLs within a flow. Hardcoded URLs are a bad practice as they break when moving between environments. Use a Named Credential, custom setting, or custom label instead.`,
+
+    GetRecordAllFieldsRuleDescription:
+        `This rule detects Get Records elements that automatically store all fields instead of selecting only the fields that are needed. Storing all fields is inefficient; manually assign only the fields that are used.`,
+
+    ProcessBuilderRuleDescription:
+        `This rule detects Process Builder processes and Workflow Rules. These automation tools are retired and should be migrated to Flows.`,
+
+    InactiveFlowRuleDescription:
+        `This rule detects flows that are not active. Inactive flows should be activated if they are needed, or deleted if they are not, to reduce clutter and confusion.`,
+
+    InvalidApiVersionRuleDescription:
+        `This rule detects flows that have no API version or an API version below the supported minimum. Outdated API versions can cause compatibility issues; set the flow to a recent API version.`,
+
+    MissingTriggerOrderRuleDescription:
+        `This rule detects record-triggered flows that do not specify a trigger order. When multiple record-triggered flows run on the same object and event, a trigger order makes the execution sequence deterministic.`
 };
 
 export function getMessage(msgId: string, ...args: (string | number)[]): string {

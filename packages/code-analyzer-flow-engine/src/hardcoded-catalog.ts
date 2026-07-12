@@ -17,7 +17,13 @@ enum RuleName {
     TriggerEntryCriteria = 'TriggerEntryCriteria',
     TriggerWaitEvent = 'TriggerWaitEvent',
     UnreachableElement = 'UnreachableElement',
-    UnusedResource = 'UnusedResource'
+    UnusedResource = 'UnusedResource',
+    HardcodedUrl = 'HardcodedUrl',
+    GetRecordAllFields = 'GetRecordAllFields',
+    ProcessBuilder = 'ProcessBuilder',
+    InactiveFlow = 'InactiveFlow',
+    InvalidApiVersion = 'InvalidApiVersion',
+    MissingTriggerOrder = 'MissingTriggerOrder'
 }
 
 const RULE_DESCRIPTIONS: RuleDescription[] = [
@@ -124,6 +130,48 @@ const RULE_DESCRIPTIONS: RuleDescription[] = [
         description: getMessage('UnusedResourceRuleDescription'),
         severityLevel: SeverityLevel.Moderate,
         tags: [/* NOT RECOMMENDED */    COMMON_TAGS.CATEGORIES.BEST_PRACTICES, COMMON_TAGS.LANGUAGES.XML],
+        resourceUrls: []
+    },
+    {
+        name: RuleName.HardcodedUrl,
+        description: getMessage('HardcodedUrlRuleDescription'),
+        severityLevel: SeverityLevel.Moderate,
+        tags: [COMMON_TAGS.RECOMMENDED, COMMON_TAGS.CATEGORIES.BEST_PRACTICES, COMMON_TAGS.LANGUAGES.XML],
+        resourceUrls: []
+    },
+    {
+        name: RuleName.GetRecordAllFields,
+        description: getMessage('GetRecordAllFieldsRuleDescription'),
+        severityLevel: SeverityLevel.Low,
+        tags: [COMMON_TAGS.RECOMMENDED, COMMON_TAGS.CATEGORIES.PERFORMANCE,    COMMON_TAGS.LANGUAGES.XML],
+        resourceUrls: []
+    },
+    {
+        name: RuleName.ProcessBuilder,
+        description: getMessage('ProcessBuilderRuleDescription'),
+        severityLevel: SeverityLevel.Moderate,
+        tags: [COMMON_TAGS.RECOMMENDED, COMMON_TAGS.CATEGORIES.BEST_PRACTICES, COMMON_TAGS.LANGUAGES.XML],
+        resourceUrls: []
+    },
+    {
+        name: RuleName.InactiveFlow,
+        description: getMessage('InactiveFlowRuleDescription'),
+        severityLevel: SeverityLevel.Low,
+        tags: [COMMON_TAGS.RECOMMENDED, COMMON_TAGS.CATEGORIES.BEST_PRACTICES, COMMON_TAGS.LANGUAGES.XML],
+        resourceUrls: []
+    },
+    {
+        name: RuleName.InvalidApiVersion,
+        description: getMessage('InvalidApiVersionRuleDescription'),
+        severityLevel: SeverityLevel.Low,
+        tags: [COMMON_TAGS.RECOMMENDED, COMMON_TAGS.CATEGORIES.BEST_PRACTICES, COMMON_TAGS.LANGUAGES.XML],
+        resourceUrls: []
+    },
+    {
+        name: RuleName.MissingTriggerOrder,
+        description: getMessage('MissingTriggerOrderRuleDescription'),
+        severityLevel: SeverityLevel.Low,
+        tags: [COMMON_TAGS.RECOMMENDED, COMMON_TAGS.CATEGORIES.BEST_PRACTICES, COMMON_TAGS.LANGUAGES.XML],
         resourceUrls: []
     }
 ];

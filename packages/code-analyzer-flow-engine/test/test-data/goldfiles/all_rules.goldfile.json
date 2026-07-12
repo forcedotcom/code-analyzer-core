@@ -163,5 +163,71 @@
       "XML"
     ],
     "resourceUrls": []
+  },
+  {
+    "name": "HardcodedUrl",
+    "description": "This rule detects hardcoded URLs within a flow. Hardcoded URLs are a bad practice as they break when moving between environments. Use a Named Credential, custom setting, or custom label instead.",
+    "severityLevel": 3,
+    "tags": [
+      "Recommended",
+      "BestPractices",
+      "XML"
+    ],
+    "resourceUrls": []
+  },
+  {
+    "name": "GetRecordAllFields",
+    "description": "This rule detects Get Records elements that automatically store all fields instead of selecting only the fields that are needed. Storing all fields is inefficient; manually assign only the fields that are used.",
+    "severityLevel": 4,
+    "tags": [
+      "Recommended",
+      "Performance",
+      "XML"
+    ],
+    "resourceUrls": []
+  },
+  {
+    "name": "ProcessBuilder",
+    "description": "This rule detects Process Builder processes and Workflow Rules. These automation tools are retired and should be migrated to Flows.",
+    "severityLevel": 3,
+    "tags": [
+      "Recommended",
+      "BestPractices",
+      "XML"
+    ],
+    "resourceUrls": []
+  },
+  {
+    "name": "InactiveFlow",
+    "description": "This rule detects flows that are not active. Inactive flows should be activated if they are needed, or deleted if they are not, to reduce clutter and confusion.",
+    "severityLevel": 4,
+    "tags": [
+      "Recommended",
+      "BestPractices",
+      "XML"
+    ],
+    "resourceUrls": []
+  },
+  {
+    "name": "InvalidApiVersion",
+    "description": "This rule detects flows that have no API version or an API version below the supported minimum. Outdated API versions can cause compatibility issues; set the flow to a recent API version.",
+    "severityLevel": 4,
+    "tags": [
+      "Recommended",
+      "BestPractices",
+      "XML"
+    ],
+    "resourceUrls": []
+  },
+  {
+    "name": "MissingTriggerOrder",
+    "description": "This rule detects record-triggered flows that do not specify a trigger order. When multiple record-triggered flows run on the same object and event, a trigger order makes the execution sequence deterministic.",
+    "severityLevel": 4,
+    "tags": [
+      "Recommended",
+      "BestPractices",
+      "XML"
+    ],
+    "resourceUrls": []
   }
 ]
