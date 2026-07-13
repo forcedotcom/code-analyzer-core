@@ -233,9 +233,6 @@ class MissingFaultHandler(LexicalQuery):
     fault_tags = ['recordCreates', 'recordUpdates', 'recordDeletes',
                        'actionCalls', 'subflows']
 
-    def __init__(self):
-        self.root = None
-
     @classmethod
     def get_query_description(cls) -> QueryDescription:
         return QueryDescription(query_id=cls.query_id,
@@ -253,11 +250,7 @@ class MissingFaultHandler(LexicalQuery):
 
     def execute(self, parser: FlowParser = None, **kwargs) -> list[QueryResult] | None:
         accum = []
-        if self.root is None:
-            root = parser.get_root()
-            self.root = root
-        else:
-            root = self.root
+        root = parser.get_root()
 
         for tag_ in self.fault_tags:
             elems = parse_utils.get_by_tag(root, tag_)

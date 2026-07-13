@@ -125,7 +125,7 @@ describe('Tests for the FlowScannerEngine', () => {
             }, {});
             expect(countsPerRule).toEqual({
                 MissingDescription: 56,
-                MissingFaultHandler: 9,
+                MissingFaultHandler: 8,
                 PreventPassingUserDataIntoElementWithoutSharing: 5,
                 PreventPassingUserDataIntoElementWithSharing: 2
             });
