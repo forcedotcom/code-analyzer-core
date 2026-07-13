@@ -124,7 +124,7 @@ export class ApexGuruEngine extends EngineEventEmitter implements Engine {
         // TEMP DIAGNOSTIC: log the exact set of files being zipped and shipped to SFAP.
         // Pair this with the [apexguru-diag] "Raw SFAP violation paths" log to confirm
         // that only what we zipped comes back in violations. Remove once verified.
-        this.emitLogEvent(LogLevel.Info,
+        this.emitLogEvent(LogLevel.Fine,
             `[apexguru-diag] Zipping ${pathsToZip.length} file(s) for SFAP: ${JSON.stringify(pathsToZip)}`);
 
         try {
@@ -144,7 +144,7 @@ export class ApexGuruEngine extends EngineEventEmitter implements Engine {
                 file: av.locations[av.primaryLocationIndex]?.file ?? av.locations[0]?.file,
                 startLine: av.locations[av.primaryLocationIndex]?.startLine ?? av.locations[0]?.startLine
             }));
-            this.emitLogEvent(LogLevel.Info,
+            this.emitLogEvent(LogLevel.Fine,
                 `[apexguru-diag] Raw SFAP violation paths (${rawFilePaths.length}): ${JSON.stringify(rawFilePaths)}`);
 
             // SFAP normalizes the paths it returns — it strips the longest common leading directory
