@@ -817,6 +817,19 @@
     ]
   },
   {
+    "name": "InvocableClassNoArgConstructor",
+    "severityLevel": 3,
+    "tags": [
+      "Recommended",
+      "ErrorProne",
+      "Apex"
+    ],
+    "description": "Apex classes containing @InvocableVariable properties used for flow parameters must expose a visible, zero-argument constructor to prevent runtime instantiation errors under modern Salesforce API versions.",
+    "resourceUrls": [
+      "https://docs.pmd-code.org/pmd-doc-{{PMD_VERSION}}/pmd_rules_apex_errorprone.html#invocableclassnoargconstructor"
+    ]
+  },
+  {
     "name": "LocalVariableNamingConventions",
     "severityLevel": 3,
     "tags": [
