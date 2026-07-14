@@ -40,7 +40,7 @@ export class ApexGuruAuthService {
                 return;
             } catch (err) {
                 const errorMessage = err instanceof Error ? err.message : String(err);
-                this.emitLogEvent(LogLevel.Error, `Failed to authenticate with org '${config.targetOrg}': ${errorMessage}`);
+                this.emitLogEvent(LogLevel.Fine, `Failed to authenticate with org '${config.targetOrg}': ${errorMessage}`);
                 throw new Error(
                     `Failed to authenticate with org '${config.targetOrg}'. ` +
                     'Please verify the org alias/username and ensure you are authenticated:\n' +
@@ -58,7 +58,7 @@ export class ApexGuruAuthService {
             this.emitLogEvent(LogLevel.Fine, 'Successfully authenticated to default org');
         } catch (err) {
             const errorMessage = err instanceof Error ? err.message : String(err);
-            this.emitLogEvent(LogLevel.Error, `Failed to authenticate: No default org found: ${errorMessage}`);
+            this.emitLogEvent(LogLevel.Fine, `Failed to authenticate: No default org found: ${errorMessage}`);
             throw new Error(
                 'No default org found. Please either:\n' +
                 '  1. Set a default org: sf config set target-org <org-alias>\n' +

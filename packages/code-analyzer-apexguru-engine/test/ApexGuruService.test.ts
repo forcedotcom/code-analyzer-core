@@ -7,7 +7,7 @@ jest.mock('../src/services/ApexGuruAuthService');
 jest.mock('archiver');
 jest.mock('node:fs');
 
-const TEST_SFAP_BASE_URL = 'https://example.test/sfap';
+const TEST_SFAP_BASE_URL = 'https://dev.api.salesforce.com/platform/scale/v1-beta.1';
 
 const mockFetch = jest.fn();
 globalThis.fetch = mockFetch as unknown as typeof globalThis.fetch;
@@ -16,12 +16,9 @@ describe('ApexGuruService', () => {
     let apexGuruService: ApexGuruService;
     let mockEmitLogEvent: jest.Mock;
     let mockAuthService: jest.Mocked<ApexGuruAuthService>;
-    let originalSfapBaseUrl: string | undefined;
 
     beforeEach(() => {
         jest.clearAllMocks();
-        originalSfapBaseUrl = process.env.SFAP_API_BASE_URL;
-        process.env.SFAP_API_BASE_URL = TEST_SFAP_BASE_URL;
         mockEmitLogEvent = jest.fn();
 
         mockAuthService = {
@@ -45,11 +42,7 @@ describe('ApexGuruService', () => {
     });
 
     afterEach(() => {
-        if (originalSfapBaseUrl === undefined) {
-            delete process.env.SFAP_API_BASE_URL;
-        } else {
-            process.env.SFAP_API_BASE_URL = originalSfapBaseUrl;
-        }
+        jest.restoreAllMocks();
     });
 
     describe('initialize', () => {
@@ -149,6 +142,7 @@ describe('ApexGuruService', () => {
 
             expect(result.violations).toEqual(mockViolations);
             expect(result.scanMetadata).toEqual(mockScanMetadata);
+            expect(result.analysisMode).toBe('full');
             expect(mockFetch).toHaveBeenCalledTimes(2); // submit + poll
         });
 
@@ -484,7 +478,8 @@ describe('ApexGuruService', () => {
                 expect.objectContaining({
                     method: 'POST',
                     headers: expect.objectContaining({
-                        'Authorization': 'Bearer mock-jwt-token'
+                        'Authorization': 'Bearer mock-jwt-token',
+                        'x-apexguru-client': 'CodeAnalyzer'
                     })
                 })
             );
@@ -495,9 +490,10 @@ describe('ApexGuruService', () => {
                 `${TEST_SFAP_BASE_URL}/apex-guru/scan/scan-endpoint-check`,
                 expect.objectContaining({
                     method: 'GET',
-                    headers: {
-                        'Authorization': 'Bearer mock-jwt-token'
-                    }
+                    headers: expect.objectContaining({
+                        'Authorization': 'Bearer mock-jwt-token',
+                        'x-apexguru-client': 'CodeAnalyzer'
+                    })
                 })
             );
         });

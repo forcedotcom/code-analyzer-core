@@ -1,22 +1,24 @@
 import { ApexGuruEngine } from '../src/engine';
 import { ApexGuruService } from '../src/services/ApexGuruService';
-import { RunOptions, Workspace } from '@salesforce/code-analyzer-engine-api';
+import { LogLevel, RunOptions, Workspace } from '@salesforce/code-analyzer-engine-api';
 import * as fs from 'node:fs/promises';
+import * as fsSync from 'node:fs';
+import * as path from 'node:path';
 
 // Mock dependencies
 jest.mock('../src/services/ApexGuruService');
 jest.mock('node:fs/promises');
+jest.mock('node:fs', () => ({
+    ...jest.requireActual('node:fs'),
+    existsSync: jest.fn().mockReturnValue(true)
+}));
 
 describe('ApexGuruEngine', () => {
     let engine: ApexGuruEngine;
     let mockApexGuruService: jest.Mocked<ApexGuruService>;
     let mockWorkspace: jest.Mocked<Workspace>;
-    let originalSfapBaseUrl: string | undefined;
-
     beforeEach(() => {
         jest.clearAllMocks();
-        originalSfapBaseUrl = process.env.SFAP_API_BASE_URL;
-        process.env.SFAP_API_BASE_URL = 'https://example.test/sfap';
 
         mockApexGuruService = {
             initialize: jest.fn(),
@@ -39,11 +41,7 @@ describe('ApexGuruEngine', () => {
     });
 
     afterEach(() => {
-        if (originalSfapBaseUrl === undefined) {
-            delete process.env.SFAP_API_BASE_URL;
-        } else {
-            process.env.SFAP_API_BASE_URL = originalSfapBaseUrl;
-        }
+        jest.restoreAllMocks();
     });
 
     describe('getName', () => {
@@ -63,17 +61,6 @@ describe('ApexGuruEngine', () => {
     });
 
     describe('describeRules', () => {
-        it('should return empty array when SFAP_API_BASE_URL is not set', async () => {
-            delete process.env.SFAP_API_BASE_URL;
-
-            const rules = await engine.describeRules({
-                logFolder: '/tmp/logs',
-                workingFolder: '/tmp/working'
-            });
-
-            expect(rules).toEqual([]);
-        });
-
         it('should return all ApexGuru rules', async () => {
             const rules = await engine.describeRules({
                 logFolder: '/tmp/logs',
@@ -156,6 +143,18 @@ describe('ApexGuruEngine', () => {
             expect(rules.length).toBeGreaterThan(0);
             expect(rules.find(r => r.name === 'SoqlInALoop')).toBeDefined();
         });
+
+        it('should return rules without attempting authentication regardless of auth state', async () => {
+            const rules = await engine.describeRules({
+                logFolder: '/tmp/logs',
+                workingFolder: '/tmp/working'
+            });
+
+            expect(rules.length).toBeGreaterThan(0);
+            expect(rules.find(r => r.name === 'SoqlInALoop')).toBeDefined();
+            expect(rules.find(r => r.name === 'DmlInALoop')).toBeDefined();
+            expect(mockApexGuruService.initialize).not.toHaveBeenCalled();
+        });
     });
 
     describe('runRules', () => {
@@ -186,15 +185,96 @@ describe('ApexGuruEngine', () => {
             await engine.runRules(['SoqlInALoop'], mockRunOptions);
 
             expect(mockApexGuruService.initialize).toHaveBeenCalledWith(undefined);
-            expect(mockApexGuruService.scanWorkspace).toHaveBeenCalledWith('/test/workspace', ['/test/workspace']);
+            expect(mockApexGuruService.scanWorkspace).toHaveBeenCalledWith('/test/workspace', ['/test/workspace/Test.cls']);
         });
 
-        it('should throw error if authentication fails', async () => {
-            mockApexGuruService.initialize.mockRejectedValue(new Error('Auth failed'));
+        it('should gracefully skip with NO_ORG_CONNECTION when authentication fails', async () => {
+            mockApexGuruService.initialize.mockRejectedValue(new Error('No default org found'));
             mockWorkspace.getTargetedFiles.mockResolvedValue(['/test/workspace/Test.cls']);
+            const logSpy = jest.spyOn(engine as any, 'emitLogEvent');
+            const progressSpy = jest.spyOn(engine as any, 'emitRunRulesProgressEvent');
 
-            await expect(engine.runRules(['SoqlInALoop'], mockRunOptions))
-                .rejects.toThrow('Failed to authenticate');
+            const results = await engine.runRules(['SoqlInALoop'], mockRunOptions);
+
+            expect(results.violations).toEqual([]);
+            expect(results.insights).toEqual({
+                status: 'skipped',
+                error: {
+                    code: 'NO_ORG_CONNECTION',
+                    message: expect.stringContaining('No default org found'),
+                    remediation: expect.stringContaining('sf org login web')
+                }
+            });
+            expect(logSpy).toHaveBeenCalledWith(
+                LogLevel.Warn,
+                expect.stringContaining('Failed to authenticate')
+            );
+            expect(mockApexGuruService.cleanup).toHaveBeenCalled();
+            expect(progressSpy).toHaveBeenCalledWith(100);
+            // No SFAP calls should be made after auth failure
+            expect(mockApexGuruService.scanWorkspace).not.toHaveBeenCalled();
+        });
+
+        it('should gracefully skip with API_UNAVAILABLE when API is unreachable', async () => {
+            mockWorkspace.getTargetedFiles.mockResolvedValue(['/test/workspace/Test.cls']);
+            mockApexGuruService.scanWorkspace.mockRejectedValue(new Error('connect ECONNREFUSED 127.0.0.1:443'));
+            const logSpy = jest.spyOn(engine as any, 'emitLogEvent');
+
+            const results = await engine.runRules(['SoqlInALoop'], mockRunOptions);
+
+            expect(results.violations).toEqual([]);
+            expect(results.insights).toEqual({
+                status: 'skipped',
+                error: {
+                    code: 'API_UNAVAILABLE',
+                    message: expect.stringContaining('ECONNREFUSED'),
+                    remediation: expect.stringContaining('temporarily unavailable')
+                }
+            });
+            expect(logSpy).toHaveBeenCalledWith(
+                LogLevel.Warn,
+                expect.stringContaining('unavailable')
+            );
+            expect(mockApexGuruService.cleanup).toHaveBeenCalled();
+        });
+
+        it('should gracefully skip with API_UNAVAILABLE on timeout', async () => {
+            mockWorkspace.getTargetedFiles.mockResolvedValue(['/test/workspace/Test.cls']);
+            mockApexGuruService.scanWorkspace.mockRejectedValue(new Error('Request timeout after 300000ms'));
+            const logSpy = jest.spyOn(engine as any, 'emitLogEvent');
+
+            const results = await engine.runRules(['SoqlInALoop'], mockRunOptions);
+
+            expect(results.violations).toEqual([]);
+            expect(results.insights).toEqual({
+                status: 'skipped',
+                error: {
+                    code: 'API_UNAVAILABLE',
+                    message: expect.stringContaining('timeout'),
+                    remediation: expect.stringContaining('try again later')
+                }
+            });
+            expect(logSpy).toHaveBeenCalledWith(LogLevel.Warn, expect.any(String));
+        });
+
+        it('should gracefully skip with UNEXPECTED_ERROR on non-network errors', async () => {
+            mockWorkspace.getTargetedFiles.mockResolvedValue(['/test/workspace/Test.cls']);
+            mockApexGuruService.scanWorkspace.mockRejectedValue(new Error('Unexpected internal failure'));
+            const logSpy = jest.spyOn(engine as any, 'emitLogEvent');
+
+            const results = await engine.runRules(['SoqlInALoop'], mockRunOptions);
+
+            expect(results.violations).toEqual([]);
+            expect(results.insights).toEqual({
+                status: 'skipped',
+                error: {
+                    code: 'UNEXPECTED_ERROR',
+                    message: expect.stringContaining('Unexpected internal failure'),
+                    remediation: expect.stringContaining('file a support ticket')
+                }
+            });
+            expect(logSpy).toHaveBeenCalledWith(LogLevel.Warn, expect.any(String));
+            expect(mockApexGuruService.cleanup).toHaveBeenCalled();
         });
 
         it('should return empty results if no Apex files found', async () => {
@@ -219,7 +299,7 @@ describe('ApexGuruEngine', () => {
             expect(mockApexGuruService.cleanup).toHaveBeenCalled();
         });
 
-        it('should scan workspace with all Apex files', async () => {
+        it('should zip only the targeted Apex files', async () => {
             mockWorkspace.getTargetedFiles.mockResolvedValue([
                 '/test/workspace/classes/Test.cls',
                 '/test/workspace/triggers/AccountTrigger.trigger'
@@ -227,7 +307,24 @@ describe('ApexGuruEngine', () => {
 
             await engine.runRules(['SoqlInALoop'], mockRunOptions);
 
-            expect(mockApexGuruService.scanWorkspace).toHaveBeenCalledWith('/test/workspace', ['/test/workspace']);
+            expect(mockApexGuruService.scanWorkspace).toHaveBeenCalledWith('/test/workspace', [
+                '/test/workspace/classes/Test.cls',
+                '/test/workspace/triggers/AccountTrigger.trigger'
+            ]);
+        });
+
+        it('should exclude non-Apex targeted files from the zip', async () => {
+            mockWorkspace.getTargetedFiles.mockResolvedValue([
+                '/test/workspace/classes/Test.cls',
+                '/test/workspace/README.md',
+                '/test/workspace/lwc/foo/foo.js'
+            ]);
+
+            await engine.runRules(['SoqlInALoop'], mockRunOptions);
+
+            expect(mockApexGuruService.scanWorkspace).toHaveBeenCalledWith('/test/workspace', [
+                '/test/workspace/classes/Test.cls'
+            ]);
         });
 
         it('should filter violations by selected rules', async () => {
@@ -346,12 +443,17 @@ describe('ApexGuruEngine', () => {
         it('should cleanup even when error occurs within try block', async () => {
             mockWorkspace.getTargetedFiles.mockResolvedValue(['/test/workspace/Test.cls']);
 
-            // Make scanWorkspace throw an error
+            // Make scanWorkspace throw an error — should be caught and return skip result
             mockApexGuruService.scanWorkspace.mockRejectedValue(new Error('Fatal API error'));
 
-            await expect(engine.runRules(['SoqlInALoop'], mockRunOptions))
-                .rejects.toThrow('Fatal API error');
+            const results = await engine.runRules(['SoqlInALoop'], mockRunOptions);
 
+            // Should not throw — error is caught and returned as UNEXPECTED_ERROR skip
+            expect(results.violations).toEqual([]);
+            expect(results.insights).toEqual({
+                status: 'skipped',
+                error: expect.objectContaining({ code: 'UNEXPECTED_ERROR' })
+            });
             expect(mockApexGuruService.cleanup).toHaveBeenCalled();
         });
 
@@ -383,7 +485,7 @@ describe('ApexGuruEngine', () => {
             expect(mockApexGuruService.initialize).toHaveBeenCalledWith('my-org');
         });
 
-        it('should populate insights in results when scanMetadata is returned', async () => {
+        it('should return insights with status completed, analysis mode, and scan metadata on success', async () => {
             mockWorkspace.getTargetedFiles.mockResolvedValue(['/test/workspace/Test.cls']);
             const mockScanMetadata = {
                 analysis_mode: 'full' as const,
@@ -394,22 +496,28 @@ describe('ApexGuruEngine', () => {
             };
             mockApexGuruService.scanWorkspace.mockResolvedValue({
                 violations: [],
-                scanMetadata: mockScanMetadata
+                scanMetadata: mockScanMetadata,
+                analysisMode: 'full'
             });
 
             const results = await engine.runRules(['SoqlInALoop'], mockRunOptions);
 
             expect(results.insights).toBeDefined();
+            expect(results.insights!['status']).toBe('completed');
+            expect(results.insights!['analysisMode']).toBe('full');
             expect(results.insights!['scan']).toEqual(mockScanMetadata);
         });
 
-        it('should not include insights in results when no scanMetadata is returned', async () => {
+        it('should return insights with status completed even without scan metadata or analysis mode', async () => {
             mockWorkspace.getTargetedFiles.mockResolvedValue(['/test/workspace/Test.cls']);
             mockApexGuruService.scanWorkspace.mockResolvedValue({ violations: [] });
 
             const results = await engine.runRules(['SoqlInALoop'], mockRunOptions);
 
-            expect(results.insights).toBeUndefined();
+            expect(results.insights).toBeDefined();
+            expect(results.insights!['status']).toBe('completed');
+            expect(results.insights!['analysisMode']).toBeUndefined();
+            expect(results.insights!['scan']).toBeUndefined();
         });
 
         it('should use file path from SFAP violation location', async () => {
@@ -431,7 +539,67 @@ describe('ApexGuruEngine', () => {
 
             expect(results.violations).toHaveLength(1);
             expect(results.violations[0].primaryLocationIndex).toBe(0);
-            expect(results.violations[0].codeLocations[0].file).toBe('force-app/main/default/classes/Test.cls');
+            expect(results.violations[0].codeLocations[0].file).toBe(
+                path.resolve('/test/workspace', 'force-app/main/default/classes/Test.cls'));
+        });
+
+        it('should reconstruct the real absolute path when SFAP strips a common leading directory', async () => {
+            // Simulate the NPSP case: user targeted files under .../NPSP/unpackaged/,
+            // SFAP stripped "unpackaged/" from the returned path.
+            mockWorkspace.getWorkspaceRoot.mockReturnValue('/test/workspace');
+            const zippedFile = '/test/workspace/unpackaged/config/foo/classes/Bar.cls';
+            mockWorkspace.getTargetedFiles.mockResolvedValue([zippedFile]);
+            (fsSync.existsSync as jest.Mock).mockImplementation((p: string) => p === zippedFile);
+            mockApexGuruService.scanWorkspace.mockResolvedValue({
+                violations: [
+                    {
+                        rule: 'SoqlInALoop',
+                        message: 'stripped path',
+                        locations: [{ startLine: 5, file: 'config/foo/classes/Bar.cls' }],
+                        primaryLocationIndex: 0,
+                        severity: 1,
+                        resources: []
+                    }
+                ]
+            });
+
+            const results = await engine.runRules(['SoqlInALoop'], mockRunOptions);
+
+            expect(results.violations).toHaveLength(1);
+            expect(results.violations[0].codeLocations[0].file).toBe(zippedFile);
+        });
+
+        it('should drop violations whose primary location file does not exist on disk', async () => {
+            mockWorkspace.getTargetedFiles.mockResolvedValue(['/test/workspace/Test.cls']);
+            const realFilePath = path.resolve('/test/workspace', 'force-app/main/default/classes/Real.cls');
+            // existsSync returns true only for the real file, false for the synthetic inner-class path
+            (fsSync.existsSync as jest.Mock).mockImplementation((p: string) =>
+                p === realFilePath);
+            mockApexGuruService.scanWorkspace.mockResolvedValue({
+                violations: [
+                    {
+                        rule: 'SoqlInALoop',
+                        message: 'real file',
+                        locations: [{ startLine: 10, file: 'force-app/main/default/classes/Real.cls' }],
+                        primaryLocationIndex: 0,
+                        severity: 1,
+                        resources: []
+                    },
+                    {
+                        rule: 'SoqlInALoop',
+                        message: 'synthetic inner-class path',
+                        locations: [{ startLine: 20, file: 'force-app/main/default/classes/Foo.InnerHelper.cls' }],
+                        primaryLocationIndex: 0,
+                        severity: 1,
+                        resources: []
+                    }
+                ]
+            });
+
+            const results = await engine.runRules(['SoqlInALoop'], mockRunOptions);
+
+            expect(results.violations).toHaveLength(1);
+            expect(results.violations[0].codeLocations[0].file).toBe(realFilePath);
         });
     });
 });

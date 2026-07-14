@@ -30,6 +30,26 @@ export const APEXGURU_RULES: RuleDescription[] = [
     },
 
     // =================================================================================================================
+    //   PERFORMANCE RULES - HIGH SEVERITY (PERFORMANCE ONLY - NOT RECOMMENDED)
+    // =================================================================================================================
+
+    {
+        name: 'SoqlInALoopOneHop',
+        severityLevel: SeverityLevel.High,
+        tags: [COMMON_TAGS.CATEGORIES.PERFORMANCE, COMMON_TAGS.LANGUAGES.APEX],
+        description: 'SOQL query reached one method-hop away inside a loop causes performance issues and can hit governor limits',
+        resourceUrls: ['https://help.salesforce.com/s/articleView?id=xcloud.apexguru_antipattern_soql_in_loop_one_hop.htm&type=5']
+    },
+
+    {
+        name: 'ExpensiveMethods',
+        severityLevel: SeverityLevel.High,
+        tags: [COMMON_TAGS.CATEGORIES.PERFORMANCE, COMMON_TAGS.LANGUAGES.APEX],
+        description: 'Method accounts for a large share of observed Apex CPU time and is a hotspot for performance work',
+        resourceUrls: ['https://help.salesforce.com/s/articleView?id=xcloud.apexguru_antipattern_expensive_methods.htm&type=5']
+    },
+
+    // =================================================================================================================
     //   PERFORMANCE RULES - MODERATE SEVERITY (CRITICAL - RECOMMENDED)
     // =================================================================================================================
 
@@ -109,6 +129,42 @@ export const APEXGURU_RULES: RuleDescription[] = [
         resourceUrls: ['https://help.salesforce.com/s/articleView?id=xcloud.apexguru_antipattern_sobject_map_in_for_loop.htm&type=5']
     },
 
+    {
+        name: 'SoqlWithoutPlatformCache',
+        severityLevel: SeverityLevel.Moderate,
+        tags: [COMMON_TAGS.CATEGORIES.PERFORMANCE, COMMON_TAGS.LANGUAGES.APEX],
+        description: 'Frequently executed SOQL query whose results could be served from Platform Cache to reduce database load',
+        resourceUrls: ['https://help.salesforce.com/s/articleView?id=xcloud.apexguru_antipattern_soql_without_platform_cache.htm&type=5']
+    },
+
+    // =================================================================================================================
+    //   PERFORMANCE RULES - LOW SEVERITY (PERFORMANCE ONLY - NOT RECOMMENDED)
+    // =================================================================================================================
+
+    {
+        name: 'LimitsGetHeapsizeMethods',
+        severityLevel: SeverityLevel.Low,
+        tags: [COMMON_TAGS.CATEGORIES.PERFORMANCE, COMMON_TAGS.LANGUAGES.APEX],
+        description: 'Frequent Limits.getHeapSize() calls add runtime overhead',
+        resourceUrls: ['https://help.salesforce.com/s/articleView?id=xcloud.apexguru_antipattern_limits_getheapsize_methods.htm&type=5']
+    },
+
+    {
+        name: 'ExpensiveStringComparison',
+        severityLevel: SeverityLevel.Low,
+        tags: [COMMON_TAGS.CATEGORIES.PERFORMANCE, COMMON_TAGS.LANGUAGES.APEX],
+        description: 'Inefficient string comparison wastes CPU time',
+        resourceUrls: ['https://help.salesforce.com/s/articleView?id=xcloud.apexguru_antipattern_expensive_string_comparison.htm&type=5']
+    },
+
+    {
+        name: 'ExpensiveDebugStatements',
+        severityLevel: SeverityLevel.Low,
+        tags: [COMMON_TAGS.CATEGORIES.PERFORMANCE, COMMON_TAGS.LANGUAGES.APEX],
+        description: 'Expensive System.debug() statements add runtime overhead',
+        resourceUrls: ['https://help.salesforce.com/s/articleView?id=xcloud.apexguru_antipattern_expensive_debug_statements.htm&type=5']
+    },
+
     // =================================================================================================================
     //   BEST PRACTICES - LOW SEVERITY (RECOMMENDED)
     // =================================================================================================================
@@ -147,6 +203,14 @@ export const APEXGURU_RULES: RuleDescription[] = [
         tags: [COMMON_TAGS.CATEGORIES.BEST_PRACTICES, COMMON_TAGS.LANGUAGES.APEX],
         description: 'SOQL query selecting unused fields increases resource consumption unnecessarily',
         resourceUrls: ['https://help.salesforce.com/s/articleView?id=xcloud.apexguru_antipattern_soql_with_unused_fields.htm&type=5']
+    },
+
+    {
+        name: 'WritingFillerStatements',
+        severityLevel: SeverityLevel.Low,
+        tags: [COMMON_TAGS.CATEGORIES.BEST_PRACTICES, COMMON_TAGS.LANGUAGES.APEX],
+        description: 'Filler statements written to inflate code coverage instead of testing real behavior',
+        resourceUrls: ['https://help.salesforce.com/s/articleView?id=xcloud.apexguru_test_case_antipattern_filler_statements.htm&type=5']
     },
 
     // =================================================================================================================
