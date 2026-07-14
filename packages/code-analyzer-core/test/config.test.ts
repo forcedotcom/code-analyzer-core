@@ -18,7 +18,6 @@ describe("Tests for creating and accessing configuration values", () => {
         expect(conf.getConfigRoot()).toEqual(DEFAULT_CONFIG_ROOT);
         expect(conf.getLogFolder()).toEqual(os.tmpdir());
         expect(conf.getLogLevel()).toEqual(LogLevel.Debug);
-        expect(conf.getCustomEnginePluginModules()).toEqual([]);
         expect(conf.getPreserveAllWorkingFolders()).toEqual(false);
         expect(conf.getRootWorkingFolder()).toEqual(os.tmpdir());
         expect(conf.getRuleOverridesFor("stubEngine1")).toEqual({});
@@ -79,11 +78,15 @@ describe("Tests for creating and accessing configuration values", () => {
         });
     });
 
-    it("When constructing config from file with yml extension then it is parsed as a yaml file", () => {
+    it("When constructing config from file with yml extension containing custom_engine_plugin_modules then it is rejected as invalid key", () => {
+        expect(() => CodeAnalyzerConfig.fromFile(path.join(TEST_DATA_DIR, 'sample-config-02.Yml'))).toThrow(
+            "invalid key 'custom_engine_plugin_modules'");
+    });
+
+    it("When constructing config from file with yml extension (without custom_engine_plugin_modules) then it is parsed as a yaml file", () => {
         // Also note that Yml should work just like yml. Case doesn't matter.
-        const conf: CodeAnalyzerConfig = CodeAnalyzerConfig.fromFile(path.join(TEST_DATA_DIR, 'sample-config-02.Yml'));
+        const conf: CodeAnalyzerConfig = CodeAnalyzerConfig.fromFile(path.join(TEST_DATA_DIR, 'sample-config-02b.Yml'));
         expect(conf.getLogFolder()).toEqual(os.tmpdir());
-        expect(conf.getCustomEnginePluginModules()).toEqual(['dummy_plugin_module_path']);
         expect(conf.getPreserveAllWorkingFolders()).toEqual(true);
         expect(conf.getRootWorkingFolder()).toEqual(os.tmpdir());
         expect(conf.getRuleOverridesFor('stubEngine1')).toEqual({});
@@ -107,7 +110,6 @@ describe("Tests for creating and accessing configuration values", () => {
     it("When constructing config from json file then values from file are parsed correctly", () => {
         const conf: CodeAnalyzerConfig = CodeAnalyzerConfig.fromFile(path.join(TEST_DATA_DIR, 'sample-config-03.json'));
         expect(conf.getLogFolder()).toEqual(path.join(TEST_DATA_DIR, 'sampleLogFolder'));
-        expect(conf.getCustomEnginePluginModules()).toEqual([]);
         expect(conf.getPreserveAllWorkingFolders()).toEqual(false);
         expect(conf.getRuleOverridesFor('stubEngine1')).toEqual({});
         expect(conf.getRuleOverridesFor('stubEngine2')).toEqual({});
@@ -347,12 +349,12 @@ describe("Tests for creating and accessing configuration values", () => {
             getMessage('ConfigValueNotAValidEnumValue', 'log_level', '["Error","Warn","Info","Debug","Fine",1,2,3,4,5]', '0'));
     });
 
-    it("When custom_engine_plugin_modules is not a string array, then throw an error", () => {
-        expect(() => CodeAnalyzerConfig.fromObject({custom_engine_plugin_modules: 3})).toThrow(
-            getMessageFromCatalog(SHARED_MESSAGE_CATALOG, 'ConfigValueMustBeOfType','custom_engine_plugin_modules', 'array', 'number'));
+    it("[Security] When custom_engine_plugin_modules is provided, it is rejected as an invalid config key", () => {
+        expect(() => CodeAnalyzerConfig.fromObject({custom_engine_plugin_modules: ['./evil.js']})).toThrow(
+            "invalid key 'custom_engine_plugin_modules'");
 
-        expect(() => CodeAnalyzerConfig.fromObject({custom_engine_plugin_modules: 'oops'})).toThrow(
-            getMessageFromCatalog(SHARED_MESSAGE_CATALOG, 'ConfigValueMustBeOfType','custom_engine_plugin_modules', 'array', 'string'));
+        expect(() => CodeAnalyzerConfig.fromObject({custom_engine_plugin_modules: []})).toThrow(
+            "invalid key 'custom_engine_plugin_modules'");
     });
 
     it("When preserve_all_working_folders is not a boolean, then throw an error", () => {

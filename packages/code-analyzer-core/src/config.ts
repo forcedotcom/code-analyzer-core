@@ -14,7 +14,6 @@ export const FIELDS = {
     LOG_FOLDER: 'log_folder',
     LOG_LEVEL: 'log_level',
     ROOT_WORKING_FOLDER: 'root_working_folder', // Hidden
-    CUSTOM_ENGINE_PLUGIN_MODULES: 'custom_engine_plugin_modules', // Hidden
     PRESERVE_ALL_WORKING_FOLDERS: 'preserve_all_working_folders', // Hidden
     SUPPRESSIONS: 'suppressions',
     DISABLE_SUPPRESSIONS: 'disable_suppressions',
@@ -77,7 +76,6 @@ type TopLevelConfig = {
     suppressions: Suppressions
     root_working_folder: string, // INTERNAL USE ONLY
     preserve_all_working_folders: boolean // INTERNAL USE ONLY
-    custom_engine_plugin_modules: string[] // INTERNAL USE ONLY
 }
 
 // Only exported internally to help with testing
@@ -91,7 +89,6 @@ export const DEFAULT_CONFIG: TopLevelConfig = {
     ignores: { files: [] },
     root_working_folder: os.tmpdir(), // INTERNAL USE ONLY
     preserve_all_working_folders: false, // INTERNAL USE ONLY
-    custom_engine_plugin_modules: [], // INTERNAL USE ONLY
 };
 
 /**
@@ -176,16 +173,13 @@ export class CodeAnalyzerConfig {
         configRoot = !rawConfig.config_root ? (configRoot ?? process.cwd()) :
             validateAbsoluteFolder(rawConfig.config_root, FIELDS.CONFIG_ROOT);
         const configExtractor: engApi.ConfigValueExtractor = new engApi.ConfigValueExtractor(rawConfig, '', configRoot);
-        configExtractor.addKeysThatBypassValidation([FIELDS.CUSTOM_ENGINE_PLUGIN_MODULES, FIELDS.PRESERVE_ALL_WORKING_FOLDERS, FIELDS.ROOT_WORKING_FOLDER]); // Hidden fields bypass validation
+        configExtractor.addKeysThatBypassValidation([FIELDS.PRESERVE_ALL_WORKING_FOLDERS, FIELDS.ROOT_WORKING_FOLDER]); // Hidden fields bypass validation
         configExtractor.validateContainsOnlySpecifiedKeys([FIELDS.CONFIG_ROOT, FIELDS.LOG_FOLDER, FIELDS.LOG_LEVEL, FIELDS.RULES, FIELDS.ENGINES, FIELDS.IGNORES, FIELDS.SUPPRESSIONS]);
         const config: TopLevelConfig = {
             config_root: configRoot,
             log_folder: configExtractor.extractFolder(FIELDS.LOG_FOLDER, DEFAULT_CONFIG.log_folder)!,
             log_level: extractLogLevel(configExtractor),
             suppressions: extractSuppressionsValue(configExtractor),
-            custom_engine_plugin_modules: configExtractor.extractArray(FIELDS.CUSTOM_ENGINE_PLUGIN_MODULES,
-                engApi.ValueValidator.validateString,
-                DEFAULT_CONFIG.custom_engine_plugin_modules)!,
             root_working_folder: configExtractor.extractFolder(FIELDS.ROOT_WORKING_FOLDER, DEFAULT_CONFIG.root_working_folder)!,
             preserve_all_working_folders: configExtractor.extractBoolean(FIELDS.PRESERVE_ALL_WORKING_FOLDERS, DEFAULT_CONFIG.preserve_all_working_folders)!,
             rules: extractRulesValue(configExtractor),
@@ -296,13 +290,6 @@ export class CodeAnalyzerConfig {
      */
     public getConfigRoot(): string {
         return this.config.config_root;
-    }
-
-    /**
-     * Returns any user-specified custom engine plugin modules that have been specified in the configuration.
-     */
-    public getCustomEnginePluginModules(): string[] {
-        return this.config.custom_engine_plugin_modules;
     }
 
     /**

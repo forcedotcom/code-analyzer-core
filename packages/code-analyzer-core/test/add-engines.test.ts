@@ -60,7 +60,7 @@ describe("Tests for adding engines to Code Analyzer", () => {
     });
 
     it('When adding engine plugin using non-default config then engines are correctly added with engine specific configurations', async () => {
-        codeAnalyzer = createCodeAnalyzer(CodeAnalyzerConfig.fromFile(path.join(TEST_DATA_DIR, 'sample-config-02.Yml')));
+        codeAnalyzer = createCodeAnalyzer(CodeAnalyzerConfig.fromFile(path.join(TEST_DATA_DIR, 'sample-config-02b.Yml')));
 
         const stubEnginePlugin: stubs.StubEnginePlugin = new stubs.StubEnginePlugin();
         await codeAnalyzer.addEnginePlugin(stubEnginePlugin);
@@ -145,27 +145,8 @@ describe("Tests for adding engines to Code Analyzer", () => {
         expect(codeAnalyzer.getEngineNames().sort()).toEqual([]);
     })
 
-    it('When calling dynamicallyAddEnginePlugin on a module that has a createEnginePlugin function, then it is used to create the plugin and then add it', async () => {
-        const pluginModulePath: string = require.resolve('./stubs');
-        await codeAnalyzer.dynamicallyAddEnginePlugin(pluginModulePath);
-        expect(codeAnalyzer.getEngineNames().sort()).toEqual(["stubEngine1", "stubEngine2", "stubEngine3"]);
-    });
-
-    it('When calling dynamicallyAddEnginePlugin on a module that is missing a createEnginePlugin function, then an error is thrown', async () => {
-        const badPluginModulePath: string = require.resolve('./test-helpers');
-        await expect(codeAnalyzer.dynamicallyAddEnginePlugin(badPluginModulePath)).rejects.toThrow(
-            getMessage('FailedToDynamicallyAddEnginePlugin', badPluginModulePath));
-    });
-
-    it('When calling dynamicallyAddEnginePlugin on a module that does not exist, then an error is thrown', async () => {
-        const expectedErrorMessageSubstring: string = getMessage('FailedToDynamicallyLoadModule', 'doesNotExist', '');
-        await expect(codeAnalyzer.dynamicallyAddEnginePlugin('doesNotExist')).rejects.toThrow(expectedErrorMessageSubstring);
-    });
-
-    it('When calling dynamicallyAddEnginePlugin on a file that is not a module, then an error is thrown', async () => {
-        const nonModuleFile: string = path.resolve('package.json');
-        const expectedErrorMessageSubstring: string = getMessage('FailedToDynamicallyAddEnginePlugin', nonModuleFile);
-        await expect(codeAnalyzer.dynamicallyAddEnginePlugin(nonModuleFile)).rejects.toThrow(expectedErrorMessageSubstring);
+    it('[Security] dynamicallyAddEnginePlugin method does not exist on CodeAnalyzer', () => {
+        expect((codeAnalyzer as any).dynamicallyAddEnginePlugin).toBeUndefined();
     });
 
     it('When an engine is disabled, then addEnginePlugin does not add that particular engine and gives debug log', async () => {

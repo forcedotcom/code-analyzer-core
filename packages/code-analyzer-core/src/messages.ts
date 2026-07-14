@@ -120,12 +120,6 @@ const MESSAGE_CATALOG : MessageCatalog = {
         `  %s:\n` +
         `    disable_engine: true`,
 
-    FailedToDynamicallyLoadModule:
-        `Failed to dynamically load module '%s'. Error: %s`,
-
-    FailedToDynamicallyAddEnginePlugin:
-        `Failed to dynamically add engine plugin from module '%s' because the module does not seem to export a 'createEnginePlugin' function.`,
-
     FailedToGetEngineConfig:
         `Failed to get configuration for engine with name '%s' since this engine has not been added to Code Analyzer.`,
 
