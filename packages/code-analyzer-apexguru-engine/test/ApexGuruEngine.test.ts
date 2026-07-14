@@ -1,6 +1,6 @@
 import { ApexGuruEngine } from '../src/engine';
 import { ApexGuruService } from '../src/services/ApexGuruService';
-import { LogLevel, RunOptions, Workspace } from '@salesforce/code-analyzer-engine-api';
+import { LogLevel, RunOptions, Workspace, COMMON_TAGS } from '@salesforce/code-analyzer-engine-api';
 import * as fs from 'node:fs/promises';
 import * as fsSync from 'node:fs';
 import * as path from 'node:path';
@@ -600,6 +600,52 @@ describe('ApexGuruEngine', () => {
 
             expect(results.violations).toHaveLength(1);
             expect(results.violations[0].codeLocations[0].file).toBe(realFilePath);
+        });
+    });
+
+    describe('DevPreview behavior', () => {
+        it('rules list should show DevPreview tag on all rules and no Recommended tag', async () => {
+            const rules = await engine.describeRules({
+                logFolder: '/tmp/logs',
+                workingFolder: '/tmp/working'
+            });
+
+            expect(rules.length).toBeGreaterThan(0);
+            for (const rule of rules) {
+                expect(rule.tags).toContain('DevPreview');
+                expect(rule.tags).not.toContain('Recommended');
+            }
+        });
+
+        it('should describe rules that can be selected by engine name apexguru', async () => {
+            const rules = await engine.describeRules({
+                logFolder: '/tmp/logs',
+                workingFolder: '/tmp/working'
+            });
+
+            expect(rules.length).toBeGreaterThan(0);
+            expect(engine.getName()).toBe('apexguru');
+        });
+
+        it('should describe rules selectable by DevPreview tag', async () => {
+            const rules = await engine.describeRules({
+                logFolder: '/tmp/logs',
+                workingFolder: '/tmp/working'
+            });
+
+            const devPreviewRules = rules.filter(r => r.tags.includes('DevPreview'));
+            expect(devPreviewRules).toHaveLength(rules.length);
+        });
+
+        it('should describe individual rules by name for explicit selection', async () => {
+            const rules = await engine.describeRules({
+                logFolder: '/tmp/logs',
+                workingFolder: '/tmp/working'
+            });
+
+            expect(rules.find(r => r.name === 'SoqlInALoop')).toBeDefined();
+            expect(rules.find(r => r.name === 'DmlInALoop')).toBeDefined();
+            expect(rules.find(r => r.name === 'ExpensiveMethods')).toBeDefined();
         });
     });
 });
