@@ -1,4 +1,3 @@
-import {pathToFileURL} from "node:url";
 import {RuleImpl, RuleSelection, RuleSelectionImpl} from "./rules"
 import {
     EngineRunResults,
@@ -233,40 +232,6 @@ export class CodeAnalyzer {
         const promises: Promise<void>[] = getAvailableEngineNamesFromPlugin(enginePluginV1).map(engineName =>
             this.createAndAddEngineIfValid(engineName, enginePluginV1));
         await Promise.all(promises);
-    }
-
-    /**
-     * Dynamically loads a module containing an {@link EnginePlugin} and adds its engines to Code Analyzer
-     *     Note that the module must export a createEnginePlugin() function that returns an EnginePlugin.
-     * @param enginePluginModulePath string containing a discoverable name or location of an engine plugin module
-     */
-    public async dynamicallyAddEnginePlugin(enginePluginModulePath: string): Promise<void> {
-        let pluginModule;
-        let resolvedModulePath: string;
-        try {
-            try {
-                resolvedModulePath = require.resolve(enginePluginModulePath, {paths: [this.config.getConfigRoot()]});
-            } catch (err) /* istanbul ignore next */ {
-                // On windows, there is an edge case where a standalone file in the same directory as the user's config
-                // file may not be resolved by require.resolve if given as just the file name. So we attempt to resolve
-                // this using path.resolve for this edge case.
-                this.emitLogEvent(LogLevel.Fine, `While dynamically importing '${enginePluginModulePath}', ` +
-                    `require.resolve failed with the following exception, so we will attempt to resolve with ` +
-                    `path.resolve instead.\nError:\n` +
-                    (err instanceof Error) ? (err as Error).stack || (err as Error).message : (err as string));
-                resolvedModulePath = path.resolve(this.config.getConfigRoot(), enginePluginModulePath);
-            }
-
-            pluginModule = await dynamicallyImport(resolvedModulePath);
-        } catch (err) {
-            throw new Error(getMessage('FailedToDynamicallyLoadModule', enginePluginModulePath, (err as Error).message), {cause: err});
-        }
-
-        if (typeof pluginModule.createEnginePlugin !== 'function') {
-            throw new Error(getMessage('FailedToDynamicallyAddEnginePlugin', enginePluginModulePath));
-        }
-        const enginePlugin: engApi.EnginePlugin = pluginModule.createEnginePlugin();
-        return this.addEnginePlugin(enginePlugin);
     }
 
     /**
@@ -1141,11 +1106,3 @@ function findCaseInsensitiveKey(obj: object, key: string): string | undefined {
     return Object.keys(obj).find(k => k.toLowerCase() === key.toLowerCase());
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-async function dynamicallyImport(absJavaScriptFilePath: string): Promise<any> {
-    // To avoid issues with dynamically importing absolute paths on Windows, we need to convert to url with pathToFileURL.
-    const moduleUrl: string = pathToFileURL(absJavaScriptFilePath).href;
-    const pluginModule = await import(moduleUrl);
-    /* istanbul ignore next */
-    return pluginModule.default ?? pluginModule; // Return the default export if it exists, otherwise the module itself
-}

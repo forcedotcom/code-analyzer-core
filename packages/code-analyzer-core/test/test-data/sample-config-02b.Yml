@@ -1,0 +1,12 @@
+preserve_all_working_folders: true
+rules:
+  stubEngine2:
+    stub2RuleC:
+      severity: 3
+
+engines:
+  stubEngine1:
+    miscSetting1: true
+    miscSetting2:
+      miscSetting2A: 3
+      miscSetting2B: ["hello", "world"]
