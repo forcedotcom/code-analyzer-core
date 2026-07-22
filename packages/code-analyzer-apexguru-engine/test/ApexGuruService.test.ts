@@ -7,7 +7,7 @@ jest.mock('../src/services/ApexGuruAuthService');
 jest.mock('archiver');
 jest.mock('node:fs');
 
-const TEST_SFAP_BASE_URL = 'https://dev.api.salesforce.com/platform/scale/v1-beta.1';
+const TEST_SFAP_BASE_URL = 'https://api.salesforce.com/platform/scale/v1-beta.1';
 
 const mockFetch = jest.fn();
 globalThis.fetch = mockFetch as unknown as typeof globalThis.fetch;
