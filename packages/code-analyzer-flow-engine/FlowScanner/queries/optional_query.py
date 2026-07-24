@@ -27,6 +27,11 @@ DEFAULT_HELP_URL = ("https://developer.salesforce.com/docs/atlas.en-us.secure_co
 id_pattern = re.compile(r"^(?=.*[0-9][0-9])[a-zA-Z0-9]+[a-zA-Z0-9]{15}(?:[0-5][A-Z0-5]{3})?$")
 copy_name_pattern = re.compile(r"^Copy_\d+_of_[a-zA-Z]+")
 copy_label_pattern = re.compile(r"^Copy \d+ of [a-zA-Z]+")
+# Matches an http(s) URL anywhere inside a string value.
+url_pattern = re.compile(r"https?://[^\s\"'<>]+", re.IGNORECASE)
+# Minimum Flow API version considered current. Flows below this (or with no
+# apiVersion) are flagged by InvalidApiVersion.
+MIN_API_VERSION = 50.0
 
 ns = parse_utils.ns
 
@@ -48,7 +53,13 @@ QUERIES = {
     "CyclicSubflow": "Chain of subflow calls forms a cycle",
     "TriggerWaitEvent": "Wait Event in Trigger",
     "TriggerCallout": "Trigger Flow Callout in Synchronous Path",
-    "MissingDescription": "Missing Description"
+    "MissingDescription": "Missing Description",
+    "HardcodedUrl": "Hardcoded URL",
+    "GetRecordAllFields": "Get Records Retrieves All Fields",
+    "ProcessBuilder": "Deprecated Process Builder or Workflow",
+    "InactiveFlow": "Inactive Flow",
+    "InvalidApiVersion": "Invalid or Outdated API Version",
+    "MissingTriggerOrder": "Record Trigger Without Trigger Order"
 }
 
 """
@@ -1153,3 +1164,250 @@ def is_copy_label(label: str) -> bool:
 
 def is_copy_name(name: str) -> bool:
     return bool(copy_name_pattern.match(name))
+
+
+def flow_level_result(query_id: str, parser: FlowParser) -> QueryResult:
+    """Build a single QueryResult attributed to the flow as a whole.
+
+    Used by rules that report a property of the entire flow (e.g. its status
+    or API version) rather than a specific inner element.
+    """
+    # We don't want to print out the whole flow, so use a placeholder (see MissingDescription).
+    return QueryResult(
+        query_id=query_id,
+        flow_type=parser.get_flow_type(),
+        elem_code='<Flow>',
+        elem_name='Flow',
+        elem_line_no=2,
+        field="Flow",
+        filename=parser.get_filename()
+    )
+
+
+class HardcodedUrl(LexicalQuery):
+
+    query_id = "HardcodedUrl"
+    query_name = QUERIES[query_id]
+
+    @classmethod
+    def get_query_description(cls) -> QueryDescription:
+        return QueryDescription(
+            query_id=cls.query_id,
+            query_name=cls.query_name,
+            query_description=("The flow has a hardcoded URL. Hardcoded URLs are a bad practice as they break "
+                               "when moving between environments. Use a Named Credential, custom setting, or "
+                               "custom label instead."),
+            query_version="1.0",
+            severity=Severity.Flow_Moderate_Severity,
+            help_url=DEFAULT_HELP_URL,
+            is_security=False
+        )
+
+    def when_to_run(self) -> list[QueryAction]:
+        return [QueryAction.lexical]
+
+    def execute(self, parser: FlowParser = None, **kwargs) -> list[QueryResult] | None:
+        if parser is None:
+            return None
+        results = []
+        root = parser.get_root()
+        top_level = [x for x in root if parse_utils.get_tag(x) != "processMetadataValues"]
+        for top in top_level:
+            for el in top.iter(tag=f"{ns}stringValue"):
+                msg = el.text
+                if msg is not None and url_pattern.search(msg) is not None and (top, el) not in results:
+                    results.append((top, el))
+        return self.report(results, parser)
+
+    def report(self, results: list[tuple], parser: FlowParser) -> list[QueryResult] | None:
+        accum = []
+        for top, el in results:
+            el_name = parse_utils.get_name(top)
+            if el_name is None:
+                el_name = parse_utils.get_tag(top)
+            accum.append(QueryResult(
+                query_id=self.query_id,
+                flow_type=parser.get_flow_type(),
+                influence_statement=None,
+                paths=None,
+                elem_code=parse_utils.get_elem_string(el),
+                elem_line_no=parse_utils.get_line_no(el),
+                elem_name=el_name,
+                filename=parser.get_filename(),
+                field=None
+            ))
+        return accum if len(accum) > 0 else None
+
+
+class GetRecordAllFields(LexicalQuery):
+
+    query_id = "GetRecordAllFields"
+    query_name = QUERIES[query_id]
+
+    @classmethod
+    def get_query_description(cls) -> QueryDescription:
+        return QueryDescription(
+            query_id=cls.query_id,
+            query_name=cls.query_name,
+            query_description=("A Get Records element retrieves all fields automatically instead of selecting "
+                               "only the fields it needs. Storing all fields is inefficient. Set the element to "
+                               "manually assign only the fields that are used."),
+            query_version="1.0",
+            severity=Severity.Flow_Low_Severity,
+            help_url=DEFAULT_HELP_URL,
+            is_security=False
+        )
+
+    def when_to_run(self) -> list[QueryAction]:
+        return [QueryAction.lexical]
+
+    def execute(self, parser: FlowParser = None, **kwargs) -> list[QueryResult] | None:
+        root = parser.get_root()
+        accum = []
+        for el in parse_utils.get_by_tag(root, 'recordLookups'):
+            stores_all = parse_utils.get_text_of_tag(el, 'storeOutputAutomatically') == 'true'
+            has_queried_fields = len(parse_utils.get_by_tag(el, 'queriedFields')) > 0
+            if stores_all and not has_queried_fields:
+                accum.append(QueryResult(
+                    query_id=self.query_id,
+                    flow_type=parser.get_flow_type(),
+                    elem_code=parse_utils.get_elem_string(el),
+                    elem_line_no=parse_utils.get_line_no(el),
+                    elem_name=parse_utils.get_name(el),
+                    field=parse_utils.get_name(el),
+                    filename=parser.get_filename()
+                ))
+        return accum if len(accum) > 0 else None
+
+
+class ProcessBuilder(LexicalQuery):
+
+    query_id = "ProcessBuilder"
+    query_name = QUERIES[query_id]
+
+    @classmethod
+    def get_query_description(cls) -> QueryDescription:
+        return QueryDescription(
+            query_id=cls.query_id,
+            query_name=cls.query_name,
+            query_description=("The flow is a Process Builder or Workflow Rule. These automation tools are retired. "
+                               "Migrate the automation to a Flow."),
+            query_version="1.0",
+            severity=Severity.Flow_Moderate_Severity,
+            help_url=DEFAULT_HELP_URL,
+            is_security=False
+        )
+
+    def when_to_run(self) -> list[QueryAction]:
+        return [QueryAction.lexical]
+
+    def execute(self, parser: FlowParser = None, **kwargs) -> list[QueryResult] | None:
+        if parser.get_flow_type() in (FlowType.ProcessBuilder, FlowType.Workflow, FlowType.InvocableProcess):
+            return [flow_level_result(self.query_id, parser)]
+        return None
+
+
+class InactiveFlow(LexicalQuery):
+
+    query_id = "InactiveFlow"
+    query_name = QUERIES[query_id]
+
+    @classmethod
+    def get_query_description(cls) -> QueryDescription:
+        return QueryDescription(
+            query_id=cls.query_id,
+            query_name=cls.query_name,
+            query_description=("The flow is not active. Inactive flows should be activated if they are needed, "
+                               "or deleted if they are not, to avoid clutter and confusion."),
+            query_version="1.0",
+            severity=Severity.Flow_Low_Severity,
+            help_url=DEFAULT_HELP_URL,
+            is_security=False
+        )
+
+    def when_to_run(self) -> list[QueryAction]:
+        return [QueryAction.lexical]
+
+    def execute(self, parser: FlowParser = None, **kwargs) -> list[QueryResult] | None:
+        status = parse_utils.get_text_of_tag(parser.get_root(), 'status')
+        if status is not None and status != 'Active':
+            return [flow_level_result(self.query_id, parser)]
+        return None
+
+
+class InvalidApiVersion(LexicalQuery):
+
+    query_id = "InvalidApiVersion"
+    query_name = QUERIES[query_id]
+
+    @classmethod
+    def get_query_description(cls) -> QueryDescription:
+        return QueryDescription(
+            query_id=cls.query_id,
+            query_name=cls.query_name,
+            query_description=(f"The flow has no API version or an API version below {MIN_API_VERSION:g}. "
+                               "Outdated API versions can cause compatibility issues. Set the flow to a "
+                               "recent API version."),
+            query_version="1.0",
+            severity=Severity.Flow_Low_Severity,
+            help_url=DEFAULT_HELP_URL,
+            is_security=False
+        )
+
+    def when_to_run(self) -> list[QueryAction]:
+        return [QueryAction.lexical]
+
+    def execute(self, parser: FlowParser = None, **kwargs) -> list[QueryResult] | None:
+        api_version = parse_utils.get_text_of_tag(parser.get_root(), 'apiVersion')
+        is_invalid = api_version is None
+        if not is_invalid:
+            try:
+                is_invalid = float(api_version) < MIN_API_VERSION
+            except ValueError:
+                is_invalid = True
+        if is_invalid:
+            return [flow_level_result(self.query_id, parser)]
+        return None
+
+
+class MissingTriggerOrder(LexicalQuery):
+
+    query_id = "MissingTriggerOrder"
+    query_name = QUERIES[query_id]
+
+    @classmethod
+    def get_query_description(cls) -> QueryDescription:
+        return QueryDescription(
+            query_id=cls.query_id,
+            query_name=cls.query_name,
+            query_description=("A record-triggered flow does not specify a trigger order. When multiple "
+                               "record-triggered flows run on the same object and event, set a trigger order "
+                               "to make the execution sequence deterministic."),
+            query_version="1.0",
+            severity=Severity.Flow_Low_Severity,
+            help_url=DEFAULT_HELP_URL,
+            is_security=False
+        )
+
+    def when_to_run(self) -> list[QueryAction]:
+        return [QueryAction.lexical]
+
+    def execute(self, parser: FlowParser = None, **kwargs) -> list[QueryResult] | None:
+        root = parser.get_root()
+        starts = parse_utils.get_by_tag(root, tag_name='start')
+        if len(starts) != 1:
+            return None
+        start = starts[0]
+        # Only record-triggered flows have a recordTriggerType and support triggerOrder.
+        if len(parse_utils.get_by_tag(start, tag_name='recordTriggerType')) != 1:
+            return None
+        if len(parse_utils.get_by_tag(start, tag_name='triggerOrder')) == 0:
+            return [QueryResult(
+                query_id=self.query_id,
+                flow_type=parser.get_flow_type(),
+                elem_name='start',
+                elem_line_no=parse_utils.get_line_no(start),
+                elem_code=parse_utils.get_elem_string(start),
+                filename=parser.get_filename()
+            )]
+        return None

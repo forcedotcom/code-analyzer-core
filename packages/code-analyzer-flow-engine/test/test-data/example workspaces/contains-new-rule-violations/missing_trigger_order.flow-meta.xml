@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Flow xmlns="http://soap.sforce.com/2006/04/metadata">
+    <apiVersion>60.0</apiVersion>
+    <description>d</description>
+    <label>mto</label>
+    <processType>AutoLaunchedFlow</processType>
+    <assignments>
+        <name>a1</name>
+        <label>a1</label>
+        <description>d</description>
+        <locationX>100</locationX>
+        <locationY>100</locationY>
+        <assignmentItems>
+            <assignToReference>var1</assignToReference>
+            <operator>Assign</operator>
+            <value><stringValue>x</stringValue></value>
+        </assignmentItems>
+    </assignments>
+    <start>
+        <locationX>50</locationX>
+        <locationY>48</locationY>
+        <connector><targetReference>a1</targetReference></connector>
+        <object>Account</object>
+        <recordTriggerType>Create</recordTriggerType>
+        <triggerType>RecordAfterSave</triggerType>
+    </start>
+    <status>Active</status>
+    <variables>
+        <name>var1</name>
+        <dataType>String</dataType>
+        <isCollection>false</isCollection>
+        <isInput>false</isInput>
+        <isOutput>false</isOutput>
+    </variables>
+</Flow>
