@@ -190,10 +190,6 @@ export const RULE_MAPPINGS_TYPESCRIPT_ESLINT: Record<string, {severity: Severity
         severity: SeverityLevel.High,
         tags: [/* NOT RECOMMENDED */    COMMON_TAGS.CATEGORIES.ERROR_PRONE,    COMMON_TAGS.LANGUAGES.TYPESCRIPT]
     },
-    "@typescript-eslint/no-loop-func": {
-        severity: SeverityLevel.Moderate,
-        tags: [/* NOT RECOMMENDED */    COMMON_TAGS.CATEGORIES.BEST_PRACTICES, COMMON_TAGS.LANGUAGES.TYPESCRIPT]
-    },
     "@typescript-eslint/no-magic-numbers": {
         severity: SeverityLevel.Moderate,
         tags: [/* NOT RECOMMENDED */    COMMON_TAGS.CATEGORIES.BEST_PRACTICES, COMMON_TAGS.LANGUAGES.TYPESCRIPT]
@@ -241,10 +237,6 @@ export const RULE_MAPPINGS_TYPESCRIPT_ESLINT: Record<string, {severity: Severity
     "@typescript-eslint/no-require-imports": {
         severity: SeverityLevel.High,
         tags: [COMMON_TAGS.RECOMMENDED, COMMON_TAGS.CATEGORIES.ERROR_PRONE,    COMMON_TAGS.LANGUAGES.TYPESCRIPT]
-    },
-    "@typescript-eslint/no-restricted-imports": {
-        severity: SeverityLevel.Moderate,
-        tags: [/* NOT RECOMMENDED */    COMMON_TAGS.CATEGORIES.BEST_PRACTICES, COMMON_TAGS.LANGUAGES.TYPESCRIPT]
     },
     "@typescript-eslint/no-restricted-types": {
         severity: SeverityLevel.Moderate,

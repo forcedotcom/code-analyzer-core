@@ -576,18 +576,6 @@
     ]
   },
   {
-    "description": "Disallow function declarations that contain unsafe references inside loop statements",
-    "name": "@typescript-eslint/no-loop-func",
-    "resourceUrls": [
-      "https://typescript-eslint.io/rules/no-loop-func"
-    ],
-    "severityLevel": 3,
-    "tags": [
-      "BestPractices",
-      "TypeScript"
-    ]
-  },
-  {
     "description": "Disallow magic numbers",
     "name": "@typescript-eslint/no-magic-numbers",
     "resourceUrls": [
@@ -745,18 +733,6 @@
     "tags": [
       "Recommended",
       "ErrorProne",
-      "TypeScript"
-    ]
-  },
-  {
-    "description": "Disallow specified modules when loaded by `import`",
-    "name": "@typescript-eslint/no-restricted-imports",
-    "resourceUrls": [
-      "https://typescript-eslint.io/rules/no-restricted-imports"
-    ],
-    "severityLevel": 3,
-    "tags": [
-      "BestPractices",
       "TypeScript"
     ]
   },
@@ -2582,6 +2558,18 @@
     ]
   },
   {
+    "description": "Disallow function declarations that contain unsafe references inside loop statements",
+    "name": "no-loop-func",
+    "resourceUrls": [
+      "https://eslint.org/docs/latest/rules/no-loop-func"
+    ],
+    "severityLevel": 3,
+    "tags": [
+      "BestPractices",
+      "JavaScript"
+    ]
+  },
+  {
     "description": "Disallow literal numbers that lose precision",
     "name": "no-loss-of-precision",
     "resourceUrls": [
@@ -2859,6 +2847,18 @@
       "BestPractices",
       "JavaScript",
       "TypeScript"
+    ]
+  },
+  {
+    "description": "Disallow specified modules when loaded by `import`",
+    "name": "no-restricted-imports",
+    "resourceUrls": [
+      "https://eslint.org/docs/latest/rules/no-restricted-imports"
+    ],
+    "severityLevel": 3,
+    "tags": [
+      "BestPractices",
+      "JavaScript"
     ]
   },
   {
