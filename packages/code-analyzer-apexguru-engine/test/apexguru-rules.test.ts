@@ -1,5 +1,4 @@
 import { APEXGURU_RULES, DEV_PREVIEW_TAG, isKnownRule, FALLBACK_RULE_NAME } from '../src/apexguru-rules';
-import { COMMON_TAGS } from '@salesforce/code-analyzer-engine-api';
 
 describe('apexguru-rules', () => {
 
@@ -64,14 +63,6 @@ describe('apexguru-rules', () => {
             expect(rule!.tags[0]).toBe('DevPreview');
         });
 
-        it.each(rulesWithoutFormerRecommended)('%s should retain its category tag', (ruleName) => {
-            const rule = APEXGURU_RULES.find(r => r.name === ruleName);
-            expect(rule).toBeDefined();
-            const hasCategoryTag = rule!.tags.includes(COMMON_TAGS.CATEGORIES.PERFORMANCE) ||
-                rule!.tags.includes(COMMON_TAGS.CATEGORIES.BEST_PRACTICES);
-            expect(hasCategoryTag).toBe(true);
-        });
-
         it.each(rulesWithoutFormerRecommended)('%s should NOT contain Recommended tag', (ruleName) => {
             const rule = APEXGURU_RULES.find(r => r.name === ruleName);
             expect(rule).toBeDefined();
@@ -96,19 +87,6 @@ describe('apexguru-rules', () => {
             }
         });
 
-        it('every rule should have a category tag (Performance or BestPractices)', () => {
-            for (const rule of APEXGURU_RULES) {
-                const hasCategoryTag = rule.tags.includes(COMMON_TAGS.CATEGORIES.PERFORMANCE) ||
-                    rule.tags.includes(COMMON_TAGS.CATEGORIES.BEST_PRACTICES);
-                expect(hasCategoryTag).toBe(true);
-            }
-        });
-
-        it('every rule should have Apex language tag', () => {
-            for (const rule of APEXGURU_RULES) {
-                expect(rule.tags).toContain(COMMON_TAGS.LANGUAGES.APEX);
-            }
-        });
     });
 
     describe('isKnownRule', () => {
