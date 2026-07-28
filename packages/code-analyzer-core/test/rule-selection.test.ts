@@ -610,6 +610,48 @@ describe('Tests for selecting rules', () => {
             getMessage('InstructionsToIgnoreErrorAndDisableEngine', 'someEngine'));
     })
 
+    describe('DevPreviewApexGuru rule selection behavior', () => {
+        beforeEach(async () => {
+            codeAnalyzer = createCodeAnalyzer();
+            await codeAnalyzer.addEnginePlugin(new stubs.DevPreviewEnginePlugin());
+        });
+
+        it('DevPreviewApexGuru rules are NOT selected by severity number selector', async () => {
+            const selection: RuleSelection = await codeAnalyzer.selectRules(['4']); // Low
+            expect(ruleNamesFor(selection, 'devPreviewEngine')).toEqual([]);
+        });
+
+        it('DevPreviewApexGuru rules are NOT selected by severity name selector', async () => {
+            const selection: RuleSelection = await codeAnalyzer.selectRules(['Low']);
+            expect(ruleNamesFor(selection, 'devPreviewEngine')).toEqual([]);
+        });
+
+        it('DevPreviewApexGuru rules are NOT selected by all', async () => {
+            const selection: RuleSelection = await codeAnalyzer.selectRules(['all']);
+            expect(ruleNamesFor(selection, 'devPreviewEngine')).toEqual([]);
+        });
+
+        it('DevPreviewApexGuru rules ARE selected by engine name', async () => {
+            const selection: RuleSelection = await codeAnalyzer.selectRules(['devPreviewEngine']);
+            expect(ruleNamesFor(selection, 'devPreviewEngine')).toEqual(['devPreviewRule1', 'devPreviewRule2']);
+        });
+
+        it('DevPreviewApexGuru rules ARE selected by rule name', async () => {
+            const selection: RuleSelection = await codeAnalyzer.selectRules(['devPreviewRule1']);
+            expect(ruleNamesFor(selection, 'devPreviewEngine')).toEqual(['devPreviewRule1']);
+        });
+
+        it('DevPreviewApexGuru rules ARE selected by DevPreviewApexGuru tag', async () => {
+            const selection: RuleSelection = await codeAnalyzer.selectRules(['DevPreviewApexGuru']);
+            expect(ruleNamesFor(selection, 'devPreviewEngine')).toEqual(['devPreviewRule1', 'devPreviewRule2']);
+        });
+
+        it('DevPreviewApexGuru rules ARE selected by other tag they carry', async () => {
+            const selection: RuleSelection = await codeAnalyzer.selectRules(['Performance']);
+            expect(ruleNamesFor(selection, 'devPreviewEngine')).toEqual(['devPreviewRule1']);
+        });
+    });
+
     it('When attempting to get a rule that does not exist in the selection, then error', async () => {
         const selection: RuleSelection = await codeAnalyzer.selectRules([]);
 

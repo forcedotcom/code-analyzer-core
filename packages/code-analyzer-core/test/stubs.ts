@@ -602,6 +602,52 @@ class EmptyTagEngine extends engApi.Engine {
 }
 
 /**
+ * DevPreviewEnginePlugin - A plugin to help with testing DevPreview rule selection behavior
+ */
+export class DevPreviewEnginePlugin extends engApi.EnginePluginV1 {
+    getAvailableEngineNames(): string[] {
+        return ["devPreviewEngine"];
+    }
+
+    async createEngine(_engineName: string, _config: engApi.ConfigObject): Promise<engApi.Engine> {
+        return new DevPreviewEngine();
+    }
+}
+
+class DevPreviewEngine extends engApi.Engine {
+    getName(): string {
+        return 'devPreviewEngine';
+    }
+
+    getEngineVersion(): Promise<string> {
+        return Promise.resolve('1.0.0');
+    }
+
+    async describeRules(_describeOptions: engApi.DescribeOptions): Promise<engApi.RuleDescription[]> {
+        return [
+            {
+                name: "devPreviewRule1",
+                severityLevel: engApi.SeverityLevel.Low,
+                tags: ['DevPreviewApexGuru', 'Performance'],
+                description: 'A DevPreview rule with Low severity',
+                resourceUrls: []
+            },
+            {
+                name: "devPreviewRule2",
+                severityLevel: engApi.SeverityLevel.High,
+                tags: ['DevPreviewApexGuru'],
+                description: 'A DevPreview rule with High severity',
+                resourceUrls: []
+            }
+        ];
+    }
+
+    async runRules(_ruleNames: string[], _runOptions: engApi.RunOptions): Promise<engApi.EngineRunResults> {
+        return { violations: [] };
+    }
+}
+
+/**
  * FutureEnginePlugin - A plugin to help with testing forward compatibility
  */
 export class FutureEnginePlugin extends engApi.EnginePluginV1 {

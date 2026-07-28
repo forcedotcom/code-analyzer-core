@@ -1,10 +1,10 @@
-import { APEXGURU_RULES, DEV_PREVIEW_TAG, isKnownRule, FALLBACK_RULE_NAME } from '../src/apexguru-rules';
+import { APEXGURU_RULES, DEV_PREVIEW_TAG_APEXGURU, isKnownRule, FALLBACK_RULE_NAME } from '../src/apexguru-rules';
 
 describe('apexguru-rules', () => {
 
-    describe('DEV_PREVIEW_TAG constant', () => {
-        it('should equal DevPreview', () => {
-            expect(DEV_PREVIEW_TAG).toBe('DevPreview');
+    describe('DEV_PREVIEW_TAG_APEXGURU constant', () => {
+        it('should equal DevPreviewApexGuru', () => {
+            expect(DEV_PREVIEW_TAG_APEXGURU).toBe('DevPreviewApexGuru');
         });
     });
 
@@ -22,7 +22,7 @@ describe('apexguru-rules', () => {
         it.each(rulesWithFormerRecommended)('%s should have DevPreview as first tag', (ruleName) => {
             const rule = APEXGURU_RULES.find(r => r.name === ruleName);
             expect(rule).toBeDefined();
-            expect(rule!.tags[0]).toBe('DevPreview');
+            expect(rule!.tags[0]).toBe('DevPreviewApexGuru');
         });
 
         it.each(rulesWithFormerRecommended)('%s should NOT contain Recommended tag', (ruleName) => {
@@ -60,7 +60,7 @@ describe('apexguru-rules', () => {
         it.each(rulesWithoutFormerRecommended)('%s should have DevPreview as first tag', (ruleName) => {
             const rule = APEXGURU_RULES.find(r => r.name === ruleName);
             expect(rule).toBeDefined();
-            expect(rule!.tags[0]).toBe('DevPreview');
+            expect(rule!.tags[0]).toBe('DevPreviewApexGuru');
         });
 
         it.each(rulesWithoutFormerRecommended)('%s should NOT contain Recommended tag', (ruleName) => {
@@ -77,7 +77,7 @@ describe('apexguru-rules', () => {
 
         it('every rule should have DevPreview in its tags', () => {
             for (const rule of APEXGURU_RULES) {
-                expect(rule.tags).toContain('DevPreview');
+                expect(rule.tags).toContain('DevPreviewApexGuru');
             }
         });
 
