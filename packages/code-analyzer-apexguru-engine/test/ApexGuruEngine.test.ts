@@ -612,7 +612,7 @@ describe('ApexGuruEngine', () => {
 
             expect(rules.length).toBeGreaterThan(0);
             for (const rule of rules) {
-                expect(rule.tags).toContain('DevPreview');
+                expect(rule.tags).toContain('DevPreviewApexGuru');
                 expect(rule.tags).not.toContain('Recommended');
             }
         });
@@ -633,7 +633,7 @@ describe('ApexGuruEngine', () => {
                 workingFolder: '/tmp/working'
             });
 
-            const devPreviewRules = rules.filter(r => r.tags.includes('DevPreview'));
+            const devPreviewRules = rules.filter(r => r.tags.includes('DevPreviewApexGuru'));
             expect(devPreviewRules).toHaveLength(rules.length);
         });
 
