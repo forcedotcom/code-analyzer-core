@@ -16,7 +16,7 @@
   },
   "types": "dist/index.d.ts",
   "dependencies": {
-    "@salesforce/code-analyzer-engine-api": "0.40.0-SNAPSHOT",
+    "@salesforce/code-analyzer-engine-api": "0.41.0-SNAPSHOT",
     "@types/node": "^20.0.0",
     "csv-stringify": "^6.8.1",
     "isbinaryfile": "^5.0.7",
