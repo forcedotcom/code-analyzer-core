@@ -19,21 +19,10 @@ describe('apexguru-rules', () => {
             'apexguru-other'
         ];
 
-        it.each(rulesWithFormerRecommended)('%s should have DevPreview as first tag', (ruleName) => {
+        it.each(rulesWithFormerRecommended)('%s should have exactly [DevPreviewApexGuru] as its tags', (ruleName) => {
             const rule = APEXGURU_RULES.find(r => r.name === ruleName);
             expect(rule).toBeDefined();
-            expect(rule!.tags[0]).toBe('DevPreviewApexGuru');
-        });
-
-        it.each(rulesWithFormerRecommended)('%s should NOT contain Recommended tag', (ruleName) => {
-            const rule = APEXGURU_RULES.find(r => r.name === ruleName);
-            expect(rule).toBeDefined();
-            expect(rule!.tags).not.toContain('Recommended');
-        });
-
-        it('should have zero rules with Recommended tag across all APEXGURU_RULES', () => {
-            const rulesWithRecommended = APEXGURU_RULES.filter(r => r.tags.includes('Recommended'));
-            expect(rulesWithRecommended).toHaveLength(0);
+            expect(rule!.tags).toEqual(['DevPreviewApexGuru']);
         });
     });
 
@@ -57,16 +46,10 @@ describe('apexguru-rules', () => {
             'WritingFillerStatements'
         ];
 
-        it.each(rulesWithoutFormerRecommended)('%s should have DevPreview as first tag', (ruleName) => {
+        it.each(rulesWithoutFormerRecommended)('%s should have exactly [DevPreviewApexGuru] as its tags', (ruleName) => {
             const rule = APEXGURU_RULES.find(r => r.name === ruleName);
             expect(rule).toBeDefined();
-            expect(rule!.tags[0]).toBe('DevPreviewApexGuru');
-        });
-
-        it.each(rulesWithoutFormerRecommended)('%s should NOT contain Recommended tag', (ruleName) => {
-            const rule = APEXGURU_RULES.find(r => r.name === ruleName);
-            expect(rule).toBeDefined();
-            expect(rule!.tags).not.toContain('Recommended');
+            expect(rule!.tags).toEqual(['DevPreviewApexGuru']);
         });
     });
 
@@ -75,15 +58,9 @@ describe('apexguru-rules', () => {
             expect(APEXGURU_RULES).toHaveLength(23);
         });
 
-        it('every rule should have DevPreview in its tags', () => {
+        it('every rule should have exactly [DevPreviewApexGuru] as its tags', () => {
             for (const rule of APEXGURU_RULES) {
-                expect(rule.tags).toContain('DevPreviewApexGuru');
-            }
-        });
-
-        it('no rule should have Recommended in its tags', () => {
-            for (const rule of APEXGURU_RULES) {
-                expect(rule.tags).not.toContain('Recommended');
+                expect(rule.tags).toEqual(['DevPreviewApexGuru']);
             }
         });
 
