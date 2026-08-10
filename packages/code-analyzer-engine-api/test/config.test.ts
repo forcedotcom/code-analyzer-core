@@ -60,6 +60,28 @@ describe("Tests for ValueValidator", () => {
             getMessage('ConfigValueMustMatchRegExp', 'someFieldName', '/^he.*/i'));
     });
 
+    it("When a bare command name is given to validateJavaCommand, then the value is returned", () => {
+        expect(ValueValidator.validateJavaCommand('java', 'engines.pmd.java_command')).toEqual('java');
+    });
+
+    it("When an absolute path is given to validateJavaCommand, then the value is returned unchanged", () => {
+        const absPath: string = path.resolve('/usr/bin/java');
+        expect(ValueValidator.validateJavaCommand(absPath, 'engines.pmd.java_command')).toEqual(absPath);
+        // A raw absolute path should also be returned unchanged regardless of platform
+        expect(ValueValidator.validateJavaCommand('/usr/bin/java', 'engines.pmd.java_command')).toEqual('/usr/bin/java');
+    });
+
+    it.each(['./scripts/afv-pmd-java', 'scripts/foo', '../x/java', 'a/b'])(
+        "When a relative path '%s' is given to validateJavaCommand, then error", (relPath) => {
+        expect(() => ValueValidator.validateJavaCommand(relPath, 'engines.pmd.java_command')).toThrow(
+            getMessage('ConfigValueMustBeCommandNameOrAbsolutePath', 'engines.pmd.java_command'));
+    });
+
+    it("When a non-string value is given to validateJavaCommand, then the validateString type error is thrown", () => {
+        expect(() => ValueValidator.validateJavaCommand(3, 'engines.pmd.java_command')).toThrow(
+            getMessage('ConfigValueMustBeOfType', 'engines.pmd.java_command', 'string', 'number'));
+    });
+
     it("When an object value is given to validateObject, then the value is returned", () => {
         expect(ValueValidator.validateObject({a:1}, 'someFieldName')).toEqual({a:1});
     });
