@@ -139,6 +139,41 @@ describe('Tests for the PmdCpdEnginesPlugin', () => {
                 getMessage('JavaBelowMinimumVersion', '/some/java', '1.9.0', '11.0.0')));
     });
 
+    it.each([
+        {engineName: 'cpd', javaCommand: './scripts/afv-pmd-java'},
+        {engineName: 'pmd', javaCommand: './scripts/afv-pmd-java'},
+        {engineName: 'cpd', javaCommand: 'scripts/foo'},
+        {engineName: 'pmd', javaCommand: 'scripts/foo'},
+        {engineName: 'cpd', javaCommand: '../foo'},
+        {engineName: 'pmd', javaCommand: '../foo'}
+    ])(`When createEngineConfig for '$engineName' is given a relative java_command '$javaCommand', then reject it without ever spawning the command`, async ({engineName, javaCommand}) => {
+        const throwingStub: ThrowIfCalledJavaVersionIdentifier = new ThrowIfCalledJavaVersionIdentifier();
+        const pluginWithStub: PmdCpdEnginesPlugin = new PmdCpdEnginesPlugin(throwingStub);
+        try {
+            await pluginWithStub.createEngineConfig(engineName, new ConfigValueExtractor({java_command: javaCommand}, `engines.${engineName}`));
+            fail('Expected error to be thrown');
+        } catch (err) {
+            const errMsg: string = (err as Error).message;
+            expect(errMsg).toContain(`The 'engines.${engineName}.java_command' configuration value is invalid.`);
+            expect(errMsg).toContain('relative file paths are not allowed');
+        }
+        expect(throwingStub.wasCalled).toEqual(false);
+    });
+
+    it.each(['cpd','pmd'])(`When createEngineConfig for '%s' is given an absolute path java_command, then it still resolves (no spawn regression)`, async (engineName) => {
+        const pluginWithStub: PmdCpdEnginesPlugin = new PmdCpdEnginesPlugin(new StubJavaVersionIdentifier(new SemVer('21.4.0')));
+        const normalizedConfig: PmdEngineConfig = await pluginWithStub.createEngineConfig(engineName,
+            new ConfigValueExtractor({java_command: '/some/java'}, `engines.${engineName}`)) as PmdEngineConfig;
+        expect(normalizedConfig.java_command).toEqual('/some/java');
+    });
+
+    it.each(['cpd','pmd'])(`When createEngineConfig for '%s' is given a bare command name java_command, then it still resolves`, async (engineName) => {
+        const pluginWithStub: PmdCpdEnginesPlugin = new PmdCpdEnginesPlugin(new StubJavaVersionIdentifier(new SemVer('21.4.0')));
+        const normalizedConfig: PmdEngineConfig = await pluginWithStub.createEngineConfig(engineName,
+            new ConfigValueExtractor({java_command: 'java'}, `engines.${engineName}`)) as PmdEngineConfig;
+        expect(normalizedConfig.java_command).toEqual('java');
+    });
+
     it.each(['cpd','pmd'])(`When createEngineConfig for '%s' is given a java_command that is greater than the minimum required, then use it`, async (engineName) => {
         const pluginWithStub: PmdCpdEnginesPlugin =  new PmdCpdEnginesPlugin(new StubJavaVersionIdentifier(new SemVer('21.4.0')));
         const rawConfig: ConfigObject = {java_command: '/some/java'};
@@ -463,5 +498,15 @@ class StubJavaVersionIdentifier implements JavaVersionIdentifier {
 
     async identifyJavaVersion(_javaCommand: string): Promise<SemVer|null> {
         return this.version;
+    }
+}
+
+// Fails the test if identifyJavaVersion is ever called (i.e. if the java_command binary would ever be spawned).
+class ThrowIfCalledJavaVersionIdentifier implements JavaVersionIdentifier {
+    wasCalled: boolean = false;
+
+    async identifyJavaVersion(_javaCommand: string): Promise<SemVer|null> {
+        this.wasCalled = true;
+        throw new Error('spawn must not be called for a relative java_command');
     }
 }
