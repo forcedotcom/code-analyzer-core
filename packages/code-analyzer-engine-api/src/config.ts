@@ -397,6 +397,10 @@ export class ValueValidator {
      *   resolvable via the PATH (containing no file path separators) or an absolute file path. Relative file paths are
      *   rejected because they would resolve against the current working directory and could point to a
      *   repository-controlled executable.
+     *
+     * NOTE: This check mitigates relative-path execution but does not fully eliminate the threat of repo-controlled
+     * absolute paths in auto-discovered configs. Consider: should auto-discovered configs be allowed to override
+     * java_command at all for engines the user did not explicitly select?
      * @param value the value that you wish to validate
      * @param fieldPath the field path of the value as you want it to appear in validation error messages
      */
@@ -406,7 +410,8 @@ export class ValueValidator {
             return strValue;
         }
         // A bare command name (no path separators) is resolved via the PATH environment variable and is allowed.
-        if (!strValue.includes('/') && !strValue.includes('\\') && !strValue.includes(path.sep)) {
+        // Reject drive-relative paths (Windows-specific: 'C:foo' where path.isAbsolute('C:foo') == false).
+        if (!strValue.includes('/') && !strValue.includes('\\') && !strValue.includes(':')) {
             return strValue;
         }
         throw new Error(getMessage('ConfigValueMustBeCommandNameOrAbsolutePath', fieldPath));
