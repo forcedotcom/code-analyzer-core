@@ -90,6 +90,20 @@ export type ApexGuruSuggestion = {
 };
 
 /**
+ * Response from the ApexGuru org-resolve endpoint
+ * (POST /services/data/v{version}/apexguru/org/resolve).
+ * Resolves the caller's org to its production org, whose id must be
+ * forwarded as the `production-org-id` header on the SFAP scan submit call.
+ */
+export type ApexGuruOrgResolveResponse = {
+    fullCopySandboxOrgIds: string[];
+    inputOrgId: string;
+    message: string | null;
+    productionOrgId: string;
+    status: string;
+};
+
+/**
  * Response from the Org JWT minting endpoint (POST /ide/auth)
  * Used to authenticate against the SFAP ApexGuru API
  */

@@ -8,9 +8,27 @@ jest.mock('archiver');
 jest.mock('node:fs');
 
 const TEST_SFAP_BASE_URL = 'https://api.salesforce.com/platform/scale/v1-beta.1';
+const TEST_INSTANCE_URL = 'https://test.salesforce.com';
+const TEST_API_VERSION = '64.0';
+const TEST_PRODUCTION_ORG_ID = '00D5g000005FGSeEAO';
 
 const mockFetch = jest.fn();
 globalThis.fetch = mockFetch as unknown as typeof globalThis.fetch;
+
+// Standard success response for the org-resolve Connect API, which is called
+// before every scan submit to obtain the production org id.
+function mockResolveResponse(): void {
+    mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({
+            fullCopySandboxOrgIds: [],
+            inputOrgId: '00DC4000003sEyjMAE',
+            message: null,
+            productionOrgId: TEST_PRODUCTION_ORG_ID,
+            status: 'SUCCESS'
+        })
+    } as any);
+}
 
 describe('ApexGuruService', () => {
     let apexGuruService: ApexGuruService;
@@ -109,6 +127,9 @@ describe('ApexGuruService', () => {
                 report_generated_ms: 1234567890
             };
 
+            // Mock resolve response
+            mockResolveResponse();
+
             // Mock submit response
             mockFetch.mockResolvedValueOnce({
                 ok: true,
@@ -143,7 +164,7 @@ describe('ApexGuruService', () => {
             expect(result.violations).toEqual(mockViolations);
             expect(result.scanMetadata).toEqual(mockScanMetadata);
             expect(result.analysisMode).toBe('full');
-            expect(mockFetch).toHaveBeenCalledTimes(2); // submit + poll
+            expect(mockFetch).toHaveBeenCalledTimes(3); // resolve + submit + poll
         });
 
         it('should poll multiple times until success', async () => {
@@ -157,6 +178,9 @@ describe('ApexGuruService', () => {
                     severity: 2
                 }
             ];
+
+            // Mock resolve response
+            mockResolveResponse();
 
             // Mock submit response
             mockFetch.mockResolvedValueOnce({
@@ -208,10 +232,13 @@ describe('ApexGuruService', () => {
             const result = await apexGuruService.scanWorkspace(mockWorkspaceRoot, mockPathsToZip);
 
             expect(result.violations).toEqual(mockViolations);
-            expect(mockFetch).toHaveBeenCalledTimes(3); // submit + 2 polls
+            expect(mockFetch).toHaveBeenCalledTimes(4); // resolve + submit + 2 polls
         });
 
         it('should throw error when scan fails', async () => {
+            // Mock resolve response
+            mockResolveResponse();
+
             // Mock submit response
             mockFetch.mockResolvedValueOnce({
                 ok: true,
@@ -246,6 +273,9 @@ describe('ApexGuruService', () => {
         });
 
         it('should throw error when submit fails', async () => {
+            // Mock resolve response
+            mockResolveResponse();
+
             mockFetch.mockResolvedValueOnce({
                 ok: false,
                 status: 401,
@@ -256,7 +286,21 @@ describe('ApexGuruService', () => {
                 .rejects.toThrow('Failed to submit scan');
         });
 
+        it('should throw error when org resolve fails', async () => {
+            mockFetch.mockResolvedValueOnce({
+                ok: false,
+                status: 403,
+                text: async () => 'Forbidden'
+            } as any);
+
+            await expect(apexGuruService.scanWorkspace(mockWorkspaceRoot, mockPathsToZip))
+                .rejects.toThrow('Failed to resolve production org id');
+        });
+
         it('should throw error when poll returns HTTP error', async () => {
+            // Mock resolve response
+            mockResolveResponse();
+
             // Mock successful submit
             mockFetch.mockResolvedValueOnce({
                 ok: true,
@@ -280,6 +324,9 @@ describe('ApexGuruService', () => {
         });
 
         it('should handle empty violation list', async () => {
+            // Mock resolve response
+            mockResolveResponse();
+
             // Mock submit response
             mockFetch.mockResolvedValueOnce({
                 ok: true,
@@ -322,6 +369,9 @@ describe('ApexGuruService', () => {
         });
 
         it('should handle null report gracefully', async () => {
+            // Mock resolve response
+            mockResolveResponse();
+
             // Mock submit response
             mockFetch.mockResolvedValueOnce({
                 ok: true,
@@ -359,6 +409,9 @@ describe('ApexGuruService', () => {
 
         it('should timeout if scan takes too long', async () => {
             jest.useFakeTimers();
+
+            // Mock resolve response
+            mockResolveResponse();
 
             // Mock submit response
             mockFetch.mockResolvedValueOnce({
@@ -405,6 +458,9 @@ describe('ApexGuruService', () => {
             const mockProgressCallback = jest.fn();
             apexGuruService.setProgressCallback(mockProgressCallback);
 
+            // Mock resolve response
+            mockResolveResponse();
+
             // Mock submit response
             mockFetch.mockResolvedValueOnce({
                 ok: true,
@@ -442,6 +498,9 @@ describe('ApexGuruService', () => {
         });
 
         it('should use correct SFAP API endpoints', async () => {
+            // Mock resolve response
+            mockResolveResponse();
+
             mockFetch.mockResolvedValueOnce({
                 ok: true,
                 json: async () => ({
@@ -471,9 +530,21 @@ describe('ApexGuruService', () => {
 
             await apexGuruService.scanWorkspace(mockWorkspaceRoot, mockPathsToZip);
 
-            // Check submit endpoint
+            // Check org-resolve endpoint
             expect(mockFetch).toHaveBeenNthCalledWith(
                 1,
+                `${TEST_INSTANCE_URL}/services/data/v${TEST_API_VERSION}/apexguru/org/resolve`,
+                expect.objectContaining({
+                    method: 'POST',
+                    headers: expect.objectContaining({
+                        'Authorization': 'Bearer test-token'
+                    })
+                })
+            );
+
+            // Check submit endpoint
+            expect(mockFetch).toHaveBeenNthCalledWith(
+                2,
                 `${TEST_SFAP_BASE_URL}/apex-guru/scan`,
                 expect.objectContaining({
                     method: 'POST',
@@ -484,9 +555,14 @@ describe('ApexGuruService', () => {
                 })
             );
 
+            // productionOrgId is sent as a multipart form field in the body, not a header
+            const submitBody = (mockFetch.mock.calls[1][1] as any).body as Buffer;
+            expect(submitBody.toString()).toContain('name="productionOrgId"');
+            expect(submitBody.toString()).toContain(TEST_PRODUCTION_ORG_ID);
+
             // Check poll endpoint
             expect(mockFetch).toHaveBeenNthCalledWith(
-                2,
+                3,
                 `${TEST_SFAP_BASE_URL}/apex-guru/scan/scan-endpoint-check`,
                 expect.objectContaining({
                     method: 'GET',

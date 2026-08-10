@@ -207,11 +207,39 @@ describe('ApexGuruEngine', () => {
             });
             expect(logSpy).toHaveBeenCalledWith(
                 LogLevel.Warn,
-                expect.stringContaining('Failed to authenticate')
+                expect.stringContaining('No default org found')
             );
             expect(mockApexGuruService.cleanup).toHaveBeenCalled();
             expect(progressSpy).toHaveBeenCalledWith(100);
             // No SFAP calls should be made after auth failure
+            expect(mockApexGuruService.scanWorkspace).not.toHaveBeenCalled();
+        });
+
+        it('should gracefully skip with INVALID_SESSION when the org session is expired (401)', async () => {
+            mockApexGuruService.initialize.mockRejectedValue(new Error(
+                'Org JWT minting failed: Failed to mint Org JWT: 401 Unauthorized. Response: {"message":"Invalid session ID sent, unable to establish login session"}'
+            ));
+            mockWorkspace.getTargetedFiles.mockResolvedValue(['/test/workspace/Test.cls']);
+            const logSpy = jest.spyOn(engine as any, 'emitLogEvent');
+
+            const results = await engine.runRules(['SoqlInALoop'], mockRunOptions);
+
+            expect(results.violations).toEqual([]);
+            expect(results.insights).toEqual({
+                status: 'skipped',
+                error: {
+                    code: 'INVALID_SESSION',
+                    message: 'ApexGuru skipped the scan because your org session is invalid or expired. (401 Unauthorized: invalid session).\n' +
+                        'Re-authenticate: sf org login web\n' +
+                        'Then run the scan again.',
+                    remediation: ''
+                }
+            });
+            expect(logSpy).toHaveBeenCalledWith(
+                LogLevel.Warn,
+                expect.stringContaining('your org session is invalid or expired')
+            );
+            expect(mockApexGuruService.cleanup).toHaveBeenCalled();
             expect(mockApexGuruService.scanWorkspace).not.toHaveBeenCalled();
         });
 
@@ -227,13 +255,14 @@ describe('ApexGuruEngine', () => {
                 status: 'skipped',
                 error: {
                     code: 'API_UNAVAILABLE',
-                    message: expect.stringContaining('ECONNREFUSED'),
-                    remediation: expect.stringContaining('temporarily unavailable')
+                    message: 'Code Analyzer skipped ApexGuru scan because the service is unavailable right now. ' +
+                        'Try again later. If the issue persists, contact Salesforce Support.',
+                    remediation: ''
                 }
             });
             expect(logSpy).toHaveBeenCalledWith(
                 LogLevel.Warn,
-                expect.stringContaining('unavailable')
+                expect.stringContaining('the service is unavailable right now')
             );
             expect(mockApexGuruService.cleanup).toHaveBeenCalled();
         });
@@ -250,11 +279,32 @@ describe('ApexGuruEngine', () => {
                 status: 'skipped',
                 error: {
                     code: 'API_UNAVAILABLE',
-                    message: expect.stringContaining('timeout'),
-                    remediation: expect.stringContaining('try again later')
+                    message: 'Code Analyzer skipped ApexGuru scan because the service is unavailable right now. ' +
+                        'Try again later. If the issue persists, contact Salesforce Support.',
+                    remediation: ''
                 }
             });
             expect(logSpy).toHaveBeenCalledWith(LogLevel.Warn, expect.any(String));
+        });
+
+        it('should gracefully skip with SCAN_TIMEOUT when the workspace scan times out', async () => {
+            mockWorkspace.getTargetedFiles.mockResolvedValue(['/test/workspace/Test.cls']);
+            mockApexGuruService.scanWorkspace.mockRejectedValue(new Error('Workspace scan timed out after 300000ms'));
+            const logSpy = jest.spyOn(engine as any, 'emitLogEvent');
+
+            const results = await engine.runRules(['SoqlInALoop'], mockRunOptions);
+
+            expect(results.violations).toEqual([]);
+            expect(results.insights).toEqual({
+                status: 'skipped',
+                error: {
+                    code: 'SCAN_TIMEOUT',
+                    message: 'Code Analyzer skipped ApexGuru scan because the workspace scan timed out after 300000 ms.',
+                    remediation: ''
+                }
+            });
+            expect(logSpy).toHaveBeenCalledWith(LogLevel.Warn, expect.stringContaining('workspace scan timed out after 300000 ms'));
+            expect(mockApexGuruService.cleanup).toHaveBeenCalled();
         });
 
         it('should gracefully skip with UNEXPECTED_ERROR on non-network errors', async () => {
