@@ -653,8 +653,8 @@ describe('ApexGuruEngine', () => {
         });
     });
 
-    describe('DevPreview behavior', () => {
-        it('rules list should show DevPreview tag on all rules and no Recommended tag', async () => {
+    describe('Rule tagging behavior', () => {
+        it('rules list should no longer carry the DevPreview tag', async () => {
             const rules = await engine.describeRules({
                 logFolder: '/tmp/logs',
                 workingFolder: '/tmp/working'
@@ -662,8 +662,7 @@ describe('ApexGuruEngine', () => {
 
             expect(rules.length).toBeGreaterThan(0);
             for (const rule of rules) {
-                expect(rule.tags).toContain('DevPreviewApexGuru');
-                expect(rule.tags).not.toContain('Recommended');
+                expect(rule.tags).not.toContain('DevPreviewApexGuru');
             }
         });
 
@@ -677,14 +676,24 @@ describe('ApexGuruEngine', () => {
             expect(engine.getName()).toBe('apexguru');
         });
 
-        it('should describe rules selectable by DevPreview tag', async () => {
+        it('should describe rules selectable by the Recommended tag', async () => {
             const rules = await engine.describeRules({
                 logFolder: '/tmp/logs',
                 workingFolder: '/tmp/working'
             });
 
-            const devPreviewRules = rules.filter(r => r.tags.includes('DevPreviewApexGuru'));
-            expect(devPreviewRules).toHaveLength(rules.length);
+            const recommendedRules = rules.filter(r => r.tags.includes(COMMON_TAGS.RECOMMENDED));
+            expect(recommendedRules).toHaveLength(rules.length);
+        });
+
+        it('should describe rules selectable by the Performance tag', async () => {
+            const rules = await engine.describeRules({
+                logFolder: '/tmp/logs',
+                workingFolder: '/tmp/working'
+            });
+
+            const performanceRules = rules.filter(r => r.tags.includes(COMMON_TAGS.CATEGORIES.PERFORMANCE));
+            expect(performanceRules).toHaveLength(rules.length);
         });
 
         it('should describe individual rules by name for explicit selection', async () => {
