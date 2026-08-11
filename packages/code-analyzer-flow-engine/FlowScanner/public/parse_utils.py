@@ -1415,19 +1415,30 @@ def quick_validate(flow_path: str) -> bool | None:
     has_start = False
     has_banned = False
     try:
-        with open(flow_path, 'r') as fp:
-            flow_data = fp.read()
-            for start_tag in START_ELEMS_TAGGED:
-                if start_tag in flow_data:
-                    has_start = True
-                    break
+        # Flow XML is authored/declared UTF-8, so read it as UTF-8 explicitly
+        # rather than relying on the platform locale encoding (e.g. cp1252 on
+        # Windows), which would raise UnicodeDecodeError on valid flows and
+        # cause them to be silently dropped. Fall back to cp1252 for legacy
+        # files, matching the pattern used in flow_scanner/__main__.py.
+        try:
+            with open(flow_path, 'r', encoding='utf-8') as fp:
+                flow_data = fp.read()
+        except UnicodeDecodeError:
+            # cp1252 is used on older Windows systems
+            with open(flow_path, 'r', encoding='cp1252') as fp:
+                flow_data = fp.read()
 
-            for banned_tag in BANNED_ELEMS_TAGGED:
-                if banned_tag in flow_data:
-                    has_banned = True
-                    break
+        for start_tag in START_ELEMS_TAGGED:
+            if start_tag in flow_data:
+                has_start = True
+                break
 
-            return has_start and not has_banned
+        for banned_tag in BANNED_ELEMS_TAGGED:
+            if banned_tag in flow_data:
+                has_banned = True
+                break
+
+        return has_start and not has_banned
 
     except FileNotFoundError:
         logger.critical(f"Could not find file {flow_path}")

@@ -94,8 +94,15 @@ export class ApexGuruEngine extends EngineEventEmitter implements Engine {
         } catch (error) {
             const detail = error instanceof Error ? error.message : String(error);
             this.apexGuruService.cleanup();
+            if (this.isInvalidSessionError(error)) {
+                return this.skipWithError('INVALID_SESSION',
+                    'ApexGuru skipped the scan because your org session is invalid or expired. (401 Unauthorized: invalid session).\n' +
+                    'Re-authenticate: sf org login web\n' +
+                    'Then run the scan again.',
+                    '');
+            }
             return this.skipWithError('NO_ORG_CONNECTION',
-                `Failed to authenticate: ${detail}`,
+                detail,
                 "Please authenticate with 'sf org login web' or pass --target-org");
         }
 
@@ -195,10 +202,16 @@ export class ApexGuruEngine extends EngineEventEmitter implements Engine {
         } catch (error) {
             // Catch API failures (5xx, timeout, connection refused) and unexpected errors
             const detail = error instanceof Error ? error.message : String(error);
+            if (this.isScanTimeoutError(error)) {
+                return this.skipWithError('SCAN_TIMEOUT',
+                    `Code Analyzer skipped ApexGuru scan because the workspace scan timed out after ${this.config.api_timeout_ms} ms.`,
+                    '');
+            }
             if (this.isApiUnavailableError(error)) {
                 return this.skipWithError('API_UNAVAILABLE',
-                    `ApexGuru service is unavailable: ${detail}`,
-                    'The ApexGuru service is temporarily unavailable. Please try again later.');
+                    'Code Analyzer skipped ApexGuru scan because the service is unavailable right now. ' +
+                    'Try again later. If the issue persists, contact Salesforce Support.',
+                    '');
             }
             return this.skipWithError('UNEXPECTED_ERROR',
                 `An unexpected error occurred: ${detail}`,
@@ -216,7 +229,7 @@ export class ApexGuruEngine extends EngineEventEmitter implements Engine {
      * this may be invoked from within a try-finally that already handles cleanup.
      */
     private skipWithError(code: string, message: string, remediation: string): EngineRunResults {
-        this.emitLogEvent(LogLevel.Warn, `ApexGuru skipped: ${message}`);
+        this.emitLogEvent(LogLevel.Warn, message);
         this.emitRunRulesProgressEvent(100);
         return {
             violations: [],
@@ -225,6 +238,25 @@ export class ApexGuruEngine extends EngineEventEmitter implements Engine {
                 error: { code, message, remediation }
             }
         };
+    }
+
+    /**
+     * Determines whether an error is an invalid/expired org session (401 Unauthorized).
+     * Surfaces from the Org JWT minting step during initialize() when the org access
+     * token is no longer valid.
+     */
+    private isInvalidSessionError(error: unknown): boolean {
+        if (!(error instanceof Error)) return false;
+        const msg = error.message.toLowerCase();
+        return msg.includes('401') || msg.includes('invalid session') || msg.includes('session id');
+    }
+
+    /**
+     * Determines whether an error is the workspace scan timeout raised by ApexGuruService
+     * when the scan exceeds the configured api_timeout_ms.
+     */
+    private isScanTimeoutError(error: unknown): boolean {
+        return error instanceof Error && error.message.includes('Workspace scan timed out');
     }
 
     /**
