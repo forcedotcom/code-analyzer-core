@@ -1,3 +1,4 @@
+import { LogLevel } from '@salesforce/code-analyzer-engine-api';
 import { ApexGuruService } from '../src/services/ApexGuruService';
 import { ApexGuruAuthService } from '../src/services/ApexGuruAuthService';
 import { ApexGuruResponseStatus } from '../src/types';
@@ -286,15 +287,58 @@ describe('ApexGuruService', () => {
                 .rejects.toThrow('Failed to submit scan');
         });
 
-        it('should throw error when org resolve fails', async () => {
+        it('should continue scan without productionOrgId when org resolve fails', async () => {
+            // Mock failed resolve response - this is non-fatal, scan should proceed without productionOrgId
             mockFetch.mockResolvedValueOnce({
                 ok: false,
                 status: 403,
                 text: async () => 'Forbidden'
             } as any);
 
-            await expect(apexGuruService.scanWorkspace(mockWorkspaceRoot, mockPathsToZip))
-                .rejects.toThrow('Failed to resolve production org id');
+            // Mock successful submit
+            mockFetch.mockResolvedValueOnce({
+                ok: true,
+                json: async () => ({
+                    scanId: 'scan-no-org',
+                    status: ApexGuruResponseStatus.QUEUED,
+                    analysisMode: 'full',
+                    createdMs: Date.now()
+                })
+            } as any);
+
+            // Mock successful poll
+            mockFetch.mockResolvedValueOnce({
+                ok: true,
+                json: async () => ({
+                    scanId: 'scan-no-org',
+                    status: ApexGuruResponseStatus.SUCCEEDED,
+                    analysisMode: 'full',
+                    createdMs: Date.now(),
+                    updatedMs: Date.now(),
+                    processingStartMs: Date.now(),
+                    processingEndMs: Date.now(),
+                    scanMetadata: null,
+                    report: null,
+                    reportS3Key: null,
+                    message: null
+                })
+            } as any);
+
+            const result = await apexGuruService.scanWorkspace(mockWorkspaceRoot, mockPathsToZip);
+
+            // Scan should succeed despite the org-resolve failure
+            expect(result.analysisMode).toBe('full');
+            expect(mockFetch).toHaveBeenCalledTimes(3); // resolve (failed) + submit + poll
+
+            // A warning should be logged about the failed org resolve
+            expect(mockEmitLogEvent).toHaveBeenCalledWith(
+                LogLevel.Warn,
+                expect.stringContaining('Failed to resolve production org id')
+            );
+
+            // productionOrgId should be omitted from the submit form body
+            const submitBody = (mockFetch.mock.calls[1][1] as any).body as Buffer;
+            expect(submitBody.toString()).not.toContain('name="productionOrgId"');
         });
 
         it('should throw error when poll returns HTTP error', async () => {

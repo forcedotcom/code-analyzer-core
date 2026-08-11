@@ -195,8 +195,11 @@ export class ApexGuruService {
             }
             return resolveResponse.productionOrgId;
         } catch (error) {
+            // The productionOrgId is optional on the scan submit call, so a failure here is non-fatal.
+            // Log a warning and return an empty string so the scan can proceed without it.
             const errorMessage = error instanceof Error ? error.message : String(error);
-            throw new Error(`Failed to resolve production org id: ${errorMessage}`);
+            this.emitLogEvent(LogLevel.Warn, `Failed to resolve production org id: ${errorMessage}`);
+            return '';
         }
     }
 
