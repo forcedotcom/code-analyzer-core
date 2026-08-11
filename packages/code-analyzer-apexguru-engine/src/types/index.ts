@@ -92,8 +92,8 @@ export type ApexGuruSuggestion = {
 /**
  * Response from the ApexGuru org-resolve endpoint
  * (POST /services/data/v{version}/apexguru/org/resolve).
- * Resolves the caller's org to its production org, whose id must be
- * forwarded as the `production-org-id` header on the SFAP scan submit call.
+ * Resolves the caller's org to its production org, whose id is
+ * forwarded as the `productionOrgId` multipart form field on the SFAP scan submit call.
  */
 export type ApexGuruOrgResolveResponse = {
     fullCopySandboxOrgIds: string[];
