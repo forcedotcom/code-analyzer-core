@@ -8,7 +8,8 @@ import {
     ApexGuruPollResponse,
     ApexGuruResponseStatus,
     ApexGuruScanMetadata,
-    ApexGuruViolation
+    ApexGuruViolation,
+    ApexGuruOrgResolveResponse
 } from '../types';
 import * as fs from 'node:fs';
 import * as path from 'node:path';
@@ -160,15 +161,63 @@ export class ApexGuruService {
     }
 
     /**
+     * Resolve the caller's org to its production org id via the org-resolve
+     * Connect API (POST /services/data/v{version}/apexguru/org/resolve). The
+     * returned productionOrgId is forwarded as an optional `productionOrgId`
+     * multipart form field on the SFAP scan submit call. Uses the org access
+     * token (not the Org JWT),
+     * since this is a standard Salesforce org REST endpoint.
+     */
+    private async resolveProductionOrgId(): Promise<string> {
+        const accessToken = this.authService.getAccessToken();
+        const instanceUrl = this.authService.getInstanceUrl();
+        const apiVersion = this.authService.getApiVersion();
+        const url = `${instanceUrl}/services/data/v${apiVersion}/apexguru/org/resolve`;
+
+        try {
+            const response = await fetch(url, {
+                method: 'POST',
+                headers: {
+                    'Accept': 'application/json',
+                    'Authorization': `Bearer ${accessToken}`
+                }
+            });
+
+            if (!response.ok) {
+                const errorText = await response.text();
+                throw new Error(formatHttpError(response.status, errorText));
+            }
+
+            const resolveResponse = await response.json() as ApexGuruOrgResolveResponse;
+
+            if (!resolveResponse.productionOrgId) {
+                throw new Error('Org resolve response missing productionOrgId field');
+            }
+            return resolveResponse.productionOrgId;
+        } catch (error) {
+            // The productionOrgId is optional on the scan submit call, so a failure here is non-fatal.
+            // Log a warning and return an empty string so the scan can proceed without it.
+            const errorMessage = error instanceof Error ? error.message : String(error);
+            this.emitLogEvent(LogLevel.Warn, `Failed to resolve production org id: ${errorMessage}`);
+            return '';
+        }
+    }
+
+    /**
      * Submit workspace zip to SFAP API
      */
     private async submitScan(zipBuffer: Buffer): Promise<ApexGuruSubmitResponse> {
         const orgJwt = await this.authService.mintOrgJwt();
+        const productionOrgId = await this.resolveProductionOrgId();
         const url = `${this.sfapBaseUrl}/apex-guru/scan`;
 
         const form = new FormData();
         form.append('file', zipBuffer, { filename: 'project.zip', contentType: 'application/zip' });
         form.append('analysisModeHint', 'full');
+        // productionOrgId is optional — only include it when the org-resolve call returned one.
+        if (productionOrgId) {
+            form.append('productionOrgId', productionOrgId);
+        }
 
         try {
             const response = await fetch(url, {

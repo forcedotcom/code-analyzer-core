@@ -60,10 +60,11 @@ export class ApexGuruAuthService {
             const errorMessage = err instanceof Error ? err.message : String(err);
             this.emitLogEvent(LogLevel.Fine, `Failed to authenticate: No default org found: ${errorMessage}`);
             throw new Error(
-                'No default org found. Please either:\n' +
+                'Code Analyzer skipped ApexGuru scan because no default org is set. ' +
+                'To continue, do one of the following:\n' +
                 '  1. Set a default org: sf config set target-org <org-alias>\n' +
-                '  2. Pass --target-org flag: sf code-analyzer run --target-org <org-alias> ...\n' +
-                '  3. Authenticate to an org: sf org login web'
+                '  2. Run the scan with a target org: sf code-analyzer run --target-org <org-alias> ...\n' +
+                '  3. Authenticate to your org: sf org login web'
             );
         }
     }
