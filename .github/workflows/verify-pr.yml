@@ -3,6 +3,11 @@ on:
   pull_request:
     types: [edited, opened, reopened, synchronize]
 
+# Principle of least privilege: this workflow only needs to read repository
+# contents. Restricting the token limits the blast radius of any compromised step.
+permissions:
+  contents: read
+
 defaults:
   run:
     shell: bash
@@ -13,8 +18,12 @@ jobs:
     steps:
       - name: Validate PR Title
         if: github.base_ref == 'dev'
+        # Pass the untrusted PR title via the environment (not direct ${{ }}
+        # interpolation) so it is treated as data and cannot inject shell commands.
+        env:
+          PR_TITLE: ${{ github.event.pull_request.title }}
         run: |
-          title="${{ github.event.pull_request.title }}"
+          title="$PR_TITLE"
           if [[ "$title" =~ ^(POSTRELEASE|FIX|CHANGE|NEW)([[:space:]]*\([^()]+\))?[[:space:]]*:?[[:space:]]*@W-[[:digit:]]{8,9}@[[:space:]]*.+ ]]; then
               echo "Valid PR title: '$title'"
           else
@@ -29,8 +38,12 @@ jobs:
       - name: Check for "Postrelease" keyword in PR title.
         id: main
         if: github.base_ref == 'dev'
+        # Pass the untrusted PR title via the environment (not direct ${{ }}
+        # interpolation) so it is treated as data and cannot inject shell commands.
+        env:
+          PR_TITLE: ${{ github.event.pull_request.title }}
         run: |
-          title="${{ github.event.pull_request.title }}"
+          title="$PR_TITLE"
           if [[ "$title" =~ ^POSTRELEASE ]]; then
             echo "is_postrelease=true" >> "$GITHUB_OUTPUT"
           else

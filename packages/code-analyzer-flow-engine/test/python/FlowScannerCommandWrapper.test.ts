@@ -88,6 +88,77 @@ describe('FlowScannerCommandWrapper implementations', () => {
                 });
             });
 
+            describe('Module shadowing resistance', () => {
+                const wrapper: RunTimeFlowScannerCommandWrapper = new RunTimeFlowScannerCommandWrapper(PYTHON_COMMAND);
+
+                it('resolves the bundled flow_scanner even when a malicious flow_scanner is planted in the process cwd', async () => {
+                    // End-to-end defense-in-depth check for the CWE-427 module-shadowing RCE. We plant a hostile
+                    // `flow_scanner` package into a directory, make it the process cwd (as would happen when the
+                    // CLI is run from within a scanned repo), and confirm the wrapper still executes the trusted
+                    // bundled scanner (results match the goldfile) and that the hostile payload never runs.
+                    const scannedRepoDir: string = await fs.promises.mkdtemp(path.join(os.tmpdir(), 'shadow-repo-'));
+                    const isolatedWorkingFolder: string = await fs.promises.mkdtemp(path.join(os.tmpdir(), 'shadow-work-'));
+                    const isolatedLogFile: string = path.join(isolatedWorkingFolder, 'flow_scanner_logfile.log');
+                    const sentinelFile: string = path.join(scannedRepoDir, 'PWNED.txt');
+                    const originalCwd: string = process.cwd();
+                    try {
+                        // Plant a hostile `flow_scanner` package that writes a sentinel and fake (empty) results
+                        // if it is ever imported/executed in place of the bundled scanner.
+                        const maliciousModuleDir: string = path.join(scannedRepoDir, 'flow_scanner');
+                        await fs.promises.mkdir(maliciousModuleDir);
+                        await fs.promises.writeFile(path.join(maliciousModuleDir, '__init__.py'), '', 'utf-8');
+                        await fs.promises.writeFile(path.join(maliciousModuleDir, '__main__.py'),
+                            `import os, sys\n` +
+                            `with open(os.path.join(os.path.dirname(os.path.dirname(__file__)), 'PWNED.txt'), 'w') as f:\n` +
+                            `    f.write('pwned')\n` +
+                            `# Write empty results to the --json path so the run would appear clean.\n` +
+                            `if '--json' in sys.argv:\n` +
+                            `    with open(sys.argv[sys.argv.index('--json') + 1], 'w') as f:\n` +
+                            `        f.write('{"results": {}}')\n`,
+                            'utf-8');
+
+                        // Simulate the CLI being invoked from within the malicious scanned repo.
+                        process.chdir(scannedRepoDir);
+
+                        const shadowResults: FlowScannerExecutionResult = await wrapper.runFlowScannerRules(
+                            isolatedWorkingFolder,
+                            [PATH_TO_EXAMPLE1, PATH_TO_EXAMPLE2],
+                            [PATH_TO_EXAMPLE1, PATH_TO_EXAMPLE2],
+                            isolatedLogFile,
+                            ['PreventPassingUserDataIntoElementWithoutSharing', 'PreventPassingUserDataIntoElementWithSharing', 'MissingFaultHandler'],
+                            () => {});
+                        for (const queryName of Object.keys(shadowResults.results)) {
+                            for (const queryResults of shadowResults.results[queryName]) {
+                                delete queryResults.counter;
+                            }
+                        }
+
+                        // The planted hostile module must never have executed.
+                        expect(fs.existsSync(sentinelFile)).toEqual(false);
+
+                        // The bundled scanner produced real results (proving it ran, not the empty-results payload).
+                        const goldFileContents: string = (await fs.promises.readFile(path.join(PATH_TO_GOLDFILES, 'results.goldfile.json'), {encoding: 'utf-8'}))
+                            .replaceAll('"__PATH_TO_EXAMPLE1__"', JSON.stringify(PATH_TO_EXAMPLE1))
+                            .replaceAll('"__PATH_TO_EXAMPLE2__"', JSON.stringify(PATH_TO_EXAMPLE2));
+                        const expectedResults: FlowScannerExecutionResult = JSON.parse(goldFileContents) as FlowScannerExecutionResult;
+
+                        const expectedKeys: string[] = Object.keys(expectedResults.results);
+                        expect(Object.keys(shadowResults.results)).toHaveLength(expectedKeys.length);
+                        for (const key of expectedKeys) {
+                            expect(key in shadowResults.results).toEqual(true);
+                            expect(shadowResults.results[key]).toHaveLength(expectedResults.results[key].length);
+                            for (const expectedElement of expectedResults.results[key]) {
+                                expect(shadowResults.results[key]).toContainEqual(expectedElement);
+                            }
+                        }
+                    } finally {
+                        process.chdir(originalCwd);
+                        await fs.promises.rm(scannedRepoDir, {recursive: true, force: true});
+                        await fs.promises.rm(isolatedWorkingFolder, {recursive: true, force: true});
+                    }
+                });
+            });
+
             describe('Failure Modes', () => {
                 afterEach(() => {
                     jest.restoreAllMocks();

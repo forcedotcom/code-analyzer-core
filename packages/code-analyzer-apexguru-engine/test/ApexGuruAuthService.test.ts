@@ -66,7 +66,7 @@ describe('ApexGuruAuthService', () => {
 
             await expect(authService.initialize({}))
                 .rejects
-                .toThrow('No default org found');
+                .toThrow('Code Analyzer skipped ApexGuru scan because no default org is set');
         });
     });
 

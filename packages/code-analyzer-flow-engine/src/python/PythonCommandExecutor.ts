@@ -20,6 +20,12 @@ export class PythonCommandExecutor {
             const stderrMessages: string[] = [];
 
             const pythonProcess: ChildProcessWithoutNullStreams = spawn(this.pythonCommand, pythonCmdArgs, {
+                // Pin the child's working directory to the trusted bundled FlowScanner root. When python is
+                // invoked with '-m flow_scanner', CPython places the process's cwd at sys.path[0], ahead of
+                // PYTHONPATH. Inheriting the CLI's cwd (the scanned repo) would let a repo-planted
+                // `flow_scanner` package shadow the bundled scanner and execute attacker code (CWE-427). All
+                // file arguments the wrapper passes are absolute, so pinning cwd here is behavior-preserving.
+                cwd: PATH_TO_FLOW_SCANNER_ROOT,
                 env: {
                     ...process.env,
                     PYTHONPATH: PATH_TO_FLOW_SCANNER_ROOT
