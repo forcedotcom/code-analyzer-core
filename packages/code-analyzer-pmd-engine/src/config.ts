@@ -222,6 +222,10 @@ abstract class SharedConfigValueExtractor {
         }
 
         try {
+            // Reject relative file paths (only bare PATH command names or absolute paths are allowed) BEFORE we
+            // ever spawn the command to check its version, otherwise a repo-controlled relative executable path in
+            // an auto-discovered config could be executed.
+            ValueValidator.validateJavaCommand(javaCommand, this.configValueExtractor.getFieldPath('java_command'));
             await this.validateJavaCommandContainsValidVersion(javaCommand);
         } catch (err) {
             throw new Error(getMessage('InvalidUserSpecifiedJavaCommand',

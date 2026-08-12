@@ -43,6 +43,10 @@ export const SHARED_MESSAGE_CATALOG: MessageCatalog = {
     ConfigValueMustMatchRegExp:
         `The '%s' configuration value is invalid. The string did not match the regular expression pattern: %s`,
 
+    ConfigValueMustBeCommandNameOrAbsolutePath:
+        `The '%s' configuration value is invalid. The value must either be the name of a command that exists on ` +
+        `the path (containing no file path separators) or an absolute file path; relative file paths are not allowed.`,
+
     ConfigValueNotAValidSeverityLevel:
         `The '%s' configuration value must be one of the following: %s. Instead received: %s`,
 

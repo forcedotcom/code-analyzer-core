@@ -101,6 +101,20 @@ describe('SfgeEnginePlugin', () => {
                     javaVersionIdentifierBuilder: () => new StubJavaVersionIdentifier(new SemVer('1.9.0')),
                     mainMessage: `The 'engines.sfge.java_command' configuration value is invalid.`,
                     reasonMessage: `The command '/some/version/of/java' specifies Java v1.9.0, which is below minimum supported version v11.0.0.`,
+                },
+                {
+                    case: 'specified as a relative path',
+                    configObject: {java_command: './scripts/afv-pmd-java'} as ConfigObject,
+                    javaVersionIdentifierBuilder: () => new ThrowIfCalledJavaVersionIdentifier(),
+                    mainMessage: `The 'engines.sfge.java_command' configuration value is invalid.`,
+                    reasonMessage: 'relative file paths are not allowed'
+                },
+                {
+                    case: 'specified as a relative path without a leading dot',
+                    configObject: {java_command: 'scripts/foo'} as ConfigObject,
+                    javaVersionIdentifierBuilder: () => new ThrowIfCalledJavaVersionIdentifier(),
+                    mainMessage: `The 'engines.sfge.java_command' configuration value is invalid.`,
+                    reasonMessage: 'relative file paths are not allowed'
                 }
             ])('When java_command is $case, an error is thrown', async ({configObject, javaVersionIdentifierBuilder, mainMessage, reasonMessage}) => {
                 const pluginWithStub: SfgeEnginePlugin = new SfgeEnginePlugin(javaVersionIdentifierBuilder());
@@ -120,6 +134,16 @@ describe('SfgeEnginePlugin', () => {
                 const configValueExtractor: ConfigValueExtractor = new ConfigValueExtractor(rawConfig, 'engines.sfge');
                 const normalizedConfig: ConfigObject = await pluginWithStub.createEngineConfig('sfge', configValueExtractor);
                 expect(normalizedConfig).toHaveProperty('java_command', '/some/java');
+            });
+
+            it('When java_command is a relative path, it is rejected before the command is ever spawned', async () => {
+                const throwingStub: ThrowIfCalledJavaVersionIdentifier = new ThrowIfCalledJavaVersionIdentifier();
+                const pluginWithStub: SfgeEnginePlugin = new SfgeEnginePlugin(throwingStub);
+                const configValueExtractor: ConfigValueExtractor =
+                    new ConfigValueExtractor({java_command: './scripts/afv-pmd-java'}, 'engines.sfge');
+                await expect(pluginWithStub.createEngineConfig('sfge', configValueExtractor)).rejects.toThrow(
+                    `The 'engines.sfge.java_command' configuration value is invalid.`);
+                expect(throwingStub.wasCalled).toEqual(false);
             });
         });
 
@@ -294,5 +318,15 @@ class StubJavaVersionIdentifier implements JavaVersionIdentifier {
 
     public identifyJavaVersion(_javaCommand: string): Promise<SemVer|null> {
         return Promise.resolve(this.version);
+    }
+}
+
+// Fails the test if identifyJavaVersion is ever called (i.e. if the java_command binary would ever be spawned).
+class ThrowIfCalledJavaVersionIdentifier implements JavaVersionIdentifier {
+    wasCalled: boolean = false;
+
+    public identifyJavaVersion(_javaCommand: string): Promise<SemVer|null> {
+        this.wasCalled = true;
+        return Promise.reject(new Error('spawn must not be called for a relative java_command'));
     }
 }
