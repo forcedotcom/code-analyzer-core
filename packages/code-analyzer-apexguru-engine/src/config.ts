@@ -13,7 +13,7 @@ export type ApexGuruEngineConfig = {
 
     /**
      * Maximum time to wait for ApexGuru API response (in milliseconds)
-     * Default: 300000 (5 minutes)
+     * Default: 600000 (10 minutes)
      */
     api_timeout_ms: number;
 

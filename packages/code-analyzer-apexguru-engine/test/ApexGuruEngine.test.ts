@@ -299,12 +299,12 @@ describe('ApexGuruEngine', () => {
                 status: 'skipped',
                 error: {
                     code: 'SCAN_TIMEOUT',
-                    message: 'Code Analyzer skipped ApexGuru scan because the workspace scan timed out after 300 seconds. ' +
+                    message: 'Code Analyzer skipped ApexGuru scan because the workspace scan timed out after 600 seconds. ' +
                         'Increase the timeout setting in the Code Analyzer configuration file.',
                     remediation: ''
                 }
             });
-            expect(logSpy).toHaveBeenCalledWith(LogLevel.Warn, expect.stringContaining('workspace scan timed out after 300 seconds'));
+            expect(logSpy).toHaveBeenCalledWith(LogLevel.Warn, expect.stringContaining('workspace scan timed out after 600 seconds'));
             expect(mockApexGuruService.cleanup).toHaveBeenCalled();
         });
 
