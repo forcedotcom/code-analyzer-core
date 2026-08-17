@@ -1,0 +1,205 @@
+import path from "node:path";
+import * as fsp from "node:fs/promises";
+import {
+    Engine,
+    LogLevel,
+    type DescribeOptions,
+    type EngineRunResults,
+    type RuleDescription,
+    type RunOptions,
+    type Violation,
+} from "@salesforce/code-analyzer-engine-api";
+import { RULES, RULE_NAMES } from "./rules";
+import {
+    COVERAGE_ANALYSIS_RULE,
+    validateCoverageAnalysis,
+} from "./validators/coverage-analysis";
+import {
+    INVALID_SOURCE_REFERENCES_RULE,
+    validateInvalidSourceReferences,
+} from "./validators/invalid-source-references";
+import {
+    MISSING_SOURCEMAP_RULE,
+    validateMissingSourcemaps,
+} from "./validators/missing-sourcemap";
+import { PATH_LEAKAGE_RULE, validatePathLeakage } from "./validators/path-leakage";
+import {
+    SOURCE_CONTENT_VERIFICATION_RULE,
+    validateSourceContent,
+} from "./validators/source-content-verification";
+import {
+    STRUCTURAL_COHERENCE_RULE,
+    validateStructuralCoherence,
+} from "./validators/structural-coherence";
+import {
+    TOKEN_CONSISTENCY_RULE,
+    validateTokenConsistency,
+} from "./validators/token-consistency";
+import type { ValidatorFinding, ValidatorResult } from "./validators/types";
+import { VLQ_INTEGRITY_RULE, validateVlqIntegrity } from "./validators/vlq-integrity";
+
+interface BundleTarget {
+    distPath: string;
+    sourcePath: string | null;
+}
+
+export class UIBundleEngine extends Engine {
+    static readonly NAME = "uibundle";
+
+    getName(): string {
+        return UIBundleEngine.NAME;
+    }
+
+    async getEngineVersion(): Promise<string> {
+        const pathToPackageJson: string = path.join(__dirname, '..', 'package.json');
+        const packageJson: {version: string} = JSON.parse(await fsp.readFile(pathToPackageJson, 'utf-8'));
+        return packageJson.version;
+    }
+
+    async describeRules(_describeOptions: DescribeOptions): Promise<RuleDescription[]> {
+        return RULES;
+    }
+
+    async runRules(ruleNames: string[], runOptions: RunOptions): Promise<EngineRunResults> {
+        const selected: string[] = ruleNames.filter((name) => RULE_NAMES.has(name));
+        if (selected.length === 0) return { violations: [] };
+
+        const targets: BundleTarget[] = await this.findBundleTargets(runOptions);
+        if (targets.length === 0) {
+            this.emitLogEvent(
+                LogLevel.Info,
+                `[${UIBundleEngine.NAME}] No UI Bundle dist/ directories found. Run 'npm run build' in each UI Bundle before code analysis.`,
+            );
+            return { violations: [] };
+        }
+
+        const violations: Violation[] = [];
+        for (const target of targets) {
+            await this.runOnTarget(target, selected, violations);
+        }
+        return { violations };
+    }
+
+    private async runOnTarget(
+        target: BundleTarget,
+        selected: string[],
+        violations: Violation[],
+    ): Promise<void> {
+        const distOnlyDispatch: [string, () => Promise<ValidatorResult>][] = [
+            [MISSING_SOURCEMAP_RULE, () => validateMissingSourcemaps(target.distPath)],
+            [PATH_LEAKAGE_RULE, () => validatePathLeakage(target.distPath)],
+            [INVALID_SOURCE_REFERENCES_RULE, () => validateInvalidSourceReferences(target.distPath)],
+            [VLQ_INTEGRITY_RULE, () => validateVlqIntegrity(target.distPath)],
+            [COVERAGE_ANALYSIS_RULE, () => validateCoverageAnalysis(target.distPath)],
+        ];
+
+        for (const [ruleName, runValidator] of distOnlyDispatch) {
+            if (!selected.includes(ruleName)) continue;
+            const result: ValidatorResult = await runValidator();
+            this.consumeResult(ruleName, target.distPath, result, violations);
+        }
+
+        // Rules that also require the submitted source tree.
+        const sourceDispatch: [
+            string,
+            (opts: { sourcePath: string; distPath: string }) => Promise<ValidatorResult>,
+        ][] = [
+            [SOURCE_CONTENT_VERIFICATION_RULE, validateSourceContent],
+            [STRUCTURAL_COHERENCE_RULE, validateStructuralCoherence],
+            [TOKEN_CONSISTENCY_RULE, validateTokenConsistency],
+        ];
+
+        for (const [ruleName, runValidator] of sourceDispatch) {
+            if (!selected.includes(ruleName)) continue;
+            if (!target.sourcePath) {
+                this.emitLogEvent(
+                    LogLevel.Warn,
+                    `[${UIBundleEngine.NAME}] Skipping ${ruleName} for ${target.distPath}: could not locate a source directory sibling to dist/.`,
+                );
+                continue;
+            }
+            const result: ValidatorResult = await runValidator({
+                sourcePath: target.sourcePath,
+                distPath: target.distPath,
+            });
+            this.consumeResult(ruleName, target.distPath, result, violations);
+        }
+    }
+
+    private consumeResult(
+        ruleName: string,
+        distPath: string,
+        result: ValidatorResult,
+        violations: Violation[],
+    ): void {
+        if (result.skipped) {
+            this.emitLogEvent(
+                LogLevel.Warn,
+                `[${UIBundleEngine.NAME}] ${ruleName} skipped for ${distPath}: ${result.skipped.reason}`,
+            );
+            return;
+        }
+        for (const finding of result.findings) {
+            violations.push(toViolation(finding));
+        }
+    }
+
+    private async findBundleTargets(runOptions: RunOptions): Promise<BundleTarget[]> {
+        const targetedFiles: string[] = await runOptions.workspace.getTargetedFiles();
+
+        const bundleRoots: Set<string> = new Set();
+        for (const file of targetedFiles) {
+            const base = path.basename(file);
+            if (base === "ui-bundle.json" || base.endsWith(".uibundle-meta.xml")) {
+                bundleRoots.add(path.dirname(file));
+            }
+        }
+
+        // Fallback: any file inside a dist/ directory contributes a bundle whose bundle root is that dist's parent.
+        for (const file of targetedFiles) {
+            const dist = findAncestorNamed(file, "dist");
+            if (dist) bundleRoots.add(path.dirname(dist));
+        }
+
+        const targets: BundleTarget[] = [];
+        for (const bundleRoot of bundleRoots) {
+            const distPath = path.join(bundleRoot, "dist");
+            if (!(await isDirectory(distPath))) continue;
+
+            const srcPath = path.join(bundleRoot, "src");
+            const sourcePath = (await isDirectory(srcPath)) ? srcPath : null;
+
+            targets.push({ distPath, sourcePath });
+        }
+        return targets;
+    }
+}
+
+function toViolation(finding: ValidatorFinding): Violation {
+    // SFCA requires 1-based line/column; validators emit 0-based columns (Babel/trace-mapping).
+    const startLine: number = Math.max(1, finding.startLine ?? 1);
+    const rawCol: number | undefined = finding.startColumn;
+    const startColumn: number = rawCol == null ? 1 : Math.max(1, rawCol + 1);
+    return {
+        ruleName: finding.ruleName,
+        message: finding.message,
+        primaryLocationIndex: 0,
+        codeLocations: [{ file: finding.file, startLine, startColumn }],
+    };
+}
+
+async function isDirectory(p: string): Promise<boolean> {
+    try {
+        const stat = await fsp.stat(p);
+        return stat.isDirectory();
+    } catch {
+        return false;
+    }
+}
+
+function findAncestorNamed(filePath: string, name: string): string | null {
+    const parts = filePath.split(path.sep);
+    const idx = parts.lastIndexOf(name);
+    if (idx <= 0) return null;
+    return parts.slice(0, idx + 1).join(path.sep);
+}
