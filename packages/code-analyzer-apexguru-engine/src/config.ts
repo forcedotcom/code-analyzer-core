@@ -42,7 +42,7 @@ export type ApexGuruEngineConfig = {
  * Default configuration values
  */
 export const DEFAULT_APEXGURU_ENGINE_CONFIG: ApexGuruEngineConfig = {
-    api_timeout_ms: 300000,         // 5 minutes
+    api_timeout_ms: 3000,         // 5 minutes
     api_initial_retry_ms: 2000,     // 2 seconds
     api_max_retry_ms: 60000,        // 60 seconds
     api_backoff_multiplier: 2       // 2x exponential backoff

@@ -229,7 +229,7 @@ describe('ApexGuruEngine', () => {
                 status: 'skipped',
                 error: {
                     code: 'INVALID_SESSION',
-                    message: 'ApexGuru skipped the scan because your org session is invalid or expired. (401 Unauthorized: invalid session).\n' +
+                    message: 'Code Analyzer skipped ApexGuru scan because your org session is invalid or expired. (401 Unauthorized: invalid session).\n' +
                         'Re-authenticate: sf org login web\n' +
                         'Then run the scan again.',
                     remediation: ''
@@ -299,11 +299,12 @@ describe('ApexGuruEngine', () => {
                 status: 'skipped',
                 error: {
                     code: 'SCAN_TIMEOUT',
-                    message: 'Code Analyzer skipped ApexGuru scan because the workspace scan timed out after 300000 ms.',
+                    message: 'Code Analyzer skipped ApexGuru scan because the workspace scan timed out after 300 seconds. ' +
+                        'Increase the timeout setting in the Code Analyzer configuration file.',
                     remediation: ''
                 }
             });
-            expect(logSpy).toHaveBeenCalledWith(LogLevel.Warn, expect.stringContaining('workspace scan timed out after 300000 ms'));
+            expect(logSpy).toHaveBeenCalledWith(LogLevel.Warn, expect.stringContaining('workspace scan timed out after 300 seconds'));
             expect(mockApexGuruService.cleanup).toHaveBeenCalled();
         });
 
