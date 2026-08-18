@@ -1,4 +1,4 @@
-import { encode } from "@jridgewell/sourcemap-codec";
+import { encode, type SourceMapSegment } from "@jridgewell/sourcemap-codec";
 import { TraceMap } from "@jridgewell/trace-mapping";
 import * as path from "node:path";
 import { analyzeCoverage, validateCoverageAnalysis } from "../src/validators/coverage-analysis";
@@ -544,7 +544,7 @@ describe('structural-coherence branch coverage', () => {
         writeFile(tmp, 'src/main.js', emptySrc);
         writeFile(tmp, 'dist/main.js', compiled);
         // Build a chain of 15 mappings on generated line 1.
-        const segs: number[][] = [];
+        const segs: SourceMapSegment[] = [];
         for (let i = 0; i < 15; i++) segs.push([i, 0, 0, 0]);
         writeFile(tmp, 'dist/main.js.map', JSON.stringify({
             version: 3,
@@ -569,7 +569,7 @@ describe('structural-coherence branch coverage', () => {
         writeFile(tmp, 'src/b.js', srcB);
         writeFile(tmp, 'dist/main.js', 'x'.repeat(10) + '\n');
         // 10 mappings on generated line 1 alternating between src[0] and src[1].
-        const segs: number[][] = [];
+        const segs: SourceMapSegment[] = [];
         // Segments are relative-encoded; use absolute values via a chain of alternating source-index deltas.
         // encode() re-encodes properly.
         let genCol = 0;

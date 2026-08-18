@@ -1,5 +1,5 @@
-import { encode } from "@jridgewell/sourcemap-codec";
-import { TraceMap } from "@jridgewell/trace-mapping";
+import { encode, type SourceMapSegment } from "@jridgewell/sourcemap-codec";
+import { TraceMap, type SourceMapInput } from "@jridgewell/trace-mapping";
 import { EngineRunResults, Workspace } from "@salesforce/code-analyzer-engine-api";
 import * as path from "node:path";
 import { UIBundleEngine } from "../src/engine";
@@ -67,14 +67,14 @@ describe('classification', () => {
 });
 
 describe('analyzeCoverage', () => {
-    function makeTraceMapWithCoverage(mappings: number[][][]): TraceMap {
+    function makeTraceMapWithCoverage(mappings: SourceMapSegment[][]): TraceMap {
         const encoded = encode(mappings);
         return new TraceMap({
             version: 3,
             sources: ['../src/main.js'],
             names: [],
             mappings: encoded,
-        });
+        } as SourceMapInput);
     }
 
     it('flags a long fully-unmapped line as an unmapped region', () => {
@@ -140,7 +140,7 @@ describe('analyzeCoherence', () => {
             names: [],
             mappings: encode([[[0, 0, 0, 0]]]),
         };
-        const tracer = new TraceMap(mapJson);
+        const tracer = new TraceMap(mapJson as SourceMapInput);
         const src = new Map<string, string>([['src/main.js', 'let x = 1;\nlet y = 2;\n']]);
         const report = analyzeCoherence(tracer, src);
         expect(report.totalMappingsChecked).toEqual(1);
@@ -155,7 +155,7 @@ describe('analyzeCoherence', () => {
             names: [],
             mappings: encode([[[0, 0, 99, 0]]]),
         };
-        const tracer = new TraceMap(mapJson);
+        const tracer = new TraceMap(mapJson as SourceMapInput);
         const src = new Map<string, string>([['src/main.js', 'let x = 1;\n']]);
         const report = analyzeCoherence(tracer, src);
         expect(report.boundsViolations.length).toBeGreaterThan(0);
@@ -171,7 +171,7 @@ describe('analyzeTokenConsistency', () => {
             names: [],
             mappings: encode([[[0, 0, 0, 0]]]),
         };
-        const tracer = new TraceMap(mapJson);
+        const tracer = new TraceMap(mapJson as SourceMapInput);
         const compiled = 'foo';
         const src = new Map<string, string>([['src/main.js', 'foo']]);
         const report = analyzeTokenConsistency(tracer, compiled, src);
