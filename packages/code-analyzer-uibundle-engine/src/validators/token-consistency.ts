@@ -233,7 +233,7 @@ function nameExistsNear(
             if (checkCol < 0) continue;
             const word = extractWordAt(lineText, checkCol, expected.length + 5);
             if (word === expected) return [true, word];
-            if (offset === 0) break; // Only check offset=0 once
+            if (offset === 0) break;
         }
     }
 

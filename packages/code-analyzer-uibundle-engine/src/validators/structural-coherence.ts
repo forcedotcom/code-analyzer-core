@@ -67,7 +67,6 @@ export async function validateStructuralCoherence(
 
         if (report.totalMappingsChecked === 0) return;
 
-        // Bounds violations
         if (report.boundsViolations.length > 0) {
             findings.push({
                 ruleName: STRUCTURAL_COHERENCE_RULE,
@@ -83,8 +82,7 @@ export async function validateStructuralCoherence(
             }
         }
 
-        // Whitespace/comment sampling — denominator is the actual number of
-        // sample fires so the ratio can never exceed 1.0.
+        // Denominator is the actual sample-fire count so wsRatio ≤ 1.0.
         if (report.whitespaceSampleCount > 0) {
             const wsRatio = report.whitespaceOnlyMappings / report.whitespaceSampleCount;
             if (wsRatio > WHITESPACE_SUSPICION_THRESHOLD) {
@@ -96,7 +94,6 @@ export async function validateStructuralCoherence(
             }
         }
 
-        // Cross-file jump ratio
         if (report.suspiciousJumpRatio > JUMP_RATIO_WARN) {
             findings.push({
                 ruleName: STRUCTURAL_COHERENCE_RULE,
@@ -173,7 +170,6 @@ export function analyzeCoherence(
 
         totalMappingsChecked++;
 
-        // --- Check 1: bounds ---
         const actualLines = lineLens.length;
         if (srcLine >= actualLines) {
             boundsViolations.push({
@@ -194,7 +190,7 @@ export function analyzeCoherence(
             }
         }
 
-        // --- Check 2: whitespace/comment sampling (every 10th mapping) ---
+        // Sample every Nth mapping for whitespace/comment landing.
         if (sampleIndex % WHITESPACE_SAMPLE_INTERVAL === 0 && srcLine < actualLines) {
             whitespaceSampleCount++;
             const sourceText = sourceContents.get(normalized) ?? embeddedText.get(srcRaw) ?? null;
@@ -204,7 +200,7 @@ export function analyzeCoherence(
         }
         sampleIndex++;
 
-        // --- Check 3: cross-file jump ratio (consecutive tokens on same dst line) ---
+        // Cross-file jumps: consecutive tokens on the same generated line.
         if (prevDstLine !== null && dstLine === prevDstLine) {
             if (prevSource !== null) {
                 consecutivePairs++;
@@ -251,11 +247,8 @@ export function pointsToWhitespaceOrComment(source: string, line0: number, col0:
 
 const INDEX_IGNORE_PREFIXES = ["node_modules", ".git", "dist"];
 
-/**
- * Add `<sourcePathBase>/<rel>` aliases so `sources[]` entries like
- * `../src/foo.ts` (which normalize to `src/foo.ts`) find the file even
- * though the on-disk index is keyed by the path relative to `src/`.
- */
+// Add `<base>/<rel>` aliases so sourcemap `sources[]` entries that normalize
+// to `src/foo.ts` still resolve against an index keyed relative to `src/`.
 function expandIndexWithBase(index: Map<string, string>, base: string): Map<string, string> {
     const out = new Map(index);
     for (const [rel, content] of index) {

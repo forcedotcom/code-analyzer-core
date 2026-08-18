@@ -1,29 +1,19 @@
-// Path classification helpers, ported line-for-line from the source Rust tool.
-// These decide whether a sourcemap `sources[]` entry is a real submitted source,
-// a virtual bundler pseudo-source, a third-party dependency, or a static asset.
+// Path classification helpers: decide whether a sourcemap `sources[]` entry is
+// a real submitted source, a virtual bundler pseudo-source, a third-party
+// dependency, or a static asset.
 
-/**
- * Force forward-slash separators so paths built from `path.relative` (which
- * uses `\` on Windows) can be looked up against sourcemap `sources[]` entries
- * (which are always `/`-separated).
- */
+// Sourcemap `sources[]` entries are always `/`-separated; `path.relative` uses
+// `\` on Windows.
 export function toPosixPath(p: string): string {
     return p.replace(/\\/g, "/");
 }
 
-/**
- * Collapse Windows CRLF and old-Mac CR line endings to LF. Byte-equal source
- * comparison must ignore line-ending differences — CRLF checkouts on Windows
- * would otherwise diverge from LF-embedded `sourcesContent`.
- */
+// Byte-equal source compare must ignore line-ending differences — CRLF
+// checkouts on Windows would otherwise diverge from LF-embedded sourcesContent.
 export function normalizeLineEndings(s: string): string {
     return s.replace(/\r\n?/g, "\n");
 }
 
-/**
- * Strip common relative prefixes and bundler URL schemes so paths can be
- * compared against the submitted source tree.
- */
 export function normalizeSourcePath(p: string): string {
     let s = p;
     while (s.startsWith("../")) s = s.slice(3);
@@ -35,10 +25,8 @@ export function normalizeSourcePath(p: string): string {
     return s;
 }
 
-/**
- * Virtual bundler pseudo-source — not a real file, but not automatically
- * malicious either. High aggregate ratios (>20%) trigger a bypass-attempt gate.
- */
+// Virtual bundler pseudo-source. Not a real file, so excluded from source-tree
+// gates. High aggregate ratios (>20%) trigger a bypass-attempt gate.
 export function isVirtualSource(p: string): boolean {
     return (
         p.includes("\0") ||
@@ -51,19 +39,12 @@ export function isVirtualSource(p: string): boolean {
     );
 }
 
-/**
- * Third-party dependency — sources under node_modules are not part of the
- * submitted source tree and are excluded from byte-equal and missing-source
- * gates.
- */
 export function isDependency(p: string): boolean {
     return p.startsWith("node_modules/") || p.includes("/node_modules/");
 }
 
-/**
- * Static asset — image/font/audio/video files that bundlers inline as sources
- * but are not text and shouldn't participate in the byte-equal gate.
- */
+// Image/font/audio/video files inlined by bundlers; not text, so excluded from
+// byte-equal comparison.
 export function isAsset(p: string): boolean {
     return ASSET_EXTENSIONS.some((ext) => p.endsWith(ext));
 }
@@ -88,11 +69,8 @@ const ASSET_EXTENSIONS = [
     ".webm",
 ];
 
-/**
- * Substring markers of dangerous browser/runtime APIs. This is a SCANNER
- * PATTERN LIST — the strings appear here only so we can detect them in
- * arbitrary compiled JS. None of these APIs are invoked by this file.
- */
+// Scanner pattern list — strings appear here so we can detect them in
+// arbitrary compiled JS. None of these APIs are invoked by this file.
 export const DANGEROUS_API_PATTERNS: readonly string[] = Object.freeze([
     "document.cookie",
     "localStorage",
@@ -106,8 +84,8 @@ export const DANGEROUS_API_PATTERNS: readonly string[] = Object.freeze([
     "crypto.subtle",
 ]);
 
-/** Extra patterns the AST validator flags on unmapped node snippets, in addition
- *  to the base DANGEROUS_API_PATTERNS. */
+// Extra patterns the AST validator flags on unmapped node snippets (added to
+// DANGEROUS_API_PATTERNS).
 export const DANGEROUS_AST_EXTRA_PATTERNS: readonly string[] = Object.freeze([
     "fetch(",
     '.createElement("script")',

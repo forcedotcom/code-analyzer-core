@@ -17,13 +17,6 @@ interface UnmappedRegion {
     length: number;
 }
 
-/**
- * Char-level coverage analysis (informational). For each compiled JS line,
- * groups all mapped destination columns; anything before the first mapped
- * column that exceeds UNMAPPED_THRESHOLD chars is flagged as an unmapped
- * region. Total unmapped chars (line-1 preamble discounted) above
- * EXCESSIVE_UNMAPPED_PCT of file size raises a cumulative-budget finding.
- */
 export async function validateCoverageAnalysis(distPath: string): Promise<ValidatorResult> {
     let distStat;
     try {
@@ -97,7 +90,6 @@ export function analyzeCoverage(
     const lines = compiledJs.split("\n");
     const lineCount = lines.length;
 
-    // Group destination columns by 0-based line index.
     const lineCols: number[][] = Array.from({ length: lineCount }, () => []);
     eachMapping(tracer, (m) => {
         // eachMapping yields 1-based lines; convert to 0-based.
@@ -108,7 +100,6 @@ export function analyzeCoverage(
     });
     for (const cols of lineCols) {
         cols.sort((a, b) => a - b);
-        // Dedup in place
         let write = 0;
         for (const col of cols) {
             if (write === 0 || col !== cols[write - 1]) {

@@ -64,8 +64,6 @@ const SIGNIFICANT_NODE_TYPES = new Set<string>([
     "YieldExpression",
 ]);
 
-// Flatten export forms into a single label so nodes that live inside `export …`
-// match the wrapper as well as their bare form.
 export function normalizeNodeType(t: string): string {
     if (
         t === "ExportNamedDeclaration" ||
@@ -146,10 +144,8 @@ export async function validateSourceContent(
             return;
         }
 
-        // --- Layer 1: byte-equal sourcesContent check + virtual-source ratio gate ---
         await runByteEqualAndRatioChecks(rawMap, mapPath, sourceIndex, sourcePathBase, findings);
 
-        // --- Layer 1 (AST): coverage + type-mismatch + dangerous-unmapped-snippets ---
         let compiledJs: string;
         try {
             compiledJs = await fs.readFile(jsPath, "utf8");
@@ -279,11 +275,8 @@ async function runAstChecks(
 
         const normalized = normalizeSourcePath(orig.source);
 
-        // Virtual bundler pseudo-sources (`?raw`, `webpack/…`, `<anonymous>`,
-        // vite internals), dependencies, and static assets aren't part of the
-        // submitted source tree — mirror the top-level Layer-1 gate above so
-        // they aren't flagged as "orphan". Excessive virtual use is still
-        // caught by the virtual-source ratio gate in runByteEqualAndRatioChecks.
+        // Skip pseudo-sources/deps/assets so they aren't flagged as orphans;
+        // virtual-source excess is still caught by runByteEqualAndRatioChecks.
         if (isVirtualSource(normalized) || isDependency(normalized) || isAsset(normalized)) continue;
 
         const submittedContent = lookupSubmitted(sourceIndex, normalized, sourcePathBase);
@@ -344,7 +337,7 @@ async function runAstChecks(
         }
     }
 
-    // Dangerous-pattern check on unmapped snippets — exempt line 1 (bundler preamble)
+    // Line 1 is the bundler preamble; skip it.
     const dangerousUnmapped = unmapped.filter(
         (n) => n.line > 1 && containsDangerousPattern(n.snippet),
     );
@@ -463,8 +456,6 @@ export function nodeTypesCompatible(generated: string, source: string): boolean 
         (generated === "CallExpression" && source === "MemberExpression")
     )
         return true;
-    // ExportDeclaration wraps a top-level declaration; the compiled side often
-    // exposes the inner declaration while the source reports the wrapper.
     const declarations = new Set([
         "FunctionDeclaration",
         "ClassDeclaration",
@@ -490,13 +481,8 @@ function truncate(s: string, n: number): string {
 
 const INDEX_IGNORE_PREFIXES = ["node_modules", ".git", "dist"];
 
-/**
- * Look up a normalized sourcemap path against the source-tree index.
- * Sourcemap `sources[]` entries typically look like `../src/foo.ts`, which
- * normalizes to `src/foo.ts`. The source index, however, is keyed by paths
- * relative to `<bundleRoot>/src`, so the leading `src/` segment needs to be
- * stripped before the lookup.
- */
+// `sources[]` typically normalizes to `src/foo.ts`, but the index is keyed
+// relative to `<bundleRoot>/src`, so strip the leading `src/` on retry.
 function lookupSubmitted(
     index: SourceIndex,
     normalized: string,

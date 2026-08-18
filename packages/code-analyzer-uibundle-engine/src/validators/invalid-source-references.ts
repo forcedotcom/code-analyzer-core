@@ -22,8 +22,6 @@ export async function validateInvalidSourceReferences(distPath: string): Promise
             const source = map.sources[i];
             if (!source) continue;
             if (isVirtualOrRemote(source)) continue;
-
-            // If sourcesContent[i] is present, the source is considered self-contained.
             if (contents[i] != null) continue;
 
             const resolved = resolveSourcePath(source, map.sourceRoot ?? "", mapDir);

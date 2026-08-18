@@ -23,7 +23,6 @@ export async function validateMissingSourcemaps(distPath: string): Promise<Valid
     for (const jsFile of jsFiles) {
         if (await hasSourcemap(jsFile)) continue;
 
-        // Base finding — no sourcemap
         findings.push({
             ruleName: MISSING_SOURCEMAP_RULE,
             message: getMessage('MissingSourcemapForFile', path.relative(distPath, jsFile)),
@@ -32,8 +31,6 @@ export async function validateMissingSourcemaps(distPath: string): Promise<Valid
             startColumn: 1,
         });
 
-        // Orphan-JS dangerous-API scan: bump missing-map findings to a stronger
-        // finding when the orphan file contains exfil/backdoor API patterns.
         let content: string;
         try {
             content = await fs.readFile(jsFile, "utf8");
@@ -78,7 +75,7 @@ async function hasSourcemap(jsFile: string): Promise<boolean> {
         await fs.access(colocated);
         return true;
     } catch {
-        // fall through to inline check
+        // fall through to sourceMappingURL check
     }
 
     try {
