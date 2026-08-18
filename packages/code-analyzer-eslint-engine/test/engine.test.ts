@@ -113,7 +113,7 @@ describe('Tests for the describeRules method of ESLintEngine', () => {
             const engine: Engine = await createEngineFromPlugin({...DEFAULT_CONFIG_FOR_TESTING,
                 config_root: __dirname,
                 auto_discover_eslint_config: true,
-                eslint_config_file: caseObj.configFile
+                ...(caseObj.configFile ? {eslint_config_file: caseObj.configFile} : {})
             });
             const ruleDescriptions: RuleDescription[] = await engine.describeRules(createDescribeOptions());
             expect(ruleDescriptions).toEqual(caseObj.expectationRuleDescriptions);
@@ -125,7 +125,7 @@ describe('Tests for the describeRules method of ESLintEngine', () => {
     it.each(testScenarios)('When describing rules while from a workspace $description with the config applied explicitly, then return expected', async (caseObj: TEST_SCENARIO) => {
         const engine: Engine = await createEngineFromPlugin({...DEFAULT_CONFIG_FOR_TESTING,
             auto_discover_eslint_config: true,
-            eslint_config_file: caseObj.configFile
+            ...(caseObj.configFile ? {eslint_config_file: caseObj.configFile} : {})
         });
         const ruleDescriptions: RuleDescription[] = await engine.describeRules(createDescribeOptions(new Workspace('id', [caseObj.folder])));
         expect(ruleDescriptions).toEqual(caseObj.expectationRuleDescriptions);
@@ -135,7 +135,7 @@ describe('Tests for the describeRules method of ESLintEngine', () => {
         const engine: Engine = await createEngineFromPlugin({...DEFAULT_CONFIG_FOR_TESTING,
             auto_discover_eslint_config: true,
             config_root: caseObj.folder,
-            eslint_config_file: caseObj.configFile
+            ...(caseObj.configFile ? {eslint_config_file: caseObj.configFile} : {})
         });
         const ruleDescriptions: RuleDescription[] = await engine.describeRules(createDescribeOptions());
         expect(ruleDescriptions).toEqual(caseObj.expectationRuleDescriptions);
