@@ -9,7 +9,9 @@ import {
     isAsset,
     isDependency,
     isVirtualSource,
+    normalizeLineEndings,
     normalizeSourcePath,
+    toPosixPath,
 } from "./classification";
 import { walk } from "./sourcemap-io";
 import { getMessage } from "../messages";
@@ -215,7 +217,7 @@ async function runByteEqualAndRatioChecks(
             continue;
         }
 
-        if (embedded.trim() !== submitted.trim()) {
+        if (normalizeLineEndings(embedded).trim() !== normalizeLineEndings(submitted).trim()) {
             findings.push({
                 ruleName: SOURCE_CONTENT_VERIFICATION_RULE,
                 message: getMessage('SourceContentBytewiseMismatch', normalized),
@@ -512,7 +514,7 @@ function lookupSubmitted(
 async function indexSourceFiles(sourcePath: string): Promise<SourceIndex> {
     const index: SourceIndex = new Map();
     await walk(sourcePath, async (abs) => {
-        const rel = path.relative(sourcePath, abs);
+        const rel = toPosixPath(path.relative(sourcePath, abs));
         if (INDEX_IGNORE_PREFIXES.some((prefix) => rel.startsWith(prefix))) return;
         try {
             const content = await fs.readFile(abs, "utf8");

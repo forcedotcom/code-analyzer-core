@@ -3,6 +3,24 @@
 // a virtual bundler pseudo-source, a third-party dependency, or a static asset.
 
 /**
+ * Force forward-slash separators so paths built from `path.relative` (which
+ * uses `\` on Windows) can be looked up against sourcemap `sources[]` entries
+ * (which are always `/`-separated).
+ */
+export function toPosixPath(p: string): string {
+    return p.replace(/\\/g, "/");
+}
+
+/**
+ * Collapse Windows CRLF and old-Mac CR line endings to LF. Byte-equal source
+ * comparison must ignore line-ending differences — CRLF checkouts on Windows
+ * would otherwise diverge from LF-embedded `sourcesContent`.
+ */
+export function normalizeLineEndings(s: string): string {
+    return s.replace(/\r\n?/g, "\n");
+}
+
+/**
  * Strip common relative prefixes and bundler URL schemes so paths can be
  * compared against the submitted source tree.
  */

@@ -1,7 +1,7 @@
 import { promises as fs } from "node:fs";
 import * as path from "node:path";
 import { TraceMap, eachMapping, sourceContentFor } from "@jridgewell/trace-mapping";
-import { isAsset, isDependency, isVirtualSource, normalizeSourcePath } from "./classification";
+import { isAsset, isDependency, isVirtualSource, normalizeSourcePath, toPosixPath } from "./classification";
 import { walk } from "./sourcemap-io";
 import { getMessage } from "../messages";
 import type { ValidatorFinding, ValidatorResult } from "./types";
@@ -266,7 +266,7 @@ function expandIndexWithBase(index: Map<string, string>, base: string): Map<stri
 async function indexSourceFiles(sourcePath: string): Promise<Map<string, string>> {
     const index = new Map<string, string>();
     await walk(sourcePath, async (abs) => {
-        const rel = path.relative(sourcePath, abs);
+        const rel = toPosixPath(path.relative(sourcePath, abs));
         if (INDEX_IGNORE_PREFIXES.some((prefix) => rel.startsWith(prefix))) return;
         try {
             const content = await fs.readFile(abs, "utf8");

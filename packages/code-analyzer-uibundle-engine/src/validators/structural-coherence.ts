@@ -1,7 +1,7 @@
 import { promises as fs } from "node:fs";
 import * as path from "node:path";
 import { TraceMap, eachMapping, sourceContentFor } from "@jridgewell/trace-mapping";
-import { isAsset, isDependency, normalizeSourcePath } from "./classification";
+import { isAsset, isDependency, normalizeSourcePath, toPosixPath } from "./classification";
 import { walk } from "./sourcemap-io";
 import { getMessage } from "../messages";
 import type { ValidatorFinding, ValidatorResult } from "./types";
@@ -83,14 +83,14 @@ export async function validateStructuralCoherence(
             }
         }
 
-        // Whitespace/comment sampling
-        const sampled = Math.floor(report.totalMappingsChecked / WHITESPACE_SAMPLE_INTERVAL);
-        if (sampled > 0) {
-            const wsRatio = report.whitespaceOnlyMappings / sampled;
+        // Whitespace/comment sampling — denominator is the actual number of
+        // sample fires so the ratio can never exceed 1.0.
+        if (report.whitespaceSampleCount > 0) {
+            const wsRatio = report.whitespaceOnlyMappings / report.whitespaceSampleCount;
             if (wsRatio > WHITESPACE_SUSPICION_THRESHOLD) {
                 findings.push({
                     ruleName: STRUCTURAL_COHERENCE_RULE,
-                    message: getMessage('CoherenceWhitespaceSuspicious', (wsRatio * 100).toFixed(1), report.whitespaceOnlyMappings, sampled, (WHITESPACE_SUSPICION_THRESHOLD * 100).toString()),
+                    message: getMessage('CoherenceWhitespaceSuspicious', (wsRatio * 100).toFixed(1), report.whitespaceOnlyMappings, report.whitespaceSampleCount, (WHITESPACE_SUSPICION_THRESHOLD * 100).toString()),
                     file: mapPath,
                 });
             }
@@ -116,6 +116,7 @@ export function analyzeCoherence(
     totalMappingsChecked: number;
     boundsViolations: BoundsViolation[];
     whitespaceOnlyMappings: number;
+    whitespaceSampleCount: number;
     suspiciousJumpRatio: number;
 } {
     const submittedLineLens = new Map<string, number[]>();
@@ -132,6 +133,7 @@ export function analyzeCoherence(
     let totalMappingsChecked = 0;
     const boundsViolations: BoundsViolation[] = [];
     let whitespaceOnlyMappings = 0;
+    let whitespaceSampleCount = 0;
 
     let prevSource: string | null = null;
     let prevDstLine: number | null = null;
@@ -194,6 +196,7 @@ export function analyzeCoherence(
 
         // --- Check 2: whitespace/comment sampling (every 10th mapping) ---
         if (sampleIndex % WHITESPACE_SAMPLE_INTERVAL === 0 && srcLine < actualLines) {
+            whitespaceSampleCount++;
             const sourceText = sourceContents.get(normalized) ?? embeddedText.get(srcRaw) ?? null;
             if (sourceText != null && pointsToWhitespaceOrComment(sourceText, srcLine, srcCol)) {
                 whitespaceOnlyMappings++;
@@ -218,6 +221,7 @@ export function analyzeCoherence(
         totalMappingsChecked,
         boundsViolations,
         whitespaceOnlyMappings,
+        whitespaceSampleCount,
         suspiciousJumpRatio,
     };
 }
@@ -263,7 +267,7 @@ function expandIndexWithBase(index: Map<string, string>, base: string): Map<stri
 async function indexSourceFiles(sourcePath: string): Promise<Map<string, string>> {
     const index = new Map<string, string>();
     await walk(sourcePath, async (abs) => {
-        const rel = path.relative(sourcePath, abs);
+        const rel = toPosixPath(path.relative(sourcePath, abs));
         if (INDEX_IGNORE_PREFIXES.some((prefix) => rel.startsWith(prefix))) return;
         try {
             const content = await fs.readFile(abs, "utf8");

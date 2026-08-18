@@ -508,8 +508,11 @@ describe('source-content-verification', () => {
             sourcePath: path.join(tmp, 'src'),
             distPath: path.join(tmp, 'dist'),
         });
-        // We just need the AST-compat matrix to have been walked; asserting >=0 is fine.
-        expect(Array.isArray(res.findings)).toBe(true);
+        // Source and compiled are identical → the byte-equal check must not fire.
+        // If the AST-compat matrix regressed and started emitting spurious mismatches
+        // on identical content, this assertion will catch it.
+        const byteMismatches = res.findings.filter((f) => /byte|mismatch/i.test(f.message));
+        expect(byteMismatches).toEqual([]);
     });
 
     it('surfaces a sourcemap-unloadable finding when the map JSON parses but TraceMap rejects it', async () => {
@@ -526,10 +529,8 @@ describe('source-content-verification', () => {
             sourcePath: path.join(tmp, 'src'),
             distPath: path.join(tmp, 'dist'),
         });
-        // Either the sourcemap-unloadable branch fires OR the byte-check branch does; the
-        // key is that at least one finding surfaces from this malformed map.
-        // (If neither fires, we regressed the diagnostics.)
-        expect(res.findings.length).toBeGreaterThanOrEqual(0);
+        const unloadable = res.findings.filter((f) => /could not be loaded|unloadable/i.test(f.message));
+        expect(unloadable.length).toBeGreaterThan(0);
     });
 });
 
@@ -556,8 +557,8 @@ describe('structural-coherence branch coverage', () => {
             sourcePath: path.join(tmp, 'src'),
             distPath: path.join(tmp, 'dist'),
         });
-        // Findings may include whitespace-heavy or bounds — assert we got at least one back.
-        expect(res.findings.length).toBeGreaterThanOrEqual(0);
+        const whitespaceFindings = res.findings.filter((f) => /whitespace|comment/i.test(f.message));
+        expect(whitespaceFindings.length).toBeGreaterThan(0);
     });
 
     it('emits a cross-file-jump finding when consecutive tokens flip between sources', async () => {
@@ -587,8 +588,8 @@ describe('structural-coherence branch coverage', () => {
             sourcePath: path.join(tmp, 'src'),
             distPath: path.join(tmp, 'dist'),
         });
-        // At the very least this should not throw and should produce a numeric findings array.
-        expect(Array.isArray(res.findings)).toBe(true);
+        const jumpFindings = res.findings.filter((f) => /cross-file jump|jump ratio/i.test(f.message));
+        expect(jumpFindings.length).toBeGreaterThan(0);
     });
 });
 
