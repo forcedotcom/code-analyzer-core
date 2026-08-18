@@ -114,8 +114,7 @@ function getLatestReleasedVersion(changedPackage) {
 
 function isPackageThatHasNotPublished(changedPackage) {
     return [
-        "packages/ENGINE-TEMPLATE",
-        "packages/code-analyzer-uibundle-engine"
+        "packages/ENGINE-TEMPLATE"
     ].includes(changedPackage.replace("\\","/"));
 }
 
