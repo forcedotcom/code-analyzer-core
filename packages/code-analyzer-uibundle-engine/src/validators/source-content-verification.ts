@@ -17,7 +17,7 @@ import { walk } from "./sourcemap-io";
 import { getMessage } from "../messages";
 import type { ValidatorFinding, ValidatorResult } from "./types";
 
-// @babel/traverse ships its callable as a default export; ESM/CJS interop puts it under `.default`.
+// ESM/CJS interop for @babel/traverse
 const traverse = (_traverse as unknown as { default?: typeof _traverse }).default ?? _traverse;
 
 export const SOURCE_CONTENT_VERIFICATION_RULE = "source-content-verification";
@@ -77,8 +77,8 @@ export function normalizeNodeType(t: string): string {
 
 interface SignificantNode {
     type: string;
-    line: number; // 1-based (Babel convention)
-    column: number; // 0-based (Babel convention)
+    line: number;
+    column: number;
     byteOffset: number;
     snippet: string;
 }
@@ -117,7 +117,7 @@ export async function validateSourceContent(
         try {
             mapRaw = await fs.readFile(mapPath, "utf8");
         } catch {
-            return; // missing-sourcemap rule handles this
+            return;
         }
 
         let rawMap: RawSourceMap;
@@ -265,7 +265,6 @@ async function runAstChecks(
     const orphanSources = new Set<string>();
 
     for (const node of significantNodes) {
-        // Babel columns are 0-based; TraceMap wants (line: 1-based, column: 0-based)
         const orig = originalPositionFor(tracer, { line: node.line, column: node.column });
         if (orig.source == null || orig.line == null) {
             unmapped.push(node);
@@ -275,8 +274,6 @@ async function runAstChecks(
 
         const normalized = normalizeSourcePath(orig.source);
 
-        // Skip pseudo-sources/deps/assets so they aren't flagged as orphans;
-        // virtual-source excess is still caught by runByteEqualAndRatioChecks.
         if (isVirtualSource(normalized) || isDependency(normalized) || isAsset(normalized)) continue;
 
         const submittedContent = lookupSubmitted(sourceIndex, normalized, sourcePathBase);
@@ -337,7 +334,6 @@ async function runAstChecks(
         }
     }
 
-    // Line 1 is the bundler preamble; skip it.
     const dangerousUnmapped = unmapped.filter(
         (n) => n.line > 1 && containsDangerousPattern(n.snippet),
     );
@@ -481,8 +477,6 @@ function truncate(s: string, n: number): string {
 
 const INDEX_IGNORE_PREFIXES = ["node_modules", ".git", "dist"];
 
-// `sources[]` typically normalizes to `src/foo.ts`, but the index is keyed
-// relative to `<bundleRoot>/src`, so strip the leading `src/` on retry.
 function lookupSubmitted(
     index: SourceIndex,
     normalized: string,
@@ -506,7 +500,7 @@ async function indexSourceFiles(sourcePath: string): Promise<SourceIndex> {
             const content = await fs.readFile(abs, "utf8");
             index.set(rel, content);
         } catch {
-            // binary or unreadable — skip
+            // skip
         }
     });
     return index;

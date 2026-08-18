@@ -15,8 +15,8 @@ const MAX_LISTED_BOUNDS = 10;
 
 interface BoundsViolation {
     sourceFile: string;
-    claimedLine: number; // 0-based
-    claimedCol: number; // 0-based
+    claimedLine: number;
+    claimedCol: number;
     actualLines: number;
 }
 
@@ -82,7 +82,6 @@ export async function validateStructuralCoherence(
             }
         }
 
-        // Denominator is the actual sample-fire count so wsRatio ≤ 1.0.
         if (report.whitespaceSampleCount > 0) {
             const wsRatio = report.whitespaceOnlyMappings / report.whitespaceSampleCount;
             if (wsRatio > WHITESPACE_SUSPICION_THRESHOLD) {
@@ -161,7 +160,7 @@ export function analyzeCoherence(
                         embeddedText.set(srcRaw, contents);
                     }
                 } catch {
-                    // ignore
+                    // skip
                 }
             }
             if (!cached) return;
@@ -190,7 +189,6 @@ export function analyzeCoherence(
             }
         }
 
-        // Sample every Nth mapping for whitespace/comment landing.
         if (sampleIndex % WHITESPACE_SAMPLE_INTERVAL === 0 && srcLine < actualLines) {
             whitespaceSampleCount++;
             const sourceText = sourceContents.get(normalized) ?? embeddedText.get(srcRaw) ?? null;
@@ -200,7 +198,6 @@ export function analyzeCoherence(
         }
         sampleIndex++;
 
-        // Cross-file jumps: consecutive tokens on the same generated line.
         if (prevDstLine !== null && dstLine === prevDstLine) {
             if (prevSource !== null) {
                 consecutivePairs++;
@@ -247,8 +244,6 @@ export function pointsToWhitespaceOrComment(source: string, line0: number, col0:
 
 const INDEX_IGNORE_PREFIXES = ["node_modules", ".git", "dist"];
 
-// Add `<base>/<rel>` aliases so sourcemap `sources[]` entries that normalize
-// to `src/foo.ts` still resolve against an index keyed relative to `src/`.
 function expandIndexWithBase(index: Map<string, string>, base: string): Map<string, string> {
     const out = new Map(index);
     for (const [rel, content] of index) {
@@ -266,7 +261,7 @@ async function indexSourceFiles(sourcePath: string): Promise<Map<string, string>
             const content = await fs.readFile(abs, "utf8");
             index.set(rel, content);
         } catch {
-            // binary or unreadable — skip
+            // skip
         }
     });
     return index;

@@ -27,7 +27,7 @@ export async function collectSourceMaps(root: string): Promise<LoadedSourceMap[]
                 out.push({ path: file, map });
             }
         } catch {
-            // Malformed JSON is surfaced by the vlq-integrity validator instead.
+            // vlq-integrity surfaces malformed JSON
         }
     });
     return out;

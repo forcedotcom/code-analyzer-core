@@ -99,7 +99,6 @@ export class UIBundleEngine extends Engine {
             this.consumeResult(ruleName, target.distPath, result, violations);
         }
 
-        // Rules that also require the submitted source tree.
         const sourceDispatch: [
             string,
             (opts: { sourcePath: string; distPath: string }) => Promise<ValidatorResult>,
@@ -155,7 +154,6 @@ export class UIBundleEngine extends Engine {
             }
         }
 
-        // Fallback: any file inside a dist/ directory contributes a bundle whose bundle root is that dist's parent.
         for (const file of targetedFiles) {
             const dist = findAncestorNamed(file, "dist");
             if (dist) bundleRoots.add(path.dirname(dist));
@@ -176,7 +174,7 @@ export class UIBundleEngine extends Engine {
 }
 
 function toViolation(finding: ValidatorFinding): Violation {
-    // SFCA requires 1-based line/column; validators emit 0-based columns (Babel/trace-mapping).
+    // SFCA requires 1-based line/column; validators emit 0-based columns.
     const startLine: number = Math.max(1, finding.startLine ?? 1);
     const rawCol: number | undefined = finding.startColumn;
     const startColumn: number = rawCol == null ? 1 : Math.max(1, rawCol + 1);

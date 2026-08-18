@@ -75,7 +75,7 @@ async function hasSourcemap(jsFile: string): Promise<boolean> {
         await fs.access(colocated);
         return true;
     } catch {
-        // fall through to sourceMappingURL check
+        // fall through
     }
 
     try {

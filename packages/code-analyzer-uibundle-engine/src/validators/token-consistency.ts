@@ -24,8 +24,8 @@ export type TokenCategory =
 interface NameMismatch {
     expectedName: string;
     sourceFile: string;
-    line: number; // 0-based
-    col: number; // 0-based
+    line: number;
+    col: number;
     foundText: string;
 }
 
@@ -140,7 +140,6 @@ export function analyzeTokenConsistency(
         const srcRaw = m.source;
         const normalized = normalizeSourcePath(srcRaw);
 
-        // Skip third-party deps, static assets, and virtual bundler pseudo-sources.
         if (isDependency(normalized) || isAsset(normalized) || isVirtualSource(normalized)) return;
 
         let sourceText = sourceContents.get(normalized) ?? null;
@@ -272,7 +271,7 @@ async function indexSourceFiles(sourcePath: string): Promise<Map<string, string>
             const content = await fs.readFile(abs, "utf8");
             index.set(rel, content);
         } catch {
-            // binary or unreadable — skip
+            // skip
         }
     });
     return index;

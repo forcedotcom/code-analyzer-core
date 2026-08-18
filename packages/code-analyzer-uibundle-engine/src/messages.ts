@@ -13,7 +13,6 @@ const MESSAGE_CATALOG : { [key: string]: string } = {
     SkippedNoSourceTree:
         `[%s] Skipping %s for %s: could not locate a source directory sibling to dist/.`,
 
-    // --- Rule descriptions ---
     MissingSourcemapRuleDescription:
         `Every compiled .js file in the build output must have a corresponding sourcemap (co-located .js.map or //# sourceMappingURL). Missing sourcemaps prevent source-to-compiled verification during security review.`,
 
@@ -38,22 +37,18 @@ const MESSAGE_CATALOG : { [key: string]: string } = {
     TokenConsistencyRuleDescription:
         `Token-type consistency checks on sampled sourcemap tokens (informational). Every 20th mapping is compared between compiled and source positions; verifies names[] entries exist near the claimed source position (±3 col tolerance); flags scores below 85% (warning) and below 70% (suspicious).`,
 
-    // --- Missing sourcemap ---
     MissingSourcemapForFile:
         `No sourcemap found for %s. Expected a co-located .js.map or a //# sourceMappingURL comment.`,
 
     OrphanJsWithDangerousApi:
         `Orphan JS file (no sourcemap) contains dangerous API pattern(s): %s. This looks like unmapped/injected code rather than a bundler runtime.`,
 
-    // --- Path leakage ---
     PathLeakageFinding:
         `Sourcemap references an absolute local path: "%s". Sources should be relative to protect developer environment details.`,
 
-    // --- Invalid source references ---
     SourceFileDoesNotExist:
         `Sourcemap references a source file that does not exist on disk: "%s" (resolved to %s).`,
 
-    // --- VLQ integrity ---
     SourcemapNotValidJson:
         `Sourcemap is not valid JSON: %s`,
 
@@ -72,7 +67,6 @@ const MESSAGE_CATALOG : { [key: string]: string } = {
     SegmentNameIndexOutOfRange:
         `Sourcemap segment at line %d, segment %d references name index %d but names length is %d.`,
 
-    // --- Source content verification ---
     SourceContentSourcemapNotJson:
         `Sourcemap is not valid JSON: %s`,
 
@@ -112,14 +106,12 @@ const MESSAGE_CATALOG : { [key: string]: string } = {
     SourceContentOrphanSources:
         `%d mapped AST node source(s) not present in the submitted source tree: %s`,
 
-    // --- Coverage analysis ---
     CoverageUnmappedRegion:
         `Unmapped region on line %d cols %d..%d (%d chars) — no sourcemap coverage.`,
 
     CoverageExcessiveCumulative:
         `Excessive cumulative unmapped content: %s%% of %d chars are unmapped (line-1 preamble discounted). Threshold is %s%%.`,
 
-    // --- Structural coherence ---
     CoherenceBoundsSummary:
         `%d sourcemap mapping(s) point out of bounds of the referenced source file.`,
 
@@ -132,7 +124,6 @@ const MESSAGE_CATALOG : { [key: string]: string } = {
     CoherenceCrossFileJumpsSuspicious:
         `Cross-file jump ratio %s exceeds %s: majority of consecutive tokens on the same generated line jump between source files, which is unusual for real bundler output.`,
 
-    // --- Token consistency ---
     TokenConsistencySuspicious:
         `Token type consistency %s%% is below suspicious threshold %s%% (%d/%d sampled tokens agree between compiled and source positions). Sourcemap tokens appear fabricated.`,
 
@@ -146,11 +137,6 @@ const MESSAGE_CATALOG : { [key: string]: string } = {
         `Name mismatch: expected "%s" at %s:%d:%d, found "%s".`
 };
 
-/**
- * getMessage - Convenience function to get a message out of the message catalog.
- * @param msgId - The message identifier
- * @param args - The arguments that will fill in the %s and %d markers.
- */
 export function getMessage(msgId: string, ...args: (string | number)[]): string {
     return getMessageFromCatalog(MESSAGE_CATALOG, msgId, ...args);
 }

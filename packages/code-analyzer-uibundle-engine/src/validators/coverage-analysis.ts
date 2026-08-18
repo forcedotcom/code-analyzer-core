@@ -11,7 +11,7 @@ const EXCESSIVE_UNMAPPED_PCT = 2.0;
 const LINE1_EXEMPT_CHARS = 150;
 
 interface UnmappedRegion {
-    line: number; // 1-based for display
+    line: number;
     startCol: number;
     endCol: number;
     length: number;
@@ -37,13 +37,13 @@ export async function validateCoverageAnalysis(distPath: string): Promise<Valida
         try {
             mapRaw = await fs.readFile(mapPath, "utf8");
         } catch {
-            return; // missing-sourcemap handles this
+            return;
         }
         let tracer: TraceMap;
         try {
             tracer = new TraceMap(mapRaw);
         } catch {
-            return; // vlq-integrity handles this
+            return;
         }
         let compiledJs: string;
         try {
@@ -92,7 +92,6 @@ export function analyzeCoverage(
 
     const lineCols: number[][] = Array.from({ length: lineCount }, () => []);
     eachMapping(tracer, (m) => {
-        // eachMapping yields 1-based lines; convert to 0-based.
         const dstLine = m.generatedLine - 1;
         if (dstLine >= 0 && dstLine < lineCount) {
             lineCols[dstLine]!.push(m.generatedColumn);
