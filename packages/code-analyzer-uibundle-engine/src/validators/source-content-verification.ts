@@ -277,7 +277,12 @@ async function runAstChecks(
 
         const normalized = normalizeSourcePath(orig.source);
 
-        if (isDependency(normalized) || isAsset(normalized)) continue;
+        // Virtual bundler pseudo-sources (`?raw`, `webpack/…`, `<anonymous>`,
+        // vite internals), dependencies, and static assets aren't part of the
+        // submitted source tree — mirror the top-level Layer-1 gate above so
+        // they aren't flagged as "orphan". Excessive virtual use is still
+        // caught by the virtual-source ratio gate in runByteEqualAndRatioChecks.
+        if (isVirtualSource(normalized) || isDependency(normalized) || isAsset(normalized)) continue;
 
         const submittedContent = lookupSubmitted(sourceIndex, normalized, sourcePathBase);
         if (submittedContent == null) {
