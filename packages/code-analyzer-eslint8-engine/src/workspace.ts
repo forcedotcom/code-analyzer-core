@@ -1,7 +1,7 @@
 import {Workspace} from "@salesforce/code-analyzer-engine-api";
 import fs from "node:fs";
 import path from "node:path";
-import {ESLint8EngineConfig, LEGACY_ESLINT_CONFIG_FILES, LEGACY_ESLINT_IGNORE_FILE} from "./config";
+import {ESLint8EngineConfig, isExecutableConfigFile, LEGACY_ESLINT_CONFIG_FILES, LEGACY_ESLINT_IGNORE_FILE} from "./config";
 import {makeUnique} from "./utils";
 
 export type AsyncFilterFnc<T> = (value: T) => Promise<boolean>;
@@ -25,8 +25,27 @@ export class UserConfigInfo {
     }
 
     getUserConfigFile(): string | undefined {
-        return this.engineConfig.eslint_config_file ||
-            (this.engineConfig.auto_discover_eslint_config ? this.autoDiscoveredConfigFile : undefined);
+        if (this.engineConfig.eslint_config_file) {
+            return this.engineConfig.eslint_config_file;
+        }
+        // When auto-discovering config, we deliberately refuse to apply an executable config file because doing so
+        // would run its top-level JavaScript during analysis (an arbitrary code execution vector). Only declarative
+        // auto-discovered config files (e.g. .eslintrc.json/.yaml/.yml) are applied automatically.
+        if (this.engineConfig.auto_discover_eslint_config && this.autoDiscoveredConfigFile
+                && !isExecutableConfigFile(this.autoDiscoveredConfigFile)) {
+            return this.autoDiscoveredConfigFile;
+        }
+        return undefined;
+    }
+
+    // Returns the auto-discovered config file that was NOT applied because it is executable (and thus would run
+    // arbitrary top-level code when loaded). Returns undefined when no such file was skipped.
+    getSkippedExecutableConfigFile(): string | undefined {
+        if (!this.engineConfig.eslint_config_file && this.engineConfig.auto_discover_eslint_config
+                && this.autoDiscoveredConfigFile && isExecutableConfigFile(this.autoDiscoveredConfigFile)) {
+            return this.autoDiscoveredConfigFile;
+        }
+        return undefined;
     }
 
     userConfigIsEnabled(): boolean {
