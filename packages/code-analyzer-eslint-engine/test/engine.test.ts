@@ -79,7 +79,10 @@ describe('Tests for the describeRules method of ESLintEngine', () => {
 
 
     // React rules now apply to all JS files, so all tests with JS files get React rules
-    type TEST_SCENARIO = {description: string, folder: string, expectationRuleDescriptions: RuleDescription[]};
+    // The 'configFile' field, when supplied, is an executable flat config that is now only applied when set explicitly
+    // via eslint_config_file (the trusted opt-in path); auto-discovery no longer executes such files. When it is
+    // undefined the scenario relies purely on auto-discovery, which finds nothing executable to apply.
+    type TEST_SCENARIO = {description: string, folder: string, configFile?: string, expectationRuleDescriptions: RuleDescription[]};
     const testScenarios: TEST_SCENARIO[] = [
         {
             description: 'with no customizations',
@@ -89,6 +92,7 @@ describe('Tests for the describeRules method of ESLintEngine', () => {
         {
             description: 'with config that modifies existing rules',
             folder: workspaceThatHasCustomConfigModifyingExistingRules,
+            configFile: path.join(workspaceThatHasCustomConfigModifyingExistingRules, 'eslint.config.cjs'),
             // The config modifies some rule properties. This does not impact the rule descriptions. If error is
             // modified to warn then it doesn't impact the severity since we still grab it from our rule mappings.
             // But if a rule is turned off, then it is indeed removed, this no-useless-escape is removed.
@@ -97,17 +101,19 @@ describe('Tests for the describeRules method of ESLintEngine', () => {
         {
             description: 'with config that adds a new plugin and rules',
             folder: workspaceThatHasCustomConfigWithNewRules,
+            configFile: path.join(workspaceThatHasCustomConfigWithNewRules, 'eslint.config.js'),
             expectationRuleDescriptions: makeUniqueAndSorted([...DEFAULT_RULES, ...CUSTOM_RULES])
         }
     ]
 
-    it.each(testScenarios)('When describing rules while cwd is folder $description and auto_discover_eslint_config=true, then return expected', async (caseObj: TEST_SCENARIO) => {
+    it.each(testScenarios)('When describing rules while cwd is folder $description with the config applied explicitly, then return expected', async (caseObj: TEST_SCENARIO) => {
         const origWorkingDir: string = process.cwd();
         process.chdir(caseObj.folder);
         try {
             const engine: Engine = await createEngineFromPlugin({...DEFAULT_CONFIG_FOR_TESTING,
                 config_root: __dirname,
                 auto_discover_eslint_config: true,
+                eslint_config_file: caseObj.configFile
             });
             const ruleDescriptions: RuleDescription[] = await engine.describeRules(createDescribeOptions());
             expect(ruleDescriptions).toEqual(caseObj.expectationRuleDescriptions);
@@ -116,21 +122,38 @@ describe('Tests for the describeRules method of ESLintEngine', () => {
         }
     });
 
-    it.each(testScenarios)('When describing rules while from a workspace $description and auto_discover_eslint_config=true, then return expected', async (caseObj: TEST_SCENARIO) => {
+    it.each(testScenarios)('When describing rules while from a workspace $description with the config applied explicitly, then return expected', async (caseObj: TEST_SCENARIO) => {
         const engine: Engine = await createEngineFromPlugin({...DEFAULT_CONFIG_FOR_TESTING,
-            auto_discover_eslint_config: true
+            auto_discover_eslint_config: true,
+            eslint_config_file: caseObj.configFile
         });
         const ruleDescriptions: RuleDescription[] = await engine.describeRules(createDescribeOptions(new Workspace('id', [caseObj.folder])));
         expect(ruleDescriptions).toEqual(caseObj.expectationRuleDescriptions);
     });
 
-    it.each(testScenarios)('When describing rules while config_root is folder $description and auto_discover_eslint_config=true, then return expected', async (caseObj: TEST_SCENARIO) => {
+    it.each(testScenarios)('When describing rules while config_root is folder $description with the config applied explicitly, then return expected', async (caseObj: TEST_SCENARIO) => {
         const engine: Engine = await createEngineFromPlugin({...DEFAULT_CONFIG_FOR_TESTING,
             auto_discover_eslint_config: true,
-            config_root: caseObj.folder
+            config_root: caseObj.folder,
+            eslint_config_file: caseObj.configFile
         });
         const ruleDescriptions: RuleDescription[] = await engine.describeRules(createDescribeOptions());
         expect(ruleDescriptions).toEqual(caseObj.expectationRuleDescriptions);
+    });
+
+    it('When an executable flat config is auto-discovered (not set explicitly), then it is skipped with a warning and only base rules are returned', async () => {
+        const engine: Engine = await createEngineFromPlugin({...DEFAULT_CONFIG_FOR_TESTING,
+            auto_discover_eslint_config: true,
+            config_root: workspaceThatHasCustomConfigModifyingExistingRules
+        });
+        const logEvents: LogEvent[] = [];
+        engine.onEvent(EventType.LogEvent, (event: LogEvent) => logEvents.push(event));
+        const ruleDescriptions: RuleDescription[] = await engine.describeRules(createDescribeOptions());
+        // The custom config is NOT applied, so no-useless-escape is not removed and we get the full default rule set.
+        expect(ruleDescriptions).toEqual(DEFAULT_RULES);
+        const warnLogs: LogEvent[] = logEvents.filter(e => e.logLevel === LogLevel.Warn);
+        expect(warnLogs.map(e => e.message)).toContainEqual(getMessage('SkippedAutoDiscoveredExecutableConfigFile',
+            path.join(workspaceThatHasCustomConfigModifyingExistingRules, 'eslint.config.cjs')));
     });
 
     it('When describing rules from a workspace targeting no javascript files, then no javascript rules should return', async () => {
@@ -435,10 +458,10 @@ describe('Tests for the describeRules method of ESLintEngine', () => {
         }
     });
 
-    it('When all base configs are off and custom config with new rules exists, when auto_discover_eslint_config=true then only custom config is applied', async() => {
+    it('When all base configs are off and custom config with new rules is explicitly set, then only custom config is applied', async() => {
         const engine: Engine = await createEngineFromPlugin({...DEFAULT_CONFIG_FOR_TESTING,
             config_root: workspaceThatHasCustomConfigWithNewRules,
-            auto_discover_eslint_config: true, // Sanity test that we can auto discover in config root
+            eslint_config_file: path.join(workspaceThatHasCustomConfigWithNewRules, 'eslint.config.js'),
             disable_javascript_base_config: true,
             disable_typescript_base_config: true,
             disable_lwc_base_config: true,
@@ -452,9 +475,9 @@ describe('Tests for the describeRules method of ESLintEngine', () => {
         expect(ruleDescriptions).toEqual(CUSTOM_RULES);
     });
 
-    it('When all base configs are off and custom config that modifies eslint rules exists and auto_discover_eslint_config=true, then only custom config is applied', async() => {
+    it('When all base configs are off and custom config that modifies eslint rules is explicitly set, then only custom config is applied', async() => {
         const engine: Engine = await createEngineFromPlugin({...DEFAULT_CONFIG_FOR_TESTING,
-            auto_discover_eslint_config: true,
+            eslint_config_file: path.join(testDataFolder, 'workspaceWithFlatConfigJs', 'eslint.config.js'),
             disable_javascript_base_config: true,
             disable_typescript_base_config: true,
             disable_lwc_base_config: true,
@@ -488,9 +511,12 @@ describe('Tests for the describeRules method of ESLintEngine', () => {
         expect(ruleDescriptions).toEqual(EXPECTED_RULES_FOR_BASE_PLUS_CONFIG_THAT_MODIFIES_EXISTING_RULES);
 
         const warnLogs: LogEvent[] = logEvents.filter(e => e.logLevel === LogLevel.Warn);
-        expect(warnLogs).toHaveLength(1);
-        expect(warnLogs[0].message).toEqual(getMessage('IgnoringLegacyIgnoreFile',
+        const warnMessages: string[] = warnLogs.map(e => e.message);
+        expect(warnMessages).toContainEqual(getMessage('IgnoringLegacyIgnoreFile',
             path.join(testDataFolder, 'workspaceWithLegacyIgnoreFile', '.eslintignore')));
+        // Since the config file is explicitly set to an executable config, we also warn that it will execute.
+        expect(warnMessages).toContainEqual(getMessage('ExplicitExecutableConfigFileWillExecute',
+            path.join(workspaceThatHasCustomConfigModifyingExistingRules, 'eslint.config.cjs')));
     });
 
    it('When custom rules only apply to other file extensions, then without specifying file extensions in custom config, they are not picked up', async () => {
@@ -662,7 +688,7 @@ describe('Typical tests for the runRules method of ESLintEngine', () => {
 
     it('When using custom plugin rules, then violations from custom rules are returned', async () => {
         const engine: Engine = await createEngineFromPlugin({...DEFAULT_CONFIG_FOR_TESTING,
-            auto_discover_eslint_config: true
+            eslint_config_file: path.join(workspaceThatHasCustomConfigWithNewRules, 'eslint.config.js')
         });
         const runOptions: RunOptions = createRunOptions(new Workspace('id', [path.join(workspaceThatHasCustomConfigWithNewRules, 'dummy1.js')]));
         const results: EngineRunResults = await engine.runRules(['dummy/my-rule-1', 'dummy/my-rule-2'], runOptions);
@@ -767,7 +793,7 @@ describe('Typical tests for the runRules method of ESLintEngine', () => {
         const workspaceFolder: string = path.join(tempFolder, 'workspaceWithConflictingConfig');
 
         const engine: Engine = await createEngineFromPlugin({...DEFAULT_CONFIG_FOR_TESTING,
-            auto_discover_eslint_config: true,
+            eslint_config_file: path.join(workspaceFolder, 'eslint.config.mjs'),
             config_root: workspaceFolder
         });
         const logEvents: LogEvent[] = [];
