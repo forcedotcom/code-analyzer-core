@@ -360,8 +360,8 @@ function formatHttpError(status: number, body: string): string {
     const statusText = STATUS_TEXT[status] ?? 'Error';
     const detail = summarizeErrorBody(body);
     return detail
-        ? `SFAP API returned ${status} ${statusText}: ${detail}`
-        : `SFAP API returned ${status} ${statusText}`;
+        ? `${status} ${statusText}: ${detail}`
+        : `${status} ${statusText}`;
 }
 
 const STATUS_TEXT: Record<number, string> = {

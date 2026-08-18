@@ -46,7 +46,7 @@ describe('ApexGuruAuthService', () => {
 
             await expect(authService.initialize({ targetOrg: 'invalid-org' }))
                 .rejects
-                .toThrow("Failed to authenticate with org 'invalid-org'");
+                .toThrow("We couldn't find the org 'invalid-org', or it isn't authenticated.");
         });
 
         it('should initialize with default org when no targetOrg provided', async () => {

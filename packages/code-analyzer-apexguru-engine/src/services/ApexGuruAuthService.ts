@@ -42,10 +42,9 @@ export class ApexGuruAuthService {
                 const errorMessage = err instanceof Error ? err.message : String(err);
                 this.emitLogEvent(LogLevel.Fine, `Failed to authenticate with org '${config.targetOrg}': ${errorMessage}`);
                 throw new Error(
-                    `Failed to authenticate with org '${config.targetOrg}'. ` +
-                    'Please verify the org alias/username and ensure you are authenticated:\n' +
-                    '  sf org list\n' +
-                    '  sf org login web'
+                    `We couldn't find the org '${config.targetOrg}', or it isn't authenticated.\n\n` +
+                    `Run sf org list to see available orgs.\n` +
+                    `Run sf org login web --alias ${config.targetOrg} to authenticate a new org.`
                 );
             }
         }

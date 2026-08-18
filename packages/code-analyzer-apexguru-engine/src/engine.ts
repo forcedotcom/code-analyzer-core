@@ -96,7 +96,7 @@ export class ApexGuruEngine extends EngineEventEmitter implements Engine {
             this.apexGuruService.cleanup();
             if (this.isInvalidSessionError(error)) {
                 return this.skipWithError('INVALID_SESSION',
-                    'ApexGuru skipped the scan because your org session is invalid or expired. (401 Unauthorized: invalid session).\n' +
+                    'Code Analyzer skipped ApexGuru scan because your org session is invalid or expired. (401 Unauthorized: invalid session).\n' +
                     'Re-authenticate: sf org login web\n' +
                     'Then run the scan again.',
                     '');
@@ -204,7 +204,8 @@ export class ApexGuruEngine extends EngineEventEmitter implements Engine {
             const detail = error instanceof Error ? error.message : String(error);
             if (this.isScanTimeoutError(error)) {
                 return this.skipWithError('SCAN_TIMEOUT',
-                    `Code Analyzer skipped ApexGuru scan because the workspace scan timed out after ${this.config.api_timeout_ms} ms.`,
+                    `Code Analyzer skipped ApexGuru scan because the workspace scan timed out after ${formatSeconds(this.config.api_timeout_ms)}. ` +
+                    'Increase the timeout setting in the Code Analyzer configuration file.',
                     '');
             }
             if (this.isApiUnavailableError(error)) {
@@ -286,6 +287,14 @@ export class ApexGuruEngine extends EngineEventEmitter implements Engine {
     private getTargetOrg(): string | undefined {
         return this.config.target_org;
     }
+}
+
+
+function formatSeconds(ms: number): string {
+    const seconds = ms / 1000;
+    // Drop the trailing ".0" for whole numbers, keep up to 1 decimal otherwise.
+    const rounded = Number.isInteger(seconds) ? seconds : Math.round(seconds * 10) / 10;
+    return `${rounded} ${rounded === 1 ? 'second' : 'seconds'}`;
 }
 
 /**
