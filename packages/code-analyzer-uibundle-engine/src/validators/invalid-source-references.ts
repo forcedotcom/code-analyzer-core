@@ -41,7 +41,7 @@ export async function validateInvalidSourceReferences(distPath: string): Promise
                     message: getMessage('SourceFileDoesNotExist', source, resolved),
                     file: mapPath,
                     startLine: 1,
-                    startColumn: 0,
+                    startColumn: 1,
                 });
             }
         }

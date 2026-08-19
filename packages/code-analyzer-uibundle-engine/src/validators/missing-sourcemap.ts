@@ -28,7 +28,7 @@ export async function validateMissingSourcemaps(distPath: string): Promise<Valid
             message: getMessage('MissingSourcemapForFile', path.relative(distPath, jsFile)),
             file: jsFile,
             startLine: 1,
-            startColumn: 0,
+            startColumn: 1,
         });
 
         let content: string;
@@ -44,7 +44,7 @@ export async function validateMissingSourcemaps(distPath: string): Promise<Valid
                 message: getMessage('OrphanJsWithDangerousApi', hits.join(", ")),
                 file: jsFile,
                 startLine: 1,
-                startColumn: 0,
+                startColumn: 1,
             });
         }
     }

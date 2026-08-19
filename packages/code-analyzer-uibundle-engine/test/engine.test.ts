@@ -108,12 +108,6 @@ describe('UIBundleEngine Tests', () => {
             expect(results.violations).toHaveLength(0);
         });
 
-        // Table-driven cases where a specific .js.map JSON is expected to trigger at
-        // least one violation of the named rule. Shared setup: an empty ui-bundle.json
-        // marker, a trivial dist/main.js, and the case's map JSON written adjacent.
-        // "AICA" (vlq-integrity out-of-range) decodes to [0, 1, 1, 0] — source index 1
-        // when sources.length is 1. "../src/missing.js" (invalid-source-references) is
-        // intentionally never created on disk.
         const perRuleViolationCases: Array<{ desc: string; rule: string; mapJson: unknown }> = [
             {
                 desc: 'path-leakage: absolute unix home path in sources[]',
@@ -183,17 +177,43 @@ describe('UIBundleEngine Tests', () => {
             expect(results.violations[0]!.ruleName).toEqual('missing-sourcemap');
         });
 
-        it('violations use 1-based line and column numbers', async () => {
+        it('emits SFCA 1-based startColumn for whole-file findings across missing-sourcemap, path-leakage, invalid-source-references and coverage-analysis', async () => {
             const engine = new UIBundleEngine();
             const tmp = makeTmpDir();
             writeFile(tmp, 'ui-bundle.json', '{}');
-            writeFile(tmp, 'dist/main.js', 'x\n');
+            writeFile(tmp, 'dist/orphan.js', 'document.cookie = "x=1";\n');
+            writeFile(tmp, 'dist/main.js', 'a'.repeat(200) + '\n');
+            writeFile(tmp, 'dist/main.js.map', JSON.stringify({
+                version: 3,
+                sources: ['/Users/attacker/src/main.js', '../src/missing.js'],
+                names: [],
+                mappings: '',
+            }));
+
             const results: EngineRunResults = await engine.runRules(
-                ['missing-sourcemap'],
+                ['missing-sourcemap', 'path-leakage', 'invalid-source-references', 'coverage-analysis'],
                 createRunOptions(new Workspace('id', [tmp])),
             );
-            expect(results.violations[0]!.codeLocations[0]!.startLine).toBeGreaterThanOrEqual(1);
-            expect(results.violations[0]!.codeLocations[0]!.startColumn).toBeGreaterThanOrEqual(1);
+
+            const byRule = new Map<string, number>();
+            for (const v of results.violations) {
+                byRule.set(v.ruleName, (byRule.get(v.ruleName) ?? 0) + 1);
+                expect(v.codeLocations[0]!.startLine).toBeGreaterThanOrEqual(1);
+                expect(v.codeLocations[0]!.startColumn).toBeGreaterThanOrEqual(1);
+            }
+            expect(byRule.get('missing-sourcemap')).toBeGreaterThan(0);
+            expect(byRule.get('path-leakage')).toBeGreaterThan(0);
+            expect(byRule.get('invalid-source-references')).toBeGreaterThan(0);
+
+            const wholeFile = results.violations.filter(v =>
+                v.ruleName === 'missing-sourcemap' ||
+                v.ruleName === 'path-leakage' ||
+                v.ruleName === 'invalid-source-references'
+            );
+            expect(wholeFile.length).toBeGreaterThan(0);
+            for (const v of wholeFile) {
+                expect(v.codeLocations[0]!.startColumn).toEqual(1);
+            }
         });
     });
 });

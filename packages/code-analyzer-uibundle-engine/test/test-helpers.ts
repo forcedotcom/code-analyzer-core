@@ -34,8 +34,6 @@ export function createRunOptions(workspace: Workspace): RunOptions {
     };
 }
 
-// Tracks tmp dirs created via makeTmpDir so an afterEach hook (installed once per
-// describe by installTmpDirCleanup) can remove them; prevents CI temp bloat.
 const _createdTmpDirs: string[] = [];
 
 export function makeTmpDir(prefix = 'uibundle-engine-'): string {
@@ -57,9 +55,6 @@ export function installTmpDirCleanup(): void {
     });
 }
 
-/**
- * Write a file, creating parent directories as needed. Returns the absolute path.
- */
 export function writeFile(root: string, relPath: string, contents: string): string {
     const abs = path.join(root, relPath);
     fs.mkdirSync(path.dirname(abs), { recursive: true });

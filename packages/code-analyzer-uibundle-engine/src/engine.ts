@@ -185,10 +185,10 @@ export class UIBundleEngine extends Engine {
 }
 
 function toViolation(finding: ValidatorFinding): Violation {
-    // SFCA requires 1-based line/column; validators emit 0-based columns.
+    // SFCA requires 1-based line/column; validators emit 1-based coordinates.
     const startLine: number = Math.max(1, finding.startLine ?? 1);
     const rawCol: number | undefined = finding.startColumn;
-    const startColumn: number = rawCol == null ? 1 : Math.max(1, rawCol + 1);
+    const startColumn: number = rawCol == null ? 1 : Math.max(1, rawCol);
     return {
         ruleName: finding.ruleName,
         message: finding.message,

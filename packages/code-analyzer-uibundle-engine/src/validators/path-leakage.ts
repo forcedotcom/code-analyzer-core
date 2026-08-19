@@ -30,7 +30,7 @@ export async function validatePathLeakage(distPath: string): Promise<ValidatorRe
                     message: getMessage('PathLeakageFinding', source),
                     file: mapPath,
                     startLine: 1,
-                    startColumn: 0,
+                    startColumn: 1,
                 });
             }
         }

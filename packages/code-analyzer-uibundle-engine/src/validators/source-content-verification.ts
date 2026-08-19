@@ -310,7 +310,7 @@ async function runAstChecks(
                 message: getMessage('SourceContentUnmappedNode', node.type, node.line, node.column, truncate(node.snippet, 80)),
                 file: jsPath,
                 startLine: node.line,
-                startColumn: node.column,
+                startColumn: node.column + 1,
             });
         }
     }
@@ -339,7 +339,7 @@ async function runAstChecks(
             message: getMessage('SourceContentDangerousUnmapped', n.type, n.line, n.column, truncate(n.snippet, 100)),
             file: jsPath,
             startLine: n.line,
-            startColumn: n.column,
+            startColumn: n.column + 1,
         });
     }
 

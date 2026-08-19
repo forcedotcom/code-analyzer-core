@@ -62,6 +62,9 @@ describe('coverage-analysis file-walker', () => {
         const messages = res.findings.map(f => f.message).join(' | ');
         expect(res.findings.length).toBeGreaterThan(0);
         expect(messages.length).toBeGreaterThan(0);
+        // Region starts at 0-based col 0 in the analyzer → validator emits 1-based col 1.
+        const region = res.findings.find(f => f.startColumn !== undefined);
+        expect(region!.startColumn).toEqual(1);
     });
 
     it('skipped when distPath is a file rather than a directory', async () => {
