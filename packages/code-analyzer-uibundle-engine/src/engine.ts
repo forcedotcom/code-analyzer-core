@@ -38,6 +38,7 @@ import {
 import { buildSourceIndex, type SourceIndex } from "./validators/sourcemap-io";
 import type { ValidatorFinding, ValidatorResult } from "./validators/types";
 import { VLQ_INTEGRITY_RULE, validateVlqIntegrity } from "./validators/vlq-integrity";
+import { getMessage } from "./messages";
 
 interface BundleTarget {
     distPath: string;
@@ -58,7 +59,7 @@ export class UIBundleEngine extends Engine {
     }
 
     async describeRules(_describeOptions: DescribeOptions): Promise<RuleDescription[]> {
-        return RULES;
+        return [...RULES];
     }
 
     async runRules(ruleNames: string[], runOptions: RunOptions): Promise<EngineRunResults> {
@@ -67,10 +68,7 @@ export class UIBundleEngine extends Engine {
 
         const targets: BundleTarget[] = await this.findBundleTargets(runOptions);
         if (targets.length === 0) {
-            this.emitLogEvent(
-                LogLevel.Info,
-                `[${UIBundleEngine.NAME}] No UI Bundle dist/ directories found. Run 'npm run build' in each UI Bundle before code analysis.`,
-            );
+            this.emitLogEvent(LogLevel.Info, getMessage('NoBundleTargetsFound', UIBundleEngine.NAME));
             return { violations: [] };
         }
 
@@ -120,7 +118,7 @@ export class UIBundleEngine extends Engine {
             for (const [ruleName] of activeSourceRules) {
                 this.emitLogEvent(
                     LogLevel.Warn,
-                    `[${UIBundleEngine.NAME}] Skipping ${ruleName} for ${target.distPath}: could not locate a source directory sibling to dist/.`,
+                    getMessage('SkippedNoSourceTree', UIBundleEngine.NAME, ruleName, target.distPath),
                 );
             }
             return;
@@ -147,7 +145,7 @@ export class UIBundleEngine extends Engine {
         if (result.skipped) {
             this.emitLogEvent(
                 LogLevel.Warn,
-                `[${UIBundleEngine.NAME}] ${ruleName} skipped for ${distPath}: ${result.skipped.reason}`,
+                getMessage('SkippedForTarget', UIBundleEngine.NAME, ruleName, distPath, result.skipped.reason),
             );
             return;
         }
@@ -210,7 +208,7 @@ async function isDirectory(p: string): Promise<boolean> {
 
 function findAncestorNamed(filePath: string, name: string): string | null {
     const parts = filePath.split(path.sep);
-    const idx = parts.lastIndexOf(name);
-    if (idx <= 0) return null;
-    return parts.slice(0, idx + 1).join(path.sep);
+    const lastNameSegmentIdx = parts.lastIndexOf(name);
+    if (lastNameSegmentIdx <= 0) return null;
+    return parts.slice(0, lastNameSegmentIdx + 1).join(path.sep);
 }

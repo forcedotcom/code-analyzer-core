@@ -10,11 +10,13 @@ import {
     changeWorkingDirectoryToPackageRoot,
     createDescribeOptions,
     createRunOptions,
+    installTmpDirCleanup,
     makeTmpDir,
     writeFile,
 } from "./test-helpers";
 
 changeWorkingDirectoryToPackageRoot();
+installTmpDirCleanup();
 
 const TEST_DATA_FOLDER: string = path.join(__dirname, 'test-data');
 const GOLDFILE = 'uibundle-engine-goldfile.json';
@@ -106,82 +108,66 @@ describe('UIBundleEngine Tests', () => {
             expect(results.violations).toHaveLength(0);
         });
 
-        it('path-leakage: raises a violation when sources[] contains an absolute unix home path', async () => {
-            const engine = new UIBundleEngine();
-            const tmp = makeTmpDir();
-            writeFile(tmp, 'ui-bundle.json', '{}');
-            writeFile(tmp, 'dist/main.js', 'x\n');
-            writeFile(tmp, 'dist/main.js.map', JSON.stringify({
-                version: 3,
-                sources: ['/Users/attacker/src/main.js'],
-                names: [],
-                mappings: '',
-            }));
-            const results: EngineRunResults = await engine.runRules(
-                ['path-leakage'],
-                createRunOptions(new Workspace('id', [tmp])),
-            );
-            const leakage = results.violations.filter(v => v.ruleName === 'path-leakage');
-            expect(leakage.length).toBeGreaterThan(0);
-        });
+        // Table-driven cases where a specific .js.map JSON is expected to trigger at
+        // least one violation of the named rule. Shared setup: an empty ui-bundle.json
+        // marker, a trivial dist/main.js, and the case's map JSON written adjacent.
+        // "AICA" (vlq-integrity out-of-range) decodes to [0, 1, 1, 0] — source index 1
+        // when sources.length is 1. "../src/missing.js" (invalid-source-references) is
+        // intentionally never created on disk.
+        const perRuleViolationCases: Array<{ desc: string; rule: string; mapJson: unknown }> = [
+            {
+                desc: 'path-leakage: absolute unix home path in sources[]',
+                rule: 'path-leakage',
+                mapJson: {
+                    version: 3,
+                    sources: ['/Users/attacker/src/main.js'],
+                    names: [],
+                    mappings: '',
+                },
+            },
+            {
+                desc: 'vlq-integrity: sourcemap JSON has no "mappings" field',
+                rule: 'vlq-integrity',
+                mapJson: {
+                    version: 3,
+                    sources: ['../src/main.js'],
+                    names: [],
+                },
+            },
+            {
+                desc: 'vlq-integrity: segment source index out of range',
+                rule: 'vlq-integrity',
+                mapJson: {
+                    version: 3,
+                    sources: ['../src/main.js'],
+                    names: [],
+                    mappings: 'AICA',
+                },
+            },
+            {
+                desc: 'invalid-source-references: sources[] entry does not exist on disk',
+                rule: 'invalid-source-references',
+                mapJson: {
+                    version: 3,
+                    sources: ['../src/missing.js'],
+                    names: [],
+                    mappings: '',
+                },
+            },
+        ];
 
-        it('vlq-integrity: raises a violation when the sourcemap JSON has no "mappings" field', async () => {
+        it.each(perRuleViolationCases)('$desc', async ({ rule, mapJson }) => {
             const engine = new UIBundleEngine();
             const tmp = makeTmpDir();
             writeFile(tmp, 'ui-bundle.json', '{}');
             writeFile(tmp, 'dist/main.js', 'x\n');
-            writeFile(tmp, 'dist/main.js.map', JSON.stringify({
-                version: 3,
-                sources: ['../src/main.js'],
-                names: [],
-            }));
+            writeFile(tmp, 'dist/main.js.map', JSON.stringify(mapJson));
             const results: EngineRunResults = await engine.runRules(
-                ['vlq-integrity'],
+                [rule],
                 createRunOptions(new Workspace('id', [tmp])),
             );
-            const vlq = results.violations.filter(v => v.ruleName === 'vlq-integrity');
-            expect(vlq.length).toBeGreaterThan(0);
-        });
-
-        it('vlq-integrity: raises a violation when segment source index is out of range', async () => {
-            const engine = new UIBundleEngine();
-            const tmp = makeTmpDir();
-            writeFile(tmp, 'ui-bundle.json', '{}');
-            writeFile(tmp, 'dist/main.js', 'x\n');
-            // Single VLQ segment "AICA" decodes to [0, 1, 1, 0] — source index 1,
-            // but sources.length is 1 (indices 0..0), so 1 is out of range.
-            writeFile(tmp, 'dist/main.js.map', JSON.stringify({
-                version: 3,
-                sources: ['../src/main.js'],
-                names: [],
-                mappings: 'AICA',
-            }));
-            const results: EngineRunResults = await engine.runRules(
-                ['vlq-integrity'],
-                createRunOptions(new Workspace('id', [tmp])),
-            );
-            const vlq = results.violations.filter(v => v.ruleName === 'vlq-integrity');
-            expect(vlq.length).toBeGreaterThan(0);
-        });
-
-        it('invalid-source-references: raises a violation when a sources[] entry does not exist on disk', async () => {
-            const engine = new UIBundleEngine();
-            const tmp = makeTmpDir();
-            writeFile(tmp, 'ui-bundle.json', '{}');
-            writeFile(tmp, 'dist/main.js', 'x\n');
-            writeFile(tmp, 'dist/main.js.map', JSON.stringify({
-                version: 3,
-                sources: ['../src/missing.js'],
-                names: [],
-                mappings: '',
-            }));
-            // Note: no src/missing.js on disk
-            const results: EngineRunResults = await engine.runRules(
-                ['invalid-source-references'],
-                createRunOptions(new Workspace('id', [tmp])),
-            );
-            const badRefs = results.violations.filter(v => v.ruleName === 'invalid-source-references');
-            expect(badRefs.length).toBeGreaterThan(0);
+            const matched = results.violations.filter(v => v.ruleName === rule);
+            expect(matched.length).toBeGreaterThan(0);
         });
 
         it('bundle target detection: workspace containing files under dist/ still triggers rule execution', async () => {

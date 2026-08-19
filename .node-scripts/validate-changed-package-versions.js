@@ -115,6 +115,7 @@ function getLatestReleasedVersion(changedPackage) {
 function isPackageThatHasNotPublished(changedPackage) {
     return [
         "packages/ENGINE-TEMPLATE",
+        // TODO: remove once @salesforce/code-analyzer-uibundle-engine is published to npm (W-23659201)
         "packages/code-analyzer-uibundle-engine"
     ].includes(changedPackage.replace("\\","/"));
 }

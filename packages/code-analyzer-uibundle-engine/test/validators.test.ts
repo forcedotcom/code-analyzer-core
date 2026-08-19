@@ -27,9 +27,10 @@ import {
     validateTokenConsistency,
 } from "../src/validators/token-consistency";
 import { validateVlqIntegrity } from "../src/validators/vlq-integrity";
-import { changeWorkingDirectoryToPackageRoot, createRunOptions, makeTmpDir, writeFile } from "./test-helpers";
+import { changeWorkingDirectoryToPackageRoot, createRunOptions, installTmpDirCleanup, makeTmpDir, writeFile } from "./test-helpers";
 
 changeWorkingDirectoryToPackageRoot();
+installTmpDirCleanup();
 
 describe('classification', () => {
     it('normalizes leading dot-slash and dot-dot segments and bundler URL schemes', () => {

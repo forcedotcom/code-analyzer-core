@@ -19,9 +19,10 @@ import {
     validateTokenConsistency,
 } from "../src/validators/token-consistency";
 import { validateVlqIntegrity } from "../src/validators/vlq-integrity";
-import { changeWorkingDirectoryToPackageRoot, makeTmpDir, writeFile } from "./test-helpers";
+import { changeWorkingDirectoryToPackageRoot, installTmpDirCleanup, makeTmpDir, writeFile } from "./test-helpers";
 
 changeWorkingDirectoryToPackageRoot();
+installTmpDirCleanup();
 
 describe('missing-sourcemap dangerous-API orphan JS branch', () => {
     it('emits an extra finding when an orphan JS contains a dangerous API pattern', async () => {
@@ -117,6 +118,14 @@ describe('vlq-integrity file-walker', () => {
         const res = await validateVlqIntegrity(path.join(tmp, 'dist'));
         const nameOob = res.findings.filter(f => /name/i.test(f.message));
         expect(nameOob.length).toBeGreaterThan(0);
+    });
+
+    it('emits a SourcemapNotValidJson finding when a .js.map is not valid JSON', async () => {
+        const tmp = makeTmpDir();
+        writeFile(tmp, 'dist/main.js.map', '{ not: valid json');
+        const res = await validateVlqIntegrity(path.join(tmp, 'dist'));
+        const jsonErr = res.findings.filter(f => /not valid json/i.test(f.message));
+        expect(jsonErr.length).toBeGreaterThan(0);
     });
 });
 
@@ -263,6 +272,19 @@ describe('token-consistency file-walker', () => {
             distPath: path.join(tmp, 'dist.js'),
         });
         expect(res.skipped).toBeDefined();
+    });
+
+    it('quietly skips a .js.map that TraceMap cannot load', async () => {
+        const tmp = makeTmpDir();
+        writeFile(tmp, 'src/main.js', 'x\n');
+        writeFile(tmp, 'dist/main.js', 'x\n');
+        writeFile(tmp, 'dist/main.js.map', 'not valid json');
+        const res = await validateTokenConsistency({
+            sourcePath: path.join(tmp, 'src'),
+            distPath: path.join(tmp, 'dist'),
+        });
+        expect(res.skipped).toBeUndefined();
+        expect(res.findings).toEqual([]);
     });
 
     it('analyzeTokenConsistency emits a name mismatch when names[] entry is absent from source', () => {

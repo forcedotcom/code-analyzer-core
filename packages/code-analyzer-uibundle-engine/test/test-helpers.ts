@@ -34,13 +34,27 @@ export function createRunOptions(workspace: Workspace): RunOptions {
     };
 }
 
-/**
- * Create a fresh empty temp directory for a test and return its path.
- * The directory is created under the OS tempdir and is safe to write inside;
- * callers should clean it up in afterEach/afterAll or accept OS temp cleanup.
- */
+// Tracks tmp dirs created via makeTmpDir so an afterEach hook (installed once per
+// describe by installTmpDirCleanup) can remove them; prevents CI temp bloat.
+const _createdTmpDirs: string[] = [];
+
 export function makeTmpDir(prefix = 'uibundle-engine-'): string {
-    return fs.mkdtempSync(path.join(os.tmpdir(), prefix));
+    const dir = fs.mkdtempSync(path.join(os.tmpdir(), prefix));
+    _createdTmpDirs.push(dir);
+    return dir;
+}
+
+export function installTmpDirCleanup(): void {
+    afterEach(() => {
+        while (_createdTmpDirs.length > 0) {
+            const dir = _createdTmpDirs.pop()!;
+            try {
+                fs.rmSync(dir, { recursive: true, force: true });
+            } catch {
+                // Best-effort cleanup — a stray tmp dir is not worth failing a test.
+            }
+        }
+    });
 }
 
 /**

@@ -25,7 +25,7 @@
         "tags": [
             "UIBundleIntegrity"
         ],
-        "description": "Every file referenced by a sourcemap sources[] entry (that does not have inline sourcesContent) must exist on disk. Missing files indicate tampering or an incomplete submission.",
+        "description": "Every file referenced by a sourcemap sources[] entry (that doesn't have inline sourcesContent) must exist on disk. Missing files indicate tampering or an incomplete submission.",
         "resourceUrls": []
     },
     {

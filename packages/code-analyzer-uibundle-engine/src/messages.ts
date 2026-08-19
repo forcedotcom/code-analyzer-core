@@ -2,7 +2,7 @@ import {getMessageFromCatalog} from "@salesforce/code-analyzer-engine-api";
 
 const MESSAGE_CATALOG : { [key: string]: string } = {
     UnsupportedEngineName:
-        `The UIBundleEnginePlugin does not support an engine with name '%s'.`,
+        `The UIBundleEnginePlugin doesn't support an engine with name '%s'.`,
 
     NoBundleTargetsFound:
         `[%s] No UI Bundle dist/ directories found. Run 'npm run build' in each UI Bundle before code analysis.`,
@@ -20,7 +20,7 @@ const MESSAGE_CATALOG : { [key: string]: string } = {
         `Sourcemap sources[] entries must be relative paths. Absolute paths leak developer environment details (usernames, filesystem layout) into shipped artifacts.`,
 
     InvalidSourceReferencesRuleDescription:
-        `Every file referenced by a sourcemap sources[] entry (that does not have inline sourcesContent) must exist on disk. Missing files indicate tampering or an incomplete submission.`,
+        `Every file referenced by a sourcemap sources[] entry (that doesn't have inline sourcesContent) must exist on disk. Missing files indicate tampering or an incomplete submission.`,
 
     VlqIntegrityRuleDescription:
         `Sourcemap "mappings" field must be valid Base64 VLQ and reference in-range source/name indices. Malformed mappings signal a fabricated or corrupted sourcemap.`,
@@ -47,7 +47,7 @@ const MESSAGE_CATALOG : { [key: string]: string } = {
         `Sourcemap references an absolute local path: "%s". Sources should be relative to protect developer environment details.`,
 
     SourceFileDoesNotExist:
-        `Sourcemap references a source file that does not exist on disk: "%s" (resolved to %s).`,
+        `Sourcemap references a source file that doesn't exist on disk: "%s" (resolved to %s).`,
 
     SourcemapNotValidJson:
         `Sourcemap is not valid JSON: %s`,
@@ -131,7 +131,7 @@ const MESSAGE_CATALOG : { [key: string]: string } = {
         `Token type consistency %s%% is below expected threshold %s%% (%d/%d sampled tokens agree between compiled and source positions).`,
 
     TokenNameMismatchSummary:
-        `%d sourcemap name(s) do not exist at the claimed source position (±%d col tolerance).`,
+        `%d sourcemap name(s) don't exist at the claimed source position (±%d col tolerance).`,
 
     TokenNameMismatchDetail:
         `Name mismatch: expected "%s" at %s:%d:%d, found "%s".`

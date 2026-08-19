@@ -41,21 +41,39 @@ export interface LoadedSourceMap {
     map: RawSourceMap;
 }
 
-export async function collectSourceMaps(root: string): Promise<LoadedSourceMap[]> {
-    const out: LoadedSourceMap[] = [];
+export interface SourceMapParseError {
+    path: string;
+    message: string;
+}
+
+export interface CollectedSourceMaps {
+    maps: LoadedSourceMap[];
+    parseErrors: SourceMapParseError[];
+}
+
+export async function collectSourceMaps(root: string): Promise<CollectedSourceMaps> {
+    const maps: LoadedSourceMap[] = [];
+    const parseErrors: SourceMapParseError[] = [];
     await walk(root, async (file) => {
         if (!file.endsWith(".js.map")) return;
+        let raw: string;
         try {
-            const raw = await fs.readFile(file, "utf8");
-            const map = JSON.parse(raw) as RawSourceMap;
-            if (typeof map?.mappings === "string" && Array.isArray(map?.sources)) {
-                out.push({ path: file, map });
-            }
+            raw = await fs.readFile(file, "utf8");
         } catch {
-            // vlq-integrity surfaces malformed JSON
+            return;
+        }
+        let map: RawSourceMap;
+        try {
+            map = JSON.parse(raw) as RawSourceMap;
+        } catch (err) {
+            parseErrors.push({ path: file, message: (err as Error).message });
+            return;
+        }
+        if (typeof map?.mappings === "string" && Array.isArray(map?.sources)) {
+            maps.push({ path: file, map });
         }
     });
-    return out;
+    return { maps, parseErrors };
 }
 
 export async function walk(root: string, visit: (file: string) => Promise<void>): Promise<void> {

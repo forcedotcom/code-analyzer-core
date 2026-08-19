@@ -11,8 +11,16 @@ const DATA_URL = /^data:/i;
 const HTTP_URL = /^https?:\/\//i;
 
 export async function validateInvalidSourceReferences(distPath: string): Promise<ValidatorResult> {
-    const maps = await collectSourceMaps(distPath);
+    const { maps, parseErrors } = await collectSourceMaps(distPath);
     const findings: ValidatorFinding[] = [];
+
+    for (const { path: mapPath, message } of parseErrors) {
+        findings.push({
+            ruleName: INVALID_SOURCE_REFERENCES_RULE,
+            message: getMessage('SourcemapNotValidJson', message),
+            file: mapPath,
+        });
+    }
 
     for (const { path: mapPath, map } of maps) {
         const mapDir = path.dirname(mapPath);
@@ -33,7 +41,7 @@ export async function validateInvalidSourceReferences(distPath: string): Promise
                     message: getMessage('SourceFileDoesNotExist', source, resolved),
                     file: mapPath,
                     startLine: 1,
-                    startColumn: 1,
+                    startColumn: 0,
                 });
             }
         }

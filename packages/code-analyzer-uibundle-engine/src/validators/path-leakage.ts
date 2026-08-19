@@ -4,14 +4,22 @@ import type { ValidatorFinding, ValidatorResult } from "./types";
 
 export const PATH_LEAKAGE_RULE = "path-leakage";
 
-const ABSOLUTE_UNIX_HOME = /^\/(?:Users|home|root)\//;
+const ABSOLUTE_UNIX_ROOT = /^\/(?:Users|home|root|app|build|opt|tmp|var)\//;
 const ABSOLUTE_WIN_DRIVE = /^[A-Za-z]:[\\/]/;
 const WIN_UNC = /^\\\\/;
 const FILE_URL = /^file:\/\//i;
 
 export async function validatePathLeakage(distPath: string): Promise<ValidatorResult> {
-    const maps = await collectSourceMaps(distPath);
+    const { maps, parseErrors } = await collectSourceMaps(distPath);
     const findings: ValidatorFinding[] = [];
+
+    for (const { path: mapPath, message } of parseErrors) {
+        findings.push({
+            ruleName: PATH_LEAKAGE_RULE,
+            message: getMessage('SourcemapNotValidJson', message),
+            file: mapPath,
+        });
+    }
 
     for (const { path: mapPath, map } of maps) {
         for (const source of map.sources) {
@@ -22,7 +30,7 @@ export async function validatePathLeakage(distPath: string): Promise<ValidatorRe
                     message: getMessage('PathLeakageFinding', source),
                     file: mapPath,
                     startLine: 1,
-                    startColumn: 1,
+                    startColumn: 0,
                 });
             }
         }
@@ -32,7 +40,7 @@ export async function validatePathLeakage(distPath: string): Promise<ValidatorRe
 
 function isLeaking(source: string): boolean {
     return (
-        ABSOLUTE_UNIX_HOME.test(source) ||
+        ABSOLUTE_UNIX_ROOT.test(source) ||
         ABSOLUTE_WIN_DRIVE.test(source) ||
         WIN_UNC.test(source) ||
         FILE_URL.test(source)

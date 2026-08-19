@@ -60,7 +60,7 @@ export async function validateCoverageAnalysis(distPath: string): Promise<Valida
                 message: getMessage('CoverageUnmappedRegion', region.line, region.startCol, region.endCol, region.length),
                 file: jsPath,
                 startLine: region.line,
-                startColumn: region.startCol + 1,
+                startColumn: region.startCol,
             });
         }
 
