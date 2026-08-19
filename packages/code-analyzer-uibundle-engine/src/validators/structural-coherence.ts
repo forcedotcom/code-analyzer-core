@@ -1,8 +1,7 @@
 import { promises as fs } from "node:fs";
-import * as path from "node:path";
 import { TraceMap, eachMapping, sourceContentFor } from "@jridgewell/trace-mapping";
-import { isAsset, isDependency, normalizeSourcePath, toPosixPath } from "./classification";
-import { walk } from "./sourcemap-io";
+import { isAsset, isDependency, normalizeSourcePath } from "./classification";
+import { buildSourceIndex, walk, type SourceIndex } from "./sourcemap-io";
 import { getMessage } from "../messages";
 import type { ValidatorFinding, ValidatorResult } from "./types";
 
@@ -23,6 +22,7 @@ interface BoundsViolation {
 export interface StructuralCoherenceOptions {
     sourcePath: string;
     distPath: string;
+    sourceIndex?: SourceIndex;
 }
 
 export async function validateStructuralCoherence(
@@ -43,8 +43,7 @@ export async function validateStructuralCoherence(
         return { findings: [], skipped: { reason: "source and dist must both be directories" } };
     }
 
-    const rawIndex = await indexSourceFiles(options.sourcePath);
-    const sourceIndex = expandIndexWithBase(rawIndex, path.basename(options.sourcePath));
+    const sourceIndex = options.sourceIndex ?? await buildSourceIndex(options.sourcePath);
     const findings: ValidatorFinding[] = [];
 
     await walk(options.distPath, async (jsPath) => {
@@ -115,16 +114,12 @@ export function analyzeCoherence(
     whitespaceSampleCount: number;
     suspiciousJumpRatio: number;
 } {
-    const submittedLineLens = new Map<string, number[]>();
+    const submittedLines = new Map<string, string[]>();
     for (const [key, content] of sourceContents) {
-        submittedLineLens.set(
-            key,
-            content.split("\n").map((l) => l.length),
-        );
+        submittedLines.set(key, content.split("\n"));
     }
 
-    const embeddedLineLens = new Map<string, number[]>();
-    const embeddedText = new Map<string, string>();
+    const embeddedLines = new Map<string, string[]>();
 
     let totalMappingsChecked = 0;
     const boundsViolations: BoundsViolation[] = [];
@@ -148,28 +143,26 @@ export function analyzeCoherence(
         const srcCol = m.originalColumn;
         const dstLine = m.generatedLine - 1;
 
-        let lineLens = submittedLineLens.get(normalized);
-        if (!lineLens) {
-            let cached = embeddedLineLens.get(srcRaw);
-            if (!cached) {
+        let lines = submittedLines.get(normalized);
+        if (!lines) {
+            lines = embeddedLines.get(srcRaw);
+            if (!lines) {
                 try {
                     const contents = sourceContentFor(tracer, srcRaw);
                     if (contents != null) {
-                        cached = contents.split("\n").map((l) => l.length);
-                        embeddedLineLens.set(srcRaw, cached);
-                        embeddedText.set(srcRaw, contents);
+                        lines = contents.split("\n");
+                        embeddedLines.set(srcRaw, lines);
                     }
                 } catch {
                     // skip
                 }
             }
-            if (!cached) return;
-            lineLens = cached;
+            if (!lines) return;
         }
 
         totalMappingsChecked++;
 
-        const actualLines = lineLens.length;
+        const actualLines = lines.length;
         if (srcLine >= actualLines) {
             boundsViolations.push({
                 sourceFile: normalized,
@@ -178,7 +171,7 @@ export function analyzeCoherence(
                 actualLines,
             });
         } else {
-            const lineLen = lineLens[srcLine]!;
+            const lineLen = lines[srcLine]!.length;
             if (srcCol > lineLen) {
                 boundsViolations.push({
                     sourceFile: normalized,
@@ -191,8 +184,7 @@ export function analyzeCoherence(
 
         if (sampleIndex % WHITESPACE_SAMPLE_INTERVAL === 0 && srcLine < actualLines) {
             whitespaceSampleCount++;
-            const sourceText = sourceContents.get(normalized) ?? embeddedText.get(srcRaw) ?? null;
-            if (sourceText != null && pointsToWhitespaceOrComment(sourceText, srcLine, srcCol)) {
+            if (pointsToWhitespaceOrCommentInLines(lines, srcLine, srcCol)) {
                 whitespaceOnlyMappings++;
             }
         }
@@ -220,7 +212,10 @@ export function analyzeCoherence(
 }
 
 export function pointsToWhitespaceOrComment(source: string, line0: number, col0: number): boolean {
-    const lines = source.split("\n");
+    return pointsToWhitespaceOrCommentInLines(source.split("\n"), line0, col0);
+}
+
+function pointsToWhitespaceOrCommentInLines(lines: string[], line0: number, col0: number): boolean {
     if (line0 >= lines.length) return false;
     const lineText = lines[line0]!;
     if (col0 >= lineText.length) return true;
@@ -242,27 +237,3 @@ export function pointsToWhitespaceOrComment(source: string, line0: number, col0:
     return false;
 }
 
-const INDEX_IGNORE_PREFIXES = ["node_modules", ".git", "dist"];
-
-function expandIndexWithBase(index: Map<string, string>, base: string): Map<string, string> {
-    const out = new Map(index);
-    for (const [rel, content] of index) {
-        out.set(`${base}/${rel}`, content);
-    }
-    return out;
-}
-
-async function indexSourceFiles(sourcePath: string): Promise<Map<string, string>> {
-    const index = new Map<string, string>();
-    await walk(sourcePath, async (abs) => {
-        const rel = toPosixPath(path.relative(sourcePath, abs));
-        if (INDEX_IGNORE_PREFIXES.some((prefix) => rel.startsWith(prefix))) return;
-        try {
-            const content = await fs.readFile(abs, "utf8");
-            index.set(rel, content);
-        } catch {
-            // skip
-        }
-    });
-    return index;
-}

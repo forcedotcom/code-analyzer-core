@@ -1,5 +1,30 @@
 import { promises as fs } from "node:fs";
 import * as path from "node:path";
+import { toPosixPath } from "./classification";
+
+export type SourceIndex = Map<string, string>;
+
+const INDEX_IGNORE_PREFIXES = ["node_modules", ".git", "dist"];
+
+export async function buildSourceIndex(sourcePath: string): Promise<SourceIndex> {
+    const raw: SourceIndex = new Map();
+    await walk(sourcePath, async (abs) => {
+        const rel = toPosixPath(path.relative(sourcePath, abs));
+        if (INDEX_IGNORE_PREFIXES.some((prefix) => rel.startsWith(prefix))) return;
+        try {
+            const content = await fs.readFile(abs, "utf8");
+            raw.set(rel, content);
+        } catch {
+            // skip
+        }
+    });
+    const base = path.basename(sourcePath);
+    const expanded: SourceIndex = new Map(raw);
+    for (const [rel, content] of raw) {
+        expanded.set(`${base}/${rel}`, content);
+    }
+    return expanded;
+}
 
 export interface RawSourceMap {
     version: number;

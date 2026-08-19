@@ -1,8 +1,7 @@
 import { promises as fs } from "node:fs";
-import * as path from "node:path";
 import { TraceMap, eachMapping, sourceContentFor } from "@jridgewell/trace-mapping";
-import { isAsset, isDependency, isVirtualSource, normalizeSourcePath, toPosixPath } from "./classification";
-import { walk } from "./sourcemap-io";
+import { isAsset, isDependency, isVirtualSource, normalizeSourcePath } from "./classification";
+import { buildSourceIndex, walk, type SourceIndex } from "./sourcemap-io";
 import { getMessage } from "../messages";
 import type { ValidatorFinding, ValidatorResult } from "./types";
 
@@ -32,6 +31,7 @@ interface NameMismatch {
 export interface TokenConsistencyOptions {
     sourcePath: string;
     distPath: string;
+    sourceIndex?: SourceIndex;
 }
 
 export async function validateTokenConsistency(
@@ -52,8 +52,7 @@ export async function validateTokenConsistency(
         return { findings: [], skipped: { reason: "source and dist must both be directories" } };
     }
 
-    const rawIndex = await indexSourceFiles(options.sourcePath);
-    const sourceIndex = expandIndexWithBase(rawIndex, path.basename(options.sourcePath));
+    const sourceIndex = options.sourceIndex ?? await buildSourceIndex(options.sourcePath);
     const findings: ValidatorFinding[] = [];
 
     await walk(options.distPath, async (jsPath) => {
@@ -125,7 +124,13 @@ export function analyzeTokenConsistency(
     nameMismatches: NameMismatch[];
     consistencyScore: number;
 } {
-    const embeddedCache = new Map<string, string | null>();
+    const compiledLines = compiledJs.split("\n");
+    const linesCache = new Map<string, string[]>();
+    for (const [key, content] of sourceContents) {
+        linesCache.set(key, content.split("\n"));
+    }
+    const embeddedLinesCache = new Map<string, string[] | null>();
+
     let totalSampled = 0;
     let consistent = 0;
     let inconsistent = 0;
@@ -142,21 +147,22 @@ export function analyzeTokenConsistency(
 
         if (isDependency(normalized) || isAsset(normalized) || isVirtualSource(normalized)) return;
 
-        let sourceText = sourceContents.get(normalized) ?? null;
-        if (sourceText == null) {
-            if (embeddedCache.has(srcRaw)) {
-                sourceText = embeddedCache.get(srcRaw) ?? null;
+        let sourceLines = linesCache.get(normalized) ?? null;
+        if (sourceLines == null) {
+            if (embeddedLinesCache.has(srcRaw)) {
+                sourceLines = embeddedLinesCache.get(srcRaw) ?? null;
             } else {
                 try {
                     const c = sourceContentFor(tracer, srcRaw);
-                    embeddedCache.set(srcRaw, c);
-                    sourceText = c;
+                    const split = c != null ? c.split("\n") : null;
+                    embeddedLinesCache.set(srcRaw, split);
+                    sourceLines = split;
                 } catch {
-                    embeddedCache.set(srcRaw, null);
+                    embeddedLinesCache.set(srcRaw, null);
                 }
             }
         }
-        if (sourceText == null) return;
+        if (sourceLines == null) return;
 
         totalSampled++;
 
@@ -166,7 +172,7 @@ export function analyzeTokenConsistency(
         const dstCol = m.generatedColumn;
 
         if (m.name != null) {
-            const [found, foundText] = nameExistsNear(sourceText, srcLine, srcCol, m.name);
+            const [found, foundText] = nameExistsNearInLines(sourceLines, srcLine, srcCol, m.name);
             if (!found) {
                 nameMismatches.push({
                     expectedName: m.name,
@@ -178,8 +184,8 @@ export function analyzeTokenConsistency(
             }
         }
 
-        const genCat = classifyTokenAt(compiledJs, dstLine, dstCol);
-        const srcCat = classifyTokenAt(sourceText, srcLine, srcCol);
+        const genCat = classifyTokenAtInLines(compiledLines, dstLine, dstCol);
+        const srcCat = classifyTokenAtInLines(sourceLines, srcLine, srcCol);
         if (categoriesAreConsistent(genCat, srcCat)) {
             consistent++;
         } else {
@@ -193,7 +199,10 @@ export function analyzeTokenConsistency(
 }
 
 export function classifyTokenAt(text: string, line0: number, col0: number): TokenCategory {
-    const lines = text.split("\n");
+    return classifyTokenAtInLines(text.split("\n"), line0, col0);
+}
+
+function classifyTokenAtInLines(lines: string[], line0: number, col0: number): TokenCategory {
     if (line0 >= lines.length) return "Other";
     const lineText = lines[line0]!;
     if (col0 >= lineText.length) return "Other";
@@ -216,13 +225,12 @@ function categoriesAreConsistent(gen: TokenCategory, src: TokenCategory): boolea
     return false;
 }
 
-function nameExistsNear(
-    source: string,
+function nameExistsNearInLines(
+    lines: string[],
     line0: number,
     col0: number,
     expected: string,
 ): [boolean, string] {
-    const lines = source.split("\n");
     if (line0 >= lines.length) return [false, ""];
     const lineText = lines[line0]!;
 
@@ -252,27 +260,3 @@ function extractWordAt(line: string, col: number, maxLen: number): string {
     return out;
 }
 
-const INDEX_IGNORE_PREFIXES = ["node_modules", ".git", "dist"];
-
-function expandIndexWithBase(index: Map<string, string>, base: string): Map<string, string> {
-    const out = new Map(index);
-    for (const [rel, content] of index) {
-        out.set(`${base}/${rel}`, content);
-    }
-    return out;
-}
-
-async function indexSourceFiles(sourcePath: string): Promise<Map<string, string>> {
-    const index = new Map<string, string>();
-    await walk(sourcePath, async (abs) => {
-        const rel = toPosixPath(path.relative(sourcePath, abs));
-        if (INDEX_IGNORE_PREFIXES.some((prefix) => rel.startsWith(prefix))) return;
-        try {
-            const content = await fs.readFile(abs, "utf8");
-            index.set(rel, content);
-        } catch {
-            // skip
-        }
-    });
-    return index;
-}

@@ -126,11 +126,42 @@ export function analyzeCoverage(
             continue;
         }
 
-        const firstCol = cols[0]!;
-        if (firstCol > 0 && firstCol >= UNMAPPED_THRESHOLD) {
-            unmappedRegions.push({ line: i + 1, startCol: 0, endCol: firstCol, length: firstCol });
+        // Each mapping covers characters until the NEXT mapping — but only up to
+        // UNMAPPED_THRESHOLD chars, so a single mapping cannot silently credit an
+        // arbitrarily long minified tail. Gaps between consecutive mappings that
+        // exceed the threshold are recorded as unmapped regions.
+        let prevBoundary = 0;
+        for (let k = 0; k <= cols.length; k++) {
+            const boundary = k < cols.length ? cols[k]! : lineLen;
+            const gap = boundary - prevBoundary;
+            if (k === 0) {
+                // Leading gap: from column 0 to first mapping.
+                if (gap >= UNMAPPED_THRESHOLD) {
+                    unmappedRegions.push({
+                        line: i + 1,
+                        startCol: prevBoundary,
+                        endCol: boundary,
+                        length: gap,
+                    });
+                }
+            } else {
+                // Gap from previous mapping to this boundary (next mapping or EOL).
+                // The previous mapping covers up to UNMAPPED_THRESHOLD chars; anything
+                // past that is unmapped.
+                const covered = Math.min(gap, UNMAPPED_THRESHOLD);
+                mappedChars += covered;
+                const uncovered = gap - covered;
+                if (uncovered >= UNMAPPED_THRESHOLD) {
+                    unmappedRegions.push({
+                        line: i + 1,
+                        startCol: prevBoundary + covered,
+                        endCol: boundary,
+                        length: uncovered,
+                    });
+                }
+            }
+            prevBoundary = boundary;
         }
-        mappedChars += lineLen - firstCol;
     }
 
     const coveragePct = totalChars > 0 ? (mappedChars / totalChars) * 100 : 100;

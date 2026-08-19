@@ -99,6 +99,17 @@ describe('analyzeCoverage', () => {
         const report = analyzeCoverage(tracer, compiled);
         expect(report.excessiveUnmapped).toEqual(false);
     });
+
+    it('does not over-credit a minified line with a single mapping at column 0', () => {
+        // A single mapping cannot silently credit the whole line — anything past the
+        // per-mapping reach must be flagged unmapped and reduce mappedChars.
+        const tracer = makeTraceMapWithCoverage([[[0, 0, 0, 0]]]);
+        const lineLen = 5000;
+        const compiled = 'a'.repeat(lineLen);
+        const report = analyzeCoverage(tracer, compiled);
+        expect(report.coveragePct).toBeLessThan(50);
+        expect(report.unmappedRegions.length).toBeGreaterThan(0);
+    });
 });
 
 describe('pointsToWhitespaceOrComment', () => {

@@ -35,6 +35,7 @@ import {
     TOKEN_CONSISTENCY_RULE,
     validateTokenConsistency,
 } from "./validators/token-consistency";
+import { buildSourceIndex, type SourceIndex } from "./validators/sourcemap-io";
 import type { ValidatorFinding, ValidatorResult } from "./validators/types";
 import { VLQ_INTEGRITY_RULE, validateVlqIntegrity } from "./validators/vlq-integrity";
 
@@ -101,25 +102,37 @@ export class UIBundleEngine extends Engine {
 
         const sourceDispatch: [
             string,
-            (opts: { sourcePath: string; distPath: string }) => Promise<ValidatorResult>,
+            (opts: {
+                sourcePath: string;
+                distPath: string;
+                sourceIndex?: SourceIndex;
+            }) => Promise<ValidatorResult>,
         ][] = [
             [SOURCE_CONTENT_VERIFICATION_RULE, validateSourceContent],
             [STRUCTURAL_COHERENCE_RULE, validateStructuralCoherence],
             [TOKEN_CONSISTENCY_RULE, validateTokenConsistency],
         ];
 
-        for (const [ruleName, runValidator] of sourceDispatch) {
-            if (!selected.includes(ruleName)) continue;
-            if (!target.sourcePath) {
+        const activeSourceRules = sourceDispatch.filter(([r]) => selected.includes(r));
+        if (activeSourceRules.length === 0) return;
+
+        if (!target.sourcePath) {
+            for (const [ruleName] of activeSourceRules) {
                 this.emitLogEvent(
                     LogLevel.Warn,
                     `[${UIBundleEngine.NAME}] Skipping ${ruleName} for ${target.distPath}: could not locate a source directory sibling to dist/.`,
                 );
-                continue;
             }
+            return;
+        }
+
+        const sourceIndex: SourceIndex = await buildSourceIndex(target.sourcePath);
+
+        for (const [ruleName, runValidator] of activeSourceRules) {
             const result: ValidatorResult = await runValidator({
                 sourcePath: target.sourcePath,
                 distPath: target.distPath,
+                sourceIndex,
             });
             this.consumeResult(ruleName, target.distPath, result, violations);
         }

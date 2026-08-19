@@ -1,5 +1,4 @@
 import { promises as fs } from "node:fs";
-import * as path from "node:path";
 import { parse, type ParserOptions } from "@babel/parser";
 import _traverse, { type NodePath } from "@babel/traverse";
 import type { Node } from "@babel/types";
@@ -11,9 +10,8 @@ import {
     isVirtualSource,
     normalizeLineEndings,
     normalizeSourcePath,
-    toPosixPath,
 } from "./classification";
-import { walk } from "./sourcemap-io";
+import { buildSourceIndex, walk, type SourceIndex } from "./sourcemap-io";
 import { getMessage } from "../messages";
 import type { ValidatorFinding, ValidatorResult } from "./types";
 
@@ -86,6 +84,7 @@ interface SignificantNode {
 export interface SourceContentOptions {
     sourcePath: string;
     distPath: string;
+    sourceIndex?: SourceIndex;
 }
 
 export async function validateSourceContent(
@@ -106,9 +105,8 @@ export async function validateSourceContent(
         return { findings: [], skipped: { reason: "source and dist must both be directories" } };
     }
 
-    const sourceIndex = await indexSourceFiles(options.sourcePath);
+    const sourceIndex = options.sourceIndex ?? await buildSourceIndex(options.sourcePath);
     const findings: ValidatorFinding[] = [];
-    const sourcePathBase = path.basename(options.sourcePath);
 
     await walk(options.distPath, async (jsPath) => {
         if (!jsPath.endsWith(".js")) return;
@@ -144,7 +142,7 @@ export async function validateSourceContent(
             return;
         }
 
-        await runByteEqualAndRatioChecks(rawMap, mapPath, sourceIndex, sourcePathBase, findings);
+        await runByteEqualAndRatioChecks(rawMap, mapPath, sourceIndex, findings);
 
         let compiledJs: string;
         try {
@@ -152,7 +150,7 @@ export async function validateSourceContent(
         } catch {
             return;
         }
-        await runAstChecks(jsPath, mapPath, compiledJs, tracer, sourceIndex, sourcePathBase, findings);
+        await runAstChecks(jsPath, mapPath, compiledJs, tracer, sourceIndex, findings);
     });
 
     return { findings };
@@ -169,7 +167,6 @@ async function runByteEqualAndRatioChecks(
     map: RawSourceMap,
     mapPath: string,
     sourceIndex: SourceIndex,
-    sourcePathBase: string,
     findings: ValidatorFinding[],
 ): Promise<void> {
     const sources = map.sources ?? [];
@@ -192,7 +189,7 @@ async function runByteEqualAndRatioChecks(
             continue;
         }
 
-        const submitted = lookupSubmitted(sourceIndex, normalized, sourcePathBase);
+        const submitted = sourceIndex.get(normalized);
         const embedded = map.sourcesContent?.[i] ?? null;
 
         if (submitted == null) {
@@ -240,7 +237,6 @@ async function runAstChecks(
     compiledJs: string,
     tracer: TraceMap,
     sourceIndex: SourceIndex,
-    sourcePathBase: string,
     findings: ValidatorFinding[],
 ): Promise<void> {
     let significantNodes: SignificantNode[];
@@ -276,7 +272,7 @@ async function runAstChecks(
 
         if (isVirtualSource(normalized) || isDependency(normalized) || isAsset(normalized)) continue;
 
-        const submittedContent = lookupSubmitted(sourceIndex, normalized, sourcePathBase);
+        const submittedContent = sourceIndex.get(normalized);
         if (submittedContent == null) {
             orphanSources.add(normalized);
             continue;
@@ -384,7 +380,6 @@ interface SourceAst {
     nodes: SignificantNode[];
     lineOffsets: number[];
 }
-type SourceIndex = Map<string, string>;
 
 function getSourceAst(
     normalized: string,
@@ -420,15 +415,27 @@ function lineColToByteOffset(lineOffsets: number[], line1: number, col0: number)
 
 function findNodeAtOffset(nodes: SignificantNode[], byteOffset: number): SignificantNode | null {
     const tol = AST_MATCH_TOLERANCE_BYTES;
+    // Nodes are produced by babel traversal in document order — byteOffset is non-decreasing.
+    // Binary-search the first node with byteOffset >= (target - tol), then linearly scan the
+    // tolerance window (at most a few nodes wide).
+    const lowerTarget = byteOffset - tol;
+    let lo = 0;
+    let hi = nodes.length;
+    while (lo < hi) {
+        const mid = (lo + hi) >>> 1;
+        if (nodes[mid]!.byteOffset < lowerTarget) lo = mid + 1;
+        else hi = mid;
+    }
     let best: SignificantNode | null = null;
     let bestDist = Number.POSITIVE_INFINITY;
-    for (const n of nodes) {
+    for (let i = lo; i < nodes.length; i++) {
+        const n = nodes[i]!;
+        if (n.byteOffset > byteOffset + tol) break;
         const dist = Math.abs(n.byteOffset - byteOffset);
-        if (dist <= tol && dist < bestDist) {
+        if (dist < bestDist) {
             bestDist = dist;
             best = n;
         }
-        if (n.byteOffset > byteOffset + tol) break;
     }
     return best;
 }
@@ -475,33 +482,3 @@ function truncate(s: string, n: number): string {
     return s.length <= n ? s : s.slice(0, n) + "…";
 }
 
-const INDEX_IGNORE_PREFIXES = ["node_modules", ".git", "dist"];
-
-function lookupSubmitted(
-    index: SourceIndex,
-    normalized: string,
-    sourcePathBase: string,
-): string | undefined {
-    const direct = index.get(normalized);
-    if (direct != null) return direct;
-    const prefix = `${sourcePathBase}/`;
-    if (normalized.startsWith(prefix)) {
-        return index.get(normalized.slice(prefix.length));
-    }
-    return undefined;
-}
-
-async function indexSourceFiles(sourcePath: string): Promise<SourceIndex> {
-    const index: SourceIndex = new Map();
-    await walk(sourcePath, async (abs) => {
-        const rel = toPosixPath(path.relative(sourcePath, abs));
-        if (INDEX_IGNORE_PREFIXES.some((prefix) => rel.startsWith(prefix))) return;
-        try {
-            const content = await fs.readFile(abs, "utf8");
-            index.set(rel, content);
-        } catch {
-            // skip
-        }
-    });
-    return index;
-}

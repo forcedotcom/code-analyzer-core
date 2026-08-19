@@ -515,6 +515,38 @@ describe('source-content-verification', () => {
         expect(byteMismatches).toEqual([]);
     });
 
+    it('does not raise orphan findings when mapped AST nodes resolve to virtual/dependency/asset sources', async () => {
+        const tmp = makeTmpDir();
+        const shared = 'export function foo() { return 1; }\n';
+        writeFile(tmp, 'src/main.js', shared);
+        writeFile(tmp, 'dist/main.js', shared);
+        writeFile(tmp, 'dist/main.js.map', JSON.stringify({
+            version: 3,
+            // Three sources: one virtual (webpack/runtime prefix), one dependency (node_modules/),
+            // one asset (.png). None exist on disk; all should be skipped by runAstChecks.
+            sources: [
+                '../webpack/runtime/foo',
+                '../node_modules/lib/index.js',
+                '../assets/sprite.png',
+            ],
+            sourcesContent: [null, null, null],
+            names: [],
+            mappings: encode([[
+                [0, 0, 0, 0],
+                [7, 1, 0, 0],
+                [16, 2, 0, 0],
+            ]]),
+        }));
+        const res = await validateSourceContent({
+            sourcePath: path.join(tmp, 'src'),
+            distPath: path.join(tmp, 'dist'),
+        });
+        const orphanFindings = res.findings.filter((f) => /AST node source\(s\) not present/i.test(f.message));
+        expect(orphanFindings).toEqual([]);
+        const unknownRefs = res.findings.filter((f) => /Sourcemap references source .* is not present/i.test(f.message));
+        expect(unknownRefs).toEqual([]);
+    });
+
     it('surfaces a sourcemap-unloadable finding when the map JSON parses but TraceMap rejects it', async () => {
         const tmp = makeTmpDir();
         writeFile(tmp, 'src/main.js', 'x\n');
