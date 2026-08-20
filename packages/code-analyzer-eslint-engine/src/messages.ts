@@ -107,6 +107,15 @@ const MESSAGE_CATALOG : { [key: string]: string } = {
     ApplyingFlatConfigFile:
         `Applying the flat ESLint configuration file: %s`,
 
+    SkippedAutoDiscoveredExecutableConfigFile:
+        `The executable ESLint configuration file '%s' was automatically discovered in your workspace but was NOT applied.\n` +
+        `Code Analyzer does not execute automatically discovered configuration files because their top-level JavaScript would run during analysis.\n` +
+        `If you trust this file and want to apply it, set it explicitly as the eslint_config_file value in your Code Analyzer configuration.`,
+
+    ExplicitExecutableConfigFileWillExecute:
+        `The explicitly configured ESLint configuration file '%s' contains executable JavaScript whose top-level code will run during analysis.\n` +
+        `Only apply configuration files that you trust.`,
+
     UnableToCalculateBaseDirectory:
         `Couldn't calculate base directory for ESLint from the list of relevant targeted files to scan.\n` +
         `This can occur if you are attempting to target files from more than one drive (like C: and D: drives for example).\n` +

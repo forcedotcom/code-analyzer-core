@@ -3,7 +3,7 @@ import {ESLint, Linter, Rule} from "eslint";
 import {AsyncFilterFnc, ESLintWorkspace, UserConfigInfo} from "./workspace";
 import path from "node:path";
 import {BaseRuleset, LegacyBaseConfigFactory} from "./base-config";
-import {ESLint8EngineConfig} from "./config";
+import {ESLint8EngineConfig, isExecutableConfigFile} from "./config";
 import {LogLevel} from "@salesforce/code-analyzer-engine-api";
 import {getMessage} from "./messages";
 import {Worker} from "node:worker_threads";
@@ -64,6 +64,8 @@ export class LegacyESLintStrategy implements ESLintStrategy {
         const userConfigInfo: UserConfigInfo = this.workspace.getUserConfigInfo();
         this.emitInfoMessageIfDiscoveredEslintConfigFileIsNotBeingUsed(userConfigInfo);
         this.emitInfoMessageIfDiscoveredEslintIgnoreFileIsNotBeingUsed(userConfigInfo);
+        this.emitWarningIfAutoDiscoveredExecutableConfigFileIsSkipped(userConfigInfo);
+        this.emitWarningIfExplicitConfigFileIsExecutable();
 
         const eslintOptions: ESLint.Options = this.createESLintOptions(BaseRuleset.RECOMMENDED);
         const eslint: ESLint = new LegacyESLintWrapper(eslintOptions);
@@ -177,7 +179,7 @@ export class LegacyESLintStrategy implements ESLintStrategy {
             errorOnUnmatchedPattern: false,
             reportUnusedDisableDirectives: 'off',
             baseConfig: this.baseConfigFactory.createBaseConfig(baseRuleset) as Linter.Config,   // This is applied first (on bottom).
-            useEslintrc: this.config.auto_discover_eslint_config,                                // This is applied second.
+            useEslintrc: this.shouldUseEslintrc(userConfigInfo),                                 // This is applied second.
             overrideConfigFile: userConfigInfo.getUserConfigFile(),                              // This is applied third.
             overrideConfig: overrideConfig as Linter.Config,                                     // This is applied fourth (on top).
             ignorePath: userConfigInfo.getUserIgnoreFile()
@@ -200,6 +202,29 @@ export class LegacyESLintStrategy implements ESLintStrategy {
             }
         }
         return baseRulesThatAreOn;
+    }
+
+    // Determines whether to let ESLint perform its own ".eslintrc.*" tree-walk (which requires/executes any
+    // ".eslintrc.js"/".eslintrc.cjs" it encounters). We must turn this off whenever auto-discovery surfaced an
+    // executable config file, otherwise ESLint would execute the very file we are refusing to apply.
+    private shouldUseEslintrc(userConfigInfo: UserConfigInfo): boolean {
+        if (userConfigInfo.getSkippedExecutableConfigFile() !== undefined) {
+            return false;
+        }
+        return this.config.auto_discover_eslint_config;
+    }
+
+    private emitWarningIfAutoDiscoveredExecutableConfigFileIsSkipped(userConfigInfo: UserConfigInfo): void {
+        const skippedConfigFile: string | undefined = userConfigInfo.getSkippedExecutableConfigFile();
+        if (skippedConfigFile) {
+            this.emitLogEvent(LogLevel.Warn, getMessage('SkippedAutoDiscoveredExecutableConfigFile', skippedConfigFile));
+        }
+    }
+
+    private emitWarningIfExplicitConfigFileIsExecutable(): void {
+        if (this.config.eslint_config_file && isExecutableConfigFile(this.config.eslint_config_file)) {
+            this.emitLogEvent(LogLevel.Warn, getMessage('ExplicitExecutableConfigFileWillExecute', this.config.eslint_config_file));
+        }
     }
 
     private emitInfoMessageIfDiscoveredEslintConfigFileIsNotBeingUsed(userConfigInfo: UserConfigInfo): void {

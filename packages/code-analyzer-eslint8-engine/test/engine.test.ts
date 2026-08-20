@@ -34,6 +34,8 @@ const workspaceThatIgnoresFilesByConfig: string =
     path.join(legacyConfigCasesFolder, 'workspace_HasFilesIgnoredByConfig');
 const workspaceThatHasEslintIgnoreFile: string =
     path.join(legacyConfigCasesFolder, 'workspace_HasEslintIgnoreFile');
+const workspaceWithMaliciousLegacyConfig: string =
+    path.join(__dirname, 'test-data', 'workspaceWithMaliciousLegacyConfig');
 
 describe('Tests for the getName method of ESLint8Engine', () => {
     it('When getName is called, then eslint is returned', () => {
@@ -275,6 +277,41 @@ describe('Tests for the describeRules method of ESLint8Engine', () => {
         const ruleDescriptions: RuleDescription[] = await engine.describeRules(createDescribeOptions(
             new Workspace('id', [path.join(workspaceThatHasCustomConfigModifyingExistingRules, 'dummy1.js')])));
         expect(ruleDescriptions).toEqual(loadRuleDescriptions('rules_OnlyCustomConfigModifyingExistingRules.goldfile.json'));
+    });
+
+    it('When auto_discover_eslint_config=true and workspace has an executable .eslintrc.js, then it is skipped (only base rules apply) with a warning', async () => {
+        const engine: ESLint8Engine = new ESLint8Engine({...DEFAULT_CONFIG,
+            config_root: workspaceWithMaliciousLegacyConfig,
+            auto_discover_eslint_config: true
+        });
+        const logEvents: LogEvent[] = [];
+        engine.onEvent(EventType.LogEvent, (event: LogEvent) => logEvents.push(event));
+
+        const ruleDescriptions: RuleDescription[] = await engine.describeRules(createDescribeOptions(
+            new Workspace('id', [workspaceWithMaliciousLegacyConfig])));
+
+        // The executable config is refused, so only the base rules (no custom config) should be applied. The workspace
+        // only contains a JavaScript file, so only the LWC and JavaScript base rules are expected.
+        expect(ruleDescriptions).toEqual(makeUniqueAndSorted([...LWC_CONFIG_RULES, ...JS_CONFIG_RULES]));
+
+        const warnMessages: string[] = logEvents.filter(e => e.logLevel === LogLevel.Warn).map(e => e.message);
+        expect(warnMessages).toContainEqual(getMessage('SkippedAutoDiscoveredExecutableConfigFile',
+            path.join(workspaceWithMaliciousLegacyConfig, '.eslintrc.js')));
+    });
+
+    it('When eslint_config_file is explicitly set to an executable .eslintrc.js, then it is applied with an execution warning', async () => {
+        const engine: ESLint8Engine = new ESLint8Engine({...DEFAULT_CONFIG,
+            config_root: workspaceWithMaliciousLegacyConfig,
+            eslint_config_file: path.join(workspaceWithMaliciousLegacyConfig, '.eslintrc.js')
+        });
+        const logEvents: LogEvent[] = [];
+        engine.onEvent(EventType.LogEvent, (event: LogEvent) => logEvents.push(event));
+
+        await engine.describeRules(createDescribeOptions(new Workspace('id', [workspaceWithMaliciousLegacyConfig])));
+
+        const warnMessages: string[] = logEvents.filter(e => e.logLevel === LogLevel.Warn).map(e => e.message);
+        expect(warnMessages).toContainEqual(getMessage('ExplicitExecutableConfigFileWillExecute',
+            path.join(workspaceWithMaliciousLegacyConfig, '.eslintrc.js')));
     });
 
     it('When file_extensions.javascript is empty, then javascript rules do not get picked up', async () => {

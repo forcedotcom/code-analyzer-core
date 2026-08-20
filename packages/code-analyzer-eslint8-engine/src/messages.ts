@@ -105,7 +105,16 @@ const MESSAGE_CATALOG : { [key: string]: string } = {
         `  engines:\n` +
         `    eslint:\n` +
         `      eslint_ignore_file: "%s"\n` +
-        `Alternatively, to have Code Analyzer automatically discover and apply any ESLint configuration and ignore files found in your workspace, set the auto_discover_eslint_config value to true.`
+        `Alternatively, to have Code Analyzer automatically discover and apply any ESLint configuration and ignore files found in your workspace, set the auto_discover_eslint_config value to true.`,
+
+    SkippedAutoDiscoveredExecutableConfigFile:
+        `The executable ESLint configuration file '%s' was automatically discovered in your workspace but was NOT applied.\n` +
+        `Code Analyzer does not execute automatically discovered configuration files because their top-level JavaScript would run during analysis.\n` +
+        `If you trust this file and want to apply it, set it explicitly as the eslint_config_file value in your Code Analyzer configuration.`,
+
+    ExplicitExecutableConfigFileWillExecute:
+        `The explicitly configured ESLint configuration file '%s' contains executable JavaScript whose top-level code will run during analysis.\n` +
+        `Only apply configuration files that you trust.`
 }
 
 /**
