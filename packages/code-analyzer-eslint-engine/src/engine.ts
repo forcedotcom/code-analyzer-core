@@ -196,7 +196,8 @@ export class ESLintEngine extends Engine {
     private getUserConfigInfo(workspace?: Workspace): UserConfigInfo {
         const cacheKey: string = workspace?.getWorkspaceId() ?? process.cwd();
         if (!this.userConfigInfoCache.has(cacheKey)) {
-            this.userConfigInfoCache.set(cacheKey, new UserConfigInfo(this.engineConfig, workspace));
+            this.userConfigInfoCache.set(cacheKey, new UserConfigInfo(this.engineConfig, workspace,
+                (logLevel: LogLevel, message: string) => this.emitLogEvent(logLevel, message)));
         }
         return this.userConfigInfoCache.get(cacheKey)!;
     }

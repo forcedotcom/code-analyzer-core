@@ -144,6 +144,18 @@ export const LEGACY_ESLINT_CONFIG_FILES: string[] =
 
 export const LEGACY_ESLINT_IGNORE_FILE: string = '.eslintignore';
 
+// Extensions of ESLint configuration files whose contents are evaluated as JavaScript when loaded. This covers both
+// flat config files (eslint.config.{js,cjs,mjs}) and legacy config files (.eslintrc.{js,cjs}). Declarative config
+// files (.json/.yaml/.yml) are passive data and therefore excluded.
+export const EXECUTABLE_ESLINT_CONFIG_FILE_EXTS: string[] = ['.js', '.cjs', '.mjs'];
+
+// Returns true when the given config file is one whose top-level code executes when the file is loaded (i.e. it is a
+// JavaScript module rather than a declarative data file). This is used to keep auto-discovery from executing untrusted
+// config files that live inside the workspace being scanned.
+export function isExecutableConfigFile(filePath: string): boolean {
+    return EXECUTABLE_ESLINT_CONFIG_FILE_EXTS.includes(path.extname(filePath).toLowerCase());
+}
+
 
 export function validateAndNormalizeConfig(configValueExtractor: ConfigValueExtractor): ESLintEngineConfig {
     configValueExtractor.validateContainsOnlySpecifiedKeys(['eslint_config_file', 'eslint_ignore_file',
