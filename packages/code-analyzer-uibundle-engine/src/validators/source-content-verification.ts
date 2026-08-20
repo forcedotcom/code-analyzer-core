@@ -27,6 +27,12 @@ const TYPE_MISMATCH_THRESHOLD = 0.2;
 const AST_MATCH_TOLERANCE_BYTES = 5;
 
 const VIRTUAL_SOURCE_RATIO_THRESHOLD_PCT = 20;
+// Vite/webpack minified bundles put everything on line 1; a small preamble at the start
+// of that line is bundler runtime with no mapping. Beyond this column, unmapped
+// dangerous-pattern nodes on line 1 are treated the same as line-2+. Aligned with
+// coverage-analysis's LINE1_EXEMPT_CHARS so a stealth injection cannot hide in the
+// gap between the two rules' exemption windows.
+const LINE1_BANNER_EXEMPT_CHARS = 2000;
 
 const PARSER_OPTIONS: ParserOptions = {
     sourceType: "unambiguous",
@@ -331,7 +337,7 @@ async function runAstChecks(
     }
 
     const dangerousUnmapped = unmapped.filter(
-        (n) => n.line > 1 && containsDangerousPattern(n.snippet),
+        (n) => (n.line > 1 || n.column >= LINE1_BANNER_EXEMPT_CHARS) && containsDangerousPattern(n.snippet),
     );
     for (const n of dangerousUnmapped.slice(0, 10)) {
         findings.push({

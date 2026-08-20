@@ -11,7 +11,15 @@ const SAMPLE_INTERVAL = 20;
 const NAME_WINDOW_TOLERANCE = 3;
 const VERDICT_SUSPICIOUS = 0.7;
 const VERDICT_WARNING = 0.85;
-const MAX_LISTED_MISMATCHES = 10;
+const MAX_LISTED_MISMATCHES = 3;
+
+// Compiler-synthetic identifiers emitted by JSX runtimes into the sourcemap `names` array.
+// These do not exist as literal identifiers in the .tsx/.jsx source (which contains JSX
+// syntax like <div>, not the string "jsx"), so a name mismatch here is structural, not
+// tamper. Suppressed only when the source is a JSX/TSX file — a forged "jsx" name on a
+// non-JSX source is still surfaced.
+const JSX_SYNTHETIC_NAMES = new Set<string>(["jsx", "jsxs", "jsxDEV", "Fragment"]);
+const JSX_SOURCE_PATTERN = /\.(tsx|jsx)$/i;
 
 export type TokenCategory =
     | "StringLiteral"
@@ -164,16 +172,25 @@ export function analyzeTokenConsistency(
         }
         if (sourceLines == null) return;
 
-        totalSampled++;
-
         const srcLine = m.originalLine - 1;
         const srcCol = m.originalColumn;
         const dstLine = m.generatedLine - 1;
         const dstCol = m.generatedColumn;
 
+        // JSX-runtime synthetic samples (compiled `_jsx(...)` → JSX syntax on the source
+        // side) always disagree on both name and category. These are structural, not
+        // tamper — exclude the entire sample from the score so the threshold stays honest.
+        const isJsxSyntheticOnJsxSource =
+            m.name != null &&
+            JSX_SYNTHETIC_NAMES.has(m.name) &&
+            JSX_SOURCE_PATTERN.test(normalized);
+        if (isJsxSyntheticOnJsxSource) return;
+
+        totalSampled++;
+
         if (m.name != null) {
             const [found, foundText] = nameExistsNearInLines(sourceLines, srcLine, srcCol, m.name);
-            if (!found) {
+            if (!found && !isNamespacePrefixMatch(m.name, foundText)) {
                 nameMismatches.push({
                     expectedName: m.name,
                     sourceFile: normalized,
@@ -246,6 +263,19 @@ function nameExistsNearInLines(
 
     const found = extractWordAt(lineText, col0, expected.length + 10);
     return [false, found];
+}
+
+// Recognizes namespaced member-expression names like "SelectPrimitive.Viewport" whose
+// sourcemap points at the container identifier "SelectPrimitive" — a legitimate bundler
+// artifact (Radix UI, react-aria, etc.), not tamper. The suppression is narrow: the
+// expected name must be a qualified path AND the found text must be its exact leftmost
+// segment. Token-category comparison at the same sample still runs, and the
+// source-content-verification / structural-coherence rules cover injection at any name.
+function isNamespacePrefixMatch(expected: string, foundText: string): boolean {
+    if (foundText.length === 0) return false;
+    const dot = expected.indexOf(".");
+    if (dot <= 0) return false;
+    return expected.slice(0, dot) === foundText;
 }
 
 function extractWordAt(line: string, col: number, maxLen: number): string {
