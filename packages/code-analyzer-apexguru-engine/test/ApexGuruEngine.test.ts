@@ -1,5 +1,6 @@
 import { ApexGuruEngine } from '../src/engine';
 import { ApexGuruService } from '../src/services/ApexGuruService';
+import { APEXGURU_TAG } from '../src/apexguru-rules';
 import { LogLevel, RunOptions, Workspace, COMMON_TAGS } from '@salesforce/code-analyzer-engine-api';
 import * as fs from 'node:fs/promises';
 import * as fsSync from 'node:fs';
@@ -299,12 +300,12 @@ describe('ApexGuruEngine', () => {
                 status: 'skipped',
                 error: {
                     code: 'SCAN_TIMEOUT',
-                    message: 'Code Analyzer skipped ApexGuru scan because the workspace scan timed out after 600 seconds. ' +
+                    message: 'Code Analyzer skipped ApexGuru scan because the workspace scan timed out after 300 seconds. ' +
                         'Increase the timeout setting in the Code Analyzer configuration file.',
                     remediation: ''
                 }
             });
-            expect(logSpy).toHaveBeenCalledWith(LogLevel.Warn, expect.stringContaining('workspace scan timed out after 600 seconds'));
+            expect(logSpy).toHaveBeenCalledWith(LogLevel.Warn, expect.stringContaining('workspace scan timed out after 300 seconds'));
             expect(mockApexGuruService.cleanup).toHaveBeenCalled();
         });
 
@@ -677,24 +678,24 @@ describe('ApexGuruEngine', () => {
             expect(engine.getName()).toBe('apexguru');
         });
 
-        it('should describe rules selectable by the Recommended tag', async () => {
+        it('should describe rules selectable by the apex-guru tag', async () => {
+            const rules = await engine.describeRules({
+                logFolder: '/tmp/logs',
+                workingFolder: '/tmp/working'
+            });
+
+            const apexGuruRules = rules.filter(r => r.tags.includes(APEXGURU_TAG));
+            expect(apexGuruRules).toHaveLength(rules.length);
+        });
+
+        it('should not carry the Recommended tag so rules do not run by default', async () => {
             const rules = await engine.describeRules({
                 logFolder: '/tmp/logs',
                 workingFolder: '/tmp/working'
             });
 
             const recommendedRules = rules.filter(r => r.tags.includes(COMMON_TAGS.RECOMMENDED));
-            expect(recommendedRules).toHaveLength(rules.length);
-        });
-
-        it('should describe rules selectable by the Performance tag', async () => {
-            const rules = await engine.describeRules({
-                logFolder: '/tmp/logs',
-                workingFolder: '/tmp/working'
-            });
-
-            const performanceRules = rules.filter(r => r.tags.includes(COMMON_TAGS.CATEGORIES.PERFORMANCE));
-            expect(performanceRules).toHaveLength(rules.length);
+            expect(recommendedRules).toHaveLength(0);
         });
 
         it('should describe individual rules by name for explicit selection', async () => {
