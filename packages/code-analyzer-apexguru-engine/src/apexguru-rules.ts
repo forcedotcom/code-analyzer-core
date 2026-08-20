@@ -10,7 +10,7 @@ import { COMMON_TAGS, RuleDescription, SeverityLevel } from '@salesforce/code-an
  */
 export const APEXGURU_RULES: RuleDescription[] = [
     // =================================================================================================================
-    //   PERFORMANCE RULES - HIGH SEVERITY (CRITICAL - RECOMMENDED)
+    //   PERFORMANCE RULES - HIGH SEVERITY
     // =================================================================================================================
 
     {
@@ -29,18 +29,6 @@ export const APEXGURU_RULES: RuleDescription[] = [
         resourceUrls: ['https://help.salesforce.com/s/articleView?id=xcloud.apexguru_antipattern_dml_in_loop.htm&type=5']
     },
 
-    // =================================================================================================================
-    //   PERFORMANCE RULES - HIGH SEVERITY (PERFORMANCE ONLY - NOT RECOMMENDED)
-    // =================================================================================================================
-
-    {
-        name: 'SoqlInALoopOneHop',
-        severityLevel: SeverityLevel.High,
-        tags: [COMMON_TAGS.RECOMMENDED, COMMON_TAGS.CATEGORIES.PERFORMANCE],
-        description: 'SOQL query reached one method-hop away inside a loop causes performance issues and can hit governor limits',
-        resourceUrls: ['https://help.salesforce.com/s/articleView?id=xcloud.apexguru_antipattern_soql_in_loop_one_hop.htm&type=5']
-    },
-
     {
         name: 'ExpensiveMethods',
         severityLevel: SeverityLevel.High,
@@ -49,37 +37,33 @@ export const APEXGURU_RULES: RuleDescription[] = [
         resourceUrls: ['https://help.salesforce.com/s/articleView?id=xcloud.apexguru_antipattern_expensive_methods.htm&type=5']
     },
 
-    // =================================================================================================================
-    //   PERFORMANCE RULES - MODERATE SEVERITY (CRITICAL - RECOMMENDED)
-    // =================================================================================================================
-
-    {
-        name: 'SoqlWithoutAWhereClauseOrLimitStatement',
-        severityLevel: SeverityLevel.Moderate,
-        tags: [COMMON_TAGS.RECOMMENDED, COMMON_TAGS.CATEGORIES.PERFORMANCE],
-        description: 'SOQL query without WHERE clause or LIMIT statement can cause performance issues and heap size exceptions',
-        resourceUrls: ['https://help.salesforce.com/s/articleView?id=xcloud.apexguru_antipattern_soql_without_where_clause_or_limit_statement.htm&type=5']
-    },
-
-    {
-        name: 'SoqlWithWildcardFilter',
-        severityLevel: SeverityLevel.Moderate,
-        tags: [COMMON_TAGS.RECOMMENDED, COMMON_TAGS.CATEGORIES.PERFORMANCE],
-        description: 'SOQL query using LIKE with leading wildcard is inefficient and cannot use indexes',
-        resourceUrls: ['https://help.salesforce.com/s/articleView?id=xcloud.apexguru_antipattern_soql_with_wildcard_filter.htm&type=5']
-    },
-
     {
         name: 'SchemaGetGlobalDescribeNotEfficient',
-        severityLevel: SeverityLevel.Moderate,
+        severityLevel: SeverityLevel.High,
         tags: [COMMON_TAGS.RECOMMENDED, COMMON_TAGS.CATEGORIES.PERFORMANCE],
         description: 'Using Schema.getGlobalDescribe() causes unnecessary overhead and decreases performance',
         resourceUrls: ['https://help.salesforce.com/s/articleView?id=xcloud.apexguru_antipattern_schema_getglobaldescribe_not_efficient.htm&type=5']
     },
 
+    {
+        name: 'SoqlWithoutPlatformCache',
+        severityLevel: SeverityLevel.High,
+        tags: [COMMON_TAGS.RECOMMENDED, COMMON_TAGS.CATEGORIES.PERFORMANCE],
+        description: 'Frequently executed SOQL query whose results could be served from Platform Cache to reduce database load',
+        resourceUrls: ['https://help.salesforce.com/s/articleView?id=xcloud.apexguru_antipattern_soql_without_platform_cache.htm&type=5']
+    },
+
     // =================================================================================================================
-    //   PERFORMANCE RULES - MODERATE SEVERITY (PERFORMANCE ONLY - NOT RECOMMENDED)
+    //   PERFORMANCE RULES - MODERATE SEVERITY
     // =================================================================================================================
+
+    {
+        name: 'SoqlInALoopOneHop',
+        severityLevel: SeverityLevel.Moderate,
+        tags: [COMMON_TAGS.RECOMMENDED, COMMON_TAGS.CATEGORIES.PERFORMANCE],
+        description: 'SOQL query reached one method-hop away inside a loop causes performance issues and can hit governor limits',
+        resourceUrls: ['https://help.salesforce.com/s/articleView?id=xcloud.apexguru_antipattern_soql_in_loop_one_hop.htm&type=5']
+    },
 
     {
         name: 'Soql Aggregation',
@@ -114,14 +98,6 @@ export const APEXGURU_RULES: RuleDescription[] = [
     },
 
     {
-        name: 'SoqlWithNegativeExpressions',
-        severityLevel: SeverityLevel.Moderate,
-        tags: [COMMON_TAGS.RECOMMENDED, COMMON_TAGS.CATEGORIES.PERFORMANCE],
-        description: 'SOQL queries using negative expressions (NOT IN, !=) don\'t use indexes and cause full table scans',
-        resourceUrls: ['https://help.salesforce.com/s/articleView?id=xcloud.apexguru_antipattern_soql_with_negative_expressions.htm&type=5']
-    },
-
-    {
         name: 'SObjectMapInAForLoop',
         severityLevel: SeverityLevel.Moderate,
         tags: [COMMON_TAGS.RECOMMENDED, COMMON_TAGS.CATEGORIES.PERFORMANCE],
@@ -129,17 +105,33 @@ export const APEXGURU_RULES: RuleDescription[] = [
         resourceUrls: ['https://help.salesforce.com/s/articleView?id=xcloud.apexguru_antipattern_sobject_map_in_for_loop.htm&type=5']
     },
 
+    // =================================================================================================================
+    //   PERFORMANCE RULES - LOW SEVERITY
+    // =================================================================================================================
+
     {
-        name: 'SoqlWithoutPlatformCache',
-        severityLevel: SeverityLevel.Moderate,
+        name: 'SoqlWithoutAWhereClauseOrLimitStatement',
+        severityLevel: SeverityLevel.Low,
         tags: [COMMON_TAGS.RECOMMENDED, COMMON_TAGS.CATEGORIES.PERFORMANCE],
-        description: 'Frequently executed SOQL query whose results could be served from Platform Cache to reduce database load',
-        resourceUrls: ['https://help.salesforce.com/s/articleView?id=xcloud.apexguru_antipattern_soql_without_platform_cache.htm&type=5']
+        description: 'SOQL query without WHERE clause or LIMIT statement can cause performance issues and heap size exceptions',
+        resourceUrls: ['https://help.salesforce.com/s/articleView?id=xcloud.apexguru_antipattern_soql_without_where_clause_or_limit_statement.htm&type=5']
     },
 
-    // =================================================================================================================
-    //   PERFORMANCE RULES - LOW SEVERITY (PERFORMANCE ONLY - NOT RECOMMENDED)
-    // =================================================================================================================
+    {
+        name: 'SoqlWithWildcardFilter',
+        severityLevel: SeverityLevel.Low,
+        tags: [COMMON_TAGS.RECOMMENDED, COMMON_TAGS.CATEGORIES.PERFORMANCE],
+        description: 'SOQL query using LIKE with leading wildcard is inefficient and cannot use indexes',
+        resourceUrls: ['https://help.salesforce.com/s/articleView?id=xcloud.apexguru_antipattern_soql_with_wildcard_filter.htm&type=5']
+    },
+
+    {
+        name: 'SoqlWithNegativeExpressions',
+        severityLevel: SeverityLevel.Low,
+        tags: [COMMON_TAGS.RECOMMENDED, COMMON_TAGS.CATEGORIES.PERFORMANCE],
+        description: 'SOQL queries using negative expressions (NOT IN, !=) don\'t use indexes and cause full table scans',
+        resourceUrls: ['https://help.salesforce.com/s/articleView?id=xcloud.apexguru_antipattern_soql_with_negative_expressions.htm&type=5']
+    },
 
     {
         name: 'LimitsGetHeapsizeMethods',
@@ -165,10 +157,6 @@ export const APEXGURU_RULES: RuleDescription[] = [
         resourceUrls: ['https://help.salesforce.com/s/articleView?id=xcloud.apexguru_antipattern_expensive_debug_statements.htm&type=5']
     },
 
-    // =================================================================================================================
-    //   BEST PRACTICES - LOW SEVERITY (RECOMMENDED)
-    // =================================================================================================================
-
     {
         name: 'UsingTheTestMethodKeyword',
         severityLevel: SeverityLevel.Low,
@@ -176,10 +164,6 @@ export const APEXGURU_RULES: RuleDescription[] = [
         description: 'The testMethod keyword is deprecated - use @isTest annotation instead',
         resourceUrls: ['https://help.salesforce.com/s/articleView?id=xcloud.apexguru_test_case_antipattern_using_testmethod.htm&type=5']
     },
-
-    // =================================================================================================================
-    //   BEST PRACTICES - LOW SEVERITY (NOT RECOMMENDED)
-    // =================================================================================================================
 
     {
         name: 'SortingInApex',
