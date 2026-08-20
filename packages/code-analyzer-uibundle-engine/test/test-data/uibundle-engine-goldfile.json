@@ -3,6 +3,7 @@
         "name": "missing-sourcemap",
         "severityLevel": 2,
         "tags": [
+            "UIBundle",
             "UIBundleIntegrity"
         ],
         "description": "Every compiled .js file in the build output must have a corresponding sourcemap (co-located .js.map or //# sourceMappingURL). Missing sourcemaps prevent source-to-compiled verification during security review.",
@@ -14,6 +15,7 @@
         "name": "path-leakage",
         "severityLevel": 3,
         "tags": [
+            "UIBundle",
             "UIBundleIntegrity"
         ],
         "description": "Sourcemap sources[] entries must be relative paths. Absolute paths leak developer environment details (usernames, filesystem layout) into shipped artifacts.",
@@ -23,6 +25,7 @@
         "name": "invalid-source-references",
         "severityLevel": 2,
         "tags": [
+            "UIBundle",
             "UIBundleIntegrity"
         ],
         "description": "Every file referenced by a sourcemap sources[] entry (that doesn't have inline sourcesContent) must exist on disk. Missing files indicate tampering or an incomplete submission.",
@@ -32,6 +35,7 @@
         "name": "vlq-integrity",
         "severityLevel": 2,
         "tags": [
+            "UIBundle",
             "UIBundleIntegrity"
         ],
         "description": "Sourcemap \"mappings\" field must be valid Base64 VLQ and reference in-range source/name indices. Malformed mappings signal a fabricated or corrupted sourcemap.",
@@ -43,6 +47,7 @@
         "name": "source-content-verification",
         "severityLevel": 2,
         "tags": [
+            "UIBundle",
             "UIBundleIntegrity"
         ],
         "description": "AST-based verification that the compiled JS actually traces back to the submitted source. Parses compiled output with @babel/parser, collects significant AST nodes, and checks each has a sourcemap mapping into a source file present on disk. Also enforces byte-equal sourcesContent, a virtual-source ratio cap, an AST type-mismatch threshold, and flags dangerous API patterns in unmapped regions.",
@@ -54,6 +59,7 @@
         "name": "coverage-analysis",
         "severityLevel": 5,
         "tags": [
+            "UIBundle",
             "UIBundleIntegrity"
         ],
         "description": "Character-level coverage analysis (informational). Flags per-line unmapped regions of 50+ chars and raises a cumulative finding when more than 2% of the compiled file (line-1 preamble discounted up to 150 chars) has no sourcemap coverage.",
@@ -63,6 +69,7 @@
         "name": "structural-coherence",
         "severityLevel": 5,
         "tags": [
+            "UIBundle",
             "UIBundleIntegrity"
         ],
         "description": "Structural coherence checks on sourcemap tokens (informational). Flags out-of-bounds mappings, sample-based whitespace/comment-only mappings above 80%, and cross-file jump ratios above 50% on consecutive same-line tokens.",
@@ -72,6 +79,7 @@
         "name": "token-consistency",
         "severityLevel": 5,
         "tags": [
+            "UIBundle",
             "UIBundleIntegrity"
         ],
         "description": "Token-type consistency checks on sampled sourcemap tokens (informational). Every 20th mapping is compared between compiled and source positions; verifies names[] entries exist near the claimed source position (±3 col tolerance); flags scores below 85% (warning) and below 70% (suspicious).",

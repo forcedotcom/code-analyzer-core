@@ -4,6 +4,7 @@ import {
 } from "@salesforce/code-analyzer-engine-api";
 import { getMessage } from "./messages";
 
+const UIBUNDLE_TAG = "UIBundle";
 const UIBUNDLE_INTEGRITY_TAG = "UIBundleIntegrity";
 
 export const RULES: RuleDescription[] = [
@@ -11,6 +12,7 @@ export const RULES: RuleDescription[] = [
         name: "missing-sourcemap",
         severityLevel: SeverityLevel.High,
         tags: [
+            UIBUNDLE_TAG,
             UIBUNDLE_INTEGRITY_TAG,
         ],
         description: getMessage('MissingSourcemapRuleDescription'),
@@ -22,6 +24,7 @@ export const RULES: RuleDescription[] = [
         name: "path-leakage",
         severityLevel: SeverityLevel.Moderate,
         tags: [
+            UIBUNDLE_TAG,
             UIBUNDLE_INTEGRITY_TAG,
         ],
         description: getMessage('PathLeakageRuleDescription'),
@@ -31,6 +34,7 @@ export const RULES: RuleDescription[] = [
         name: "invalid-source-references",
         severityLevel: SeverityLevel.High,
         tags: [
+            UIBUNDLE_TAG,
             UIBUNDLE_INTEGRITY_TAG,
         ],
         description: getMessage('InvalidSourceReferencesRuleDescription'),
@@ -40,6 +44,7 @@ export const RULES: RuleDescription[] = [
         name: "vlq-integrity",
         severityLevel: SeverityLevel.High,
         tags: [
+            UIBUNDLE_TAG,
             UIBUNDLE_INTEGRITY_TAG,
         ],
         description: getMessage('VlqIntegrityRuleDescription'),
@@ -49,6 +54,7 @@ export const RULES: RuleDescription[] = [
         name: "source-content-verification",
         severityLevel: SeverityLevel.High,
         tags: [
+            UIBUNDLE_TAG,
             UIBUNDLE_INTEGRITY_TAG,
         ],
         description: getMessage('SourceContentVerificationRuleDescription'),
@@ -58,6 +64,7 @@ export const RULES: RuleDescription[] = [
         name: "coverage-analysis",
         severityLevel: SeverityLevel.Info,
         tags: [
+            UIBUNDLE_TAG,
             UIBUNDLE_INTEGRITY_TAG,
         ],
         description: getMessage('CoverageAnalysisRuleDescription'),
@@ -67,6 +74,7 @@ export const RULES: RuleDescription[] = [
         name: "structural-coherence",
         severityLevel: SeverityLevel.Info,
         tags: [
+            UIBUNDLE_TAG,
             UIBUNDLE_INTEGRITY_TAG,
         ],
         description: getMessage('StructuralCoherenceRuleDescription'),
@@ -76,6 +84,7 @@ export const RULES: RuleDescription[] = [
         name: "token-consistency",
         severityLevel: SeverityLevel.Info,
         tags: [
+            UIBUNDLE_TAG,
             UIBUNDLE_INTEGRITY_TAG,
         ],
         description: getMessage('TokenConsistencyRuleDescription'),
