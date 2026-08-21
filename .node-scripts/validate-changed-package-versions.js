@@ -114,7 +114,8 @@ function getLatestReleasedVersion(changedPackage) {
 
 function isPackageThatHasNotPublished(changedPackage) {
     return [
-        "packages/ENGINE-TEMPLATE"
+        "packages/ENGINE-TEMPLATE",
+        "packages/code-analyzer-lwc-engine" // remove this exception once the PR merges and the package is published
     ].includes(changedPackage.replace("\\","/"));
 }
 
