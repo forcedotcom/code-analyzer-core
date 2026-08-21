@@ -3,11 +3,19 @@ import fs from "node:fs";
 import {
     ESLintEngineConfig,
     DISCOVERABLE_FLAT_ESLINT_CONFIG_FILES,
+    isExecutableConfigFile,
     LEGACY_ESLINT_CONFIG_FILES,
     LEGACY_ESLINT_IGNORE_FILE
 } from "./config";
+import {getMessage} from "./messages";
 import {makeUnique} from "./utils";
-import {Workspace} from "@salesforce/code-analyzer-engine-api";
+import {LogLevel, Workspace} from "@salesforce/code-analyzer-engine-api";
+
+// Callback used to forward log events (such as security warnings) up to the owning engine so that they surface in the
+// main Code Analyzer log. Defaults to a no-op so that UserConfigInfo can still be constructed in isolation.
+export type EmitLogEventFunction = (logLevel: LogLevel, message: string) => void;
+
+const NO_OP_EMIT_LOG_EVENT: EmitLogEventFunction = () => {};
 
 export enum UserConfigState {
     NO_USER_CONFIG = "NO_USER_CONFIG",
@@ -18,15 +26,17 @@ export enum UserConfigState {
 export class UserConfigInfo {
     private readonly engineConfig: ESLintEngineConfig;
     private readonly workspace?: Workspace;
+    private readonly emitLogEvent: EmitLogEventFunction;
     private userConfigState?: UserConfigState;
     private userConfigFile?: string;
     private userIgnoreFile?: string;
     private discoveredConfigFile?: string;
     private discoveredIgnoreFile?: string;
 
-    constructor(config: ESLintEngineConfig, workspace?: Workspace) {
+    constructor(config: ESLintEngineConfig, workspace?: Workspace, emitLogEvent: EmitLogEventFunction = NO_OP_EMIT_LOG_EVENT) {
         this.engineConfig = config;
         this.workspace = workspace;
+        this.emitLogEvent = emitLogEvent;
     }
 
     getState(): UserConfigState {
@@ -64,12 +74,30 @@ export class UserConfigInfo {
         this.userConfigState = UserConfigState.NO_USER_CONFIG;
 
         if (this.engineConfig.eslint_config_file) {
+            // An explicitly configured config file is chosen by the operator (trusted), so we still honor it even when
+            // it is executable. We do, however, warn that its top-level code will run during analysis.
             this.userConfigFile = this.engineConfig.eslint_config_file;
+            if (isExecutableConfigFile(this.userConfigFile)) {
+                this.emitLogEvent(LogLevel.Warn,
+                    getMessage('ExplicitExecutableConfigFileWillExecute', this.userConfigFile));
+            }
         } else {
             this.discoveredConfigFile = this.discoverFile(
                 [...DISCOVERABLE_FLAT_ESLINT_CONFIG_FILES, ...LEGACY_ESLINT_CONFIG_FILES]);
-            this.userConfigFile = this.engineConfig.auto_discover_eslint_config ?
-                this.discoveredConfigFile : undefined;
+            if (this.engineConfig.auto_discover_eslint_config && this.discoveredConfigFile) {
+                // Auto-discovery pulls config files from the untrusted workspace being scanned. To eliminate arbitrary
+                // code execution (the RCE vector) we refuse to apply executable config files found this way and instead
+                // warn the operator to opt in explicitly. Declarative config files are passive data, so they still apply.
+                if (isExecutableConfigFile(this.discoveredConfigFile)) {
+                    this.emitLogEvent(LogLevel.Warn,
+                        getMessage('SkippedAutoDiscoveredExecutableConfigFile', this.discoveredConfigFile));
+                    this.userConfigFile = undefined;
+                } else {
+                    this.userConfigFile = this.discoveredConfigFile;
+                }
+            } else {
+                this.userConfigFile = undefined;
+            }
         }
         if (this.userConfigFile) {
             this.userConfigState = isLegacyConfigFile(this.userConfigFile) ? UserConfigState.LEGACY_USER_CONFIG : UserConfigState.FLAT_USER_CONFIG;

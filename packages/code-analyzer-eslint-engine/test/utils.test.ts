@@ -1,4 +1,54 @@
 import {makeStringifiable, makeUnique} from "../src/utils";
+import {isExecutableConfigFile} from "../src/config";
+import {getMessage} from "../src/messages";
+
+describe('Tests for the isExecutableConfigFile classifier', () => {
+    it.each([
+        'eslint.config.js',
+        'eslint.config.cjs',
+        'eslint.config.mjs',
+        '.eslintrc.js',
+        '.eslintrc.cjs'
+    ])('When given an executable config file (%s), then return true', (fileName: string) => {
+        expect(isExecutableConfigFile(fileName)).toEqual(true);
+    });
+
+    it.each([
+        '.eslintrc.json',
+        '.eslintrc.yaml',
+        '.eslintrc.yml',
+        '.eslintignore'
+    ])('When given a declarative config file (%s), then return false', (fileName: string) => {
+        expect(isExecutableConfigFile(fileName)).toEqual(false);
+    });
+
+    it.each([
+        'ESLINT.CONFIG.JS',
+        'ESLINT.CONFIG.CJS',
+        'ESLINT.CONFIG.MJS'
+    ])('When given an executable config file with an upper-case extension (%s), then return true', (fileName: string) => {
+        expect(isExecutableConfigFile(fileName)).toEqual(true);
+    });
+
+    it('When given a path to an executable config file, then still classify it based on its extension', () => {
+        expect(isExecutableConfigFile('/some/abs/path/eslint.config.cjs')).toEqual(true);
+        expect(isExecutableConfigFile('/some/abs/path/.eslintrc.json')).toEqual(false);
+    });
+});
+
+describe('Tests for the newly added ESLint config warning messages', () => {
+    it('SkippedAutoDiscoveredExecutableConfigFile message resolves and contains the file argument', () => {
+        const msg: string = getMessage('SkippedAutoDiscoveredExecutableConfigFile', 'eslint.config.cjs');
+        expect(msg).toContain('eslint.config.cjs');
+        expect(msg.length).toBeGreaterThan(0);
+    });
+
+    it('ExplicitExecutableConfigFileWillExecute message resolves and contains the file argument', () => {
+        const msg: string = getMessage('ExplicitExecutableConfigFileWillExecute', 'eslint.config.cjs');
+        expect(msg).toContain('eslint.config.cjs');
+        expect(msg.length).toBeGreaterThan(0);
+    });
+});
 
 describe('Tests for the makeUnique utility function', () => {
     it('When an empty array is given, then return it', () => {
