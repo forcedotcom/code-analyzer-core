@@ -157,6 +157,26 @@ describe('UIBundleEngine Tests', () => {
             expect(results.violations[0]!.ruleName).toEqual('missing-sourcemap');
         });
 
+        it('missing-sourcemap: raises a violation when the colocated .js.map is a symlink (walkers skip symlinks)', async () => {
+            const engine = new UIBundleEngine();
+            const tmp = makeTmpDir();
+            writeFile(tmp, 'ui-bundle.json', '{}');
+            writeFile(tmp, 'dist/main.js', 'console.log("hi");\n');
+            writeFile(tmp, 'dist/real.js.map', JSON.stringify({
+                version: 3,
+                sources: ['../src/main.js'],
+                names: [],
+                mappings: '',
+            }));
+            fs.symlinkSync(path.join(tmp, 'dist/real.js.map'), path.join(tmp, 'dist/main.js.map'));
+            const results: EngineRunResults = await engine.runRules(
+                ['missing-sourcemap'],
+                createRunOptions(new Workspace('id', [tmp])),
+            );
+            expect(results.violations.length).toBeGreaterThan(0);
+            expect(results.violations[0]!.ruleName).toEqual('missing-sourcemap');
+        });
+
         it('missing-sourcemap: raises a violation when //# sourceMappingURL points outside distPath', async () => {
             const engine = new UIBundleEngine();
             const tmp = makeTmpDir();

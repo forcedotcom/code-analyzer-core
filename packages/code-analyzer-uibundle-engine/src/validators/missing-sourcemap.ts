@@ -70,11 +70,10 @@ async function collectJsFiles(root: string): Promise<string[]> {
 }
 
 async function hasSourcemap(jsFile: string, distPath: string): Promise<boolean> {
-    // Downstream validators skip non-files and anything outside distPath, so accepting
-    // those here would silently bypass all 8 rules.
+    // lstat matches walker semantics — Dirent.isFile() is false for symlinks, so a symlinked map would be silently unscanned by every walk-based rule.
     const colocated = `${jsFile}.map`;
     try {
-        const st = await fs.stat(colocated);
+        const st = await fs.lstat(colocated);
         if (st.isFile()) return true;
     } catch {
         // fall through
@@ -96,7 +95,7 @@ async function hasSourcemap(jsFile: string, distPath: string): Promise<boolean> 
     if (relToDist.startsWith("..") || path.isAbsolute(relToDist)) return false;
     if (!isSourcemap(resolved)) return false;
     try {
-        const st = await fs.stat(resolved);
+        const st = await fs.lstat(resolved);
         return st.isFile();
     } catch {
         return false;
