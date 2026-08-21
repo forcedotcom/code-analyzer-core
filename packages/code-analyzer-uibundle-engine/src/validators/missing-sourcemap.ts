@@ -1,6 +1,6 @@
 import { promises as fs } from "node:fs";
 import * as path from "node:path";
-import { containsDangerousApi, DANGEROUS_API_PATTERNS } from "./classification";
+import { containsDangerousApi, DANGEROUS_API_PATTERNS, isCompiledJs } from "./classification";
 import { getMessage } from "../messages";
 import type { ValidatorFinding, ValidatorResult } from "./types";
 
@@ -60,7 +60,7 @@ async function collectJsFiles(root: string): Promise<string[]> {
             const full = path.join(dir, entry.name);
             if (entry.isDirectory()) {
                 await walk(full);
-            } else if (entry.isFile() && entry.name.endsWith(".js")) {
+            } else if (entry.isFile() && isCompiledJs(entry.name)) {
                 out.push(full);
             }
         }

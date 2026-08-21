@@ -37,6 +37,21 @@ export function isAsset(p: string): boolean {
     return ASSET_EXTENSIONS.some((ext) => p.endsWith(ext));
 }
 
+// Compiled JavaScript output extensions produced by bundlers. Vite/webpack/rollup
+// emit .js by default, .mjs when configured for pure ESM output, and .cjs when
+// emitting CommonJS. All three ship alongside .map files and are equally in-scope
+// for tamper detection.
+const COMPILED_JS_EXTENSIONS = [".js", ".mjs", ".cjs"];
+const SOURCEMAP_EXTENSIONS = [".js.map", ".mjs.map", ".cjs.map"];
+
+export function isCompiledJs(p: string): boolean {
+    return COMPILED_JS_EXTENSIONS.some((ext) => p.endsWith(ext));
+}
+
+export function isSourcemap(p: string): boolean {
+    return SOURCEMAP_EXTENSIONS.some((ext) => p.endsWith(ext));
+}
+
 const ASSET_EXTENSIONS = [
     ".png",
     ".jpg",

@@ -1,6 +1,6 @@
 import { promises as fs } from "node:fs";
 import { TraceMap, eachMapping, sourceContentFor } from "@jridgewell/trace-mapping";
-import { isAsset, isDependency, isVirtualSource, normalizeSourcePath } from "./classification";
+import { isAsset, isCompiledJs, isDependency, isVirtualSource, normalizeSourcePath } from "./classification";
 import { buildSourceIndex, walk, type SourceIndex } from "./sourcemap-io";
 import { getMessage } from "../messages";
 import type { ValidatorFinding, ValidatorResult } from "./types";
@@ -64,7 +64,7 @@ export async function validateTokenConsistency(
     const findings: ValidatorFinding[] = [];
 
     await walk(options.distPath, async (jsPath) => {
-        if (!jsPath.endsWith(".js")) return;
+        if (!isCompiledJs(jsPath)) return;
         const mapPath = `${jsPath}.map`;
         let mapRaw: string;
         try {

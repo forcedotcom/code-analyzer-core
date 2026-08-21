@@ -7,7 +7,9 @@ import {
     containsDangerousApi,
     containsDangerousPattern,
     isAsset,
+    isCompiledJs,
     isDependency,
+    isSourcemap,
     isVirtualSource,
     normalizeSourcePath,
 } from "../src/validators/classification";
@@ -52,6 +54,17 @@ describe('classification', () => {
         expect(isDependency('src/x.js')).toEqual(false);
         expect(isAsset('logo.png')).toEqual(true);
         expect(isAsset('src/x.ts')).toEqual(false);
+        // Compiled-JS predicate accepts .js/.mjs/.cjs (bundlers emit all three).
+        expect(isCompiledJs('dist/main.js')).toEqual(true);
+        expect(isCompiledJs('dist/main.mjs')).toEqual(true);
+        expect(isCompiledJs('dist/main.cjs')).toEqual(true);
+        expect(isCompiledJs('dist/main.js.map')).toEqual(false);
+        expect(isCompiledJs('src/main.ts')).toEqual(false);
+        // Sourcemap predicate mirrors the compiled-JS extensions.
+        expect(isSourcemap('dist/main.js.map')).toEqual(true);
+        expect(isSourcemap('dist/main.mjs.map')).toEqual(true);
+        expect(isSourcemap('dist/main.cjs.map')).toEqual(true);
+        expect(isSourcemap('dist/main.js')).toEqual(false);
     });
 
     it('flags dangerous API patterns in code and dangerous-only extras', () => {

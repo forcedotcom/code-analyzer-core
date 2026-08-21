@@ -1,6 +1,6 @@
 import { promises as fs } from "node:fs";
 import * as path from "node:path";
-import { toPosixPath } from "./classification";
+import { isSourcemap, toPosixPath } from "./classification";
 
 export type SourceIndex = Map<string, string>;
 
@@ -55,7 +55,7 @@ export async function collectSourceMaps(root: string): Promise<CollectedSourceMa
     const maps: LoadedSourceMap[] = [];
     const parseErrors: SourceMapParseError[] = [];
     await walk(root, async (file) => {
-        if (!file.endsWith(".js.map")) return;
+        if (!isSourcemap(file)) return;
         let raw: string;
         try {
             raw = await fs.readFile(file, "utf8");

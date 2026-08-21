@@ -6,6 +6,7 @@ import { TraceMap, originalPositionFor } from "@jridgewell/trace-mapping";
 import {
     containsDangerousPattern,
     isAsset,
+    isCompiledJs,
     isDependency,
     isVirtualSource,
     normalizeLineEndings,
@@ -115,7 +116,7 @@ export async function validateSourceContent(
     const findings: ValidatorFinding[] = [];
 
     await walk(options.distPath, async (jsPath) => {
-        if (!jsPath.endsWith(".js")) return;
+        if (!isCompiledJs(jsPath)) return;
         const mapPath = `${jsPath}.map`;
         let mapRaw: string;
         try {

@@ -1,5 +1,6 @@
 import { promises as fs } from "node:fs";
 import { TraceMap, eachMapping } from "@jridgewell/trace-mapping";
+import { isCompiledJs } from "./classification";
 import { walk } from "./sourcemap-io";
 import { getMessage } from "../messages";
 import type { ValidatorFinding, ValidatorResult } from "./types";
@@ -41,7 +42,7 @@ export async function validateCoverageAnalysis(distPath: string): Promise<Valida
     const findings: ValidatorFinding[] = [];
 
     await walk(distPath, async (jsPath) => {
-        if (!jsPath.endsWith(".js")) return;
+        if (!isCompiledJs(jsPath)) return;
         const mapPath = `${jsPath}.map`;
         let mapRaw: string;
         try {

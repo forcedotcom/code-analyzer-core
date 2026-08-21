@@ -164,6 +164,47 @@ describe('UIBundleEngine Tests', () => {
             expect(matched.length).toBeGreaterThan(0);
         });
 
+        it.each([
+            { ext: 'mjs', desc: 'ESM output' },
+            { ext: 'cjs', desc: 'CommonJS output' },
+        ])('missing-sourcemap: flags orphan dist/main.$ext ($desc) without a co-located sourcemap', async ({ ext }) => {
+            // Bundlers configured for ESM (.mjs) or CJS (.cjs) output must be scanned the
+            // same as .js output — otherwise an attacker could ship a tampered .mjs bundle
+            // with no sourcemap and every tamper detector would silently skip the file.
+            const engine = new UIBundleEngine();
+            const tmp = makeTmpDir();
+            writeFile(tmp, 'ui-bundle.json', '{}');
+            writeFile(tmp, `dist/main.${ext}`, 'export const x = 1;\n');
+            const results: EngineRunResults = await engine.runRules(
+                ['missing-sourcemap'],
+                createRunOptions(new Workspace('id', [tmp])),
+            );
+            expect(results.violations.length).toBeGreaterThan(0);
+            expect(results.violations[0]!.ruleName).toEqual('missing-sourcemap');
+            expect(results.violations[0]!.codeLocations[0]!.file).toContain(`main.${ext}`);
+        });
+
+        it.each([
+            { ext: 'mjs' },
+            { ext: 'cjs' },
+        ])('path-leakage: fires on a .$ext bundle with a leaked absolute path in sources[]', async ({ ext }) => {
+            const engine = new UIBundleEngine();
+            const tmp = makeTmpDir();
+            writeFile(tmp, 'ui-bundle.json', '{}');
+            writeFile(tmp, `dist/main.${ext}`, 'x\n');
+            writeFile(tmp, `dist/main.${ext}.map`, JSON.stringify({
+                version: 3,
+                sources: ['/Users/attacker/src/main.js'],
+                names: [],
+                mappings: '',
+            }));
+            const results: EngineRunResults = await engine.runRules(
+                ['path-leakage'],
+                createRunOptions(new Workspace('id', [tmp])),
+            );
+            expect(results.violations.some(v => v.ruleName === 'path-leakage')).toBe(true);
+        });
+
         it('bundle target detection: workspace containing files under dist/ still triggers rule execution', async () => {
             const engine = new UIBundleEngine();
             const tmp = makeTmpDir();
