@@ -47,9 +47,11 @@ describe('missing-sourcemap dangerous-API orphan JS branch', () => {
 describe('coverage-analysis file-walker', () => {
     it('emits an unmapped-region finding and cumulative-budget finding', async () => {
         const tmp = makeTmpDir();
-        // A very long line with no mappings triggers both the per-line unmapped-region
-        // finding and the cumulative-budget finding (line 1 has ~200 chars, >150 exempt).
-        const longLine = 'a'.repeat(200) + '\n';
+        // A very long line-1 with no mappings triggers both the per-line unmapped-region
+        // finding and the cumulative-budget finding. Line-1 has 3000 chars; the first
+        // 2000 are discounted by LINE1_EXEMPT_CHARS, leaving 1000 uncounted chars =
+        // 33% of the 3000-char file, which exceeds the 5% cumulative threshold.
+        const longLine = 'a'.repeat(3000) + '\n';
         writeFile(tmp, 'dist/main.js', longLine);
         writeFile(tmp, 'dist/main.js.map', JSON.stringify({
             version: 3,
@@ -61,7 +63,7 @@ describe('coverage-analysis file-walker', () => {
         const res = await validateCoverageAnalysis(path.join(tmp, 'dist'));
         const messages = res.findings.map(f => f.message).join(' | ');
         expect(res.findings.length).toBeGreaterThan(0);
-        expect(messages.length).toBeGreaterThan(0);
+        expect(messages).toMatch(/Excessive cumulative unmapped/);
         // Region starts at 0-based col 0 in the analyzer → validator emits 1-based col 1.
         const region = res.findings.find(f => f.startColumn !== undefined);
         expect(region!.startColumn).toEqual(1);

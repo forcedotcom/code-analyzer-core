@@ -106,7 +106,7 @@ describe('analyzeCoverage', () => {
         expect(report.unmappedRegions).toHaveLength(0);
     });
 
-    it('exempts up to 150 chars on line 1 when computing excessive-unmapped budget', () => {
+    it('exempts up to 2000 chars on line 1 when computing excessive-unmapped budget', () => {
         // line 1 is fully unmapped but only 100 chars — should NOT count toward budget.
         const tracer = makeTraceMapWithCoverage([[]]);
         const compiled = 'a'.repeat(100) + '\n';

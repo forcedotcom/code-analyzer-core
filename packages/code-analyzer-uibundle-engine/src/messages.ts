@@ -29,7 +29,7 @@ const MESSAGE_CATALOG : { [key: string]: string } = {
         `AST-based verification that the compiled JS actually traces back to the submitted source. Parses compiled output with @babel/parser, collects significant AST nodes, and checks each has a sourcemap mapping into a source file present on disk. Also enforces byte-equal sourcesContent, a virtual-source ratio cap, an AST type-mismatch threshold, and flags dangerous API patterns in unmapped regions.`,
 
     CoverageAnalysisRuleDescription:
-        `Character-level coverage analysis (informational). Flags per-line unmapped regions of 50+ chars and raises a cumulative finding when more than 2% of the compiled file (line-1 preamble discounted up to 150 chars) has no sourcemap coverage.`,
+        `Character-level coverage analysis (informational). Flags per-line unmapped regions of 50+ chars and raises a cumulative finding when more than 5% of the compiled file (line-1 preamble discounted up to 2000 chars) has no sourcemap coverage.`,
 
     StructuralCoherenceRuleDescription:
         `Structural coherence checks on sourcemap tokens (informational). Flags out-of-bounds mappings, sample-based whitespace/comment-only mappings above 80%, and cross-file jump ratios above 50% on consecutive same-line tokens.`,
