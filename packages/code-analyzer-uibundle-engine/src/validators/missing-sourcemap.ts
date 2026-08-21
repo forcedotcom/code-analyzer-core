@@ -1,6 +1,6 @@
 import { promises as fs } from "node:fs";
 import * as path from "node:path";
-import { containsDangerousApi, DANGEROUS_API_PATTERNS, isCompiledJs } from "./classification";
+import { containsDangerousApi, DANGEROUS_API_PATTERNS, isCompiledJs, isSourcemap } from "./classification";
 import { getMessage } from "../messages";
 import type { ValidatorFinding, ValidatorResult } from "./types";
 
@@ -21,7 +21,7 @@ export async function validateMissingSourcemaps(distPath: string): Promise<Valid
     const findings: ValidatorFinding[] = [];
 
     for (const jsFile of jsFiles) {
-        if (await hasSourcemap(jsFile)) continue;
+        if (await hasSourcemap(jsFile, distPath)) continue;
 
         findings.push({
             ruleName: MISSING_SOURCEMAP_RULE,
@@ -69,18 +69,35 @@ async function collectJsFiles(root: string): Promise<string[]> {
     return out;
 }
 
-async function hasSourcemap(jsFile: string): Promise<boolean> {
+async function hasSourcemap(jsFile: string, distPath: string): Promise<boolean> {
+    // Downstream validators skip non-files and anything outside distPath, so accepting
+    // those here would silently bypass all 8 rules.
     const colocated = `${jsFile}.map`;
     try {
-        await fs.access(colocated);
-        return true;
+        const st = await fs.stat(colocated);
+        if (st.isFile()) return true;
     } catch {
         // fall through
     }
 
+    let contents: string;
     try {
-        const contents = await fs.readFile(jsFile, "utf8");
-        return /^[/\s]*[#@]\s*sourceMappingURL\s*=/m.test(contents);
+        contents = await fs.readFile(jsFile, "utf8");
+    } catch {
+        return false;
+    }
+    const match = /^[/\s]*[#@]\s*sourceMappingURL\s*=\s*(\S+)/m.exec(contents);
+    if (!match) return false;
+    const url = match[1]!.replace(/[?#].*$/, "");
+    if (url.startsWith("data:")) return false;
+    if (/^[a-z]+:\/\//i.test(url)) return false;
+    const resolved = path.resolve(path.dirname(jsFile), url);
+    const relToDist = path.relative(distPath, resolved);
+    if (relToDist.startsWith("..") || path.isAbsolute(relToDist)) return false;
+    if (!isSourcemap(resolved)) return false;
+    try {
+        const st = await fs.stat(resolved);
+        return st.isFile();
     } catch {
         return false;
     }

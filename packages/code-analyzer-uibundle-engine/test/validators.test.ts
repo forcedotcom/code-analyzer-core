@@ -44,11 +44,20 @@ describe('classification', () => {
     });
 
     it('identifies virtual, dependency, and asset sources', () => {
-        // The virtual predicate hits on bundler-runtime prefixes and query-string embellishments.
+        // The virtual predicate hits on bundler-runtime prefixes and concrete Vite/webpack query forms.
         expect(isVirtualSource('webpack/runtime/hasOwnProperty')).toEqual(true);
         expect(isVirtualSource('vite/dist/client/env.mjs')).toEqual(true);
-        expect(isVirtualSource('src/x.js?vue&type=script')).toEqual(true);
+        expect(isVirtualSource('src/App.vue?vue&type=script&lang.ts')).toEqual(true);
+        expect(isVirtualSource('src/logo.svg?url')).toEqual(true);
+        expect(isVirtualSource('src/worker.js?worker')).toEqual(true);
+        expect(isVirtualSource('src/style.css?inline')).toEqual(true);
         expect(isVirtualSource('src/x.js')).toEqual(false);
+        // Attacker suffixes must not launder a real source path past byte-equal / AST checks.
+        expect(isVirtualSource('src/injected.js?x')).toEqual(false);
+        expect(isVirtualSource('src/x.js?tampered')).toEqual(false);
+        expect(isVirtualSource('src/injected.js?x=1')).toEqual(false);
+        expect(isVirtualSource('src/x.js?tampered=1')).toEqual(false);
+        expect(isVirtualSource('src/x.js?type=anything')).toEqual(false);
         expect(isDependency('node_modules/foo/index.js')).toEqual(true);
         expect(isDependency('packages/pkg/node_modules/foo/index.js')).toEqual(true);
         expect(isDependency('src/x.js')).toEqual(false);

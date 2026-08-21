@@ -1,5 +1,6 @@
 import { promises as fs } from "node:fs";
 import { decode } from "@jridgewell/sourcemap-codec";
+import { isSourcemap } from "./classification";
 import { walk } from "./sourcemap-io";
 import { getMessage } from "../messages";
 import type { ValidatorFinding, ValidatorResult } from "./types";
@@ -17,7 +18,7 @@ export async function validateVlqIntegrity(distPath: string): Promise<ValidatorR
     const findings: ValidatorFinding[] = [];
 
     await walk(distPath, async (file) => {
-        if (!file.endsWith(".js.map")) return;
+        if (!isSourcemap(file)) return;
 
         let raw: string;
         try {

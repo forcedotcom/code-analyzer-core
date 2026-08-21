@@ -17,15 +17,30 @@ export function normalizeSourcePath(p: string): string {
     return s;
 }
 
+// An "any `?`" gate would let `src/injected.js?x=1` launder past byte-equal/AST checks.
+const KNOWN_VIRTUAL_QUERY_PATTERNS = [
+    /\?vue(&|$)/,
+    /\?vue&type=(script|template|style|custom)(&|$)/,
+    /\?url(&|$)/,
+    /\?raw(&|$)/,
+    /\?worker(&|$)/,
+    /\?sharedworker(&|$)/,
+    /\?inline(&|$)/,
+    /\?used(&|$)/,
+    /\?import(&|$)/,
+    /\?commonjs-(proxy|es-import|external|entry)(&|$)/,
+    /\?lang\.(js|jsx|ts|tsx|css|scss|sass|less|stylus|postcss)(&|$)/,
+];
+
 export function isVirtualSource(p: string): boolean {
     return (
         p.includes("\0") ||
         p.startsWith("webpack/") ||
         p.startsWith("<") ||
-        p.includes("?") ||
         p.startsWith("__vite") ||
         p.startsWith("vite/") ||
-        p === "unknown"
+        p === "unknown" ||
+        KNOWN_VIRTUAL_QUERY_PATTERNS.some((re) => re.test(p))
     );
 }
 
