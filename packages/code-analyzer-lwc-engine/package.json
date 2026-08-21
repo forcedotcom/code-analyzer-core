@@ -14,7 +14,7 @@
   "types": "dist/index.d.ts",
   "dependencies": {
     "@types/node": "^20.0.0",
-    "@salesforce/code-analyzer-engine-api": "0.36.0",
+    "@salesforce/code-analyzer-engine-api": "0.42.0-SNAPSHOT",
     "@lwc/compiler": "9.2.1",
     "@lwc/errors": "9.2.1",
     "@lwc/sfdc-lwc-compiler": "15.0.5",

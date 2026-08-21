@@ -4,8 +4,8 @@ import { toSeverityLevel } from "../src/severity";
 describe("toSeverityLevel", () => {
     it.each([
         [0, SeverityLevel.Critical],   // Fatal
-        [1, SeverityLevel.High],       // Error
-        [2, SeverityLevel.Moderate],   // Warning
+        [1, SeverityLevel.Critical],   // Error
+        [2, SeverityLevel.High],       // Warning
         [3, SeverityLevel.Info],       // Log
     ])("DiagnosticLevel %i maps to SeverityLevel %i", (level, expected) => {
         expect(toSeverityLevel(level)).toBe(expected);

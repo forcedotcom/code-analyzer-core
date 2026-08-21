@@ -1,6 +1,7 @@
 import * as fsp from "node:fs/promises";
 import path from "node:path";
 import { BundleIdentity } from "./bundle";
+import { getMessage } from "./messages";
 
 export interface CollectedDiagnostic {
     code: number;
@@ -11,6 +12,11 @@ export interface CollectedDiagnostic {
     url?: string;
 }
 
+// Callback used to surface non-fatal issues (e.g. the platform compiler being unavailable)
+// back to the engine, which owns the event emitter. compile.ts stays free of any Engine
+// dependency so it remains a plain, testable module.
+export type DebugLogger = (message: string) => void;
+
 // Compile a single LWC file using both open-source and platform compilers.
 // Returns a merged, deduplicated list of diagnostics from both paths.
 //
@@ -18,15 +24,19 @@ export interface CollectedDiagnostic {
 // Path 2: @lwc/sfdc-lwc-compiler compile() — returns diagnostics on output (codes 1500-1538)
 export async function compileAndCollect(
     file: string,
-    bundle: BundleIdentity
+    bundle: BundleIdentity,
+    logDebug?: DebugLogger
 ): Promise<CollectedDiagnostic[]> {
     const source = await fsp.readFile(file, "utf-8");
     const bundleFiles = await readBundleFiles(file, bundle.name);
 
-    // Sequential — not parallel. Both paths import @lwc/compiler internally;
-    // concurrent dynamic import() of the same ESM module causes a Node race condition.
+    // Run the two compiler paths sequentially, not via Promise.all. The open-source
+    // path (transformSync) is a synchronous, CPU-bound call, so overlapping it with the
+    // platform path yields no throughput win on Node's single thread. Both paths also
+    // drive the same @lwc/compiler internals; serializing avoids depending on that shared
+    // machinery being safe to re-enter concurrently.
     const openSourceDiags = await collectFromTransformSync(source, file, bundle);
-    const platformDiags = await collectFromPlatformCompile(bundleFiles, bundle);
+    const platformDiags = await collectFromPlatformCompile(bundleFiles, bundle, file, logDebug);
 
     return deduplicateDiagnostics([...openSourceDiags, ...platformDiags]);
 }
@@ -88,7 +98,9 @@ async function collectFromTransformSync(
 // Path 2: @lwc/sfdc-lwc-compiler platform compile (returns diagnostics, doesn't throw)
 async function collectFromPlatformCompile(
     bundleFiles: Record<string, string>,
-    bundle: BundleIdentity
+    bundle: BundleIdentity,
+    file: string,
+    logDebug?: DebugLogger
 ): Promise<CollectedDiagnostic[]> {
     try {
         const sfdcCompiler = await import("@lwc/sfdc-lwc-compiler");
@@ -124,10 +136,11 @@ async function collectFromPlatformCompile(
         }
 
         return diagnostics;
-    } catch (_err) {
-        // If platform compile fails entirely (missing deps, version mismatch), fall back silently.
-        // Open-source path still provides coverage for codes 1001-1213.
-        // Platform compile unavailable — open-source path still covers codes 1001-1213.
+    } catch (err) {
+        // If platform compile fails entirely (missing deps, version mismatch), fall back to the
+        // open-source path (codes 1001-1213). This is non-fatal, but we surface it at debug level
+        // so the absence of platform-range diagnostics (1500+) is explainable rather than silent.
+        logDebug?.(getMessage("PlatformCompilerUnavailable", file, (err as Error).message));
         return [];
     }
 }

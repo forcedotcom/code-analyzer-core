@@ -17,6 +17,14 @@ interface LWCErrorInfoLike {
 // CJS cannot require ESM — this is a broken dependency in the published packages.
 // Workaround: read the .js file from disk and execute it in a VM with a fake require()
 // that supplies the only constants the file actually needs (DiagnosticLevel enum values).
+//
+// RESOLUTION PATH (pending team decision): Node ships flagless require(esm) as of
+// Node >= 20.19 / >= 22.12. On those versions the inner require("@lwc/errors") no longer
+// throws ERR_REQUIRE_ESM, so this VM hack can be deleted and replaced with a plain
+// `await import(`${packageName}/dist/errors/errors.js`)`. Doing so requires bumping this
+// package's engines floor from ">=20.0.0" to ">=20.19.0" (Node 20.0–20.18 would still
+// crash). Whether we can raise the Node floor — here only, or repo-wide (every package is
+// currently ">=20.0.0") — is a decision for the team, not the POC.
 
 async function loadPlatformErrors(packageName: string): Promise<Record<string, unknown>> {
     const resolvePath = require.resolve(`${packageName}/dist/errors/errors.js`);
