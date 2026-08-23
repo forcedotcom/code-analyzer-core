@@ -21,13 +21,8 @@ export class RuntimeJavaVersionIdentifier implements JavaVersionIdentifier {
             // * (from Win10): "openjdk 14 2020-03-17\r\nOpenJDK Runtime Environment (build 14+36-1461)\r\nOpenJDK 64-Bit Server VM (build 14+36-1461, mixed mode, sharing)\r\n"
             // Notice it doesn't have the word "version" which is why we don't call "--version" but instead call "-version".
             //
-            // We pin the child's working directory to this engine's installed module directory (__dirname),
-            // never the inherited, attacker-controllable scanned-repo cwd. On Windows, spawning a bare command
-            // name like "java" (the auto-detect fallback in config.ts) without pinning cwd lets the OS resolve
-            // a repo-local java/java.exe from the current directory ahead of the trusted PATH entry, executing
-            // attacker code (CWE-427 search-path element). Absolute-path and PATH-resolved java commands are
-            // unaffected, so behavior is preserved for legitimate configs. Mirrors the Flow engine's
-            // PythonCommandExecutor cwd pin.
+            // Pin cwd to this engine's install dir (__dirname), not the inherited scanned-repo cwd, so a
+            // repo-local java.exe can't shadow the real one on Windows (CWE-427). Absolute/PATH commands unaffected.
             const childProcess: cp.ChildProcessWithoutNullStreams = cp.spawn(javaCommand, ['-version'], {cwd: __dirname});
 
             let stderr: string = '';
