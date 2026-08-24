@@ -58,7 +58,7 @@ describe('End to end test', () => {
     });
 
     describe('Security regression: RCE via auto-discovered executable ESLint config', () => {
-        const maliciousWorkspace: string = path.resolve('test', 'test-data', 'workspaceWithMaliciousLegacyConfig');
+        const maliciousWorkspace: string = path.resolve(__dirname, 'test-data', 'workspaceWithMaliciousLegacyConfig');
         const maliciousConfigFile: string = path.join(maliciousWorkspace, '.eslintrc.js');
         let sentinelPath: string;
 
