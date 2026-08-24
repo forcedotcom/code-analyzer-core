@@ -602,21 +602,21 @@ class EmptyTagEngine extends engApi.Engine {
 }
 
 /**
- * DevPreviewEnginePlugin - A plugin to help with testing DevPreview rule selection behavior
+ * ApexGuruEnginePlugin - A plugin to help with testing apex-guru (opt-in) rule selection behavior
  */
-export class DevPreviewEnginePlugin extends engApi.EnginePluginV1 {
+export class ApexGuruEnginePlugin extends engApi.EnginePluginV1 {
     getAvailableEngineNames(): string[] {
-        return ["devPreviewEngine"];
+        return ["apexGuruEngine"];
     }
 
     async createEngine(_engineName: string, _config: engApi.ConfigObject): Promise<engApi.Engine> {
-        return new DevPreviewEngine();
+        return new ApexGuruEngine();
     }
 }
 
-class DevPreviewEngine extends engApi.Engine {
+class ApexGuruEngine extends engApi.Engine {
     getName(): string {
-        return 'devPreviewEngine';
+        return 'apexGuruEngine';
     }
 
     getEngineVersion(): Promise<string> {
@@ -626,17 +626,63 @@ class DevPreviewEngine extends engApi.Engine {
     async describeRules(_describeOptions: engApi.DescribeOptions): Promise<engApi.RuleDescription[]> {
         return [
             {
-                name: "devPreviewRule1",
+                name: "apexGuruRule1",
                 severityLevel: engApi.SeverityLevel.Low,
-                tags: ['DevPreviewApexGuru', 'Performance'],
-                description: 'A DevPreview rule with Low severity',
+                tags: ['apex-guru', 'Performance'],
+                description: 'An apex-guru rule with Low severity',
                 resourceUrls: []
             },
             {
-                name: "devPreviewRule2",
+                name: "apexGuruRule2",
                 severityLevel: engApi.SeverityLevel.High,
-                tags: ['DevPreviewApexGuru'],
-                description: 'A DevPreview rule with High severity',
+                tags: ['apex-guru'],
+                description: 'An apex-guru rule with High severity',
+                resourceUrls: []
+            }
+        ];
+    }
+
+    async runRules(_ruleNames: string[], _runOptions: engApi.RunOptions): Promise<engApi.EngineRunResults> {
+        return { violations: [] };
+    }
+}
+
+/**
+ * UIBundleEnginePlugin - A plugin to help with testing UIBundle opt-in rule selection behavior
+ */
+export class UIBundleEnginePlugin extends engApi.EnginePluginV1 {
+    getAvailableEngineNames(): string[] {
+        return ["uibundleEngine"];
+    }
+
+    async createEngine(_engineName: string, _config: engApi.ConfigObject): Promise<engApi.Engine> {
+        return new UIBundleEngine();
+    }
+}
+
+class UIBundleEngine extends engApi.Engine {
+    getName(): string {
+        return 'uibundleEngine';
+    }
+
+    getEngineVersion(): Promise<string> {
+        return Promise.resolve('1.0.0');
+    }
+
+    async describeRules(_describeOptions: engApi.DescribeOptions): Promise<engApi.RuleDescription[]> {
+        return [
+            {
+                name: "uibundleRule1",
+                severityLevel: engApi.SeverityLevel.Low,
+                tags: ['UIBundle', 'UIBundleIntegrity'],
+                description: 'A UIBundle rule with Low severity',
+                resourceUrls: []
+            },
+            {
+                name: "uibundleRule2",
+                severityLevel: engApi.SeverityLevel.High,
+                tags: ['UIBundle', 'UIBundleIntegrity'],
+                description: 'A UIBundle rule with High severity',
                 resourceUrls: []
             }
         ];

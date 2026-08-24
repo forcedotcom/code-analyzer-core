@@ -610,45 +610,92 @@ describe('Tests for selecting rules', () => {
             getMessage('InstructionsToIgnoreErrorAndDisableEngine', 'someEngine'));
     })
 
-    describe('DevPreviewApexGuru rule selection behavior', () => {
+    describe('apex-guru rule selection behavior', () => {
         beforeEach(async () => {
             codeAnalyzer = createCodeAnalyzer();
-            await codeAnalyzer.addEnginePlugin(new stubs.DevPreviewEnginePlugin());
+            await codeAnalyzer.addEnginePlugin(new stubs.ApexGuruEnginePlugin());
         });
 
-        it('DevPreviewApexGuru rules are NOT selected by severity number selector', async () => {
+        it('apex-guru rules are NOT selected by the default Recommended selector', async () => {
+            const selection: RuleSelection = await codeAnalyzer.selectRules(['Recommended']);
+            expect(ruleNamesFor(selection, 'apexGuruEngine')).toEqual([]);
+        });
+
+        it('apex-guru rules are NOT selected by severity number selector', async () => {
             const selection: RuleSelection = await codeAnalyzer.selectRules(['4']); // Low
-            expect(ruleNamesFor(selection, 'devPreviewEngine')).toEqual([]);
+            expect(ruleNamesFor(selection, 'apexGuruEngine')).toEqual([]);
         });
 
-        it('DevPreviewApexGuru rules are NOT selected by severity name selector', async () => {
+        it('apex-guru rules are NOT selected by severity name selector', async () => {
             const selection: RuleSelection = await codeAnalyzer.selectRules(['Low']);
-            expect(ruleNamesFor(selection, 'devPreviewEngine')).toEqual([]);
+            expect(ruleNamesFor(selection, 'apexGuruEngine')).toEqual([]);
         });
 
-        it('DevPreviewApexGuru rules are NOT selected by all', async () => {
+        it('apex-guru rules are NOT selected by all', async () => {
             const selection: RuleSelection = await codeAnalyzer.selectRules(['all']);
-            expect(ruleNamesFor(selection, 'devPreviewEngine')).toEqual([]);
+            expect(ruleNamesFor(selection, 'apexGuruEngine')).toEqual([]);
         });
 
-        it('DevPreviewApexGuru rules ARE selected by engine name', async () => {
-            const selection: RuleSelection = await codeAnalyzer.selectRules(['devPreviewEngine']);
-            expect(ruleNamesFor(selection, 'devPreviewEngine')).toEqual(['devPreviewRule1', 'devPreviewRule2']);
+        it('apex-guru rules ARE selected by engine name', async () => {
+            const selection: RuleSelection = await codeAnalyzer.selectRules(['apexGuruEngine']);
+            expect(ruleNamesFor(selection, 'apexGuruEngine')).toEqual(['apexGuruRule1', 'apexGuruRule2']);
         });
 
-        it('DevPreviewApexGuru rules ARE selected by rule name', async () => {
-            const selection: RuleSelection = await codeAnalyzer.selectRules(['devPreviewRule1']);
-            expect(ruleNamesFor(selection, 'devPreviewEngine')).toEqual(['devPreviewRule1']);
+        it('apex-guru rules ARE selected by rule name', async () => {
+            const selection: RuleSelection = await codeAnalyzer.selectRules(['apexGuruRule1']);
+            expect(ruleNamesFor(selection, 'apexGuruEngine')).toEqual(['apexGuruRule1']);
         });
 
-        it('DevPreviewApexGuru rules ARE selected by DevPreviewApexGuru tag', async () => {
-            const selection: RuleSelection = await codeAnalyzer.selectRules(['DevPreviewApexGuru']);
-            expect(ruleNamesFor(selection, 'devPreviewEngine')).toEqual(['devPreviewRule1', 'devPreviewRule2']);
+        it('apex-guru rules ARE selected by the apex-guru tag', async () => {
+            const selection: RuleSelection = await codeAnalyzer.selectRules(['apex-guru']);
+            expect(ruleNamesFor(selection, 'apexGuruEngine')).toEqual(['apexGuruRule1', 'apexGuruRule2']);
         });
 
-        it('DevPreviewApexGuru rules ARE selected by other tag they carry', async () => {
+        it('apex-guru rules ARE selected by other tag they carry', async () => {
             const selection: RuleSelection = await codeAnalyzer.selectRules(['Performance']);
-            expect(ruleNamesFor(selection, 'devPreviewEngine')).toEqual(['devPreviewRule1']);
+            expect(ruleNamesFor(selection, 'apexGuruEngine')).toEqual(['apexGuruRule1']);
+        });
+    });
+
+    describe('UIBundle rule selection behavior', () => {
+        beforeEach(async () => {
+            codeAnalyzer = createCodeAnalyzer();
+            await codeAnalyzer.addEnginePlugin(new stubs.UIBundleEnginePlugin());
+        });
+
+        it('UIBundle rules are NOT selected by severity number selector', async () => {
+            const selection: RuleSelection = await codeAnalyzer.selectRules(['4']); // Low
+            expect(ruleNamesFor(selection, 'uibundleEngine')).toEqual([]);
+        });
+
+        it('UIBundle rules are NOT selected by severity name selector', async () => {
+            const selection: RuleSelection = await codeAnalyzer.selectRules(['Low']);
+            expect(ruleNamesFor(selection, 'uibundleEngine')).toEqual([]);
+        });
+
+        it('UIBundle rules are NOT selected by all', async () => {
+            const selection: RuleSelection = await codeAnalyzer.selectRules(['all']);
+            expect(ruleNamesFor(selection, 'uibundleEngine')).toEqual([]);
+        });
+
+        it('UIBundle rules ARE selected by engine name', async () => {
+            const selection: RuleSelection = await codeAnalyzer.selectRules(['uibundleEngine']);
+            expect(ruleNamesFor(selection, 'uibundleEngine')).toEqual(['uibundleRule1', 'uibundleRule2']);
+        });
+
+        it('UIBundle rules ARE selected by rule name', async () => {
+            const selection: RuleSelection = await codeAnalyzer.selectRules(['uibundleRule1']);
+            expect(ruleNamesFor(selection, 'uibundleEngine')).toEqual(['uibundleRule1']);
+        });
+
+        it('UIBundle rules ARE selected by UIBundle tag', async () => {
+            const selection: RuleSelection = await codeAnalyzer.selectRules(['UIBundle']);
+            expect(ruleNamesFor(selection, 'uibundleEngine')).toEqual(['uibundleRule1', 'uibundleRule2']);
+        });
+
+        it('UIBundle rules ARE selected by UIBundleIntegrity tag they carry', async () => {
+            const selection: RuleSelection = await codeAnalyzer.selectRules(['UIBundleIntegrity']);
+            expect(ruleNamesFor(selection, 'uibundleEngine')).toEqual(['uibundleRule1', 'uibundleRule2']);
         });
     });
 
