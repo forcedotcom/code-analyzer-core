@@ -72,31 +72,41 @@ describe('JavaCommandExecutor CWE-427 cwd pinning', () => {
         expect(TRUSTED_DIR).not.toEqual(process.cwd());
     });
 
-    // STUB (#2 of the review follow-up) — end-to-end proof of the security property, not just the argument.
-    // Intentionally skipped: enable and validate on the windows-latest CI runner (Java 11 is already provisioned
-    // there via actions/setup-java). Two caveats to resolve before un-skipping:
-    //   1. A faithful attack plants a real `java.exe` (Windows resolves bare names cwd-before-PATH). Creating a
-    //      genuine .exe portably in a test is nontrivial; a `java.cmd`/`.bat` is a weaker proxy AND, since Node
-    //      18.20.2/20.12.2, spawning .bat/.cmd without `shell:true` throws EINVAL rather than executing — so the
-    //      proxy must be chosen carefully or the assertion will pass for the wrong reason.
-    //   2. The runner must have a working PATH `java` and no *_HOME so the bare-'java' path is exercised.
-    // Mechanism once enabled: plant a hostile `java` in a temp dir, chdir there (simulating a scanned repo),
-    // exec via JavaCommandExecutor, and assert the sentinel was never written — i.e. our cwd pin routed the child
-    // to the trusted dir and the planted binary never ran. Removing the {cwd:__dirname} pin must fail this test.
-    it.skip('does not execute a repo-local java planted in the scanned-repo cwd (Windows-only; see comment)', async () => {
+    // End-to-end proof of the security property on the only OS where it is reachable. Windows resolves a bare
+    // command name cwd-before-PATH, so a repo-local java.exe can shadow the real one; macOS/Linux use PATH only
+    // (execvp) and never consult cwd, so this test is skipped there. The CI matrix runs the windows-latest leg,
+    // which provisions a real temurin java on PATH via actions/setup-java.
+    //
+    // We plant a genuine java.exe (a copy of a harmless system .exe) in an attacker-controlled dir and chdir there
+    // to simulate scanning that repo. A real .exe is required: on Node >= 18.20.2/20.12.2 (CI uses Node 20)
+    // spawning a .bat/.cmd without shell:true throws EINVAL, so a .cmd proxy would never run and the test would
+    // pass for the wrong reason. Detection is by output: `java --version` prints its banner to stdout and exits 0
+    // on JDK 9+, which the planted hostname.exe cannot reproduce. With the {cwd:__dirname} pin the child resolves
+    // to the real PATH java; remove the pin and the planted exe runs instead, failing both assertions below.
+    const itOnWindows = process.platform === 'win32' ? it : it.skip;
+    itOnWindows('does not execute a repo-local java.exe planted in the scanned-repo cwd', async () => {
         const attackDir: string = await fs.promises.mkdtemp(path.join(os.tmpdir(), 'cwd-shadow-'));
-        const sentinel: string = path.join(attackDir, 'PWNED.txt');
-        await fs.promises.writeFile(path.join(attackDir, 'java.cmd'),
-            `@echo off\r\n> "${sentinel}" echo pwned\r\nexit /b 0\r\n`);
+        // A genuine .exe named exactly "java.exe": Windows resolves a bare "java" to it when the cwd is searched.
+        await fs.promises.copyFile(
+            path.join(process.env.SystemRoot ?? 'C:\\Windows', 'System32', 'hostname.exe'),
+            path.join(attackDir, 'java.exe'));
+
         const originalCwd: string = process.cwd();
+        let stdout: string = '';
+        let execError: string = '';
         try {
-            process.chdir(attackDir);
-            await new JavaCommandExecutor('java').exec(['-version']);
+            process.chdir(attackDir); // simulate the CLI being invoked from inside the untrusted repo
+            await new JavaCommandExecutor('java').exec(['--version'], [], line => { stdout += line + '\n'; });
+        } catch (err) {
+            execError = (err as Error).message;
         } finally {
             process.chdir(originalCwd);
             await fs.promises.rm(attackDir, {recursive: true, force: true});
         }
-        expect(fs.existsSync(sentinel)).toBe(false);
+
+        // The real PATH java must have run (its version banner reached stdout) and not the planted hostname.exe.
+        expect(stdout.toLowerCase()).toMatch(/java|jdk|openjdk|runtime|hotspot/);
+        expect(execError).toEqual('');
     });
 });
 
