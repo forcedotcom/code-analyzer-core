@@ -1,5 +1,8 @@
 import { RuleDescription } from "@salesforce/code-analyzer-engine-api";
+import { pathToFileURL } from "node:url";
 import { toSeverityLevel } from "./severity";
+import { DebugLogger } from "./compile";
+import { getMessage } from "./messages";
 
 interface LWCErrorInfoLike {
     code: number;
@@ -8,41 +11,41 @@ interface LWCErrorInfoLike {
     url?: string;
 }
 
-// Lazy-load all error registries from three sources:
-//   1. @lwc/errors (open-source compiler, codes 1001-1213)
-//   2. @lwc/sfdc-lwc-compiler (platform compiler, codes 1500-1538)
-//   3. @lwc/metadata (metadata extraction, codes 1700-1720)
+// Load a platform package's error registry (@lwc/sfdc-lwc-compiler, @lwc/metadata).
 //
-// Platform packages (2 & 3) are CJS but require() @lwc/errors which is ESM-only.
-// CJS cannot require ESM — this is a broken dependency in the published packages.
-// Workaround: read the .js file from disk and execute it in a VM with a fake require()
-// that supplies the only constants the file actually needs (DiagnosticLevel enum values).
+// These packages are CJS but internally require("@lwc/errors"), which is ESM-only. We load
+// each package's own, unmodified errors module through Node's standard loader via a dynamic
+// import() of its file URL. Node's flagless require(ESM) support (Node >=20.19 / >=22.12)
+// resolves the inner require("@lwc/errors") on its own, so no interception is needed.
 //
-// RESOLUTION PATH (pending team decision): Node ships flagless require(esm) as of
-// Node >= 20.19 / >= 22.12. On those versions the inner require("@lwc/errors") no longer
-// throws ERR_REQUIRE_ESM, so this VM hack can be deleted and replaced with a plain
-// `await import(`${packageName}/dist/errors/errors.js`)`. Doing so requires bumping this
-// package's engines floor from ">=20.0.0" to ">=20.19.0" (Node 20.0–20.18 would still
-// crash). Whether we can raise the Node floor — here only, or repo-wide (every package is
-// currently ">=20.0.0") — is a decision for the team, not the POC.
-
-async function loadPlatformErrors(packageName: string): Promise<Record<string, unknown>> {
-    const resolvePath = require.resolve(`${packageName}/dist/errors/errors.js`);
-    const fs = await import("node:fs");
-    const vm = await import("node:vm");
-    const code = fs.readFileSync(resolvePath, "utf-8").replace(/\/\/# sourceMappingURL=.*$/m, "");
-    const mod = { exports: {} as Record<string, unknown> };
-    const wrapped = `(function(exports, require, module) {\n${code}\n})`;
-    const fn = vm.runInThisContext(wrapped);
-    fn(mod.exports, () => ({ DiagnosticLevel: { Fatal: 0, Error: 1, Warning: 2, Log: 3 }, SITE_LOCAL_NAMESPACE: "Site" }), mod);
-    return mod.exports;
+// We deliberately do NOT read the file off disk and execute its text in a vm: that is
+// arbitrary code execution with no integrity guarantees, and it forced us to hand-fake the
+// @lwc/errors constants the file expects. import() runs the real code through the real
+// module machinery instead — no vm, no disk reads, no faked constants.
+//
+// A failure here (e.g. an older Node without require(ESM), or a packaging change) is
+// non-fatal: the caller falls back to the open-source registry and we surface the reason at
+// debug level, mirroring how the platform compiler path degrades in compile.ts.
+async function loadPlatformErrors(
+    packageName: string,
+    logDebug?: DebugLogger
+): Promise<Record<string, unknown>> {
+    try {
+        const resolvedPath = require.resolve(`${packageName}/dist/errors/errors.js`);
+        const mod = await import(pathToFileURL(resolvedPath).href);
+        // A CJS module imported by URL exposes its module.exports as the default binding.
+        return ((mod as { default?: unknown }).default ?? mod) as Record<string, unknown>;
+    } catch (err) {
+        logDebug?.(getMessage("PlatformErrorRegistryUnavailable", packageName, (err as Error).message));
+        return {};
+    }
 }
 
-async function loadRegistries(): Promise<LWCErrorInfoLike[]> {
+async function loadRegistries(logDebug?: DebugLogger): Promise<LWCErrorInfoLike[]> {
     const lwcErrors = await import("@lwc/errors");
     const [sfdcErrors, metadataErrors] = await Promise.all([
-        loadPlatformErrors("@lwc/sfdc-lwc-compiler"),
-        loadPlatformErrors("@lwc/metadata"),
+        loadPlatformErrors("@lwc/sfdc-lwc-compiler", logDebug),
+        loadPlatformErrors("@lwc/metadata", logDebug),
     ]);
 
     const collected: LWCErrorInfoLike[] = [];
@@ -96,8 +99,8 @@ export function ruleNameForCode(code: number): string {
     return `LWC${code}`;
 }
 
-export async function buildRuleCatalog(): Promise<RuleDescription[]> {
-    const infos = await loadRegistries();
+export async function buildRuleCatalog(logDebug?: DebugLogger): Promise<RuleDescription[]> {
+    const infos = await loadRegistries(logDebug);
 
     // Dedupe by code — registries can repeat entries for shared codes.
     const byCode = new Map<number, LWCErrorInfoLike>();

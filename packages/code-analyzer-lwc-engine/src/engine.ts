@@ -40,7 +40,8 @@ export class LwcEngine extends Engine {
             }
         }
 
-        const rules = await buildRuleCatalog();
+        const rules = await buildRuleCatalog(
+            (msg: string) => this.emitLogEvent(LogLevel.Debug, msg));
         this.emitDescribeRulesProgressEvent(100);
         return rules;
     }
