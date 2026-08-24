@@ -13,7 +13,7 @@ export type ApexGuruEngineConfig = {
 
     /**
      * Maximum time to wait for ApexGuru API response (in milliseconds)
-     * Default: 600000 (10 minutes)
+     * Default: 300000 (5 minutes)
      */
     api_timeout_ms: number;
 
@@ -42,7 +42,7 @@ export type ApexGuruEngineConfig = {
  * Default configuration values
  */
 export const DEFAULT_APEXGURU_ENGINE_CONFIG: ApexGuruEngineConfig = {
-    api_timeout_ms: 600000,         // 10 minutes
+    api_timeout_ms: 300000,         // 5 minutes
     api_initial_retry_ms: 2000,     // 2 seconds
     api_max_retry_ms: 60000,        // 60 seconds
     api_backoff_multiplier: 2       // 2x exponential backoff
@@ -60,9 +60,9 @@ export const APEXGURU_ENGINE_CONFIG_DESCRIPTION: ConfigDescription = {
             defaultValue: null
         },
         api_timeout_ms: {
-            descriptionText: 'Maximum time to wait for ApexGuru API response (in milliseconds). Default: 600000 (10 minutes)',
+            descriptionText: 'Maximum time to wait for ApexGuru API response (in milliseconds). Default: 300000 (5 minutes)',
             valueType: 'number',
-            defaultValue: 600000
+            defaultValue: 300000
         },
         api_initial_retry_ms: {
             descriptionText: 'Initial retry delay for polling ApexGuru API (in milliseconds). Default: 2000 (2 seconds)',

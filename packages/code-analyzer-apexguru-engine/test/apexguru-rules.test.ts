@@ -1,5 +1,5 @@
 import { COMMON_TAGS } from '@salesforce/code-analyzer-engine-api';
-import { APEXGURU_RULES, isKnownRule, FALLBACK_RULE_NAME } from '../src/apexguru-rules';
+import { APEXGURU_RULES, APEXGURU_TAG, isKnownRule, FALLBACK_RULE_NAME } from '../src/apexguru-rules';
 
 describe('apexguru-rules', () => {
 
@@ -8,9 +8,16 @@ describe('apexguru-rules', () => {
             expect(APEXGURU_RULES).toHaveLength(23);
         });
 
-        it('every rule should carry exactly the Recommended and Performance tags', () => {
+        it('every rule should carry exactly the apex-guru tag', () => {
             for (const rule of APEXGURU_RULES) {
-                expect(rule.tags).toEqual([COMMON_TAGS.RECOMMENDED, COMMON_TAGS.CATEGORIES.PERFORMANCE]);
+                expect(rule.tags).toEqual([APEXGURU_TAG]);
+            }
+        });
+
+        it('no rule should carry the Recommended or Performance tags (ApexGuru is opt-in, not run by default)', () => {
+            for (const rule of APEXGURU_RULES) {
+                expect(rule.tags).not.toContain(COMMON_TAGS.RECOMMENDED);
+                expect(rule.tags).not.toContain(COMMON_TAGS.CATEGORIES.PERFORMANCE);
             }
         });
 

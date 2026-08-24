@@ -109,11 +109,11 @@ export class RuleImpl implements Rule {
         const sevNumber: number = this.getSeverityLevel().valueOf();
         const sevName: string = SeverityLevel[sevNumber];
         const tags: string[] = this.getTags().map(t => t.toLowerCase());
-        const isDevPreviewApexGuru: boolean = tags.includes('devpreviewapexguru');
+        const isApexGuru: boolean = tags.includes('apex-guru');
         const isDevPreviewUIBundle: boolean = tags.includes('uibundle');
         let selectables: string[];
-        if (isDevPreviewApexGuru || isDevPreviewUIBundle) {
-            // Opt-in rule families (DevPreviewApexGuru, UIBundle) are only selectable by
+        if (isApexGuru || isDevPreviewUIBundle) {
+            // Opt-in rule families (ApexGuru, UIBundle) are only selectable by
             // engine name, rule name, or explicit tag. 'all' and severity are intentionally
             // excluded so broad selectors (e.g. 'all', '4', 'Low') don't pull them in.
             selectables = [
