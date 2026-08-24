@@ -1,0 +1,69 @@
+{
+  "name": "@salesforce/code-analyzer-uibundle-engine",
+  "description": "Plugin package that adds the 'uibundle' engine into Salesforce Code Analyzer. Validates UI Bundle build-output integrity — currently ships sourcemap-based verification of each shipped dist/ artifact against its declared sourcemap and the submitted src/ tree.",
+  "version": "0.1.0-SNAPSHOT",
+  "author": "The Salesforce Code Analyzer Team",
+  "license": "BSD-3-Clause",
+  "homepage": "https://developer.salesforce.com/docs/platform/salesforce-code-analyzer/overview",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/forcedotcom/code-analyzer-core.git",
+    "directory": "packages/code-analyzer-uibundle-engine"
+  },
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "dependencies": {
+    "@babel/parser": "^7.25.0",
+    "@babel/traverse": "^7.25.0",
+    "@babel/types": "^7.25.0",
+    "@jridgewell/sourcemap-codec": "^1.5.5",
+    "@jridgewell/trace-mapping": "^0.3.31",
+    "@salesforce/code-analyzer-engine-api": "0.42.0-SNAPSHOT",
+    "@types/node": "^20.0.0"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.39.5",
+    "@types/babel__traverse": "^7.28.0",
+    "@types/jest": "^30.0.0",
+    "eslint": "^9.39.5",
+    "jest": "^30.4.2",
+    "rimraf": "^6.1.3",
+    "ts-jest": "^29.4.11",
+    "typescript": "^5.9.3",
+    "typescript-eslint": "^8.64.0"
+  },
+  "engines": {
+    "node": ">=20.0.0"
+  },
+  "files": [
+    "dist",
+    "LICENSE",
+    "package.json"
+  ],
+  "scripts": {
+    "build": "tsc --build tsconfig.build.json --verbose",
+    "test": "tsc --build tsconfig.json && jest --coverage",
+    "lint": "eslint src/**/*.ts",
+    "package": "npm pack",
+    "all": "npm run build && npm run lint && npm run test && npm run package",
+    "clean": "tsc --build tsconfig.build.json --clean",
+    "postclean": "rimraf dist && rimraf coverage && rimraf ./*.tgz && rimraf vulnerabilities",
+    "scrub": "npm run clean && rimraf node_modules",
+    "showcoverage": "open ./coverage/lcov-report/index.html"
+  },
+  "jest": {
+    "preset": "ts-jest",
+    "testEnvironment": "node",
+    "testMatch": [
+      "**/*.test.ts"
+    ],
+    "testPathIgnorePatterns": [
+      "/node_modules/",
+      "/dist/"
+    ],
+    "collectCoverageFrom": [
+      "src/**/*.ts",
+      "!src/index.ts"
+    ]
+  }
+}
