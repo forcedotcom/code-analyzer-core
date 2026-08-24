@@ -26,7 +26,13 @@ export class JavaCommandExecutor {
             this.emitLogEvent(LogLevel.Fine, `Calling command: ${this.javaCommand} ` +
                 allJavaArgs.map(arg => arg.startsWith('-') ? arg : `"${arg}"`).join(' '));
 
-            const javaProcess: ChildProcessWithoutNullStreams = spawn(this.javaCommand, allJavaArgs);
+            // Pin cwd to this module's trusted install dir (__dirname), not the inherited scanned-repo cwd, so a
+            // repo-local java.exe can't shadow the real one on Windows, where a bare command name resolves
+            // cwd-before-PATH (CWE-427). This is the shared executor for the PMD, CPD, and SFGE engines, so this
+            // single pin protects the actual rule-listing/execution path (not just the version probe) for all three.
+            // Every java arg (classpaths and I/O files) is absolute, so pinning cwd is behavior-preserving.
+            // Mirrors the Flow-engine cwd-shadowing fix in PR #495 (W-23791879).
+            const javaProcess: ChildProcessWithoutNullStreams = spawn(this.javaCommand, allJavaArgs, {cwd: __dirname});
 
             javaProcess.stdout.on('data', (data: Buffer) => {
                 const msg: string = data.toString().trim();
