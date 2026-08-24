@@ -1,0 +1,118 @@
+export function toPosixPath(p: string): string {
+    return p.replace(/\\/g, "/");
+}
+
+export function normalizeLineEndings(s: string): string {
+    return s.replace(/\r\n?/g, "\n");
+}
+
+export function normalizeSourcePath(p: string): string {
+    let s = p;
+    while (s.startsWith("../")) s = s.slice(3);
+    while (s.startsWith("./")) s = s.slice(2);
+    while (s.startsWith("/")) s = s.slice(1);
+    if (s.startsWith("webpack:///")) s = s.slice("webpack:///".length);
+    else if (s.startsWith("webpack://")) s = s.slice("webpack://".length);
+    if (s.startsWith("/src/")) s = s.slice("/src/".length);
+    return s;
+}
+
+// An "any `?`" gate would let `src/injected.js?x=1` launder past byte-equal/AST checks.
+const KNOWN_VIRTUAL_QUERY_PATTERNS = [
+    /\?vue(&|$)/,
+    /\?vue&type=(script|template|style|custom)(&|$)/,
+    /\?url(&|$)/,
+    /\?raw(&|$)/,
+    /\?worker(&|$)/,
+    /\?sharedworker(&|$)/,
+    /\?inline(&|$)/,
+    /\?used(&|$)/,
+    /\?import(&|$)/,
+    /\?commonjs-(proxy|es-import|external|entry)(&|$)/,
+    /\?lang\.(js|jsx|ts|tsx|css|scss|sass|less|stylus|postcss)(&|$)/,
+];
+
+export function isVirtualSource(p: string): boolean {
+    return (
+        p.includes("\0") ||
+        p.startsWith("webpack/") ||
+        p.startsWith("<") ||
+        p.startsWith("__vite") ||
+        p.startsWith("vite/") ||
+        p === "unknown" ||
+        KNOWN_VIRTUAL_QUERY_PATTERNS.some((re) => re.test(p))
+    );
+}
+
+export function isDependency(p: string): boolean {
+    return p.startsWith("node_modules/") || p.includes("/node_modules/");
+}
+
+export function isAsset(p: string): boolean {
+    return ASSET_EXTENSIONS.some((ext) => p.endsWith(ext));
+}
+
+// Compiled JavaScript output extensions produced by bundlers. Vite/webpack/rollup
+// emit .js by default, .mjs when configured for pure ESM output, and .cjs when
+// emitting CommonJS. All three ship alongside .map files and are equally in-scope
+// for tamper detection.
+const COMPILED_JS_EXTENSIONS = [".js", ".mjs", ".cjs"];
+const SOURCEMAP_EXTENSIONS = [".js.map", ".mjs.map", ".cjs.map"];
+
+export function isCompiledJs(p: string): boolean {
+    return COMPILED_JS_EXTENSIONS.some((ext) => p.endsWith(ext));
+}
+
+export function isSourcemap(p: string): boolean {
+    return SOURCEMAP_EXTENSIONS.some((ext) => p.endsWith(ext));
+}
+
+const ASSET_EXTENSIONS = [
+    ".png",
+    ".jpg",
+    ".jpeg",
+    ".gif",
+    ".svg",
+    ".ico",
+    ".webp",
+    ".woff",
+    ".woff2",
+    ".ttf",
+    ".eot",
+    ".otf",
+    ".mp3",
+    ".mp4",
+    ".wav",
+    ".ogg",
+    ".webm",
+];
+
+export const DANGEROUS_API_PATTERNS: readonly string[] = Object.freeze([
+    "document.cookie",
+    "localStorage",
+    "sessionStorage",
+    "XMLHttpRequest",
+    "navigator.sendBeacon",
+    "importScripts",
+    "ServiceWorker",
+    ["ev", "al", "("].join(""),
+    ["Fu", "nction", "("].join(""),
+    "crypto.subtle",
+]);
+
+export const DANGEROUS_AST_EXTRA_PATTERNS: readonly string[] = Object.freeze([
+    "fetch(",
+    '.createElement("script")',
+    ".createElement(`script`)",
+]);
+
+export function containsDangerousApi(content: string): boolean {
+    return DANGEROUS_API_PATTERNS.some((p) => content.includes(p));
+}
+
+export function containsDangerousPattern(snippet: string): boolean {
+    return (
+        DANGEROUS_API_PATTERNS.some((p) => snippet.includes(p)) ||
+        DANGEROUS_AST_EXTRA_PATTERNS.some((p) => snippet.includes(p))
+    );
+}

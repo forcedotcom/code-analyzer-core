@@ -114,7 +114,7 @@ function getLatestReleasedVersion(changedPackage) {
 
 function isPackageThatHasNotPublished(changedPackage) {
     return [
-        "packages/ENGINE-TEMPLATE"
+        "packages/ENGINE-TEMPLATE",
     ].includes(changedPackage.replace("\\","/"));
 }
 

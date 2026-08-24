@@ -657,6 +657,48 @@ describe('Tests for selecting rules', () => {
         });
     });
 
+    describe('UIBundle rule selection behavior', () => {
+        beforeEach(async () => {
+            codeAnalyzer = createCodeAnalyzer();
+            await codeAnalyzer.addEnginePlugin(new stubs.UIBundleEnginePlugin());
+        });
+
+        it('UIBundle rules are NOT selected by severity number selector', async () => {
+            const selection: RuleSelection = await codeAnalyzer.selectRules(['4']); // Low
+            expect(ruleNamesFor(selection, 'uibundleEngine')).toEqual([]);
+        });
+
+        it('UIBundle rules are NOT selected by severity name selector', async () => {
+            const selection: RuleSelection = await codeAnalyzer.selectRules(['Low']);
+            expect(ruleNamesFor(selection, 'uibundleEngine')).toEqual([]);
+        });
+
+        it('UIBundle rules are NOT selected by all', async () => {
+            const selection: RuleSelection = await codeAnalyzer.selectRules(['all']);
+            expect(ruleNamesFor(selection, 'uibundleEngine')).toEqual([]);
+        });
+
+        it('UIBundle rules ARE selected by engine name', async () => {
+            const selection: RuleSelection = await codeAnalyzer.selectRules(['uibundleEngine']);
+            expect(ruleNamesFor(selection, 'uibundleEngine')).toEqual(['uibundleRule1', 'uibundleRule2']);
+        });
+
+        it('UIBundle rules ARE selected by rule name', async () => {
+            const selection: RuleSelection = await codeAnalyzer.selectRules(['uibundleRule1']);
+            expect(ruleNamesFor(selection, 'uibundleEngine')).toEqual(['uibundleRule1']);
+        });
+
+        it('UIBundle rules ARE selected by UIBundle tag', async () => {
+            const selection: RuleSelection = await codeAnalyzer.selectRules(['UIBundle']);
+            expect(ruleNamesFor(selection, 'uibundleEngine')).toEqual(['uibundleRule1', 'uibundleRule2']);
+        });
+
+        it('UIBundle rules ARE selected by UIBundleIntegrity tag they carry', async () => {
+            const selection: RuleSelection = await codeAnalyzer.selectRules(['UIBundleIntegrity']);
+            expect(ruleNamesFor(selection, 'uibundleEngine')).toEqual(['uibundleRule1', 'uibundleRule2']);
+        });
+    });
+
     it('When attempting to get a rule that does not exist in the selection, then error', async () => {
         const selection: RuleSelection = await codeAnalyzer.selectRules([]);
 
