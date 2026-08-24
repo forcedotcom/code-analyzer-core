@@ -2,7 +2,7 @@ import path from "node:path";
 import cp from "node:child_process";
 import {EventEmitter} from "node:events";
 import {SemVer} from "semver";
-import {_extractJavaVersionFrom, RuntimeJavaVersionIdentifier} from "../src/java-version-identifier";
+import {_extractJavaVersionFrom, RuntimeJavaVersionIdentifier} from "../src/JavaVersionIdentifier";
 
 // Under ts-jest the source runs from src/, so its __dirname (the cwd the spawn is pinned to) is this dir.
 const TRUSTED_DIR: string = path.resolve(__dirname, '..', 'src');
