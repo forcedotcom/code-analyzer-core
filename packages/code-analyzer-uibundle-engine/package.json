@@ -1,7 +1,7 @@
 {
   "name": "@salesforce/code-analyzer-uibundle-engine",
   "description": "Plugin package that adds the 'uibundle' engine into Salesforce Code Analyzer. Validates UI Bundle build-output integrity — currently ships sourcemap-based verification of each shipped dist/ artifact against its declared sourcemap and the submitted src/ tree.",
-  "version": "0.2.0-SNAPSHOT",
+  "version": "0.2.0",
   "author": "The Salesforce Code Analyzer Team",
   "license": "BSD-3-Clause",
   "homepage": "https://developer.salesforce.com/docs/platform/salesforce-code-analyzer/overview",
@@ -18,7 +18,7 @@
     "@babel/types": "^7.25.0",
     "@jridgewell/sourcemap-codec": "^1.5.5",
     "@jridgewell/trace-mapping": "^0.3.31",
-    "@salesforce/code-analyzer-engine-api": "0.42.0-SNAPSHOT",
+    "@salesforce/code-analyzer-engine-api": "0.42.0",
     "@types/node": "^20.0.0"
   },
   "devDependencies": {
