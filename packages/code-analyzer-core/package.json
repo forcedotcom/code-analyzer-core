@@ -18,9 +18,9 @@
   "dependencies": {
     "@salesforce/code-analyzer-engine-api": "0.42.0-SNAPSHOT",
     "@types/node": "^20.0.0",
-    "csv-stringify": "^6.8.1",
+    "csv-stringify": "^6.8.3",
     "isbinaryfile": "^5.0.7",
-    "js-yaml": "^4.3.0",
+    "js-yaml": "^4.3.1",
     "semver": "^7.8.5",
     "xmlbuilder": "^15.1.1"
   },
@@ -29,14 +29,14 @@
     "@types/js-yaml": "^4.0.9",
     "@types/jest": "^30.0.0",
     "@types/sarif": "^2.1.7",
-    "@types/semver": "^7.7.1",
+    "@types/semver": "^7.8.0",
     "cross-env": "^10.1.0",
     "eslint": "^9.39.5",
     "jest": "^30.4.2",
     "rimraf": "^6.1.3",
-    "ts-jest": "^29.4.11",
+    "ts-jest": "^29.4.12",
     "typescript": "^5.9.3",
-    "typescript-eslint": "^8.64.0"
+    "typescript-eslint": "^8.67.0"
   },
   "engines": {
     "node": ">=20.0.0"
