@@ -1,5 +1,5 @@
 import path from "node:path";
-import * as fs from "node:fs";
+import * as fsp from "node:fs/promises";
 
 const BUNDLE_EXTENSIONS = new Set([".js", ".ts", ".mjs", ".html", ".css"]);
 // The default LWC namespace, used when no sfdx-project.json declares one.
@@ -35,16 +35,16 @@ export function isLwcBundleFile(absPath: string): boolean {
 // Spike doc §10.2. The namespace is read from the nearest ancestor
 // sfdx-project.json's top-level "namespace" field, falling back to "c" when the
 // manifest is absent, unreadable, or declares no (non-empty) namespace.
-export function bundleIdentity(absPath: string): BundleIdentity {
+export async function bundleIdentity(absPath: string): Promise<BundleIdentity> {
     const ext = path.extname(absPath);
     const stem = path.basename(absPath, ext);
-    return { name: stem, namespace: resolveNamespace(path.dirname(absPath)) };
+    return { name: stem, namespace: await resolveNamespace(path.dirname(absPath)) };
 }
 
 // Walk up from startDir looking for an sfdx-project.json and return its declared
 // namespace. Results are cached per directory. A missing/blank namespace, a
 // missing manifest, or malformed JSON all resolve to DEFAULT_NAMESPACE.
-function resolveNamespace(startDir: string): string {
+async function resolveNamespace(startDir: string): Promise<string> {
     const cached = namespaceCache.get(startDir);
     if (cached !== undefined) return cached;
 
@@ -57,9 +57,11 @@ function resolveNamespace(startDir: string): string {
         if (cachedForDir !== undefined) {
             return cacheFor(visited, cachedForDir);
         }
-        const manifest = path.join(dir, SFDX_PROJECT_FILE);
-        if (fs.existsSync(manifest)) {
-            return cacheFor(visited, readNamespace(manifest));
+        const ns = await readNamespace(path.join(dir, SFDX_PROJECT_FILE));
+        if (ns !== undefined) {
+            // A manifest exists here — its namespace (or the default, if blank/malformed)
+            // wins and we stop walking.
+            return cacheFor(visited, ns);
         }
         const parent = path.dirname(dir);
         if (parent === dir) break;
@@ -68,15 +70,24 @@ function resolveNamespace(startDir: string): string {
     return cacheFor(visited, DEFAULT_NAMESPACE);
 }
 
-function readNamespace(manifestPath: string): string {
+// Read the namespace from a manifest. Returns undefined when the manifest does not
+// exist (so the caller keeps walking up), the trimmed namespace when one is declared,
+// or DEFAULT_NAMESPACE when the manifest exists but is blank/malformed.
+async function readNamespace(manifestPath: string): Promise<string | undefined> {
+    let raw: string;
     try {
-        const parsed = JSON.parse(fs.readFileSync(manifestPath, "utf-8")) as { namespace?: unknown };
+        raw = await fsp.readFile(manifestPath, "utf-8");
+    } catch {
+        return undefined; // no manifest at this level
+    }
+    try {
+        const parsed = JSON.parse(raw) as { namespace?: unknown };
         const ns = parsed.namespace;
         if (typeof ns === "string" && ns.trim().length > 0) {
             return ns.trim();
         }
     } catch {
-        // Malformed or unreadable manifest — fall back to the default namespace.
+        // Manifest exists but is malformed — fall back to the default namespace.
     }
     return DEFAULT_NAMESPACE;
 }

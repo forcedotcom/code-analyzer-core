@@ -49,7 +49,7 @@ async function readBundleFiles(file: string, name: string): Promise<Record<strin
         const entries = await fsp.readdir(dir);
         for (const entry of entries) {
             const stem = path.basename(entry, path.extname(entry));
-            if (stem === name && !entry.includes("__tests__")) {
+            if (stem === name) {
                 const content = await fsp.readFile(path.join(dir, entry), "utf-8");
                 files[entry] = content;
             }

@@ -6,7 +6,6 @@ import { SeverityLevel } from "@salesforce/code-analyzer-engine-api";
 // SeverityLevel from code-analyzer-engine-api:
 //   Critical=1, High=2, Moderate=3, Low=4, Info=5
 //
-// TODO: Discuss this mapping further with the team
 // Log collapses to Info; SARIF round-trip imperfection is accepted as
 // a v1 known limitation (§16).
 export function toSeverityLevel(level: number | undefined): SeverityLevel {

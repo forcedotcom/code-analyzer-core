@@ -30,12 +30,20 @@ describe("buildRuleCatalog", () => {
         expect(names).toEqual([...names].sort((a, b) => a.localeCompare(b)));
     });
 
-    it("never throws even if a platform registry fails to load", async () => {
-        // The try/catch in loadPlatformErrors must keep the catalog usable (falling back to
-        // the open-source range) rather than propagating a load failure.
-        await expect(buildRuleCatalog()).resolves.toEqual(expect.arrayContaining([
-            expect.objectContaining({ name: expect.stringMatching(/^LWC\d+$/) }),
-        ]));
+    it("degrades gracefully (never throws, logs why) when a platform registry fails to load", async () => {
+        // No failure injected: under Jest the platform registries can't load (no synchronous
+        // require(ESM) below Node 24.9), so this hits the real catch path. The child-process
+        // test below covers the happy path where all three ranges load.
+        const debugMessages: string[] = [];
+        const rules = await buildRuleCatalog(msg => debugMessages.push(msg));
+
+        const codes = codesOf(rules);
+        expect(codes.some(c => c >= 1001 && c <= 1213)).toBe(true); // open-source survived
+        expect(codes.some(c => c >= 1500)).toBe(false);             // platform ranges dropped
+        expect(debugMessages).toHaveLength(2);                      // one per platform registry
+        for (const msg of debugMessages) {
+            expect(msg).toContain("platform error registry");
+        }
     });
 });
 

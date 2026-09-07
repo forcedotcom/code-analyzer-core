@@ -28,8 +28,8 @@ describe("isLwcBundleFile", () => {
 });
 
 describe("bundleIdentity", () => {
-    it("derives name from file stem and namespace defaults to c when no manifest exists", () => {
-        expect(bundleIdentity(j("project", "lwc", "foo", "foo.js"))).toEqual({ name: "foo", namespace: "c" });
+    it("derives name from file stem and namespace defaults to c when no manifest exists", async () => {
+        expect(await bundleIdentity(j("project", "lwc", "foo", "foo.js"))).toEqual({ name: "foo", namespace: "c" });
     });
 
     describe("namespace resolution from sfdx-project.json", () => {
@@ -55,24 +55,24 @@ describe("bundleIdentity", () => {
             fs.writeFileSync(path.join(tmpRoot, "sfdx-project.json"), JSON.stringify(body));
         };
 
-        it("reads the declared namespace from an ancestor sfdx-project.json", () => {
+        it("reads the declared namespace from an ancestor sfdx-project.json", async () => {
             writeManifest("myns");
-            expect(bundleIdentity(componentFile())).toEqual({ name: "foo", namespace: "myns" });
+            expect(await bundleIdentity(componentFile())).toEqual({ name: "foo", namespace: "myns" });
         });
 
-        it("falls back to c when the manifest declares no namespace", () => {
+        it("falls back to c when the manifest declares no namespace", async () => {
             writeManifest(undefined);
-            expect(bundleIdentity(componentFile())).toEqual({ name: "foo", namespace: "c" });
+            expect(await bundleIdentity(componentFile())).toEqual({ name: "foo", namespace: "c" });
         });
 
-        it("falls back to c when the manifest namespace is blank", () => {
+        it("falls back to c when the manifest namespace is blank", async () => {
             writeManifest("   ");
-            expect(bundleIdentity(componentFile())).toEqual({ name: "foo", namespace: "c" });
+            expect(await bundleIdentity(componentFile())).toEqual({ name: "foo", namespace: "c" });
         });
 
-        it("falls back to c when the manifest is malformed JSON", () => {
+        it("falls back to c when the manifest is malformed JSON", async () => {
             fs.writeFileSync(path.join(tmpRoot, "sfdx-project.json"), "{ not valid json");
-            expect(bundleIdentity(componentFile())).toEqual({ name: "foo", namespace: "c" });
+            expect(await bundleIdentity(componentFile())).toEqual({ name: "foo", namespace: "c" });
         });
     });
 });

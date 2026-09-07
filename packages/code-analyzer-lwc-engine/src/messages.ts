@@ -4,9 +4,6 @@ const MESSAGE_CATALOG: { [key: string]: string } = {
     UnsupportedEngineName:
         `The LwcEnginePlugin does not support an engine with name '%s'.`,
 
-    CompileFailed:
-        `Failed to compile %s: %s`,
-
     UnexpectedThrowDuringCompile:
         `Unexpected error while compiling %s: %s`,
 

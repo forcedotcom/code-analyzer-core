@@ -64,7 +64,7 @@ export class LwcEngine extends Engine {
 
         for (const file of lwcFiles) {
             try {
-                const diagnostics = await compileAndCollect(file, bundleIdentity(file),
+                const diagnostics = await compileAndCollect(file, await bundleIdentity(file),
                     (msg: string) => this.emitLogEvent(LogLevel.Debug, msg));
                 for (const d of diagnostics) {
                     const ruleName = `LWC${d.code}`;

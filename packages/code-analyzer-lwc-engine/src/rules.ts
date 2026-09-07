@@ -23,9 +23,10 @@ interface LWCErrorInfoLike {
 // @lwc/errors constants the file expects. import() runs the real code through the real
 // module machinery instead — no vm, no disk reads, no faked constants.
 //
-// A failure here (e.g. an older Node without require(ESM), or a packaging change) is
-// non-fatal: the caller falls back to the open-source registry and we surface the reason at
-// debug level, mirroring how the platform compiler path degrades in compile.ts.
+// Needs Node >=20.19 (flagless require(ESM)). On Node 20.0-20.18 this throws, which is fine:
+// the catch below falls back to the open-source registry (codes 1001-1213 only, no 1500/1700
+// ranges) and logs why at debug. We keep engines at ">=20.0.0" and document this in the README
+// rather than raise the floor.
 async function loadPlatformErrors(
     packageName: string,
     logDebug?: DebugLogger
