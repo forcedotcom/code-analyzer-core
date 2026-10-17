@@ -290,4 +290,42 @@ public class ApexEnumValueTest {
         MatcherAssert.assertThat(ordinal.isDeterminant(), equalTo(true));
         MatcherAssert.assertThat(ordinal.getValue(), optEqualTo(1));
     }
+
+    /**
+     * Apex enums inherit {@code toString()} from Object; it returns the same value as {@code
+     * name()}.
+     */
+    @Test
+    public void testToString() {
+        String sourceCode =
+                "public class MyClass {\n"
+                        + "    public static void doSomething() {\n"
+                        + "       DisplayType dt = DisplayType.ANYTYPE;\n"
+                        + "       System.debug(dt.toString());\n"
+                        + "    }\n"
+                        + "}";
+
+        TestRunner.Result<SystemDebugAccumulator> result = TestRunner.walkPath(g, sourceCode);
+        SystemDebugAccumulator visitor = result.getVisitor();
+
+        ApexStringValue toString = visitor.getSingletonResult();
+        MatcherAssert.assertThat(toString.isDeterminant(), equalTo(true));
+        MatcherAssert.assertThat(toString.getValue(), optEqualTo("ANYTYPE"));
+    }
+
+    @Test
+    public void testToStringIndeterminant() {
+        String sourceCode =
+                "public class MyClass {\n"
+                        + "    public static void doSomething(DisplayType dt) {\n"
+                        + "       System.debug(dt.toString());\n"
+                        + "    }\n"
+                        + "}";
+
+        TestRunner.Result<SystemDebugAccumulator> result = TestRunner.walkPath(g, sourceCode);
+        SystemDebugAccumulator visitor = result.getVisitor();
+
+        ApexStringValue toString = visitor.getSingletonResult();
+        MatcherAssert.assertThat(toString.isIndeterminant(), equalTo(true));
+    }
 }

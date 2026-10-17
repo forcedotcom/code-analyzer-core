@@ -24,6 +24,7 @@ import org.apache.commons.lang3.tuple.Pair;
 public final class ApexEnumValue extends ApexValue<ApexEnumValue>
         implements Typeable, Immutable<ApexEnumValue> {
     private static final String METHOD_NAME = "name";
+    private static final String METHOD_TO_STRING = "toString";
     private static final String METHOD_ORDINAL = "ordinal";
 
     /** The enum that this value was declared as, i.e. DisplayType */
@@ -99,6 +100,9 @@ public final class ApexEnumValue extends ApexValue<ApexEnumValue>
                                     METHOD_NAME,
                                     IndeterminantValueProvider.StringValueProvider::get),
                             Pair.of(
+                                    METHOD_TO_STRING,
+                                    IndeterminantValueProvider.StringValueProvider::get),
+                            Pair.of(
                                     METHOD_ORDINAL,
                                     IndeterminantValueProvider.IntegerValueProvider::get));
 
@@ -112,7 +116,8 @@ public final class ApexEnumValue extends ApexValue<ApexEnumValue>
                     INDETERMINANT_VALUE_PROVIDERS.get(methodName).apply(builder).get());
         }
 
-        if (METHOD_NAME.equalsIgnoreCase(methodName)) {
+        if (METHOD_NAME.equalsIgnoreCase(methodName)
+                || METHOD_TO_STRING.equalsIgnoreCase(methodName)) {
             validateParameterSize(vertex, 0);
             return Optional.of(builder.buildString(value.getValueName()));
         } else if (METHOD_ORDINAL.equalsIgnoreCase(methodName)) {
