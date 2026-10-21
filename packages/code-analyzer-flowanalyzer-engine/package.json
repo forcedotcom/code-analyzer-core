@@ -1,0 +1,67 @@
+{
+  "name": "@salesforce/code-analyzer-flowanalyzer-engine",
+  "description": "Flow Analyzer Engine Package for the Salesforce Code Analyzer",
+  "version": "0.1.0-SNAPSHOT",
+  "author": "The Salesforce Code Analyzer Team",
+  "license": "BSD-3-Clause",
+  "homepage": "https://developer.salesforce.com/docs/platform/salesforce-code-analyzer/overview",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/forcedotcom/code-analyzer-core.git",
+    "directory": "packages/code-analyzer-flowanalyzer-engine"
+  },
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "dependencies": {
+    "@salesforce/code-analyzer-engine-api": "0.42.0",
+    "@salesforce/core": "^8.31.2",
+    "archiver": "^7.0.1",
+    "form-data": "^4.0.6"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.39.5",
+    "@types/archiver": "^6.0.4",
+    "@types/jest": "^30.0.0",
+    "@types/node": "^20.0.0",
+    "eslint": "^9.39.5",
+    "jest": "^30.4.2",
+    "rimraf": "^6.1.3",
+    "ts-jest": "^29.4.12",
+    "typescript": "^5.9.3",
+    "typescript-eslint": "^8.67.0"
+  },
+  "engines": {
+    "node": ">=20.0.0"
+  },
+  "files": [
+    "dist",
+    "LICENSE",
+    "package.json"
+  ],
+  "scripts": {
+    "build": "tsc --build tsconfig.build.json --verbose",
+    "test": "tsc --build tsconfig.json && jest --coverage",
+    "lint": "eslint src/**/*.ts",
+    "package": "npm pack",
+    "all": "npm run build && npm run lint && npm run test && npm run package",
+    "clean": "tsc --build tsconfig.build.json --clean",
+    "postclean": "rimraf dist && rimraf coverage && rimraf ./*.tgz && rimraf vulnerabilities",
+    "scrub": "npm run clean && rimraf node_modules",
+    "showcoverage": "open ./coverage/lcov-report/index.html"
+  },
+  "jest": {
+    "preset": "ts-jest",
+    "testEnvironment": "node",
+    "testMatch": [
+      "**/*.test.ts"
+    ],
+    "testPathIgnorePatterns": [
+      "/node_modules/",
+      "/dist/"
+    ],
+    "collectCoverageFrom": [
+      "src/**/*.ts",
+      "!src/index.ts"
+    ]
+  }
+}
