@@ -6,7 +6,7 @@ import { FlowFileCollector } from '../src/services/FlowFileCollector';
 import { getMessage } from '../src/messages';
 
 describe('FlowFileCollector', () => {
-    const collector = new FlowFileCollector(2, 1000, 2000);
+    const collector = new FlowFileCollector(2, 5000, 10000);
     const sampleDir = path.join(__dirname, 'test-data', 'example-workspaces', 'contains-one-flow');
 
     it('collects workspace-relative flow paths', async () => {
@@ -14,7 +14,7 @@ describe('FlowFileCollector', () => {
         const files = await collector.collect(workspace);
         expect(files).toHaveLength(1);
         expect(files[0].relativeFilePath).toEqual('Sample.flow-meta.xml');
-        expect(files[0].content).toContain('unusedVar');
+        expect(files[0].content).toContain('get_Account');
     });
 
     describe('with targeted subsets of a workspace', () => {
@@ -115,7 +115,7 @@ describe('FlowFileCollector', () => {
     });
 
     it('rejects case-colliding relative paths', async () => {
-        const colliding = new FlowFileCollector(5, 1000, 1000);
+        const colliding = new FlowFileCollector(5, 5000, 10000);
         const workspace = {
             getWorkspaceRoot: () => sampleDir,
             getTargetedFiles: async () => [

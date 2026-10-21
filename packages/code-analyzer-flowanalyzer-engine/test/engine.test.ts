@@ -135,14 +135,14 @@ describe('FlowAnalyzerEngine', () => {
                 ruleName: 'UnusedVariable',
                 message: 'Remove unused var',
                 relativeFilePath: 'Sample.flow-meta.xml',
-                elementApiName: 'unusedVar',
-                elementType: 'variables'
+                elementApiName: 'get_Account',
+                elementType: 'recordLookups'
             },
             {
                 ruleName: 'UnusedVariable',
                 message: 'should be filtered if not selected - still known',
                 relativeFilePath: 'Sample.flow-meta.xml',
-                elementApiName: 'unusedVar'
+                elementApiName: 'get_Account'
             }
         ]);
         const workspace = new Workspace('id', [path.join(TEST_DATA_FOLDER, 'example-workspaces', 'contains-one-flow')]);
@@ -158,7 +158,7 @@ describe('FlowAnalyzerEngine', () => {
             ruleName: 'NotInCatalog',
             message: 'bad',
             relativeFilePath: 'Sample.flow-meta.xml',
-            elementApiName: 'unusedVar'
+            elementApiName: 'get_Account'
         }]);
         const workspace = new Workspace('id', [path.join(TEST_DATA_FOLDER, 'example-workspaces', 'contains-one-flow')]);
         const results = await createEngine().runRules(['UnusedVariable'], createRunOptions(workspace));
@@ -175,7 +175,7 @@ describe('FlowAnalyzerEngine', () => {
             ruleName: 'UnusedVariable',
             message: 'bad',
             relativeFilePath: 'Other.flow-meta.xml',
-            elementApiName: 'unusedVar'
+            elementApiName: 'get_Account'
         }]);
         const workspace = new Workspace('id', [path.join(TEST_DATA_FOLDER, 'example-workspaces', 'contains-one-flow')]);
         const results = await createEngine().runRules(['UnusedVariable'], createRunOptions(workspace));
@@ -193,7 +193,7 @@ describe('FlowAnalyzerEngine', () => {
             message: 'unmapped',
             relativeFilePath: 'Sample.flow-meta.xml',
             elementApiName: 'doesNotExist',
-            elementType: 'variables'
+            elementType: 'recordLookups'
         }]);
         const workspace = new Workspace('id', [path.join(TEST_DATA_FOLDER, 'example-workspaces', 'contains-one-flow')]);
         const results = await createEngine().runRules(['UnusedVariable'], createRunOptions(workspace));
