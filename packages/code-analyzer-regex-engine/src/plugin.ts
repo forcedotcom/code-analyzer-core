@@ -80,7 +80,10 @@ export function createBaseRegexRules(now: Date): RegexRules {
             tags: [COMMON_TAGS.RECOMMENDED, COMMON_TAGS.CATEGORIES.CODE_STYLE, COMMON_TAGS.LANGUAGES.APEX]
         },
         NoMixedIndentation: {
-            regex: (/^(?<target>[ \t]*(\t[ ]+|[ ]+\t)[ \t]*)/gm).toString(),
+            // The negative lookahead skips lines that start with tabs, a single space, and an asterisk. These are the
+            // continuation lines of tab-indented block comments (like ApexDoc), where the single space aligns the
+            // asterisk under the asterisk of the opening "/*" or "/**", so they are not mixed indentation.
+            regex: (/^(?!\t+ \*)(?<target>[ \t]*(\t[ ]+|[ ]+\t)[ \t]*)/gm).toString(),
             file_extensions: ['.cls', '.trigger'],
             description: getMessage('MixedIndentationRuleDescription'),
             violation_message: getMessage('MixedIndentationRuleMessage'),
