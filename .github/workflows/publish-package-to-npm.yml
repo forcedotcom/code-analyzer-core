@@ -187,8 +187,9 @@ jobs:
           # Trusted Publishing requires Node >= 22.14.0.
           node-version: 22
       # Trusted Publishing requires npm >= 11.5.1, and managing dist-tags via OIDC requires npm >= 11.21.0.
+      # Pinned to the npm 11 line to stay consistent with the code-analyzer repo (npm 12 removed shrinkwrap support).
       - name: Upgrade npm for Trusted Publishing
-        run: npm install -g npm@latest
+        run: npm install -g npm@11
       - name: Build and test and publish packages
         run: |
           PACKAGES_TO_PUBLISH=(${{ needs.validate-packages-as-releasable.outputs.packages-to-release }})
