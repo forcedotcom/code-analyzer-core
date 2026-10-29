@@ -172,6 +172,10 @@ jobs:
   build-and-test-and-publish:
     runs-on: ubuntu-latest
     needs: [validate-packages-as-releasable, prepare-release-branch]
+    permissions:
+      # Required for npm Trusted Publishing (OIDC).
+      id-token: write
+      contents: read
     steps:
       - name: Support long paths
         run: git config --global core.longpaths true
@@ -180,7 +184,12 @@ jobs:
           ref: ${{ needs.prepare-release-branch.outputs.branch-name }}
       - uses: actions/setup-node@v4
         with:
-          node-version: 20
+          # Trusted Publishing requires Node >= 22.14.0.
+          node-version: 22
+      # Trusted Publishing requires npm >= 11.5.1, and managing dist-tags via OIDC requires npm >= 11.21.0.
+      # Pinned to the npm 11 line to stay consistent with the code-analyzer repo (npm 12 removed shrinkwrap support).
+      - name: Upgrade npm for Trusted Publishing
+        run: npm install -g npm@11
       - name: Build and test and publish packages
         run: |
           PACKAGES_TO_PUBLISH=(${{ needs.validate-packages-as-releasable.outputs.packages-to-release }})
@@ -191,8 +200,8 @@ jobs:
             npm install
             npm run build
             npm run test
-            # We need the NPM token to publish.
-            echo "//registry.npmjs.org/:_authToken=${{ secrets.NPM_TOKEN }}" > ~/.npmrc
+            # No NPM token is needed. npm authenticates via Trusted Publishing (OIDC). Each package must have this
+            # workflow configured as a trusted publisher on npmjs.com, with "Allow npm dist-tag" enabled.
             PUBLISHED_VERSION=$(jq -r ".version" package.json)
             if [[ "${{ inputs.dryrun }}" == "true" ]]; then
               npm publish --tag latest-beta --access public --verbose --dry-run
