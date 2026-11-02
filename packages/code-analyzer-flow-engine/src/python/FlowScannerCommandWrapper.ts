@@ -101,7 +101,12 @@ export class RunTimeFlowScannerCommandWrapper implements FlowScannerCommandWrapp
 
         await this.pythonCommandExecutor.exec(pythonArgs, processStdout);
 
-        const outputFileContents: string = await fs.promises.readFile(flowScannerResultsFile, 'utf-8');
+        let outputFileContents: string;
+        try {
+            outputFileContents = await fs.promises.readFile(flowScannerResultsFile, 'utf-8');
+        } catch (_err) {
+            throw new Error(getMessage('ResultsFileNotProduced', absLogFilePath));
+        }
 
         let parsedResults: object;
         try {
