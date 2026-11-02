@@ -42,7 +42,7 @@ export type PmdEngineConfig = {
     // List of xml ruleset files containing custom PMD rules to be made available for rule selection.
     // Each ruleset must be an xml file that is either::
     //   - on disk (provided as an absolute path or a relative path to 'config_root')
-    //   - or a relative resource found on the Java classpath.
+    //   - or a relative resource found on the Java classpath (which implicitly includes the folder you run Code Analyzer from).
     // Not all custom rules can be fully defined within an xml ruleset file. For example, Java based rules may be defined in jar files.
     // In these cases, you will need to also add your additional files to the Java classpath using the 'java_classpath_entries' field.
     // See https://pmd.github.io/pmd/pmd_userdocs_making_rulesets.html

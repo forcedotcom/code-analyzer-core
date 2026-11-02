@@ -78,6 +78,17 @@ export class PmdWrapperInvoker {
         this.emitLogEvent = emitLogEvent;
     }
 
+    private createJavaClassPaths(): string[] {
+        return [
+            path.join(PMD_WRAPPER_LIB_FOLDER, '*'),
+            ...this.userProvidedJavaClasspathEntries.map(toJavaClasspathEntry),
+            // The java process is pinned to the engine's install folder, but PMD resolves refs inside custom rulesets
+            // (like <rule ref="path/in/repo.xml/Rule"/>) relative to the cwd or the classpath. So we add the user's
+            // cwd (last, so it has the lowest precedence) so that repo-relative refs continue to resolve.
+            process.cwd()
+        ];
+    }
+
     async invokeDescribeCommand(customRulesets: string[], pmdRuleLanguageIds: string[],
         workingFolder: string, emitProgress: (percComplete: number) => void): Promise<PmdRuleInfo[]> {
 
@@ -87,10 +98,7 @@ export class PmdWrapperInvoker {
         emitProgress(10);
 
         const javaCmdArgs: string[] = [PMD_WRAPPER_JAVA_CLASS, 'describe', pmdRulesOutputFile, customRulesetsListFile, pmdRuleLanguageIds.join(',')];
-        const javaClassPaths: string[] = [
-            path.join(PMD_WRAPPER_LIB_FOLDER, '*'),
-            ... this.userProvidedJavaClasspathEntries.map(toJavaClasspathEntry)
-        ];
+        const javaClassPaths: string[] = this.createJavaClassPaths();
         await this.javaCommandExecutor.exec(javaCmdArgs, javaClassPaths, (stdOutMsg) => {
             if (stdOutMsg.startsWith(STDOUT_ERROR_MARKER)) {
                 const errorMessage: string = stdOutMsg.slice(STDOUT_ERROR_MARKER.length).replaceAll('{NEWLINE}','\n');
@@ -138,10 +146,7 @@ export class PmdWrapperInvoker {
 
         const resultsOutputFile: string = path.join(workingFolder, 'resultsFile.json');
         const javaCmdArgs: string[] = [PMD_WRAPPER_JAVA_CLASS, 'run', inputFile, resultsOutputFile];
-        const javaClassPaths: string[] = [
-            path.join(PMD_WRAPPER_LIB_FOLDER, '*'),
-            ... this.userProvidedJavaClasspathEntries.map(toJavaClasspathEntry)
-        ];
+        const javaClassPaths: string[] = this.createJavaClassPaths();
         this.emitLogEvent(LogLevel.Fine, `Calling JAVA command with class path containing ${JSON.stringify(javaClassPaths)} and arguments: ${JSON.stringify(javaCmdArgs)}`);
         await this.javaCommandExecutor.exec(javaCmdArgs, javaClassPaths, (stdOutMsg: string) => {
             if (stdOutMsg.startsWith(STDOUT_PROGRESS_MARKER)) {
@@ -189,10 +194,7 @@ export class PmdWrapperInvoker {
 
         const resultsOutputFile: string = path.join(workingFolder, 'astDumpResults.json');
         const javaCmdArgs: string[] = [PMD_WRAPPER_JAVA_CLASS, 'ast-dump', inputFile, resultsOutputFile];
-        const javaClassPaths: string[] = [
-            path.join(PMD_WRAPPER_LIB_FOLDER, '*'),
-            ...this.userProvidedJavaClasspathEntries.map(toJavaClasspathEntry)
-        ];
+        const javaClassPaths: string[] = this.createJavaClassPaths();
 
         this.emitLogEvent(LogLevel.Fine, `Calling AST dump for file: ${fileToDump}`);
 
