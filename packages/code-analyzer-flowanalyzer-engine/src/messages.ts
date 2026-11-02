@@ -2,13 +2,13 @@ import { getMessageFromCatalog } from '@salesforce/code-analyzer-engine-api';
 
 const MESSAGE_CATALOG: { [key: string]: string } = {
     UnsupportedEngineName:
-        `The FlowAnalyzerEnginePlugin does not support an engine with name '%s'.`,
+        `The FlowAnalyzerEnginePlugin doesn't support an engine named '%s'.`,
 
     ConfigOverview:
-        `Configuration for the Flow Analyzer engine. Authentication uses the Salesforce CLI session for the required --target-org value.`,
+        `Configuration for the Flow Analyzer engine. Authentication uses the Salesforce CLI session for the --target-org value.`,
 
     ConfigFieldDescription_target_org:
-        `Target Salesforce org alias or username. Required. Typically set by the CLI --target-org flag. Flow Analyzer never falls back to the default org.`,
+        `Target Salesforce org alias or username. Typically set by the CLI --target-org flag. When not set, Flow Analyzer is inactive and offers no rules. Flow Analyzer never falls back to the default org.`,
 
     ConfigFieldDescription_api_timeout_ms:
         `Maximum time to wait for Flow Analyzer API responses, in milliseconds. Default: 300000 (5 minutes).`,
@@ -33,6 +33,9 @@ const MESSAGE_CATALOG: { [key: string]: string } = {
 
     MissingTargetOrg:
         `Flow Analyzer requires an explicit target org. Set '%s' or pass --target-org <org-alias>.`,
+
+    NoTargetOrg:
+        `Flow Analyzer is inactive because no target org is configured. To enable it, set '%s' or pass --target-org <org-alias>.`,
 
     ConfigValueMustBePositive:
         `The value of '%s' must be greater than 0.`,
@@ -68,10 +71,10 @@ const MESSAGE_CATALOG: { [key: string]: string } = {
         `Flow Analyzer received a malformed analyze response from the target org.`,
 
     UnknownRuleInFindings:
-        `Flow Analyzer returned finding for unknown rule '%s'. The engine will not silently drop unknown rules.`,
+        `Flow Analyzer returned a finding for unknown rule '%s'. The engine won't silently drop unknown rules.`,
 
     PathNotSubmitted:
-        `Flow Analyzer returned finding for path '%s', which was not submitted.`,
+        `Flow Analyzer returned a finding for path '%s', which was not submitted.`,
 
     AbsolutePathRejected:
         `Flow Analyzer rejected absolute path '%s'. Submit workspace-relative Flow paths only.`,

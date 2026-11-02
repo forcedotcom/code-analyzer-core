@@ -11,7 +11,8 @@ import {
 } from './constants';
 
 export type FlowAnalyzerEngineConfig = {
-    target_org: string;
+    // Optional: when absent the engine is inactive (offers no rules) so scans without --target-org are unaffected.
+    target_org?: string;
     api_timeout_ms: number;
     api_version: string;
     rules_path: string;
@@ -22,7 +23,6 @@ export type FlowAnalyzerEngineConfig = {
 };
 
 export const DEFAULT_FLOW_ANALYZER_ENGINE_CONFIG: FlowAnalyzerEngineConfig = {
-    target_org: '',
     api_timeout_ms: DEFAULT_API_TIMEOUT_MS,
     api_version: DEFAULT_API_VERSION,
     rules_path: DEFAULT_RULES_PATH,
@@ -92,10 +92,7 @@ export async function validateAndNormalizeConfig(
         'max_payload_bytes'
     ]);
 
-    const targetOrg: string | undefined = configValueExtractor.extractString('target_org');
-    if (!targetOrg || targetOrg.trim().length === 0) {
-        throw new Error(getMessage('MissingTargetOrg', configValueExtractor.getFieldPath('target_org')));
-    }
+    const targetOrg: string | undefined = configValueExtractor.extractString('target_org')?.trim() || undefined;
 
     const apiTimeoutMs: number = configValueExtractor.extractNumber(
         'api_timeout_ms',
@@ -137,7 +134,7 @@ export async function validateAndNormalizeConfig(
     }
 
     return {
-        target_org: targetOrg.trim(),
+        target_org: targetOrg,
         api_timeout_ms: apiTimeoutMs,
         api_version: apiVersion,
         rules_path: rulesPath,

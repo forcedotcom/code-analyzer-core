@@ -38,9 +38,10 @@ describe('Tests for the FlowAnalyzerEnginePlugin', () => {
         expect(await plugin.createEngine(ENGINE_NAME, config as ConfigObject)).toBeInstanceOf(FlowAnalyzerEngine);
     });
 
-    it('rejects missing target_org', async () => {
-        await expect(plugin.createEngineConfig(ENGINE_NAME, new ConfigValueExtractor({}, `engines.${ENGINE_NAME}`)))
-            .rejects.toThrow(getMessage('MissingTargetOrg', `engines.${ENGINE_NAME}.target_org`));
+    it('creates a FlowAnalyzerEngine without target_org so scans without --target-org are not broken', async () => {
+        const config = await plugin.createEngineConfig(ENGINE_NAME, new ConfigValueExtractor({}, `engines.${ENGINE_NAME}`));
+        expect(config.target_org).toBeUndefined();
+        expect(await plugin.createEngine(ENGINE_NAME, config as ConfigObject)).toBeInstanceOf(FlowAnalyzerEngine);
     });
 
     it('rejects non-positive numeric config', async () => {
@@ -51,11 +52,18 @@ describe('Tests for the FlowAnalyzerEnginePlugin', () => {
             getMessage('ConfigValueMustBePositive', `engines.${ENGINE_NAME}.api_timeout_ms`));
     });
 
-    it('rejects empty target_org', async () => {
-        await expect(plugin.createEngineConfig(ENGINE_NAME, new ConfigValueExtractor({
+    it('treats a blank target_org as not configured', async () => {
+        const config = await plugin.createEngineConfig(ENGINE_NAME, new ConfigValueExtractor({
             target_org: '   '
-        }, `engines.${ENGINE_NAME}`))).rejects.toThrow(
-            getMessage('MissingTargetOrg', `engines.${ENGINE_NAME}.target_org`));
+        }, `engines.${ENGINE_NAME}`));
+        expect(config.target_org).toBeUndefined();
+    });
+
+    it('trims target_org', async () => {
+        const config = await plugin.createEngineConfig(ENGINE_NAME, new ConfigValueExtractor({
+            target_org: '  my-org  '
+        }, `engines.${ENGINE_NAME}`));
+        expect(config.target_org).toEqual('my-org');
     });
 
     it('rejects non-positive max_file_count, max_file_bytes, and max_payload_bytes', async () => {

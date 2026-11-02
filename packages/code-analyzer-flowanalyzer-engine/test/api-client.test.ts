@@ -11,7 +11,8 @@ describe('FlowAnalyzerApiClient', () => {
         getAccessToken: () => token,
         refreshAccessToken,
         getInstanceUrl: () => 'https://example.my.salesforce.com',
-        getApiVersion: () => '68.0'
+        // Simulates an older CLI connection version; requests must still use the engine's configured version.
+        getConnection: () => ({ version: '60.0' })
     } as unknown as FlowAnalyzerAuthService;
 
     const sampleFiles: CollectedFlowFile[] = [{
@@ -95,6 +96,17 @@ describe('FlowAnalyzerApiClient', () => {
         });
         await expect(createClient(fetchImpl as unknown as typeof fetch).describeRules())
             .rejects.toThrow(getMessage('CatalogMalformed'));
+    });
+
+    it('uses the configured api version rather than the connection version', async () => {
+        const fetchImpl = jest.fn().mockResolvedValue({
+            ok: true,
+            status: 200,
+            text: async () => JSON.stringify({ rules: [] })
+        });
+        await createClient(fetchImpl as unknown as typeof fetch).describeRules();
+        expect(fetchImpl.mock.calls[0][0]).toEqual(
+            'https://example.my.salesforce.com/services/data/v68.0/flowbuilder/flow-analyzer/rules');
     });
 
     it('posts a multipart ZIP to the metadata-archive endpoint', async () => {

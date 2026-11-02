@@ -14,7 +14,7 @@ engines:
     target_org: myOrg
 ```
 
-`target_org` is required. The CLI `--target-org` flag should populate it. The engine never falls back to the default Salesforce CLI org.
+The CLI `--target-org` flag populates `target_org`. When `target_org` isn't set, the engine is inactive: it offers no rules and makes no network calls, so scans without `--target-org` are unaffected. The engine never falls back to the default Salesforce CLI org.
 
 ## Commands
 

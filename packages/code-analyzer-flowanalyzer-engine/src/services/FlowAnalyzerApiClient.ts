@@ -133,8 +133,8 @@ export class FlowAnalyzerApiClient {
     }
 
     private async requestJson<T>(method: 'GET' | 'POST', resourcePath: string, body?: unknown): Promise<T> {
-        const version = this.authService.getApiVersion() || this.apiVersion;
-        const url = `${this.authService.getInstanceUrl()}/services/data/v${version}${resourcePath}`;
+        // Always use the engine's configured version: the CLI connection's version may predate the Flow Analyzer endpoints.
+        const url = `${this.authService.getInstanceUrl()}/services/data/v${this.apiVersion}${resourcePath}`;
         this.emitLogEvent(LogLevel.Fine, `Flow Analyzer ${method} ${url}`);
 
         const controller = new AbortController();

@@ -1,7 +1,7 @@
 import * as fs from 'node:fs';
 import * as os from 'node:os';
 import * as path from 'node:path';
-import { RuleDescription, SeverityLevel, Workspace } from '@salesforce/code-analyzer-engine-api';
+import { EventType, LogEvent, LogLevel, RuleDescription, SeverityLevel, Workspace } from '@salesforce/code-analyzer-engine-api';
 import { FlowAnalyzerEngine } from '../src/engine';
 import { FlowAnalyzerEngineConfig } from '../src/config';
 import { FlowAnalyzerAuthService } from '../src/services/FlowAnalyzerAuthService';
@@ -51,8 +51,8 @@ describe('FlowAnalyzerEngine', () => {
         } as unknown as jest.Mocked<FlowAnalyzerApiClient>;
     });
 
-    function createEngine(): FlowAnalyzerEngine {
-        return new FlowAnalyzerEngine(createConfig(), {
+    function createEngine(configOverrides: Partial<FlowAnalyzerEngineConfig> = {}): FlowAnalyzerEngine {
+        return new FlowAnalyzerEngine(createConfig(configOverrides), {
             authService,
             apiClient,
             fileCollector: new FlowFileCollector(10, 10000, 20000),
@@ -69,6 +69,37 @@ describe('FlowAnalyzerEngine', () => {
         expect(version).toMatch(/\d+\.\d+\.\d+.*/);
     });
 
+    it('is inactive and offers no rules when no target org is configured', async () => {
+        const engine = createEngine({ target_org: undefined });
+        const logEvents: LogEvent[] = [];
+        engine.onEvent(EventType.LogEvent, (event: LogEvent) => logEvents.push(event));
+        const workspace = new Workspace('id', [path.join(TEST_DATA_FOLDER, 'example-workspaces', 'contains-one-flow')]);
+
+        const rules = await engine.describeRules(createDescribeOptions(workspace));
+
+        expect(rules).toEqual([]);
+        expect(authService.initialize).not.toHaveBeenCalled();
+        expect(apiClient.describeRules).not.toHaveBeenCalled();
+        expect(logEvents).toContainEqual(expect.objectContaining({
+            logLevel: LogLevel.Debug,
+            message: getMessage('NoTargetOrg', 'engines.flowAnalyzer.target_org')
+        }));
+        expect(logEvents.filter(e => e.logLevel <= LogLevel.Warn)).toEqual([]);
+    });
+
+    it('skips runRules without authenticating against the default org when no target org is configured', async () => {
+        const workspace = new Workspace('id', [path.join(TEST_DATA_FOLDER, 'example-workspaces', 'contains-one-flow')]);
+        const results = await createEngine({ target_org: undefined }).runRules(['UnusedVariable'], createRunOptions(workspace));
+        expect(authService.initialize).not.toHaveBeenCalled();
+        expect(apiClient.analyze).not.toHaveBeenCalled();
+        expect(results.insights).toEqual(expect.objectContaining({
+            status: 'skipped',
+            error: expect.objectContaining({
+                message: getMessage('MissingTargetOrg', 'engines.flowAnalyzer.target_org')
+            })
+        }));
+    });
+
     it('returns no rules when the workspace has no Flow files', async () => {
         const workspace = new Workspace('id', [path.join(TEST_DATA_FOLDER, 'example-workspaces', 'contains-no-flows')]);
         const rules = await createEngine().describeRules(createDescribeOptions(workspace));
@@ -83,12 +114,11 @@ describe('FlowAnalyzerEngine', () => {
         expect(authService.initialize).toHaveBeenCalledWith({ targetOrg: 'my-org' });
     });
 
-    it('returns no rules instead of throwing when the catalog cannot be retrieved', async () => {
-        apiClient.describeRules.mockRejectedValue(new Error('HTTP 404'));
+    it('throws when the catalog cannot be retrieved so Core reports the engine error', async () => {
+        apiClient.describeRules.mockRejectedValue(new Error(getMessage('CatalogUnavailable', 'HTTP 404')));
         const workspace = new Workspace('id', [path.join(TEST_DATA_FOLDER, 'example-workspaces', 'contains-one-flow')]);
-        const engine = createEngine();
-        const rules = await engine.describeRules(createDescribeOptions(workspace));
-        expect(rules).toEqual([]);
+        await expect(createEngine().describeRules(createDescribeOptions(workspace)))
+            .rejects.toThrow(getMessage('CatalogUnavailable', 'HTTP 404'));
     });
 
     it('throws when the target org cannot be authenticated', async () => {

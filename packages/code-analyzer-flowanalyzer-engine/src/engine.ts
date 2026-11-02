@@ -68,6 +68,12 @@ export class FlowAnalyzerEngine extends Engine {
 
     async describeRules(describeOptions: DescribeOptions): Promise<RuleDescription[]> {
         this.emitDescribeRulesProgressEvent(0);
+        if (!this.config.target_org) {
+            // The engine is opt-in: without a target org it offers no rules, so scans without --target-org are unaffected.
+            this.emitLogEvent(LogLevel.Debug, getMessage('NoTargetOrg', `engines.${ENGINE_NAME}.target_org`));
+            this.emitDescribeRulesProgressEvent(100);
+            return [];
+        }
         if (describeOptions.workspace) {
             const collected = await this.fileCollector.collect(describeOptions.workspace);
             if (collected.length === 0) {
@@ -79,14 +85,9 @@ export class FlowAnalyzerEngine extends Engine {
 
         await this.ensureAuthenticated();
         this.emitDescribeRulesProgressEvent(50);
-        try {
-            this.catalogCache = await this.apiClient.describeRules();
-        } catch (err) {
-            const detail = err instanceof Error ? err.message : String(err);
-            this.emitLogEvent(LogLevel.Error, getMessage('CatalogUnavailable', detail));
-            this.emitDescribeRulesProgressEvent(100);
-            return [];
-        }
+        // Let catalog failures propagate so Code Analyzer Core reports the engine as uninstantiable,
+        // rather than silently selecting zero rules and reporting a successful run.
+        this.catalogCache = await this.apiClient.describeRules();
         this.emitDescribeRulesProgressEvent(100);
         return this.catalogCache;
     }
@@ -161,6 +162,10 @@ export class FlowAnalyzerEngine extends Engine {
     }
 
     private async ensureAuthenticated(): Promise<void> {
+        if (!this.config.target_org) {
+            // Never let auth fall back to the default Salesforce CLI org.
+            throw new Error(getMessage('MissingTargetOrg', `engines.${ENGINE_NAME}.target_org`));
+        }
         await this.authService.initialize({ targetOrg: this.config.target_org });
     }
 
