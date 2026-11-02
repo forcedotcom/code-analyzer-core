@@ -59,6 +59,29 @@ describe('Tests for the FlowAnalyzerEnginePlugin', () => {
         expect(config.target_org).toBeUndefined();
     });
 
+    it('leaves api_version unset by default so the org version can be used', async () => {
+        const config = await plugin.createEngineConfig(ENGINE_NAME, new ConfigValueExtractor({
+            target_org: 'my-org'
+        }, `engines.${ENGINE_NAME}`));
+        expect(config.api_version).toBeUndefined();
+    });
+
+    it('accepts an explicit api_version', async () => {
+        const config = await plugin.createEngineConfig(ENGINE_NAME, new ConfigValueExtractor({
+            target_org: 'my-org',
+            api_version: '69.0'
+        }, `engines.${ENGINE_NAME}`));
+        expect(config.api_version).toEqual('69.0');
+    });
+
+    it('rejects a malformed api_version', async () => {
+        await expect(plugin.createEngineConfig(ENGINE_NAME, new ConfigValueExtractor({
+            target_org: 'my-org',
+            api_version: 'v69'
+        }, `engines.${ENGINE_NAME}`))).rejects.toThrow(
+            getMessage('InvalidApiVersion', `engines.${ENGINE_NAME}.api_version`, 'v69'));
+    });
+
     it('trims target_org', async () => {
         const config = await plugin.createEngineConfig(ENGINE_NAME, new ConfigValueExtractor({
             target_org: '  my-org  '

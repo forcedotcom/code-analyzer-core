@@ -26,6 +26,7 @@ describe('FlowAnalyzerAuthService', () => {
         expect(Org.create).toHaveBeenCalledWith({ aliasOrUsername: 'myorg' });
         expect(authService.getInstanceUrl()).toEqual('https://test.salesforce.com');
         expect(authService.getAccessToken()).toEqual('mock_access_token');
+        expect(authService.getApiVersion()).toEqual('64.0');
     });
 
     it('does not fall back to the default org', async () => {
@@ -45,5 +46,12 @@ describe('FlowAnalyzerAuthService', () => {
         (Org.create as jest.Mock).mockResolvedValue(mockOrg);
         await authService.initialize({ targetOrg: 'myorg' });
         expect(() => authService.getAccessToken()).toThrow(getMessage('AccessTokenUnavailable'));
+    });
+
+    it('reports no api version when the connection has none, leaving the choice to the API client', async () => {
+        const mockOrg = { getConnection: jest.fn().mockReturnValue({ ...mockConnection, version: undefined }) };
+        (Org.create as jest.Mock).mockResolvedValue(mockOrg);
+        await authService.initialize({ targetOrg: 'myorg' });
+        expect(authService.getApiVersion()).toBeUndefined();
     });
 });

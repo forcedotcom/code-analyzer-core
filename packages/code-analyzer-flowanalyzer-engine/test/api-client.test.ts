@@ -11,9 +11,13 @@ describe('FlowAnalyzerApiClient', () => {
         getAccessToken: () => token,
         refreshAccessToken,
         getInstanceUrl: () => 'https://example.my.salesforce.com',
-        // Simulates an older CLI connection version; requests must still use the engine's configured version.
-        getConnection: () => ({ version: '60.0' })
+        getApiVersion: () => orgApiVersion
     } as unknown as FlowAnalyzerAuthService;
+    let orgApiVersion: string | undefined;
+
+    beforeEach(() => {
+        orgApiVersion = '68.0';
+    });
 
     const sampleFiles: CollectedFlowFile[] = [{
         absolutePath: '/tmp/a.flow-meta.xml',
@@ -21,11 +25,11 @@ describe('FlowAnalyzerApiClient', () => {
         content: '<Flow></Flow>'
     }];
 
-    function createClient(fetchImpl: typeof fetch): FlowAnalyzerApiClient {
+    function createClient(fetchImpl: typeof fetch, apiVersion?: string): FlowAnalyzerApiClient {
         return new FlowAnalyzerApiClient(
             authService,
             1000,
-            '68.0',
+            apiVersion,
             '/flowbuilder/flow-analyzer/rules',
             '/flowbuilder/flow-analyzer/analysis/metadata-archive',
             jest.fn(),
@@ -98,15 +102,33 @@ describe('FlowAnalyzerApiClient', () => {
             .rejects.toThrow(getMessage('CatalogMalformed'));
     });
 
-    it('uses the configured api version rather than the connection version', async () => {
+    async function requestedUrl(apiVersion: string | undefined, orgVersion: string | undefined): Promise<string> {
+        orgApiVersion = orgVersion;
         const fetchImpl = jest.fn().mockResolvedValue({
             ok: true,
             status: 200,
             text: async () => JSON.stringify({ rules: [] })
         });
-        await createClient(fetchImpl as unknown as typeof fetch).describeRules();
-        expect(fetchImpl.mock.calls[0][0]).toEqual(
-            'https://example.my.salesforce.com/services/data/v68.0/flowbuilder/flow-analyzer/rules');
+        await createClient(fetchImpl as unknown as typeof fetch, apiVersion).describeRules();
+        return fetchImpl.mock.calls[0][0];
+    }
+
+    it('uses the org api version when it is newer than the minimum and api_version is not configured', async () => {
+        expect(await requestedUrl(undefined, '69.0')).toEqual(
+            'https://example.my.salesforce.com/services/data/v69.0/flowbuilder/flow-analyzer/rules');
+    });
+
+    it('never goes below the minimum api version when the org connection is older', async () => {
+        expect(await requestedUrl(undefined, '60.0')).toContain('/services/data/v68.0/');
+    });
+
+    it('uses the minimum api version when the org connection reports none', async () => {
+        expect(await requestedUrl(undefined, undefined)).toContain('/services/data/v68.0/');
+    });
+
+    it('always honors an explicitly configured api_version', async () => {
+        expect(await requestedUrl('68.0', '69.0')).toContain('/services/data/v68.0/');
+        expect(await requestedUrl('70.0', '60.0')).toContain('/services/data/v70.0/');
     });
 
     it('posts a multipart ZIP to the metadata-archive endpoint', async () => {

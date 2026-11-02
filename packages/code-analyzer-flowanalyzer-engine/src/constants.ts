@@ -2,7 +2,9 @@ export const ENGINE_NAME = 'flowAnalyzer';
 
 export const FLOW_FILE_EXTENSIONS = ['.flow', '.flow-meta.xml'];
 
-export const DEFAULT_API_VERSION = '68.0';
+// Lowest REST API version exposing the Flow Analyzer Connect endpoints.
+// Unless api_version is configured, requests use the org's version, but never anything lower than this.
+export const MIN_API_VERSION = '68.0';
 
 export const DEFAULT_RULES_PATH = '/flowbuilder/flow-analyzer/rules';
 

@@ -3,7 +3,6 @@ import { getMessage } from './messages';
 import {
     DEFAULT_ANALYZE_PATH,
     DEFAULT_API_TIMEOUT_MS,
-    DEFAULT_API_VERSION,
     DEFAULT_MAX_FILE_BYTES,
     DEFAULT_MAX_FILE_COUNT,
     DEFAULT_MAX_PAYLOAD_BYTES,
@@ -14,7 +13,8 @@ export type FlowAnalyzerEngineConfig = {
     // Optional: when absent the engine is inactive (offers no rules) so scans without --target-org are unaffected.
     target_org?: string;
     api_timeout_ms: number;
-    api_version: string;
+    // Optional: when absent, requests use the org's API version (but at least MIN_API_VERSION).
+    api_version?: string;
     rules_path: string;
     analyze_path: string;
     max_file_count: number;
@@ -24,7 +24,6 @@ export type FlowAnalyzerEngineConfig = {
 
 export const DEFAULT_FLOW_ANALYZER_ENGINE_CONFIG: FlowAnalyzerEngineConfig = {
     api_timeout_ms: DEFAULT_API_TIMEOUT_MS,
-    api_version: DEFAULT_API_VERSION,
     rules_path: DEFAULT_RULES_PATH,
     analyze_path: DEFAULT_ANALYZE_PATH,
     max_file_count: DEFAULT_MAX_FILE_COUNT,
@@ -48,7 +47,7 @@ export const FLOW_ANALYZER_ENGINE_CONFIG_DESCRIPTION: ConfigDescription = {
         api_version: {
             descriptionText: getMessage('ConfigFieldDescription_api_version'),
             valueType: 'string',
-            defaultValue: DEFAULT_API_VERSION
+            defaultValue: null
         },
         rules_path: {
             descriptionText: getMessage('ConfigFieldDescription_rules_path'),
@@ -102,8 +101,10 @@ export async function validateAndNormalizeConfig(
         throw new Error(getMessage('ConfigValueMustBePositive', configValueExtractor.getFieldPath('api_timeout_ms')));
     }
 
-    const apiVersion: string = configValueExtractor.extractString('api_version', DEFAULT_API_VERSION)
-        ?? DEFAULT_API_VERSION;
+    const apiVersion: string | undefined = configValueExtractor.extractString('api_version')?.trim() || undefined;
+    if (apiVersion !== undefined && !/^\d+\.0$/.test(apiVersion)) {
+        throw new Error(getMessage('InvalidApiVersion', configValueExtractor.getFieldPath('api_version'), apiVersion));
+    }
     const rulesPath: string = configValueExtractor.extractString('rules_path', DEFAULT_RULES_PATH)
         ?? DEFAULT_RULES_PATH;
     const analyzePath: string = configValueExtractor.extractString('analyze_path', DEFAULT_ANALYZE_PATH)

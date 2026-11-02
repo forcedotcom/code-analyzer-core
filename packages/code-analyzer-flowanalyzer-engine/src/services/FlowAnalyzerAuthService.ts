@@ -51,4 +51,8 @@ export class FlowAnalyzerAuthService {
     getInstanceUrl(): string {
         return this.getConnection().instanceUrl;
     }
+
+    getApiVersion(): string | undefined {
+        return this.getConnection().version || undefined;
+    }
 }

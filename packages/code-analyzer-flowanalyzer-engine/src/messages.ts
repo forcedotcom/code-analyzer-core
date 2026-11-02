@@ -14,7 +14,7 @@ const MESSAGE_CATALOG: { [key: string]: string } = {
         `Maximum time to wait for Flow Analyzer API responses, in milliseconds. Default: 300000 (5 minutes).`,
 
     ConfigFieldDescription_api_version:
-        `Salesforce REST API version used for Connect calls. Default: 68.0.`,
+        `Salesforce REST API version used for Connect calls, for example '69.0'. Default: the target org's API version, but never lower than 68.0.`,
 
     ConfigFieldDescription_rules_path:
         `Connect path for the rules catalog endpoint. Default: /flowbuilder/flow-analyzer/rules.`,
@@ -36,6 +36,9 @@ const MESSAGE_CATALOG: { [key: string]: string } = {
 
     NoTargetOrg:
         `Flow Analyzer is inactive because no target org is configured. To enable it, set '%s' or pass --target-org <org-alias>.`,
+
+    InvalidApiVersion:
+        `The value of '%s' must be an API version such as '69.0', but was '%s'.`,
 
     ConfigValueMustBePositive:
         `The value of '%s' must be greater than 0.`,

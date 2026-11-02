@@ -1,5 +1,6 @@
 import { LogLevel, RuleDescription, SeverityLevel } from '@salesforce/code-analyzer-engine-api';
 import FormData from 'form-data';
+import { MIN_API_VERSION } from '../constants';
 import { getMessage } from '../messages';
 import {
     CollectedFlowFile,
@@ -15,7 +16,7 @@ import { createMetadataArchive } from './MetadataArchiveBuilder';
 export class FlowAnalyzerApiClient {
     private readonly authService: FlowAnalyzerAuthService;
     private readonly timeoutMs: number;
-    private readonly apiVersion: string;
+    private readonly apiVersion?: string;
     private readonly rulesPath: string;
     private readonly analyzePath: string;
     private readonly emitLogEvent: (logLevel: LogLevel, message: string) => void;
@@ -24,7 +25,7 @@ export class FlowAnalyzerApiClient {
     constructor(
         authService: FlowAnalyzerAuthService,
         timeoutMs: number,
-        apiVersion: string,
+        apiVersion: string | undefined,
         rulesPath: string,
         analyzePath: string,
         emitLogEvent: (logLevel: LogLevel, message: string) => void = () => {},
@@ -132,9 +133,20 @@ export class FlowAnalyzerApiClient {
         return SeverityLevel.Moderate;
     }
 
+    /**
+     * An explicitly configured api_version always wins. Otherwise use the org's version, but never one older than
+     * MIN_API_VERSION, since the CLI connection's version may predate the Flow Analyzer endpoints.
+     */
+    private resolveApiVersion(): string {
+        if (this.apiVersion) {
+            return this.apiVersion;
+        }
+        const orgVersion = this.authService.getApiVersion();
+        return orgVersion && parseFloat(orgVersion) > parseFloat(MIN_API_VERSION) ? orgVersion : MIN_API_VERSION;
+    }
+
     private async requestJson<T>(method: 'GET' | 'POST', resourcePath: string, body?: unknown): Promise<T> {
-        // Always use the engine's configured version: the CLI connection's version may predate the Flow Analyzer endpoints.
-        const url = `${this.authService.getInstanceUrl()}/services/data/v${this.apiVersion}${resourcePath}`;
+        const url = `${this.authService.getInstanceUrl()}/services/data/v${this.resolveApiVersion()}${resourcePath}`;
         this.emitLogEvent(LogLevel.Fine, `Flow Analyzer ${method} ${url}`);
 
         const controller = new AbortController();
