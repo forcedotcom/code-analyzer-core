@@ -1085,6 +1085,10 @@ def build_vartype_from_elem(elem: El) -> VariableType | None:
         elif tag == 'decisions':
             return VariableType(tag=tag, reference=ReferenceType.NodeReference)
 
+        elif tag == 'ends':
+            # API v68+ top-level End element. Terminal node, holds no value.
+            return VariableType(tag=tag, reference=ReferenceType.NodeReference)
+
         elif tag == 'dynamicChoiceSets':
             # These are effectively record lookups
             # TODO: handle this better, right now we just have a stub
