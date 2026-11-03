@@ -763,7 +763,14 @@ class Parser(FlowParser):
         if len(elems) == 0:
             return RunMode.DefaultMode
         else:
-            return RunMode[elems[0].text]
+            declared = (elems[0].text or '').strip()
+            try:
+                return RunMode[declared]
+            except KeyError:
+                # A runInMode value we don't know about (for example, one added in a newer API version) must not crash
+                # the whole scan. Fall back to the default (user context) behavior and say so in the log.
+                logger.warning(f"Unrecognized runInMode '{declared}' in {self.flow_path}, treating it as DefaultMode")
+                return RunMode.DefaultMode
 
     def get_api_version(self) -> str:
         """Get the API version of the flow.
