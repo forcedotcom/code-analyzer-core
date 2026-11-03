@@ -184,6 +184,25 @@ describe('FlowScannerCommandWrapper implementations', () => {
                         .rejects
                         .toThrow(expectedMessage);
                 });
+
+                it.each([
+                    {code: 'ENOENT', expectedMessage: 'did not produce a results file'},
+                    {code: 'EACCES', expectedMessage: 'could not be read'},
+                    {code: 'EISDIR', expectedMessage: 'could not be read'}
+                ])('When reading the results file fails with $code, the error message reflects the real problem', async ({code, expectedMessage}) => {
+                    jest.spyOn(PythonCommandExecutor.prototype, 'exec').mockImplementation(async (_args, _processStdout) => {
+                        return Promise.resolve();
+                    });
+                    const fsError: NodeJS.ErrnoException = Object.assign(new Error(`${code}: simulated failure`), {code});
+                    jest.spyOn(fs.promises, 'readFile').mockRejectedValue(fsError);
+
+                    const wrapper: RunTimeFlowScannerCommandWrapper = new RunTimeFlowScannerCommandWrapper(PYTHON_COMMAND);
+                    const promise = wrapper.runFlowScannerRules(workingFolder, [PATH_TO_EXAMPLE1, PATH_TO_EXAMPLE2], [PATH_TO_EXAMPLE1, PATH_TO_EXAMPLE2], tempLogFile, [], (_num: number) => {});
+                    await expect(promise).rejects.toThrow(expectedMessage);
+                    if (code !== 'ENOENT') {
+                        await expect(promise).rejects.toMatchObject({cause: fsError});
+                    }
+                });
             });
         });
     });

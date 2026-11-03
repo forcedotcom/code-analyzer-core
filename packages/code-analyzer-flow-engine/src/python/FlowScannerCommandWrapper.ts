@@ -104,8 +104,14 @@ export class RunTimeFlowScannerCommandWrapper implements FlowScannerCommandWrapp
         let outputFileContents: string;
         try {
             outputFileContents = await fs.promises.readFile(flowScannerResultsFile, 'utf-8');
-        } catch (_err) {
-            throw new Error(getMessage('ResultsFileNotProduced', absLogFilePath));
+        } catch (err) {
+            // Only a missing file means the scanner failed to produce results. Any other failure (permissions, the
+            // path being a directory, etc.) is a different problem, so we keep the original error as the cause.
+            if ((err as NodeJS.ErrnoException)?.code === 'ENOENT') {
+                throw new Error(getMessage('ResultsFileNotProduced', absLogFilePath));
+            }
+            throw new Error(getMessage('ResultsFileNotReadable', flowScannerResultsFile, (err as Error)?.message ?? String(err)),
+                {cause: err});
         }
 
         let parsedResults: object;

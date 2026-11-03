@@ -23,6 +23,9 @@ const MESSAGE_CATALOG: {[key: string]: string} = {
     ResultsFileNotProduced:
         `Unexpected error: The Flow Scanner did not produce a results file, which usually means it failed to parse one or more flows. See the log file for details: %s`,
 
+    ResultsFileNotReadable:
+        `Unexpected error: The Flow Scanner results file '%s' could not be read: %s`,
+
     CouldNotParseExecutionResults:
         `Unexpected error: Could not parse results from %s`,
 
