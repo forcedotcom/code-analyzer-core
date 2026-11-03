@@ -189,7 +189,16 @@ jobs:
       # Trusted Publishing requires npm >= 11.5.1, and managing dist-tags via OIDC requires npm >= 11.21.0.
       # Pinned to the npm 11 line to stay consistent with the code-analyzer repo (npm 12 removed shrinkwrap support).
       - name: Upgrade npm for Trusted Publishing
-        run: npm install -g npm@11
+        run: |
+          npm install -g npm@11
+          # Print the resolved version, and fail fast if the moving 'npm@11' tag ever resolves below what
+          # dist-tag management via OIDC needs, rather than failing later in the middle of a release.
+          NPM_VERSION="$(npm --version)"
+          echo "Using npm ${NPM_VERSION}"
+          if [ "$(printf '%s\n' "11.21.0" "${NPM_VERSION}" | sort -V | head -n1)" != "11.21.0" ]; then
+            echo "::error::npm ${NPM_VERSION} is older than the required 11.21.0"
+            exit 1
+          fi
       - name: Build and test and publish packages
         run: |
           PACKAGES_TO_PUBLISH=(${{ needs.validate-packages-as-releasable.outputs.packages-to-release }})
