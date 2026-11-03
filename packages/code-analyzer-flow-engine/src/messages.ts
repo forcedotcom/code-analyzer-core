@@ -20,6 +20,12 @@ const MESSAGE_CATALOG: {[key: string]: string} = {
     ResultsFileNotValidJson:
         `Unexpected error: Results file contents are not a valid JSON: %s`,
 
+    ResultsFileNotProduced:
+        `Unexpected error: The Flow Scanner did not produce a results file, which usually means it failed to parse one or more flows. See the log file for details: %s`,
+
+    ResultsFileNotReadable:
+        `Unexpected error: The Flow Scanner results file '%s' could not be read: %s`,
+
     CouldNotParseExecutionResults:
         `Unexpected error: Could not parse results from %s`,
 
