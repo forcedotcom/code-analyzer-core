@@ -10,11 +10,10 @@ hamcrest = "3.0"
 junit-jupiter = "5.13.4"
 commons-cli = "1.10.0"
 commons-collections4 = "4.5.0"
-tinkergraph-gremlin = "4.0.0-beta.1"
-gremlin-driver = "4.0.0-beta.1"
+tinkergraph-gremlin = "3.7.7"
 antlr-runtime = "3.5.3"
-log4j-api = "2.25.1"
-log4j-core = "2.25.1"
+log4j-api = "2.25.5"
+log4j-core = "2.25.5"
 gson = "2.13.2"
 guava = "33.4.8-jre"
 jsr305 = "3.0.2"
@@ -23,7 +22,12 @@ reflections = "0.10.2"
 asm = "9.8"
 mockito-core = "5.19.0"
 mockito-junit-jupiter = "5.19.0"
-netty-all = "4.1.127.Final"
+# Versions below force patched releases of dependencies that arrive transitively (via gremlin-core). See sfge/build.gradle.kts.
+commons-configuration2 = "2.15.1"
+commons-beanutils = "1.11.0"
+commons-lang3 = "3.21.0"
+commons-text = "1.15.0"
+snakeyaml = "2.7"
 
 [libraries]
 hamcrest = { module = "org.hamcrest:hamcrest", version.ref = "hamcrest" }
@@ -31,7 +35,6 @@ junit-jupiter = { module = "org.junit.jupiter:junit-jupiter", version.ref = "jun
 commons-cli = { module = "commons-cli:commons-cli", version.ref = "commons-cli" }
 commons-collections4 = { module = "org.apache.commons:commons-collections4", version.ref = "commons-collections4" }
 tinkergraph-gremlin = { module = "org.apache.tinkerpop:tinkergraph-gremlin", version.ref = "tinkergraph-gremlin" }
-gremlin-driver = { module = "org.apache.tinkerpop:gremlin-driver", version.ref = "gremlin-driver" }
 antlr-runtime = { module = "org.antlr:antlr-runtime", version.ref = "antlr-runtime" }
 log4j-api = { module = "org.apache.logging.log4j:log4j-api", version.ref = "log4j-api" }
 log4j-core = { module = "org.apache.logging.log4j:log4j-core", version.ref = "log4j-core" }
@@ -44,4 +47,8 @@ asm = { module = "org.ow2.asm:asm", version.ref = "asm" }
 junit-platform-launcher = { module = "org.junit.platform:junit-platform-launcher" }
 mockito-core = { module = "org.mockito:mockito-core", version.ref = "mockito-core" }
 mockito-junit-jupiter = { module = "org.mockito:mockito-junit-jupiter", version.ref = "mockito-junit-jupiter" }
-netty-all = { module = "io.netty:netty-all", version.ref = "netty-all" }
+commons-configuration2 = { module = "org.apache.commons:commons-configuration2", version.ref = "commons-configuration2" }
+commons-beanutils = { module = "commons-beanutils:commons-beanutils", version.ref = "commons-beanutils" }
+commons-lang3 = { module = "org.apache.commons:commons-lang3", version.ref = "commons-lang3" }
+commons-text = { module = "org.apache.commons:commons-text", version.ref = "commons-text" }
+snakeyaml = { module = "org.yaml:snakeyaml", version.ref = "snakeyaml" }
