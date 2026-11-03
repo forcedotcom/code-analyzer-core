@@ -88,6 +88,12 @@ tasks.jar {
 tasks.register<Copy>("copyDependencies") {
     from(configurations.runtimeClasspath) // This includes all runtime dependencies
     into(javaLibDir) // Target directory for dependencies
+    // The directory is also the output of the jar task (sfge-*.jar), so we can't use Sync. Instead, remove any stale
+    // dependency jars left over from earlier builds (e.g. ones since removed from the runtime classpath) so that an
+    // incremental build packs exactly the same dependency set as a clean build.
+    doFirst {
+        delete(fileTree(javaLibDir) { exclude("sfge-*.jar") })
+    }
 }
 tasks.build {
     dependsOn("copyDependencies") // Ensure dependencies are copied during the build process
