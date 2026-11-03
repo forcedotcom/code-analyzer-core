@@ -24,7 +24,7 @@ logger = logging.getLogger(__name__)
 DEFAULT_HELP_URL = ("https://developer.salesforce.com/docs/atlas.en-us.secure_coding_guide.meta"
                     "/secure_coding_guide/secure_coding_considerations_flow_design.htm")
 
-id_pattern = re.compile(r"^(?=.*[0-9][0-9])[a-zA-Z0-9]+[a-zA-Z0-9]{15}(?:[0-5][A-Z0-5]{3})?$")
+id_pattern = re.compile(r"^[a-zA-Z0-9]{5}0[a-zA-Z0-9]{9}(?:[A-Z0-5]{3})?$")
 copy_name_pattern = re.compile(r"^Copy_\d+_of_[a-zA-Z]+")
 copy_label_pattern = re.compile(r"^Copy \d+ of [a-zA-Z]+")
 
