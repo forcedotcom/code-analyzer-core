@@ -1,6 +1,6 @@
 import { LogLevel, RuleDescription, SeverityLevel } from '@salesforce/code-analyzer-engine-api';
 import FormData from 'form-data';
-import { MIN_API_VERSION } from '../constants';
+import { FLOW_ANALYZER_OPT_IN_TAG, MIN_API_VERSION } from '../constants';
 import { getMessage } from '../messages';
 import {
     CollectedFlowFile,
@@ -12,6 +12,8 @@ import {
 } from '../types';
 import { FlowAnalyzerAuthService } from './FlowAnalyzerAuthService';
 import { createMetadataArchive } from './MetadataArchiveBuilder';
+
+const MAX_ERROR_BODY_LENGTH = 300;
 
 export class FlowAnalyzerApiClient {
     private readonly authService: FlowAnalyzerAuthService;
@@ -83,16 +85,15 @@ export class FlowAnalyzerApiClient {
             throw new Error(getMessage('CatalogMalformed'));
         }
         const categoryId = typeof rule.category === 'string' ? rule.category : rule.category?.id;
-        const tags: string[] = [];
-        if (rule.enabled !== false) {
-            tags.push('Recommended');
-        }
+        // Flow Analyzer is a non-GA, org-backed engine, so its rules are strictly opt-in: they carry the
+        // engine-specific opt-in tag and must never carry 'Recommended'.
+        const tags: string[] = [FLOW_ANALYZER_OPT_IN_TAG];
         if (categoryId) {
             tags.push(categoryId);
         }
         if (rule.tags) {
             for (const tag of rule.tags) {
-                if (!tags.includes(tag)) {
+                if (tag.toLowerCase() !== 'recommended' && !tags.includes(tag)) {
                     tags.push(tag);
                 }
             }
@@ -103,7 +104,7 @@ export class FlowAnalyzerApiClient {
             severityLevel: this.toSeverityLevel(
                 rule.effectiveSeverity ?? rule.severityLevel ?? rule.severity ?? rule.defaultSeverity
             ),
-            tags: tags.length > 0 ? tags : ['Recommended'],
+            tags,
             description: rule.description || localizedName || '',
             resourceUrls: rule.resourceUrls ?? []
         };
@@ -145,6 +146,31 @@ export class FlowAnalyzerApiClient {
         return orgVersion && parseFloat(orgVersion) > parseFloat(MIN_API_VERSION) ? orgVersion : MIN_API_VERSION;
     }
 
+    /**
+     * Error bodies can be Salesforce JSON errors, but also whole HTML pages from a proxy or gateway in front of the
+     * org. Show the useful part only; the full body goes to the fine-level log.
+     */
+    private summarizeErrorBody(text: string): string {
+        try {
+            const parsed: unknown = JSON.parse(text);
+            const entries: unknown[] = Array.isArray(parsed) ? parsed : [parsed];
+            const messages: string[] = entries
+                .map(entry => (entry as { message?: unknown } | null)?.message)
+                .filter((message): message is string => typeof message === 'string' && message.length > 0);
+            if (messages.length > 0) {
+                return messages.join('; ');
+            }
+        } catch (_err) {
+            // Not JSON, so fall through to the text handling below.
+        }
+        if (/^\s*<(!doctype|html)/i.test(text)) {
+            const title: string | undefined = /<title[^>]*>([^<]*)<\/title>/i.exec(text)?.[1].trim();
+            return getMessage('NonJsonErrorResponse', title || 'no title');
+        }
+        const collapsed: string = text.replace(/\s+/g, ' ').trim();
+        return collapsed.length > MAX_ERROR_BODY_LENGTH ? `${collapsed.slice(0, MAX_ERROR_BODY_LENGTH)}...` : collapsed;
+    }
+
     private async requestJson<T>(method: 'GET' | 'POST', resourcePath: string, body?: unknown): Promise<T> {
         const url = `${this.authService.getInstanceUrl()}/services/data/v${this.resolveApiVersion()}${resourcePath}`;
         this.emitLogEvent(LogLevel.Fine, `Flow Analyzer ${method} ${url}`);
@@ -179,7 +205,8 @@ export class FlowAnalyzerApiClient {
             }
             const text = await response.text();
             if (!response.ok) {
-                throw new Error(getMessage('HttpError', url, response.status, text));
+                this.emitLogEvent(LogLevel.Fine, `Flow Analyzer response body for HTTP ${response.status}: ${text}`);
+                throw new Error(getMessage('HttpError', url, response.status, this.summarizeErrorBody(text)));
             }
             try {
                 return JSON.parse(text) as T;

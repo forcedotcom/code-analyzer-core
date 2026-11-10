@@ -694,6 +694,52 @@ class UIBundleEngine extends engApi.Engine {
 }
 
 /**
+ * FlowAnalyzerEnginePlugin - A plugin to help with testing Flow Analyzer (flow-analyzer opt-in) rule selection behavior
+ */
+export class FlowAnalyzerEnginePlugin extends engApi.EnginePluginV1 {
+    getAvailableEngineNames(): string[] {
+        return ["flowAnalyzerEngine"];
+    }
+
+    async createEngine(_engineName: string, _config: engApi.ConfigObject): Promise<engApi.Engine> {
+        return new FlowAnalyzerEngine();
+    }
+}
+
+class FlowAnalyzerEngine extends engApi.Engine {
+    getName(): string {
+        return 'flowAnalyzerEngine';
+    }
+
+    getEngineVersion(): Promise<string> {
+        return Promise.resolve('1.0.0');
+    }
+
+    async describeRules(_describeOptions: engApi.DescribeOptions): Promise<engApi.RuleDescription[]> {
+        return [
+            {
+                name: "flowAnalyzerRule1",
+                severityLevel: engApi.SeverityLevel.Low,
+                tags: ['flow-analyzer', 'Performance'],
+                description: 'A flow-analyzer rule with Low severity',
+                resourceUrls: []
+            },
+            {
+                name: "flowAnalyzerRule2",
+                severityLevel: engApi.SeverityLevel.High,
+                tags: ['flow-analyzer'],
+                description: 'A flow-analyzer rule with High severity',
+                resourceUrls: []
+            }
+        ];
+    }
+
+    async runRules(_ruleNames: string[], _runOptions: engApi.RunOptions): Promise<engApi.EngineRunResults> {
+        return { violations: [] };
+    }
+}
+
+/**
  * FutureEnginePlugin - A plugin to help with testing forward compatibility
  */
 export class FutureEnginePlugin extends engApi.EnginePluginV1 {

@@ -32,7 +32,7 @@ function createConfig(overrides: Partial<FlowAnalyzerEngineConfig> = {}): FlowAn
 const SAMPLE_RULES: RuleDescription[] = [{
     name: 'UnusedVariable',
     severityLevel: SeverityLevel.Moderate,
-    tags: ['Recommended'],
+    tags: ['flow-analyzer'],
     description: 'Unused flow variable',
     resourceUrls: []
 }];

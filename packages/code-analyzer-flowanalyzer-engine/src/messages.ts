@@ -104,7 +104,10 @@ const MESSAGE_CATALOG: { [key: string]: string } = {
         `Flow Analyzer rejected the request because the total payload is %d bytes, which exceeds the limit of %d.`,
 
     HttpError:
-        `Flow Analyzer request to '%s' failed with HTTP %d: %s`
+        `Flow Analyzer request to '%s' failed with HTTP %d: %s`,
+
+    NonJsonErrorResponse:
+        `the server returned an HTML page instead of a JSON error (page title: '%s'). The org or a gateway in front of it may be unavailable.`
 };
 
 export function getMessage(msgId: string, ...args: (string | number)[]): string {

@@ -56,7 +56,7 @@ describe('FlowAnalyzerApiClient', () => {
         expect(rules[0]).toEqual({
             name: 'MISSING_FLOW_DESCRIPTION',
             severityLevel: SeverityLevel.High,
-            tags: ['Recommended', 'DOCUMENTATION_AND_NAMING_STANDARDS'],
+            tags: ['flow-analyzer', 'DOCUMENTATION_AND_NAMING_STANDARDS'],
             description: 'Localized rule',
             resourceUrls: []
         });
@@ -71,7 +71,7 @@ describe('FlowAnalyzerApiClient', () => {
         });
         const rules = await createClient(fetchImpl as unknown as typeof fetch).describeRules();
         expect(rules[0].severityLevel).toEqual(SeverityLevel.Low);
-        expect(rules[0].tags).toEqual(['Recommended']);
+        expect(rules[0].tags).toEqual(['flow-analyzer']);
     });
 
     it('maps ERROR/WARNING/INFO severities from the analyzer contract', async () => {
@@ -89,7 +89,7 @@ describe('FlowAnalyzerApiClient', () => {
         expect(rules[0].severityLevel).toEqual(SeverityLevel.High);
         expect(rules[1].severityLevel).toEqual(SeverityLevel.Moderate);
         expect(rules[2].severityLevel).toEqual(SeverityLevel.Info);
-        expect(rules[2].tags).toEqual(['Recommended', 'Performance']);
+        expect(rules[2].tags).toEqual(['flow-analyzer', 'Performance']);
     });
 
     it('fails on a malformed catalog', async () => {
@@ -245,7 +245,17 @@ describe('FlowAnalyzerApiClient', () => {
         expect(client).toBeInstanceOf(FlowAnalyzerApiClient);
     });
 
-    it('keeps disabled catalog rules and omits Recommended', async () => {
+    it('never tags rules as Recommended, even if the catalog does', async () => {
+        const fetchImpl = jest.fn().mockResolvedValue({
+            ok: true,
+            status: 200,
+            text: async () => JSON.stringify([{ id: 'R1', enabled: true, tags: ['Recommended', 'recommended', 'Custom'] }])
+        });
+        const rules = await createClient(fetchImpl as unknown as typeof fetch).describeRules();
+        expect(rules[0].tags).toEqual(['flow-analyzer', 'Custom']);
+    });
+
+    it('keeps disabled catalog rules and tags them as opt-in', async () => {
         const fetchImpl = jest.fn().mockResolvedValue({
             ok: true,
             status: 200,
@@ -261,7 +271,7 @@ describe('FlowAnalyzerApiClient', () => {
         });
         const rules = await createClient(fetchImpl as unknown as typeof fetch).describeRules();
         expect(rules[0].name).toEqual('DISABLED_RULE');
-        expect(rules[0].tags).toEqual(['SECURITY']);
+        expect(rules[0].tags).toEqual(['flow-analyzer', 'SECURITY']);
         expect(rules[0].severityLevel).toEqual(SeverityLevel.Moderate);
     });
 
@@ -273,5 +283,32 @@ describe('FlowAnalyzerApiClient', () => {
         });
         const rules = await createClient(fetchImpl as unknown as typeof fetch).describeRules();
         expect(rules[0].severityLevel).toEqual(SeverityLevel.Moderate);
+    });
+
+    describe('HTTP error messages', () => {
+        const failWith = (status: number, body: string) => jest.fn().mockResolvedValue({
+            ok: false,
+            status,
+            text: async () => body
+        });
+
+        it('shows only the message of a Salesforce JSON error', async () => {
+            const fetchImpl = failWith(404, '[{"errorCode":"NOT_FOUND","message":"The requested resource does not exist"}]');
+            await expect(createClient(fetchImpl as unknown as typeof fetch).describeRules())
+                .rejects.toThrow(/failed with HTTP 404: The requested resource does not exist$/);
+        });
+
+        it('replaces an HTML error page by its title instead of dumping the markup', async () => {
+            const fetchImpl = failWith(503, '<!DOCTYPE html>\n<html><head><title>Error</title></head><body><p>lots of markup</p></body></html>');
+            const rejection = createClient(fetchImpl as unknown as typeof fetch).describeRules();
+            await expect(rejection).rejects.toThrow(/failed with HTTP 503: the server returned an HTML page .* 'Error'/);
+            await expect(rejection).rejects.not.toThrow(/<html|markup/);
+        });
+
+        it('truncates a long plain-text error body', async () => {
+            const fetchImpl = failWith(500, 'x'.repeat(1000));
+            await expect(createClient(fetchImpl as unknown as typeof fetch).describeRules())
+                .rejects.toThrow(/HTTP 500: x{300}\.\.\.$/);
+        });
     });
 });

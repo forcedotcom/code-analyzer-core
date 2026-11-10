@@ -1,5 +1,8 @@
 export const ENGINE_NAME = 'flowAnalyzer';
 
+// Opt-in tag: Core excludes rules carrying it from 'Recommended', 'all' and severity selectors.
+export const FLOW_ANALYZER_OPT_IN_TAG = 'flow-analyzer';
+
 export const FLOW_FILE_EXTENSIONS = ['.flow', '.flow-meta.xml'];
 
 // Lowest REST API version exposing the Flow Analyzer Connect endpoints.
