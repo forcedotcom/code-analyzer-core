@@ -1,0 +1,5 @@
+<aura:component controller="AccountListController">
+    <aura:attribute name="accounts" type="Account[]" />
+    <aura:attribute name="selectedId" type="String" />
+    <aura:handler name="init" value="{!this}" action="{!c.doInit}" />
+</aura:component>

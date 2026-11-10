@@ -958,6 +958,65 @@ describe('Typical tests for the runRules method of ESLintEngine', () => {
     });
 });
 
+describe('Tests for the JavaScript of Aura components', () => {
+    // See https://github.com/forcedotcom/code-analyzer-core/issues/519
+    // accountListController.js is a correct Aura controller: it uses $A, var, and document.querySelector, as Aura code
+    // may. lwcProbe.js is a Lightning web component with the same var and document.querySelector.
+    const workspaceWithAuraFiles: string = path.join(testDataFolder, 'workspaceWithAuraFiles');
+    const auraRulesToRun: string[] = [
+        '@lwc/lwc-platform/no-aura',
+        '@lwc/lwc/no-document-query',
+        'no-var',
+        'object-shorthand',
+        'prefer-arrow-callback'
+    ];
+
+    function violationsIn(results: EngineRunResults, fileName: string): string[] {
+        return results.violations
+            .filter(v => path.basename(v.codeLocations[0].file) === fileName)
+            .map(v => v.ruleName)
+            .sort();
+    }
+
+    it('When running with defaults, then the LWC rules and the ES2015+ rules do not report on Aura files, and still report on LWC files', async () => {
+        const engine: Engine = await createEngineFromPlugin(DEFAULT_CONFIG_FOR_TESTING);
+        const results: EngineRunResults = await engine.runRules(auraRulesToRun,
+            createRunOptions(new Workspace('id', [workspaceWithAuraFiles])));
+
+        expect(violationsIn(results, 'accountListController.js')).toEqual([]);
+        expect(violationsIn(results, 'lwcProbe.js')).toEqual(['@lwc/lwc/no-document-query', 'no-var']);
+    });
+
+    it('When disable_lwc_base_config=true, then the ES2015+ rules do not report on Aura files, and still report on other files', async () => {
+        const engine: Engine = await createEngineFromPlugin({...DEFAULT_CONFIG_FOR_TESTING, disable_lwc_base_config: true});
+        const results: EngineRunResults = await engine.runRules(['no-var', 'object-shorthand', 'prefer-arrow-callback'],
+            createRunOptions(new Workspace('id', [workspaceWithAuraFiles])));
+
+        expect(violationsIn(results, 'accountListController.js')).toEqual([]);
+        expect(violationsIn(results, 'lwcProbe.js')).toEqual(['no-var']);
+    });
+
+    it('When disable_javascript_base_config=true, then the LWC rules do not report on Aura files, and still report on LWC files', async () => {
+        const engine: Engine = await createEngineFromPlugin({...DEFAULT_CONFIG_FOR_TESTING, disable_javascript_base_config: true});
+        const results: EngineRunResults = await engine.runRules(['@lwc/lwc-platform/no-aura', '@lwc/lwc/no-document-query'],
+            createRunOptions(new Workspace('id', [workspaceWithAuraFiles])));
+
+        expect(violationsIn(results, 'accountListController.js')).toEqual([]);
+        expect(violationsIn(results, 'lwcProbe.js')).toEqual(['@lwc/lwc/no-document-query']);
+    });
+
+    it('When a user config turns on an LWC rule for every JavaScript file, then it applies to Aura files too and nothing throws', async () => {
+        const engine: Engine = await createEngineFromPlugin({...DEFAULT_CONFIG_FOR_TESTING,
+            eslint_config_file: path.join(workspaceWithAuraFiles, 'eslint.config.js')
+        });
+        const results: EngineRunResults = await engine.runRules(['@lwc/lwc/no-document-query'],
+            createRunOptions(new Workspace('id', [workspaceWithAuraFiles])));
+
+        expect(violationsIn(results, 'accountListController.js')).toEqual(['@lwc/lwc/no-document-query']);
+        expect(violationsIn(results, 'lwcProbe.js')).toEqual(['@lwc/lwc/no-document-query']);
+    });
+});
+
 describe('Tests for React Hooks rules', () => {
     it('React Hooks rules are included in describeRules output', async () => {
         const engine: Engine = await createEngineFromPlugin(DEFAULT_CONFIG_FOR_TESTING);
