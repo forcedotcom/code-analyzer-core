@@ -178,6 +178,9 @@ export class BaseConfigFactory {
         }));
         lwcConfigs[1] = baseJsConfig;
 
+        // Appended last, so that the index-based edits in createLwcConfigArray are unchanged
+        lwcConfigs.push(createAuraConfig(lwcExtensions, lwcConfigs, true));
+
         return lwcConfigs;
     }
 
@@ -193,6 +196,10 @@ export class BaseConfigFactory {
         // Remove the eslintJs.configs.all (at element 1). Note that this delete is after the configs[4] update above so
         // we can work with the original index [4] instead of [3] to avoid confusion.
         configs.splice(1, 1);
+
+        // Without the base JavaScript rules, the Aura config (the last element) turns off only the plugin rules
+        const lwcExtensions = this.engineConfig.file_extensions.javascript.filter(ext => ext !== '.jsx');
+        configs[configs.length - 1] = createAuraConfig(lwcExtensions, configs, false);
 
         return configs;
     }
@@ -231,7 +238,7 @@ export class BaseConfigFactory {
             };
 
             const base = parserOnly ? {} : { ...eslintJs.configs.all };
-            return [{
+            const jsConfigs: Linter.Config[] = [{
                 ...base,
                 files: allJsFilePatterns,
                 languageOptions: {
@@ -239,6 +246,10 @@ export class BaseConfigFactory {
                     parserOptions: enhancedParserOptions
                 }
             }];
+            if (!parserOnly) {
+                jsConfigs.push(createAuraConfig(['.js'], [], true));
+            }
+            return jsConfigs;
         } else {
             // Only .jsx, .mjs, .cjs (no .js) - use Espree for better performance
             const base = parserOnly ? {} : { ...eslintJs.configs.all };
@@ -437,6 +448,57 @@ function validateAndGetRawLwcConfigArray(): Linter.Config[] {
 
     // Return a shallow copy since we will be making modifications
     return rawLwcConfigs.map(config => { return {... config}});
+}
+
+// The base JavaScript rules (from eslintJs.configs.all) that ask for syntax that ECMAScript 5 does not have, such as
+// let, const, arrow functions, template literals, and the newer regular expression flags.
+const ES5_INCOMPATIBLE_RULES: string[] = [
+    'logical-assignment-operators',
+    'no-var',
+    'object-shorthand',
+    'prefer-arrow-callback',
+    'prefer-const',
+    'prefer-destructuring',
+    'prefer-exponentiation-operator',
+    'prefer-named-capture-group',
+    'prefer-numeric-literals',
+    'prefer-object-has-own',
+    'prefer-object-spread',
+    'prefer-rest-params',
+    'prefer-spread',
+    'prefer-template',
+    'require-unicode-regexp'
+];
+
+/**
+ * Creates the config for the JavaScript of Aura components: the controllers, helpers, and renderers in an "aura"
+ * folder. Aura components are not Lightning web components, and Salesforce checks their JavaScript with its own
+ * plugin, @salesforce/eslint-plugin-aura, which parses it as ECMAScript 5. So for these files only, this config turns
+ * off every rule of the plugins that the given configs register (the LWC, LWC platform, Lightning, import, and Jest
+ * plugins of the LWC base config), and, when includeBaseJsRules is true, the base JavaScript rules that ECMAScript 5
+ * cannot satisfy. The rules are turned off rather than the files ignored, so that the plugins stay registered for
+ * Aura files and a user config that names one of their rules still works. A user config comes after the base config,
+ * so a user can still turn any of these rules back on for Aura files.
+ * See https://github.com/forcedotcom/code-analyzer-core/issues/519
+ */
+function createAuraConfig(extensions: string[], pluginConfigs: Linter.Config[], includeBaseJsRules: boolean): Linter.Config {
+    const rules: Linter.RulesRecord = {};
+    for (const config of pluginConfigs) {
+        for (const [pluginName, plugin] of Object.entries(config.plugins ?? {})) {
+            for (const ruleName of Object.keys(plugin.rules ?? /* istanbul ignore next */ {})) {
+                rules[`${pluginName}/${ruleName}`] = 'off';
+            }
+        }
+    }
+    if (includeBaseJsRules) {
+        for (const ruleName of ES5_INCOMPATIBLE_RULES) {
+            rules[ruleName] = 'off';
+        }
+    }
+    return {
+        files: extensions.map(ext => `**/aura/**/*${ext}`),
+        rules: rules
+    };
 }
 
 function containsBabelOptions(config: Linter.Config): boolean {
