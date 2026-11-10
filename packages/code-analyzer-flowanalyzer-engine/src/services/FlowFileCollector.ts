@@ -36,13 +36,14 @@ export class FlowFileCollector {
             this.rejectIfUnsafeAbsolutePath(absolutePath);
             const relativeFilePath = this.toRelativePath(absolutePath, workspaceRoot);
             this.validateRelativePath(relativeFilePath);
-            this.rejectIfSymlink(absolutePath);
 
             const normalized = relativeFilePath.toLowerCase();
             if (seenNormalized.has(normalized)) {
                 throw new Error(getMessage('DuplicatePathRejected', relativeFilePath));
             }
             seenNormalized.add(normalized);
+
+            this.rejectIfSymlink(absolutePath);
 
             const content = this.fsAdapter.readFileSync(absolutePath, 'utf-8');
             const byteLength = Buffer.byteLength(content, 'utf-8');
