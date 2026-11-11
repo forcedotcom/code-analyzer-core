@@ -60,8 +60,8 @@ describe('FlowAnalyzerEngine', () => {
         });
     }
 
-    it('returns flowAnalyzer from getName', () => {
-        expect(createEngine().getName()).toEqual('flowAnalyzer');
+    it('returns flow-analyzer from getName', () => {
+        expect(createEngine().getName()).toEqual('flow-analyzer');
     });
 
     it('returns a semantic version', async () => {
@@ -82,7 +82,7 @@ describe('FlowAnalyzerEngine', () => {
         expect(apiClient.describeRules).not.toHaveBeenCalled();
         expect(logEvents).toContainEqual(expect.objectContaining({
             logLevel: LogLevel.Debug,
-            message: getMessage('NoTargetOrg', 'engines.flowAnalyzer.target_org')
+            message: getMessage('NoTargetOrg', 'engines.flow-analyzer.target_org')
         }));
         expect(logEvents.filter(e => e.logLevel <= LogLevel.Warn)).toEqual([]);
     });
@@ -95,7 +95,7 @@ describe('FlowAnalyzerEngine', () => {
         expect(results.insights).toEqual(expect.objectContaining({
             status: 'skipped',
             error: expect.objectContaining({
-                message: getMessage('MissingTargetOrg', 'engines.flowAnalyzer.target_org')
+                message: getMessage('MissingTargetOrg', 'engines.flow-analyzer.target_org')
             })
         }));
     });

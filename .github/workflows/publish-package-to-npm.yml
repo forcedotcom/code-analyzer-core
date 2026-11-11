@@ -57,8 +57,8 @@ on:
         type: boolean
         required: false
         default: false
-      code-analyzer-flowanalyzer-engine:
-        description: Should the code-analyzer-flowanalyzer-engine package be released?
+      code-analyzer-flow-analyzer-engine:
+        description: Should the code-analyzer-flow-analyzer-engine package be released?
         type: boolean
         required: false
         default: false
@@ -123,8 +123,8 @@ jobs:
           if [ "${{ inputs.code-analyzer-uibundle-engine }}" == "true" ]; then
             PACKAGES_TO_CHECK_ARR+=('code-analyzer-uibundle-engine')
           fi
-          if [ "${{ inputs.code-analyzer-flowanalyzer-engine }}" == "true" ]; then
-            PACKAGES_TO_CHECK_ARR+=('code-analyzer-flowanalyzer-engine')
+          if [ "${{ inputs.code-analyzer-flow-analyzer-engine }}" == "true" ]; then
+            PACKAGES_TO_CHECK_ARR+=('code-analyzer-flow-analyzer-engine')
           fi
           PACKAGES_TO_CHECK_STR=$(IFS=' '; echo "${PACKAGES_TO_CHECK_ARR[*]}")
           node ./.github/workflows/publish-package-to-npm/validate-packages-as-releasable.js "$PACKAGES_TO_CHECK_STR"

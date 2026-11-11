@@ -11,7 +11,7 @@ describe('Tests for the FlowAnalyzerEnginePlugin', () => {
         plugin = new FlowAnalyzerEnginePlugin();
     });
 
-    it('returns flowAnalyzer from getAvailableEngineNames', () => {
+    it('returns flow-analyzer from getAvailableEngineNames', () => {
         expect(plugin.getAvailableEngineNames()).toEqual([ENGINE_NAME]);
     });
 
@@ -25,7 +25,7 @@ describe('Tests for the FlowAnalyzerEnginePlugin', () => {
             getMessage('UnsupportedEngineName', 'error_engine'));
     });
 
-    it('describes the flowAnalyzer config schema', () => {
+    it('describes the flow-analyzer config schema', () => {
         const description = plugin.describeEngineConfig(ENGINE_NAME);
         expect(description.fieldDescriptions?.target_org.valueType).toEqual('string');
     });

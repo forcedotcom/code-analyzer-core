@@ -1,4 +1,4 @@
-export const ENGINE_NAME = 'flowAnalyzer';
+export const ENGINE_NAME = 'flow-analyzer';
 
 // Opt-in tag: Core excludes rules carrying it from 'Recommended', 'all' and severity selectors.
 export const FLOW_ANALYZER_OPT_IN_TAG = 'flow-analyzer';

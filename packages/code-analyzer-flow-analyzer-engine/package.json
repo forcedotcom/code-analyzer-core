@@ -1,5 +1,5 @@
 {
-  "name": "@salesforce/code-analyzer-flowanalyzer-engine",
+  "name": "@salesforce/code-analyzer-flow-analyzer-engine",
   "description": "Flow Analyzer Engine Package for the Salesforce Code Analyzer",
   "version": "0.1.0-SNAPSHOT",
   "author": "The Salesforce Code Analyzer Team",
@@ -8,7 +8,7 @@
   "repository": {
     "type": "git",
     "url": "git+https://github.com/forcedotcom/code-analyzer-core.git",
-    "directory": "packages/code-analyzer-flowanalyzer-engine"
+    "directory": "packages/code-analyzer-flow-analyzer-engine"
   },
   "main": "dist/index.js",
   "types": "dist/index.d.ts",

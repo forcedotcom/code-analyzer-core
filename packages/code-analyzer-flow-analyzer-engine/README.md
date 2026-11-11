@@ -1,6 +1,6 @@
 # Flow Analyzer Engine
 
-Salesforce Code Analyzer engine named `flowAnalyzer`. It sends local `.flow` / `.flow-meta.xml` files to an org-backed Connect API and maps findings back onto the original XML.
+Salesforce Code Analyzer engine named `flow-analyzer`. It sends local `.flow` / `.flow-meta.xml` files to an org-backed Connect API and maps findings back onto the original XML.
 
 Analyze POST: `/services/data/vXX.X/flowbuilder/flow-analyzer/analysis/metadata-archive` (`multipart/form-data` ZIP in `fileData`).
 
@@ -10,7 +10,7 @@ This package does **not** replace the local Python `flow` engine.
 
 ```yaml
 engines:
-  flowAnalyzer:
+  flow-analyzer:
     target_org: myOrg
 ```
 
@@ -21,6 +21,6 @@ The CLI `--target-org` flag populates `target_org`. When `target_org` isn't set,
 ## Commands
 
 ```
-sf code-analyzer run --rule-selector flowAnalyzer --target-org myOrg
-sf code-analyzer rules --rule-selector flowAnalyzer --target-org myOrg
+sf code-analyzer run --rule-selector flow-analyzer --target-org myOrg
+sf code-analyzer rules --rule-selector flow-analyzer --target-org myOrg
 ```
