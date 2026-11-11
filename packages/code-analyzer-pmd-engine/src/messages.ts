@@ -27,7 +27,7 @@ const MESSAGE_CATALOG : { [key: string]: string } = {
         `List of xml ruleset files containing custom PMD rules to be made available for rule selection.\n` +
         `Each ruleset must be an xml file that is either:\n` +
         `  - on disk (provided as an absolute path or a relative path to 'config_root')\n` +
-        `  - or a relative resource found on the Java classpath.\n` +
+        `  - or a relative resource found on the Java classpath (or, for a ruleset that references another ruleset file by a path relative to the folder you run Code Analyzer from, that referenced file).\n` +
         `Not all custom rules can be fully defined within an xml ruleset file. For example, Java based rules may be defined in jar files.\n` +
         `In these cases, you will need to also add your additional files to the Java classpath using the 'java_classpath_entries' field.\n` +
         `See https://pmd.github.io/pmd/pmd_userdocs_making_rulesets.html to learn more about PMD rulesets.`,
