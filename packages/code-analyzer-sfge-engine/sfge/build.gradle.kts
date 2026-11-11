@@ -21,7 +21,6 @@ repositories {
 // See https://docs.gradle.org/current/userguide/platforms.html#sub::toml-dependencies-format
 dependencies {
     implementation(libs.commons.cli)
-    implementation(libs.commons.collections4)
     implementation(libs.tinkergraph.gremlin) {
         // commons-collections 3.x (pulled in by commons-beanutils) has known vulnerabilities and no patched release.
         // SFGE and the Gremlin graph layer do not use it, so it is removed from the classpath entirely.
@@ -107,7 +106,8 @@ val bannedRuntimeDependencies = mapOf(
     "org.apache.tinkerpop:gremlin-driver" to "SFGE only uses the embedded in-memory graph",
     "org.apache.tinkerpop:gremlin-util" to "SFGE only uses the embedded in-memory graph",
     "org.apache.tinkerpop:gremlin-shaded" to "Bundles Jackson/Kryo with known vulnerabilities that cannot be patched via constraints",
-    "commons-collections:commons-collections" to "3.x has known vulnerabilities and no patched release (SFGE uses commons-collections4)"
+    "commons-collections:commons-collections" to "3.x has known vulnerabilities and no patched release",
+    "org.apache.commons:commons-collections4" to "SFGE does not use it (the NonNull* collections are plain Java/Guava); sonatype-2024-3350 flags SetUniqueList in it"
 )
 tasks.register("verifyNoBannedDependencies") {
     group = "verification"
