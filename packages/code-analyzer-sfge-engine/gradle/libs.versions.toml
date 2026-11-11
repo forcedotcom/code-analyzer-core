@@ -9,7 +9,6 @@
 hamcrest = "3.0"
 junit-jupiter = "5.13.4"
 commons-cli = "1.10.0"
-commons-collections4 = "4.6.0"
 tinkergraph-gremlin = "3.7.7"
 antlr-runtime = "3.5.3"
 log4j-api = "2.25.5"
@@ -33,7 +32,6 @@ snakeyaml = "2.7"
 hamcrest = { module = "org.hamcrest:hamcrest", version.ref = "hamcrest" }
 junit-jupiter = { module = "org.junit.jupiter:junit-jupiter", version.ref = "junit-jupiter" }
 commons-cli = { module = "commons-cli:commons-cli", version.ref = "commons-cli" }
-commons-collections4 = { module = "org.apache.commons:commons-collections4", version.ref = "commons-collections4" }
 tinkergraph-gremlin = { module = "org.apache.tinkerpop:tinkergraph-gremlin", version.ref = "tinkergraph-gremlin" }
 antlr-runtime = { module = "org.antlr:antlr-runtime", version.ref = "antlr-runtime" }
 log4j-api = { module = "org.apache.logging.log4j:log4j-api", version.ref = "log4j-api" }
