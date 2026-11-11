@@ -9,7 +9,7 @@
 hamcrest = "3.0"
 junit-jupiter = "5.13.4"
 commons-cli = "1.10.0"
-commons-collections4 = "4.5.0"
+commons-collections4 = "4.6.0"
 tinkergraph-gremlin = "3.7.7"
 antlr-runtime = "3.5.3"
 log4j-api = "2.25.5"
