@@ -1170,6 +1170,19 @@ describe('Tests for fixes and suggestions in runRules', () => {
         expect(fix.fixedCode).toContain('const');
     });
 
+    it('Files within aura folders are not linted with JS/LWC base configs while other files are', async () => {
+        const auraWorkspace: string = path.join(testDataFolder, 'workspaceWithAuraAndLwc');
+        const auraFile: string = path.join(auraWorkspace, 'aura', 'myCmp', 'myCmpController.js');
+        const lwcFile: string = path.join(auraWorkspace, 'lwc', 'myCmp', 'myCmp.js');
+        const engine: Engine = await createEngineFromPlugin(DEFAULT_CONFIG_FOR_TESTING);
+        const runOptions: RunOptions = createRunOptions(new Workspace('id', [auraWorkspace], [auraFile, lwcFile]));
+        const results: EngineRunResults = await engine.runRules(
+            ['no-var', '@lwc/lwc-platform/no-aura', '@lwc/lwc/no-document-query'], runOptions);
+
+        expect(results.violations.filter(v => v.codeLocations[0].file === auraFile)).toHaveLength(0);
+        expect(results.violations.filter(v => v.codeLocations[0].file === lwcFile && v.ruleName === 'no-var').length).toBeGreaterThan(0);
+    });
+
     it('Multiple violations in the same file produce fixes without errors', async () => {
         const engine: Engine = await createEngineFromPlugin(DEFAULT_CONFIG_FOR_TESTING);
         const runOptions: RunOptions = {
