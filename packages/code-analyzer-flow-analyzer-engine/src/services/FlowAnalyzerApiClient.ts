@@ -84,27 +84,15 @@ export class FlowAnalyzerApiClient {
         if (!name) {
             throw new Error(getMessage('CatalogMalformed'));
         }
-        const categoryId = typeof rule.category === 'string' ? rule.category : rule.category?.id;
-        // Flow Analyzer is a non-GA, org-backed engine, so its rules are strictly opt-in: they carry the
-        // engine-specific opt-in tag and must never carry 'Recommended'.
-        const tags: string[] = [FLOW_ANALYZER_OPT_IN_TAG];
-        if (categoryId) {
-            tags.push(categoryId);
-        }
-        if (rule.tags) {
-            for (const tag of rule.tags) {
-                if (tag.toLowerCase() !== 'recommended' && !tags.includes(tag)) {
-                    tags.push(tag);
-                }
-            }
-        }
+        // Flow Analyzer is a non-GA, org-backed engine, so its rules are strictly opt-in:
+        // they carry only the engine-specific opt-in tag and are never matched by generic selectors.
         const localizedName = rule.name && rule.name !== name ? rule.name : undefined;
         return {
             name,
             severityLevel: this.toSeverityLevel(
                 rule.effectiveSeverity ?? rule.severityLevel ?? rule.severity ?? rule.defaultSeverity
             ),
-            tags,
+            tags: [FLOW_ANALYZER_OPT_IN_TAG],
             description: rule.description || localizedName || '',
             resourceUrls: rule.resourceUrls ?? []
         };

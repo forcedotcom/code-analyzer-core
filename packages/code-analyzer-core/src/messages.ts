@@ -180,6 +180,9 @@ const MESSAGE_CATALOG : MessageCatalog = {
     GatheringRulesFromEngine:
         `Gathering all available rules from engine '%s'.`,
 
+    SkippingOptInEngine:
+        `Skipping opt-in engine '%s' because it was not explicitly selected.`,
+
     FinishedGatheringRulesFromEngine:
         `Finished gathering %d available rule(s) from engine '%s'.`,
 

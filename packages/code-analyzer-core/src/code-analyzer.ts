@@ -290,7 +290,7 @@ export class CodeAnalyzer {
         selectors = selectors.length > 0 ? selectors : [engApi.COMMON_TAGS.RECOMMENDED];
         const selectorObjects: Selector[] = selectors.map(toSelector);
 
-        const allRules: RuleImpl[] = await this.getAllRules(selectOptions?.workspace);
+        const allRules: RuleImpl[] = await this.getAllRules(selectOptions?.workspace, selectors);
 
         const ruleSelection: RuleSelectionImpl = new RuleSelectionImpl();
         const disabledRules: {ruleName: string, engineName: string}[] = [];
@@ -599,7 +599,7 @@ export class CodeAnalyzer {
         this.eventEmitter.on(eventType, callback);
     }
 
-    private async getAllRules(workspace?: Workspace): Promise<RuleImpl[]> {
+    private async getAllRules(workspace?: Workspace, selectors?: string[]): Promise<RuleImpl[]> {
         const cacheKey: string = workspace ? workspace.getWorkspaceId() : process.cwd();
         if (!this.rulesCache.has(cacheKey)) {
             this.engineRuleDiscoveryProgressAggregator.reset(this.getEngineNames());
@@ -609,6 +609,11 @@ export class CodeAnalyzer {
             await this.tempFolder.makeSubfolder(rulesWorkingFolderName);
 
             const rulePromises: Promise<RuleImpl[]>[] = this.getEngineNames().map(async (engineName) => {
+                // Skip opt-in engines (flow-analyzer) if they're not explicitly in the selector
+                if (this.isOptInEngineNotInSelector(engineName, selectors)) {
+                    this.emitLogEvent(LogLevel.Debug, getMessage('SkippingOptInEngine', engineName));
+                    return [];
+                }
                 const workingFolder: string = await this.tempFolder.makeSubfolder(rulesWorkingFolderName, engineName);
 
                 if (this.config.getPreserveAllWorkingFolders()) {
@@ -868,6 +873,23 @@ export class CodeAnalyzer {
 
     private getEngine(engineName: string): engApi.Engine {
         return this.engines.get(engineName)!;
+    }
+
+    private isOptInEngineNotInSelector(engineName: string, selectors?: string[]): boolean {
+        // Flow Analyzer is an opt-in engine that should only be instantiated if explicitly requested
+        if (engineName !== 'flow-analyzer') {
+            return false;
+        }
+        // If selectors are provided, check if this engine is explicitly in any selector
+        if (selectors && selectors.length > 0) {
+            const selectorsLower = selectors.map(s => s.toLowerCase());
+            return !selectorsLower.some(s =>
+                s === 'flow-analyzer' ||
+                s.includes('flow-analyzer')
+            );
+        }
+        // If no selectors provided (shouldn't happen, but be safe), don't skip
+        return false;
     }
 }
 

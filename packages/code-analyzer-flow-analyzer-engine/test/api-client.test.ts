@@ -56,7 +56,7 @@ describe('FlowAnalyzerApiClient', () => {
         expect(rules[0]).toEqual({
             name: 'MISSING_FLOW_DESCRIPTION',
             severityLevel: SeverityLevel.High,
-            tags: ['flow-analyzer', 'DOCUMENTATION_AND_NAMING_STANDARDS'],
+            tags: ['flow-analyzer'],
             description: 'Localized rule',
             resourceUrls: []
         });
@@ -89,7 +89,26 @@ describe('FlowAnalyzerApiClient', () => {
         expect(rules[0].severityLevel).toEqual(SeverityLevel.High);
         expect(rules[1].severityLevel).toEqual(SeverityLevel.Moderate);
         expect(rules[2].severityLevel).toEqual(SeverityLevel.Info);
-        expect(rules[2].tags).toEqual(['flow-analyzer', 'Performance']);
+        expect(rules[2].tags).toEqual(['flow-analyzer']);
+    });
+
+    it('only includes the opt-in tag, ignoring API catalog tags', async () => {
+        const fetchImpl = jest.fn().mockResolvedValue({
+            ok: true,
+            status: 200,
+            text: async () => JSON.stringify([
+                { name: 'R1', tags: ['Recommended', 'Performance'] },
+                { name: 'R2', tags: ['recommended', 'Security'] },
+                { name: 'R3', tags: ['RECOMMENDED', 'BestPractice'] },
+                { name: 'R4', tags: ['Performance'] }
+            ])
+        });
+        const rules = await createClient(fetchImpl as unknown as typeof fetch).describeRules();
+        // All flow-analyzer rules have only the opt-in tag, no other tags from the API
+        expect(rules[0].tags).toEqual(['flow-analyzer']);
+        expect(rules[1].tags).toEqual(['flow-analyzer']);
+        expect(rules[2].tags).toEqual(['flow-analyzer']);
+        expect(rules[3].tags).toEqual(['flow-analyzer']);
     });
 
     it('fails on a malformed catalog', async () => {
@@ -245,17 +264,17 @@ describe('FlowAnalyzerApiClient', () => {
         expect(client).toBeInstanceOf(FlowAnalyzerApiClient);
     });
 
-    it('never tags rules as Recommended, even if the catalog does', async () => {
+    it('only uses opt-in tag regardless of what tags the catalog provides', async () => {
         const fetchImpl = jest.fn().mockResolvedValue({
             ok: true,
             status: 200,
             text: async () => JSON.stringify([{ id: 'R1', enabled: true, tags: ['Recommended', 'recommended', 'Custom'] }])
         });
         const rules = await createClient(fetchImpl as unknown as typeof fetch).describeRules();
-        expect(rules[0].tags).toEqual(['flow-analyzer', 'Custom']);
+        expect(rules[0].tags).toEqual(['flow-analyzer']);
     });
 
-    it('keeps disabled catalog rules and tags them as opt-in', async () => {
+    it('keeps disabled catalog rules and tags them as opt-in only', async () => {
         const fetchImpl = jest.fn().mockResolvedValue({
             ok: true,
             status: 200,
@@ -271,7 +290,7 @@ describe('FlowAnalyzerApiClient', () => {
         });
         const rules = await createClient(fetchImpl as unknown as typeof fetch).describeRules();
         expect(rules[0].name).toEqual('DISABLED_RULE');
-        expect(rules[0].tags).toEqual(['flow-analyzer', 'SECURITY']);
+        expect(rules[0].tags).toEqual(['flow-analyzer']);
         expect(rules[0].severityLevel).toEqual(SeverityLevel.Moderate);
     });
 
