@@ -657,6 +657,45 @@ describe('Tests for selecting rules', () => {
         });
     });
 
+    describe('flow-analyzer rule selection behavior', () => {
+        beforeEach(async () => {
+            codeAnalyzer = createCodeAnalyzer();
+            await codeAnalyzer.addEnginePlugin(new stubs.FlowAnalyzerEnginePlugin());
+        });
+
+        it.each([
+            ['the default Recommended selector', 'Recommended'],
+            ['all', 'all'],
+            ['severity number', '4'],
+            ['severity name', 'Low'],
+            ['severity number for High', '2'],
+            ['severity name for High', 'High']
+        ])('flow-analyzer rules are NOT selected by %s', async (_desc, selector) => {
+            const selection: RuleSelection = await codeAnalyzer.selectRules([selector]);
+            expect(ruleNamesFor(selection, 'flowAnalyzerEngine')).toEqual([]);
+        });
+
+        it('flow-analyzer rules ARE selected by engine name', async () => {
+            const selection: RuleSelection = await codeAnalyzer.selectRules(['flowAnalyzerEngine']);
+            expect(ruleNamesFor(selection, 'flowAnalyzerEngine')).toEqual(['flowAnalyzerRule1', 'flowAnalyzerRule2']);
+        });
+
+        it('flow-analyzer rules ARE selected by rule name', async () => {
+            const selection: RuleSelection = await codeAnalyzer.selectRules(['flowAnalyzerRule1']);
+            expect(ruleNamesFor(selection, 'flowAnalyzerEngine')).toEqual(['flowAnalyzerRule1']);
+        });
+
+        it('flow-analyzer rules ARE selected by the flow-analyzer tag', async () => {
+            const selection: RuleSelection = await codeAnalyzer.selectRules(['flow-analyzer']);
+            expect(ruleNamesFor(selection, 'flowAnalyzerEngine')).toEqual(['flowAnalyzerRule1', 'flowAnalyzerRule2']);
+        });
+
+        it('flow-analyzer rules ARE selected by other tag they carry', async () => {
+            const selection: RuleSelection = await codeAnalyzer.selectRules(['Performance']);
+            expect(ruleNamesFor(selection, 'flowAnalyzerEngine')).toEqual(['flowAnalyzerRule1']);
+        });
+    });
+
     describe('UIBundle rule selection behavior', () => {
         beforeEach(async () => {
             codeAnalyzer = createCodeAnalyzer();

@@ -115,6 +115,8 @@ function getLatestReleasedVersion(changedPackage) {
 function isPackageThatHasNotPublished(changedPackage) {
     return [
         "packages/ENGINE-TEMPLATE",
+        // TODO: remove once @salesforce/code-analyzer-flow-analyzer-engine is published to npm
+        "packages/code-analyzer-flow-analyzer-engine",
     ].includes(changedPackage.replace("\\","/"));
 }
 
