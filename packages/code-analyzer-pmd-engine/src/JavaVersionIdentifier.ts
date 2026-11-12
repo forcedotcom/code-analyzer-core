@@ -30,7 +30,8 @@ export class RuntimeJavaVersionIdentifier implements JavaVersionIdentifier {
             childProcess.stderr.on('data', (data: Buffer) => {
                 stderr += data.toString();
             });
-            childProcess.on('exit', (code: number) => {
+            // We listen to 'close' (not 'exit') so that stderr is fully drained before we parse it.
+            childProcess.on('close', (code: number|null) => {
                 /* istanbul ignore else */
                 if (code === 0) {
                     // Oddly enough the -version command is documented to go to stderr and not stdout

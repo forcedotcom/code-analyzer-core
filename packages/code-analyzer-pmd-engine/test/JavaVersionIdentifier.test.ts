@@ -12,6 +12,19 @@ function stubJavaProcess(stderrLine: string, exitCode: number = 0): cp.ChildProc
     process.nextTick(() => {
         child.stderr.emit('data', Buffer.from(stderrLine));
         child.emit('exit', exitCode);
+        child.emit('close', exitCode);
+    });
+    return child as unknown as cp.ChildProcessWithoutNullStreams;
+}
+
+// Simulates stdio still being open at 'exit': the remaining stderr only arrives before 'close'.
+function stubJavaProcessWithLateStderr(firstChunk: string, lateChunk: string): cp.ChildProcessWithoutNullStreams {
+    const child = Object.assign(new EventEmitter(), {stderr: new EventEmitter()});
+    process.nextTick(() => {
+        child.stderr.emit('data', Buffer.from(firstChunk));
+        child.emit('exit', 0);
+        child.stderr.emit('data', Buffer.from(lateChunk));
+        child.emit('close', 0);
     });
     return child as unknown as cp.ChildProcessWithoutNullStreams;
 }
@@ -69,5 +82,15 @@ describe('RuntimeJavaVersionIdentifier CWE-427 regression', () => {
 
         expect(version?.toString()).toEqual('11.0.6');
         expect(spawnSpy).toHaveBeenCalledWith('java', ['-version'], {cwd: TRUSTED_DIR});
+    });
+
+    it('waits for stderr to be fully drained (close) before parsing, even with JAVA_TOOL_OPTIONS notice first', async () => {
+        jest.spyOn(cp, 'spawn').mockImplementation(() => stubJavaProcessWithLateStderr(
+            'Picked up JAVA_TOOL_OPTIONS: -Dfile.encoding=UTF-8\n',
+            'openjdk version "17.0.11" 2024-04-16 LTS\n'));
+
+        const version = await new RuntimeJavaVersionIdentifier().identifyJavaVersion('java');
+
+        expect(version?.toString()).toEqual('17.0.11');
     });
 });
