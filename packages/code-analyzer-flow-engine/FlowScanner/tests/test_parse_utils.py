@@ -71,5 +71,18 @@ class QuickValidateEncodingTest(unittest.TestCase):
         self.assertIsNone(pu.quick_validate(self.flow_path + '.does-not-exist'))
 
 
+class EndsElementTest(unittest.TestCase):
+    """Regression tests for issue #2098: API v68 top-level <ends> elements."""
+
+    def test_ends_is_control_flow_element(self):
+        self.assertIn('ends', pu.CTRL_FLOW_ELEM)
+
+    def test_ends_has_variable_type(self):
+        import xml.etree.ElementTree as ET
+        from flow_parser import parse
+        elem = ET.fromstring('<ends xmlns="http://soap.sforce.com/2006/04/metadata"><name>End1</name></ends>')
+        self.assertIsNotNone(parse.build_vartype_from_elem(elem))
+
+
 if __name__ == '__main__':
     unittest.main()

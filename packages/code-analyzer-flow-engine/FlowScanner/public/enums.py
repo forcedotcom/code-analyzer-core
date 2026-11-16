@@ -89,6 +89,7 @@ class RunMode(Enum):
     SystemModeWithoutSharing = 0
     SystemModeWithSharing = 1
     DefaultMode = 2
+    UserMode = 3  # API v68+: runInMode=UserMode. Runs in user context, so it behaves like DefaultMode.
 
 
 class DataType(Enum):
