@@ -56,7 +56,7 @@ const MESSAGE_CATALOG : { [key: string]: string } = {
         `Found trailing whitespace at the end of a line of code.`,
 
     MixedIndentationRuleDescription:
-        `Identifies lines with both spaces and tabs in the leading indentation. Mixed indentation causes unexpected behavior in multiline strings because the indentation algorithm processes whitespace differently.`,
+        `Identifies lines with both spaces and tabs in the leading indentation. Mixed indentation causes unexpected behavior in multiline strings because the indentation algorithm processes whitespace differently. Lines that start with tabs followed by a single space and an asterisk, such as the continuation lines of a tab-indented block comment, are not reported.`,
 
     MixedIndentationRuleMessage:
         `Leading indentation contains mixed spaces and tabs. To fix this, use either spaces or tabs.`,

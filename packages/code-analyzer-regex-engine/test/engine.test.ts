@@ -1029,7 +1029,53 @@ describe('Tests for runRules', () => {
             expect(violation.message).toBe(getMessage('MixedIndentationRuleMessage'));
         }
     });
+
+    it("NoMixedIndentation rule should NOT flag block comment continuation lines that are indented with tabs then a single space", async () => {
+        const runOptions: RunOptions = createRunOptions(
+            new Workspace('id', [path.resolve(__dirname, "test-data", "apexClassMixedIndentation", "validIndentation_TabsWithBlockComments.cls")]));
+        const runResults: EngineRunResults = await engine.runRules(["NoMixedIndentation"], runOptions);
+
+        // ApexDoc and other block comments indented with tabs have continuation lines of tabs, one space, and an
+        // asterisk. The single space only aligns the asterisk under the opening "/*", so it is not mixed indentation.
+        expect(runResults.violations).toHaveLength(0);
+    });
+
+    it("NoMixedIndentation rule should still flag lines that resemble block comment continuation lines but are mixed indentation", async () => {
+        const file: string = path.resolve(__dirname, "test-data", "apexClassMixedIndentation", "mixedIndentation_BlockCommentLookalikes.cls");
+        const runOptions: RunOptions = createRunOptions(new Workspace('id', [file]));
+        const runResults: EngineRunResults = await engine.runRules(["NoMixedIndentation"], runOptions);
+
+        const expectedViolations: Violation[] = [
+            // 1. Tabs, then two spaces, then an asterisk
+            createExpectedMixedIndentationViolation(file, 5, 4),
+            // 2. A space, then a tab, then a space, then an asterisk
+            createExpectedMixedIndentationViolation(file, 9, 4),
+            // 3. Tabs, then a single space, then a character that is not an asterisk
+            createExpectedMixedIndentationViolation(file, 13, 3),
+            // 4. Tabs, then two spaces, then text
+            createExpectedMixedIndentationViolation(file, 17, 5)
+        ];
+        expect(runResults.violations).toHaveLength(expectedViolations.length);
+        expect(runResults.violations).toEqual(expectedViolations);
+    });
 });
+
+function createExpectedMixedIndentationViolation(file: string, line: number, endColumn: number): Violation {
+    return {
+        ruleName: "NoMixedIndentation",
+        message: getMessage('MixedIndentationRuleMessage'),
+        primaryLocationIndex: 0,
+        codeLocations: [
+            {
+                file: file,
+                startLine: line,
+                startColumn: 1,
+                endLine: line,
+                endColumn: endColumn
+            }
+        ]
+    };
+}
 
 describe('Tests for regex_ignore', () => {
     it('regex_ignore should exclude matches that match the negative pattern', async () => {
