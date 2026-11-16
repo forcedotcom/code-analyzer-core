@@ -1,13 +1,11 @@
 package com.salesforce.collections;
 
 import java.util.ArrayList;
-import org.apache.commons.collections4.PredicateUtils;
-import org.apache.commons.collections4.list.PredicatedList;
 
 /** An ArrayList that doesn't allow null values */
-public class NonNullArrayList<E> extends PredicatedList<E> {
+public class NonNullArrayList<E> extends NullRejectingList<E> {
     private NonNullArrayList(ArrayList<E> list) {
-        super(list, PredicateUtils.notNullPredicate());
+        super(list);
     }
 
     static <E> NonNullArrayList<E> newInstance() {
