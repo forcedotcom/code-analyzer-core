@@ -6,7 +6,8 @@ import {
     DEFAULT_MAX_FILE_BYTES,
     DEFAULT_MAX_FILE_COUNT,
     DEFAULT_MAX_PAYLOAD_BYTES,
-    DEFAULT_RULES_PATH
+    DEFAULT_RULES_PATH,
+    MIN_API_VERSION
 } from './constants';
 
 export type FlowAnalyzerEngineConfig = {
@@ -104,6 +105,9 @@ export async function validateAndNormalizeConfig(
     const apiVersion: string | undefined = configValueExtractor.extractString('api_version')?.trim() || undefined;
     if (apiVersion !== undefined && !/^\d+\.0$/.test(apiVersion)) {
         throw new Error(getMessage('InvalidApiVersion', configValueExtractor.getFieldPath('api_version'), apiVersion));
+    }
+    if (apiVersion !== undefined && parseFloat(apiVersion) < parseFloat(MIN_API_VERSION)) {
+        throw new Error(getMessage('ApiVersionBelowMinimum', configValueExtractor.getFieldPath('api_version'), apiVersion, MIN_API_VERSION));
     }
     const rulesPath: string = configValueExtractor.extractString('rules_path', DEFAULT_RULES_PATH)
         ?? DEFAULT_RULES_PATH;

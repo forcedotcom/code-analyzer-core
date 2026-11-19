@@ -698,7 +698,7 @@ class UIBundleEngine extends engApi.Engine {
  */
 export class FlowAnalyzerEnginePlugin extends engApi.EnginePluginV1 {
     getAvailableEngineNames(): string[] {
-        return ["flowAnalyzerEngine"];
+        return ["flow-analyzer"];
     }
 
     async createEngine(_engineName: string, _config: engApi.ConfigObject): Promise<engApi.Engine> {
@@ -708,7 +708,7 @@ export class FlowAnalyzerEnginePlugin extends engApi.EnginePluginV1 {
 
 class FlowAnalyzerEngine extends engApi.Engine {
     getName(): string {
-        return 'flowAnalyzerEngine';
+        return 'flow-analyzer';
     }
 
     getEngineVersion(): Promise<string> {

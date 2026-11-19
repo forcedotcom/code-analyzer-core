@@ -672,27 +672,63 @@ describe('Tests for selecting rules', () => {
             ['severity name for High', 'High']
         ])('flow-analyzer rules are NOT selected by %s', async (_desc, selector) => {
             const selection: RuleSelection = await codeAnalyzer.selectRules([selector]);
-            expect(ruleNamesFor(selection, 'flowAnalyzerEngine')).toEqual([]);
+            expect(ruleNamesFor(selection, 'flow-analyzer')).toEqual([]);
         });
 
         it('flow-analyzer rules ARE selected by engine name', async () => {
-            const selection: RuleSelection = await codeAnalyzer.selectRules(['flowAnalyzerEngine']);
-            expect(ruleNamesFor(selection, 'flowAnalyzerEngine')).toEqual(['flowAnalyzerRule1', 'flowAnalyzerRule2']);
+            const selection: RuleSelection = await codeAnalyzer.selectRules(['flow-analyzer']);
+            expect(ruleNamesFor(selection, 'flow-analyzer')).toEqual(['flowAnalyzerRule1', 'flowAnalyzerRule2']);
         });
 
         it('flow-analyzer rules ARE selected by rule name', async () => {
             const selection: RuleSelection = await codeAnalyzer.selectRules(['flowAnalyzerRule1']);
-            expect(ruleNamesFor(selection, 'flowAnalyzerEngine')).toEqual(['flowAnalyzerRule1']);
+            expect(ruleNamesFor(selection, 'flow-analyzer')).toEqual(['flowAnalyzerRule1']);
         });
 
         it('flow-analyzer rules ARE selected by the flow-analyzer tag', async () => {
             const selection: RuleSelection = await codeAnalyzer.selectRules(['flow-analyzer']);
-            expect(ruleNamesFor(selection, 'flowAnalyzerEngine')).toEqual(['flowAnalyzerRule1', 'flowAnalyzerRule2']);
+            expect(ruleNamesFor(selection, 'flow-analyzer')).toEqual(['flowAnalyzerRule1', 'flowAnalyzerRule2']);
         });
 
         it('flow-analyzer rules ARE selected by other tag they carry', async () => {
             const selection: RuleSelection = await codeAnalyzer.selectRules(['Performance']);
-            expect(ruleNamesFor(selection, 'flowAnalyzerEngine')).toEqual(['flowAnalyzerRule1']);
+            expect(ruleNamesFor(selection, 'flow-analyzer')).toEqual(['flowAnalyzerRule1']);
+        });
+
+        describe('REGRESSION: Selector-dependent cache (Solution B)', () => {
+            it('REGRESSION: Sequential selectRules maintains correct cache per selector (Recommended → flow-analyzer)', async () => {
+                // This test catches the P2 bug where cache key didn't account for selector state
+                // Solution B: Cache key now includes flow-analyzer selector state
+
+                // Call 1: Select 'Recommended' (flow-analyzer should NOT be discovered)
+                const sel1 = await codeAnalyzer.selectRules(['Recommended']);
+                expect(ruleNamesFor(sel1, 'flow-analyzer')).toEqual([]);
+                expect(sel1.getEngineNames()).not.toContain('flow-analyzer');
+
+                // Call 2: Select 'flow-analyzer' (SHOULD be discovered with different cache key)
+                const sel2 = await codeAnalyzer.selectRules(['flow-analyzer']);
+                expect(ruleNamesFor(sel2, 'flow-analyzer')).toEqual(['flowAnalyzerRule1', 'flowAnalyzerRule2']);
+                expect(sel2.getEngineNames()).toContain('flow-analyzer');
+
+                // Call 3: Back to 'Recommended' (should use cached non-flow-analyzer rules)
+                const sel3 = await codeAnalyzer.selectRules(['Recommended']);
+                expect(ruleNamesFor(sel3, 'flow-analyzer')).toEqual([]);
+                expect(sel3.getEngineNames()).not.toContain('flow-analyzer');
+            });
+
+            it('REGRESSION: Multiple flow-analyzer selections work correctly', async () => {
+                // Call 1: flow-analyzer first
+                const sel1 = await codeAnalyzer.selectRules(['flow-analyzer']);
+                expect(ruleNamesFor(sel1, 'flow-analyzer')).toEqual(['flowAnalyzerRule1', 'flowAnalyzerRule2']);
+
+                // Call 2: 'all' selector (flow-analyzer should NOT be included - strict opt-in)
+                const sel2 = await codeAnalyzer.selectRules(['all']);
+                expect(ruleNamesFor(sel2, 'flow-analyzer')).toEqual([]);  // Strict opt-in
+
+                // Call 3: back to flow-analyzer
+                const sel3 = await codeAnalyzer.selectRules(['flow-analyzer']);
+                expect(ruleNamesFor(sel3, 'flow-analyzer')).toEqual(['flowAnalyzerRule1', 'flowAnalyzerRule2']);
+            });
         });
     });
 

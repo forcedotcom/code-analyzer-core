@@ -82,6 +82,46 @@ describe('Tests for the FlowAnalyzerEnginePlugin', () => {
             getMessage('InvalidApiVersion', `engines.${ENGINE_NAME}.api_version`, 'v69'));
     });
 
+    it('rejects api_version below the minimum (60.0)', async () => {
+        await expect(plugin.createEngineConfig(ENGINE_NAME, new ConfigValueExtractor({
+            target_org: 'my-org',
+            api_version: '60.0'
+        }, `engines.${ENGINE_NAME}`))).rejects.toThrow(
+            getMessage('ApiVersionBelowMinimum', `engines.${ENGINE_NAME}.api_version`, '60.0', '68.0'));
+    });
+
+    it('rejects api_version below the minimum (67.0)', async () => {
+        await expect(plugin.createEngineConfig(ENGINE_NAME, new ConfigValueExtractor({
+            target_org: 'my-org',
+            api_version: '67.0'
+        }, `engines.${ENGINE_NAME}`))).rejects.toThrow(
+            getMessage('ApiVersionBelowMinimum', `engines.${ENGINE_NAME}.api_version`, '67.0', '68.0'));
+    });
+
+    it('rejects api_version well below the minimum (1.0)', async () => {
+        await expect(plugin.createEngineConfig(ENGINE_NAME, new ConfigValueExtractor({
+            target_org: 'my-org',
+            api_version: '1.0'
+        }, `engines.${ENGINE_NAME}`))).rejects.toThrow(
+            getMessage('ApiVersionBelowMinimum', `engines.${ENGINE_NAME}.api_version`, '1.0', '68.0'));
+    });
+
+    it('accepts api_version exactly at the minimum (68.0)', async () => {
+        const config = await plugin.createEngineConfig(ENGINE_NAME, new ConfigValueExtractor({
+            target_org: 'my-org',
+            api_version: '68.0'
+        }, `engines.${ENGINE_NAME}`));
+        expect(config.api_version).toEqual('68.0');
+    });
+
+    it('accepts api_version well above the minimum (100.0)', async () => {
+        const config = await plugin.createEngineConfig(ENGINE_NAME, new ConfigValueExtractor({
+            target_org: 'my-org',
+            api_version: '100.0'
+        }, `engines.${ENGINE_NAME}`));
+        expect(config.api_version).toEqual('100.0');
+    });
+
     it('trims target_org', async () => {
         const config = await plugin.createEngineConfig(ENGINE_NAME, new ConfigValueExtractor({
             target_org: '  my-org  '

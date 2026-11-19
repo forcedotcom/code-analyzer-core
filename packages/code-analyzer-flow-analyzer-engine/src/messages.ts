@@ -40,6 +40,9 @@ const MESSAGE_CATALOG: { [key: string]: string } = {
     InvalidApiVersion:
         `The value of '%s' must be an API version such as '69.0', but was '%s'.`,
 
+    ApiVersionBelowMinimum:
+        `The value of '%s' must be at least '%s', but was '%s'.`,
+
     ConfigValueMustBePositive:
         `The value of '%s' must be greater than 0.`,
 
