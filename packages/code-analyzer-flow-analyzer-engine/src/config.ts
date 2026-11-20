@@ -1,4 +1,5 @@
 import { ConfigDescription, ConfigValueExtractor } from '@salesforce/code-analyzer-engine-api';
+import { FlowAnalyzerError } from './FlowAnalyzerError';
 import { getMessage } from './messages';
 import {
     DEFAULT_ANALYZE_PATH,
@@ -99,15 +100,16 @@ export async function validateAndNormalizeConfig(
         DEFAULT_API_TIMEOUT_MS
     ) ?? DEFAULT_API_TIMEOUT_MS;
     if (apiTimeoutMs <= 0) {
-        throw new Error(getMessage('ConfigValueMustBePositive', configValueExtractor.getFieldPath('api_timeout_ms')));
+        throw new FlowAnalyzerError(getMessage('ConfigValueMustBePositive', configValueExtractor.getFieldPath('api_timeout_ms')));
     }
 
     const apiVersion: string | undefined = configValueExtractor.extractString('api_version')?.trim() || undefined;
     if (apiVersion !== undefined && !/^\d+\.0$/.test(apiVersion)) {
-        throw new Error(getMessage('InvalidApiVersion', configValueExtractor.getFieldPath('api_version'), apiVersion));
+        throw new FlowAnalyzerError(getMessage('InvalidApiVersion', configValueExtractor.getFieldPath('api_version'), apiVersion));
     }
     if (apiVersion !== undefined && parseFloat(apiVersion) < parseFloat(MIN_API_VERSION)) {
-        throw new Error(getMessage('ApiVersionBelowMinimum', configValueExtractor.getFieldPath('api_version'), apiVersion, MIN_API_VERSION));
+        throw new FlowAnalyzerError(getMessage('ApiVersionBelowMinimum',
+            configValueExtractor.getFieldPath('api_version'), MIN_API_VERSION, apiVersion));
     }
     const rulesPath: string = configValueExtractor.extractString('rules_path', DEFAULT_RULES_PATH)
         ?? DEFAULT_RULES_PATH;
@@ -119,7 +121,7 @@ export async function validateAndNormalizeConfig(
         DEFAULT_MAX_FILE_COUNT
     ) ?? DEFAULT_MAX_FILE_COUNT;
     if (maxFileCount <= 0) {
-        throw new Error(getMessage('ConfigValueMustBePositive', configValueExtractor.getFieldPath('max_file_count')));
+        throw new FlowAnalyzerError(getMessage('ConfigValueMustBePositive', configValueExtractor.getFieldPath('max_file_count')));
     }
 
     const maxFileBytes: number = configValueExtractor.extractNumber(
@@ -127,7 +129,7 @@ export async function validateAndNormalizeConfig(
         DEFAULT_MAX_FILE_BYTES
     ) ?? DEFAULT_MAX_FILE_BYTES;
     if (maxFileBytes <= 0) {
-        throw new Error(getMessage('ConfigValueMustBePositive', configValueExtractor.getFieldPath('max_file_bytes')));
+        throw new FlowAnalyzerError(getMessage('ConfigValueMustBePositive', configValueExtractor.getFieldPath('max_file_bytes')));
     }
 
     const maxPayloadBytes: number = configValueExtractor.extractNumber(
@@ -135,7 +137,7 @@ export async function validateAndNormalizeConfig(
         DEFAULT_MAX_PAYLOAD_BYTES
     ) ?? DEFAULT_MAX_PAYLOAD_BYTES;
     if (maxPayloadBytes <= 0) {
-        throw new Error(getMessage('ConfigValueMustBePositive', configValueExtractor.getFieldPath('max_payload_bytes')));
+        throw new FlowAnalyzerError(getMessage('ConfigValueMustBePositive', configValueExtractor.getFieldPath('max_payload_bytes')));
     }
 
     return {

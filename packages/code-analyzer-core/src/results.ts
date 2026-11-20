@@ -339,7 +339,8 @@ export class UninstantiableEngineErrorViolation extends AbstractLocationlessViol
 
     override getMessage(): string {
         return getMessage('UninstantiableEngineErrorViolationMessage', this.engineName,
-            this.error.message);
+            this.error.stack ? this.error.stack :  // Prefer to get the whole stack when possible
+                /* istanbul ignore next */ this.error.message);
     }
 }
 
@@ -350,7 +351,8 @@ export class UnexpectedEngineErrorViolation extends AbstractLocationlessViolatio
 
     override getMessage(): string {
         return getMessage('UnexpectedEngineErrorViolationMessage', this.engineName,
-            this.error.message);
+            this.error.stack ? this.error.stack :  // Prefer to get the whole stack when possible
+                /* istanbul ignore next */ this.error.message);
     }
 }
 

@@ -1,5 +1,6 @@
 import { Connection, Org } from '@salesforce/core';
 import { LogLevel } from '@salesforce/code-analyzer-engine-api';
+import { FlowAnalyzerError } from '../FlowAnalyzerError';
 import { getMessage } from '../messages';
 import { AuthConfig } from '../types';
 
@@ -20,7 +21,7 @@ export class FlowAnalyzerAuthService {
         } catch (err) {
             const errorMessage = err instanceof Error ? err.message : String(err);
             this.emitLogEvent(LogLevel.Fine, `Failed to authenticate with org '${config.targetOrg}': ${errorMessage}`);
-            throw new Error(getMessage('OrgNotFound', config.targetOrg, config.targetOrg));
+            throw new FlowAnalyzerError(getMessage('OrgNotFound', config.targetOrg, config.targetOrg), {cause: err});
         }
     }
 
@@ -34,7 +35,7 @@ export class FlowAnalyzerAuthService {
     getAccessToken(): string {
         const token = this.getConnection().accessToken;
         if (!token) {
-            throw new Error(getMessage('AccessTokenUnavailable'));
+            throw new FlowAnalyzerError(getMessage('AccessTokenUnavailable'));
         }
         return token;
     }

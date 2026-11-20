@@ -109,6 +109,7 @@ export type RunOptions = {
 export type EngineConfig = engApi.ConfigObject;
 
 const MINIMUM_SUPPORTED_NODE = 20;
+const FLOW_ANALYZER_ENGINE = 'flow-analyzer';
 
 /**
  * Primary class to perform Salesforce Code Analyzer runs.
@@ -126,7 +127,7 @@ export class CodeAnalyzer {
     private readonly uninstantiableEnginesMap: Map<string, Error> = new Map();
     private readonly engineConfigs: Map<string, EngineConfig> = new Map();
     private readonly engineConfigDescriptions: Map<string, ConfigDescription> = new Map();
-    private readonly rulesCache: Map<string, RuleImpl[]> = new Map();
+    private readonly rulesCache: Map<string, Map<string, RuleImpl[]>> = new Map();
     private readonly engineRuleDiscoveryProgressAggregator: EngineProgressAggregator = new EngineProgressAggregator();
     // Caching for per-engine suppression processing to avoid duplicate file processing
     private readonly suppressionsMap: SuppressionsMap = new Map();
@@ -290,7 +291,9 @@ export class CodeAnalyzer {
         selectors = selectors.length > 0 ? selectors : [engApi.COMMON_TAGS.RECOMMENDED];
         const selectorObjects: Selector[] = selectors.map(toSelector);
 
-        const allRules: RuleImpl[] = await this.getAllRules(selectOptions?.workspace, selectors);
+        const includeFlowAnalyzer: boolean = selectors.some(selector =>
+            selector.toLowerCase().split(/[:,()]/).includes(FLOW_ANALYZER_ENGINE));
+        const allRules: RuleImpl[] = await this.getAllRules(selectOptions?.workspace, includeFlowAnalyzer);
 
         const ruleSelection: RuleSelectionImpl = new RuleSelectionImpl();
         const disabledRules: {ruleName: string, engineName: string}[] = [];
@@ -599,26 +602,22 @@ export class CodeAnalyzer {
         this.eventEmitter.on(eventType, callback);
     }
 
-    private async getAllRules(workspace?: Workspace, selectors?: string[]): Promise<RuleImpl[]> {
-        // Solution B: Cache key includes flow-analyzer selector state to fix selector-dependent discovery
-        // The cache must reflect whether flow-analyzer was included in discovery, not just the workspace
-        const baseKey: string = workspace ? workspace.getWorkspaceId() : process.cwd();
-        const shouldIncludeFlowAnalyzer: boolean = !this.isOptInEngineNotInSelector('flow-analyzer', selectors);
-        const cacheKey: string = `${baseKey}|flowAnalyzer:${shouldIncludeFlowAnalyzer}`;
+    private async getAllRules(workspace: Workspace | undefined, includeFlowAnalyzer: boolean): Promise<RuleImpl[]> {
+        const workspaceKey: string = workspace ? workspace.getWorkspaceId() : process.cwd();
+        const cachedRules = this.rulesCache.get(workspaceKey) ?? new Map<string, RuleImpl[]>();
+        this.rulesCache.set(workspaceKey, cachedRules);
+        const eligibleEngines: string[] = this.getEngineNames().filter(engineName =>
+            engineName !== FLOW_ANALYZER_ENGINE || includeFlowAnalyzer);
+        const enginesToDiscover: string[] = eligibleEngines.filter(engineName => !cachedRules.has(engineName));
 
-        if (!this.rulesCache.has(cacheKey)) {
-            this.engineRuleDiscoveryProgressAggregator.reset(this.getEngineNames());
+        if (enginesToDiscover.length > 0) {
+            this.engineRuleDiscoveryProgressAggregator.reset(enginesToDiscover);
             const engApiWorkspace: engApi.Workspace | undefined = workspace ? toEngApiWorkspace(workspace) : undefined;
             const rulesWorkingFolderName: string = `rules-${this.clock.formatToDateTimeString()}`;
 
             await this.tempFolder.makeSubfolder(rulesWorkingFolderName);
 
-            const rulePromises: Promise<RuleImpl[]>[] = this.getEngineNames().map(async (engineName) => {
-                // Skip opt-in engines (flow-analyzer) if they're not explicitly in the selector
-                if (this.isOptInEngineNotInSelector(engineName, selectors)) {
-                    this.emitLogEvent(LogLevel.Debug, getMessage('SkippingOptInEngine', engineName));
-                    return [];
-                }
+            const rulePromises: Promise<RuleImpl[]>[] = enginesToDiscover.map(async (engineName) => {
                 const workingFolder: string = await this.tempFolder.makeSubfolder(rulesWorkingFolderName, engineName);
 
                 if (this.config.getPreserveAllWorkingFolders()) {
@@ -645,11 +644,12 @@ export class CodeAnalyzer {
                 this.emitLogEvent(LogLevel.Debug, getMessage('AllWorkingFoldersKept', await this.tempFolder.getPath(rulesWorkingFolderName)));
             }
 
-            this.rulesCache.set(cacheKey, (await Promise.all(rulePromises)).flat());
+            const discoveredRules: RuleImpl[][] = await Promise.all(rulePromises);
+            enginesToDiscover.forEach((engineName, index) => cachedRules.set(engineName, discoveredRules[index]));
 
             await this.tempFolder.removeIfNotKept(rulesWorkingFolderName);
         }
-        return this.rulesCache.get(cacheKey)!;
+        return eligibleEngines.flatMap(engineName => cachedRules.get(engineName)!);
     }
 
     private async getAllRulesFor(engineName: string, describeOptions: engApi.DescribeOptions, errorCallback: () => void): Promise<RuleImpl[]> {
@@ -878,46 +878,6 @@ export class CodeAnalyzer {
 
     private getEngine(engineName: string): engApi.Engine {
         return this.engines.get(engineName)!;
-    }
-
-    private isOptInEngineNotInSelector(engineName: string, selectors?: string[]): boolean {
-        // Flow Analyzer is an opt-in engine that should only be instantiated if explicitly requested
-        if (engineName !== 'flow-analyzer') {
-            return false;
-        }
-        // If no selectors provided, skip flow-analyzer (default "Recommended" behavior, strict opt-in)
-        if (!selectors || selectors.length === 0) {
-            return true;
-        }
-        // Check if flow-analyzer should be included based on selectors
-        // Include ONLY if: flow-analyzer explicitly mentioned, or rule/tag that might match flow-analyzer
-        // Note: 'all' does NOT include flow-analyzer (strict opt-in)
-        const selectorsLower = selectors.map(s => s.toLowerCase());
-        const knownNonFlowAnalyzerEngines = new Set(['eslint', 'pmd', 'cpd', 'retirejs', 'regex', 'uibundle', 'apexguru', 'sfge', 'flow']);
-        const knownSeveritySelectors = new Set(['1', '2', '3', '4', '5', 'info', 'low', 'moderate', 'high', 'critical', 'recommended']);
-
-        // Check each selector
-        for (const selector of selectorsLower) {
-            // Explicitly include flow-analyzer
-            if (selector === 'flow-analyzer' || selector.includes('flow-analyzer')) {
-                return false; // Don't skip
-            }
-            // 'all' still skips flow-analyzer (strict opt-in - must be explicitly requested)
-            if (selector === 'all') {
-                return true; // Skip - 'all' doesn't include flow-analyzer
-            }
-            // Rule names starting with 'flowanalyzerrule' explicitly match flow-analyzer
-            if (selector.startsWith('flowanalyzerrule')) {
-                return false; // Don't skip
-            }
-            // If it's not a known non-flow-analyzer engine and not a known severity selector,
-            // it might be a tag that flow-analyzer has, so discover to be safe
-            if (!knownNonFlowAnalyzerEngines.has(selector) && !knownSeveritySelectors.has(selector)) {
-                return false; // Don't skip - might match flow-analyzer rules
-            }
-        }
-        // All selectors are known non-flow-analyzer engines or severity levels, so skip
-        return true;
     }
 }
 

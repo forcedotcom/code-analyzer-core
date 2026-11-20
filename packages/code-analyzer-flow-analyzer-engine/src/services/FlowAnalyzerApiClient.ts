@@ -1,6 +1,7 @@
 import { LogLevel, RuleDescription, SeverityLevel } from '@salesforce/code-analyzer-engine-api';
 import FormData from 'form-data';
 import { FLOW_ANALYZER_OPT_IN_TAG, MIN_API_VERSION } from '../constants';
+import { FlowAnalyzerError } from '../FlowAnalyzerError';
 import { getMessage } from '../messages';
 import {
     CollectedFlowFile,
@@ -46,7 +47,7 @@ export class FlowAnalyzerApiClient {
         const payload = await this.requestJson<FlowAnalyzerRulesResponse>('GET', this.rulesPath);
         const rules = Array.isArray(payload) ? payload : payload.rules;
         if (!rules) {
-            throw new Error(getMessage('CatalogMalformed'));
+            throw new FlowAnalyzerError(getMessage('CatalogMalformed'));
         }
         return rules.map(rule => this.toRuleDescription(rule));
     }
@@ -76,13 +77,13 @@ export class FlowAnalyzerApiClient {
         if (Array.isArray(payload.findings)) {
             return payload.findings;
         }
-        throw new Error(getMessage('AnalyzeMalformed'));
+        throw new FlowAnalyzerError(getMessage('AnalyzeMalformed'));
     }
 
     private toRuleDescription(rule: FlowAnalyzerCatalogRule): RuleDescription {
         const name = rule.id || rule.ruleId || rule.ruleName || rule.name;
         if (!name) {
-            throw new Error(getMessage('CatalogMalformed'));
+            throw new FlowAnalyzerError(getMessage('CatalogMalformed'));
         }
         // Flow Analyzer is a non-GA, org-backed engine, so its rules are strictly opt-in:
         // they carry only the engine-specific opt-in tag and are never matched by generic selectors.
@@ -194,19 +195,19 @@ export class FlowAnalyzerApiClient {
             const text = await response.text();
             if (!response.ok) {
                 this.emitLogEvent(LogLevel.Fine, `Flow Analyzer response body for HTTP ${response.status}: ${text}`);
-                throw new Error(getMessage('HttpError', url, response.status, this.summarizeErrorBody(text)));
+                throw new FlowAnalyzerError(getMessage('HttpError', url, response.status, this.summarizeErrorBody(text)));
             }
             try {
                 return JSON.parse(text) as T;
-            } catch (_err) {
-                throw new Error(method === 'GET' ? getMessage('CatalogMalformed') : getMessage('AnalyzeMalformed'));
+            } catch (err) {
+                throw new FlowAnalyzerError(getMessage(method === 'GET' ? 'CatalogMalformed' : 'AnalyzeMalformed'), {cause: err});
             }
         } catch (err) {
-            if (err instanceof Error && (err.message.startsWith('Flow Analyzer') || err.message.includes('malformed'))) {
+            if (err instanceof FlowAnalyzerError) {
                 throw err;
             }
             const detail = err instanceof Error ? err.message : String(err);
-            throw new Error(method === 'GET' ? getMessage('CatalogUnavailable', detail) : getMessage('AnalyzeFailed', detail));
+            throw new FlowAnalyzerError(getMessage(method === 'GET' ? 'CatalogUnavailable' : 'AnalyzeFailed', detail), {cause: err});
         } finally {
             clearTimeout(timeout);
         }

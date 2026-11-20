@@ -82,28 +82,14 @@ describe('Tests for the FlowAnalyzerEnginePlugin', () => {
             getMessage('InvalidApiVersion', `engines.${ENGINE_NAME}.api_version`, 'v69'));
     });
 
-    it('rejects api_version below the minimum (60.0)', async () => {
-        await expect(plugin.createEngineConfig(ENGINE_NAME, new ConfigValueExtractor({
+    it.each(['60.0', '67.0', '1.0'])('rejects api_version %s with the correct minimum', async apiVersion => {
+        const rejection = plugin.createEngineConfig(ENGINE_NAME, new ConfigValueExtractor({
             target_org: 'my-org',
-            api_version: '60.0'
-        }, `engines.${ENGINE_NAME}`))).rejects.toThrow(
-            getMessage('ApiVersionBelowMinimum', `engines.${ENGINE_NAME}.api_version`, '60.0', '68.0'));
-    });
-
-    it('rejects api_version below the minimum (67.0)', async () => {
-        await expect(plugin.createEngineConfig(ENGINE_NAME, new ConfigValueExtractor({
-            target_org: 'my-org',
-            api_version: '67.0'
-        }, `engines.${ENGINE_NAME}`))).rejects.toThrow(
-            getMessage('ApiVersionBelowMinimum', `engines.${ENGINE_NAME}.api_version`, '67.0', '68.0'));
-    });
-
-    it('rejects api_version well below the minimum (1.0)', async () => {
-        await expect(plugin.createEngineConfig(ENGINE_NAME, new ConfigValueExtractor({
-            target_org: 'my-org',
-            api_version: '1.0'
-        }, `engines.${ENGINE_NAME}`))).rejects.toThrow(
-            getMessage('ApiVersionBelowMinimum', `engines.${ENGINE_NAME}.api_version`, '1.0', '68.0'));
+            api_version: apiVersion
+        }, `engines.${ENGINE_NAME}`));
+        await expect(rejection).rejects.toThrow(
+            `The value of 'engines.flow-analyzer.api_version' must be at least '68.0', but was '${apiVersion}'.`);
+        await expect(rejection).rejects.toHaveProperty('stack', undefined);
     });
 
     it('accepts api_version exactly at the minimum (68.0)', async () => {

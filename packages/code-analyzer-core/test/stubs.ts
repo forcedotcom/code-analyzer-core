@@ -697,12 +697,14 @@ class UIBundleEngine extends engApi.Engine {
  * FlowAnalyzerEnginePlugin - A plugin to help with testing Flow Analyzer (flow-analyzer opt-in) rule selection behavior
  */
 export class FlowAnalyzerEnginePlugin extends engApi.EnginePluginV1 {
+    readonly engine = new FlowAnalyzerEngine();
+
     getAvailableEngineNames(): string[] {
         return ["flow-analyzer"];
     }
 
     async createEngine(_engineName: string, _config: engApi.ConfigObject): Promise<engApi.Engine> {
-        return new FlowAnalyzerEngine();
+        return this.engine;
     }
 }
 

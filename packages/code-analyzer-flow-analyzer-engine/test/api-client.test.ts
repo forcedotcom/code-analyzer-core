@@ -313,8 +313,10 @@ describe('FlowAnalyzerApiClient', () => {
 
         it('shows only the message of a Salesforce JSON error', async () => {
             const fetchImpl = failWith(404, '[{"errorCode":"NOT_FOUND","message":"The requested resource does not exist"}]');
-            await expect(createClient(fetchImpl as unknown as typeof fetch).describeRules())
+            const rejection = createClient(fetchImpl as unknown as typeof fetch).describeRules();
+            await expect(rejection)
                 .rejects.toThrow(/failed with HTTP 404: The requested resource does not exist$/);
+            await expect(rejection).rejects.toHaveProperty('stack', undefined);
         });
 
         it('replaces an HTML error page by its title instead of dumping the markup', async () => {

@@ -24,3 +24,9 @@ The CLI `--target-org` flag populates `target_org`. When `target_org` isn't set,
 sf code-analyzer run --rule-selector flow-analyzer --target-org myOrg
 sf code-analyzer rules --rule-selector flow-analyzer --target-org myOrg
 ```
+
+To select one Flow Analyzer rule, qualify its name with the engine, for example
+
+```
+sf code-analyzer run --rule-selector flow-analyzer:HARDCODED_ID --target-org myOrg
+```
