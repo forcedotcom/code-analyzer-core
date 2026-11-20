@@ -151,8 +151,9 @@ function subtractThreeYears(date: Date): Date{
 }
 
 function getSalesforceApiVersionFor(date: Date): number {
-    const year: number = date.getUTCFullYear();
     const month: number = date.getUTCMonth();
+    // January belongs to the Winter release that started in October of the previous calendar year
+    const year: number = month === 0 ? date.getUTCFullYear() - 1 : date.getUTCFullYear();
     if (month >= 1 && month < 5) {        // Feb through May (Spring release)
         return (year - 2004) * 3;
     } else if (month >= 5 && month < 9) { // Jun through Sep (Summer release)
