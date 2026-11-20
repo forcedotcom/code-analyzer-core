@@ -109,6 +109,7 @@ export type RunOptions = {
 export type EngineConfig = engApi.ConfigObject;
 
 const MINIMUM_SUPPORTED_NODE = 20;
+const FLOW_ANALYZER_ENGINE = 'flow-analyzer';
 
 /**
  * Primary class to perform Salesforce Code Analyzer runs.
@@ -126,7 +127,7 @@ export class CodeAnalyzer {
     private readonly uninstantiableEnginesMap: Map<string, Error> = new Map();
     private readonly engineConfigs: Map<string, EngineConfig> = new Map();
     private readonly engineConfigDescriptions: Map<string, ConfigDescription> = new Map();
-    private readonly rulesCache: Map<string, RuleImpl[]> = new Map();
+    private readonly rulesCache: Map<string, Map<string, RuleImpl[]>> = new Map();
     private readonly engineRuleDiscoveryProgressAggregator: EngineProgressAggregator = new EngineProgressAggregator();
     // Caching for per-engine suppression processing to avoid duplicate file processing
     private readonly suppressionsMap: SuppressionsMap = new Map();
@@ -290,7 +291,9 @@ export class CodeAnalyzer {
         selectors = selectors.length > 0 ? selectors : [engApi.COMMON_TAGS.RECOMMENDED];
         const selectorObjects: Selector[] = selectors.map(toSelector);
 
-        const allRules: RuleImpl[] = await this.getAllRules(selectOptions?.workspace);
+        const includeFlowAnalyzer: boolean = selectors.some(selector =>
+            selector.toLowerCase().split(/[:,()]/).includes(FLOW_ANALYZER_ENGINE));
+        const allRules: RuleImpl[] = await this.getAllRules(selectOptions?.workspace, includeFlowAnalyzer);
 
         const ruleSelection: RuleSelectionImpl = new RuleSelectionImpl();
         const disabledRules: {ruleName: string, engineName: string}[] = [];
@@ -599,16 +602,22 @@ export class CodeAnalyzer {
         this.eventEmitter.on(eventType, callback);
     }
 
-    private async getAllRules(workspace?: Workspace): Promise<RuleImpl[]> {
-        const cacheKey: string = workspace ? workspace.getWorkspaceId() : process.cwd();
-        if (!this.rulesCache.has(cacheKey)) {
-            this.engineRuleDiscoveryProgressAggregator.reset(this.getEngineNames());
+    private async getAllRules(workspace: Workspace | undefined, includeFlowAnalyzer: boolean): Promise<RuleImpl[]> {
+        const workspaceKey: string = workspace ? workspace.getWorkspaceId() : process.cwd();
+        const cachedRules = this.rulesCache.get(workspaceKey) ?? new Map<string, RuleImpl[]>();
+        this.rulesCache.set(workspaceKey, cachedRules);
+        const eligibleEngines: string[] = this.getEngineNames().filter(engineName =>
+            engineName !== FLOW_ANALYZER_ENGINE || includeFlowAnalyzer);
+        const enginesToDiscover: string[] = eligibleEngines.filter(engineName => !cachedRules.has(engineName));
+
+        if (enginesToDiscover.length > 0) {
+            this.engineRuleDiscoveryProgressAggregator.reset(enginesToDiscover);
             const engApiWorkspace: engApi.Workspace | undefined = workspace ? toEngApiWorkspace(workspace) : undefined;
             const rulesWorkingFolderName: string = `rules-${this.clock.formatToDateTimeString()}`;
 
             await this.tempFolder.makeSubfolder(rulesWorkingFolderName);
 
-            const rulePromises: Promise<RuleImpl[]>[] = this.getEngineNames().map(async (engineName) => {
+            const rulePromises: Promise<RuleImpl[]>[] = enginesToDiscover.map(async (engineName) => {
                 const workingFolder: string = await this.tempFolder.makeSubfolder(rulesWorkingFolderName, engineName);
 
                 if (this.config.getPreserveAllWorkingFolders()) {
@@ -635,11 +644,12 @@ export class CodeAnalyzer {
                 this.emitLogEvent(LogLevel.Debug, getMessage('AllWorkingFoldersKept', await this.tempFolder.getPath(rulesWorkingFolderName)));
             }
 
-            this.rulesCache.set(cacheKey, (await Promise.all(rulePromises)).flat());
+            const discoveredRules: RuleImpl[][] = await Promise.all(rulePromises);
+            enginesToDiscover.forEach((engineName, index) => cachedRules.set(engineName, discoveredRules[index]));
 
             await this.tempFolder.removeIfNotKept(rulesWorkingFolderName);
         }
-        return this.rulesCache.get(cacheKey)!;
+        return eligibleEngines.flatMap(engineName => cachedRules.get(engineName)!);
     }
 
     private async getAllRulesFor(engineName: string, describeOptions: engApi.DescribeOptions, errorCallback: () => void): Promise<RuleImpl[]> {

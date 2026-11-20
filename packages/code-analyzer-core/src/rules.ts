@@ -111,9 +111,10 @@ export class RuleImpl implements Rule {
         const tags: string[] = this.getTags().map(t => t.toLowerCase());
         const isApexGuru: boolean = tags.includes('apex-guru');
         const isDevPreviewUIBundle: boolean = tags.includes('uibundle');
+        const isFlowAnalyzer: boolean = tags.includes('flow-analyzer');
         let selectables: string[];
-        if (isApexGuru || isDevPreviewUIBundle) {
-            // Opt-in rule families (ApexGuru, UIBundle) are only selectable by
+        if (isApexGuru || isDevPreviewUIBundle || isFlowAnalyzer) {
+            // Opt-in rule families (ApexGuru, UIBundle, Flow Analyzer) are only selectable by
             // engine name, rule name, or explicit tag. 'all' and severity are intentionally
             // excluded so broad selectors (e.g. 'all', '4', 'Low') don't pull them in.
             selectables = [

@@ -657,6 +657,65 @@ describe('Tests for selecting rules', () => {
         });
     });
 
+    describe('flow-analyzer rule selection behavior', () => {
+        let flowPlugin: stubs.FlowAnalyzerEnginePlugin;
+
+        beforeEach(async () => {
+            flowPlugin = new stubs.FlowAnalyzerEnginePlugin();
+            await codeAnalyzer.addEnginePlugin(flowPlugin);
+        });
+
+        it.each([
+            'Recommended', 'all', '4', 'Low', '2', 'High', 'Performance',
+            'flowAnalyzerRule1', 'stubEngine1:Recommended', 'not-flow-analyzer'
+        ])('does not discover the Flow Analyzer catalog for %s', async selector => {
+            const describeRules = jest.spyOn(flowPlugin.engine, 'describeRules');
+            const selection = await codeAnalyzer.selectRules([selector]);
+            expect(ruleNamesFor(selection, 'flow-analyzer')).toEqual([]);
+            expect(describeRules).not.toHaveBeenCalled();
+        });
+
+        it('selects Flow Analyzer rules by engine name or opt-in tag', async () => {
+            const selection = await codeAnalyzer.selectRules(['flow-analyzer']);
+            expect(ruleNamesFor(selection, 'flow-analyzer')).toEqual(['flowAnalyzerRule1', 'flowAnalyzerRule2']);
+        });
+
+        it('selects one Flow Analyzer rule by its engine-qualified name', async () => {
+            const selection = await codeAnalyzer.selectRules(['FLOW-ANALYZER:(flowAnalyzerRule1)']);
+            expect(ruleNamesFor(selection, 'flow-analyzer')).toEqual(['flowAnalyzerRule1']);
+        });
+
+        it.each([
+            { selectors: ['all', 'flow-analyzer'] },
+            { selectors: ['flow-analyzer', 'all'] },
+            { selectors: ['all,flow-analyzer'] }
+        ])('honors Flow Analyzer opt-in with $selectors', async ({ selectors }) => {
+            const selection = await codeAnalyzer.selectRules(selectors);
+            expect(ruleNamesFor(selection, 'flow-analyzer')).toEqual(['flowAnalyzerRule1', 'flowAnalyzerRule2']);
+            expect(ruleNamesFor(selection, 'stubEngine1')).toContain('stub1RuleA');
+        });
+
+        it('caches discovery per engine while alternating between default and explicit selections', async () => {
+            const describeFlowRules = jest.spyOn(flowPlugin.engine, 'describeRules');
+            const describeStubRules = jest.spyOn(plugin.getCreatedEngine('stubEngine1'), 'describeRules');
+            const options: SelectOptions = { workspace: await codeAnalyzer.createWorkspace(['.']) };
+
+            expect(ruleNamesFor(await codeAnalyzer.selectRules([], options), 'flow-analyzer')).toEqual([]);
+            expect(describeFlowRules).not.toHaveBeenCalled();
+
+            const expectedFlowRules = ['flowAnalyzerRule1', 'flowAnalyzerRule2'];
+            expect(ruleNamesFor(await codeAnalyzer.selectRules(['flow-analyzer'], options), 'flow-analyzer'))
+                .toEqual(expectedFlowRules);
+            expect(ruleNamesFor(await codeAnalyzer.selectRules(['Recommended'], options), 'flow-analyzer')).toEqual([]);
+            expect(ruleNamesFor(await codeAnalyzer.selectRules(['all'], options), 'flow-analyzer')).toEqual([]);
+            expect(ruleNamesFor(await codeAnalyzer.selectRules(['flow-analyzer'], options), 'flow-analyzer'))
+                .toEqual(expectedFlowRules);
+
+            expect(describeFlowRules).toHaveBeenCalledTimes(1);
+            expect(describeStubRules).toHaveBeenCalledTimes(1);
+        });
+    });
+
     describe('UIBundle rule selection behavior', () => {
         beforeEach(async () => {
             codeAnalyzer = createCodeAnalyzer();
