@@ -669,8 +669,7 @@ export class CodeAnalyzer {
         } catch (err) {
             errorCallback();
             this.uninstantiableEnginesMap.set(engineName, err as Error);
-            this.emitLogEvent(LogLevel.Error, getMessage('PluginErrorWhenGettingRules', engineName, (err as Error).message + '\n\n' +
-                getMessage('InstructionsToIgnoreErrorAndDisableEngine', engineName)));
+            this.emitLogEvent(LogLevel.Error, getMessage('PluginErrorWhenGettingRules', engineName, (err as Error).message, engineName));
             return [];
         } finally {
             engine.removeEventListener(engApi.EventType.LogEvent, invokeErrorCallbackIfErrorIsLoggedFcn);

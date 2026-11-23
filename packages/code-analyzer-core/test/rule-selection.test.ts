@@ -606,8 +606,7 @@ describe('Tests for selecting rules', () => {
         expect(selection.getCount()).toEqual(0);
         const errorEvents: LogEvent[] = logEvents.filter(e => e.logLevel === LogLevel.Error);
         expect(errorEvents).toHaveLength(1);
-        expect(errorEvents[0].message).toEqual(getMessage('PluginErrorWhenGettingRules', 'someEngine', 'SomeErrorFromDescribeRules') + '\n\n' +
-            getMessage('InstructionsToIgnoreErrorAndDisableEngine', 'someEngine'));
+        expect(errorEvents[0].message).toEqual(getMessage('PluginErrorWhenGettingRules', 'someEngine', 'SomeErrorFromDescribeRules', 'someEngine'));
     })
 
     describe('apex-guru rule selection behavior', () => {

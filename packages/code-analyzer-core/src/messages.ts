@@ -112,7 +112,10 @@ const MESSAGE_CATALOG : MessageCatalog = {
         `Failed to create engine with name '%s' due to the following error:\n%s`,
 
     PluginErrorWhenGettingRules:
-        `Failed to get rules from engine with name '%s' due to the following error:\n%s`,
+        `Error: We couldn't load rules for the '%s' engine.\n%s\n\nTo disable this engine, add this configuration to code-analyzer.yml:\n` +
+        `engines:\n` +
+        `  %s:\n` +
+        `    disable_engine: true`,
 
     InstructionsToIgnoreErrorAndDisableEngine:
         `If you wish to ignore this error and disable this engine, then update your Code Analyzer configuration with:\n` +

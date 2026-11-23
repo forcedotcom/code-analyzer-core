@@ -26,7 +26,6 @@ export class FlowAnalyzerEngine extends Engine {
     private readonly apiClient: FlowAnalyzerApiClient;
     private readonly fileCollector: FlowFileCollector;
     private readonly locationMapper: FindingLocationMapper;
-    private catalogCache?: RuleDescription[];
 
     constructor(
         config: FlowAnalyzerEngineConfig,
@@ -87,9 +86,9 @@ export class FlowAnalyzerEngine extends Engine {
         this.emitDescribeRulesProgressEvent(50);
         // Let catalog failures propagate so Code Analyzer Core reports the engine as uninstantiable,
         // rather than silently selecting zero rules and reporting a successful run.
-        this.catalogCache = await this.apiClient.describeRules();
+        const catalog = await this.apiClient.describeRules();
         this.emitDescribeRulesProgressEvent(100);
-        return this.catalogCache;
+        return catalog;
     }
 
     async runRules(ruleNames: string[], runOptions: RunOptions): Promise<EngineRunResults> {
@@ -109,8 +108,7 @@ export class FlowAnalyzerEngine extends Engine {
             await this.ensureAuthenticated();
             this.emitRunRulesProgressEvent(20);
 
-            const catalog = this.catalogCache ?? await this.apiClient.describeRules();
-            this.catalogCache = catalog;
+            const catalog = await this.apiClient.describeRules();
             const catalogNames = new Set(catalog.map(rule => rule.name));
             const selectedRules = new Set(ruleNames);
 

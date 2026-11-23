@@ -47,7 +47,7 @@ const MESSAGE_CATALOG: { [key: string]: string } = {
         `The value of '%s' must be greater than 0.`,
 
     OrgNotFound:
-        `We couldn't find the org '%s', or it isn't authenticated.\n\nRun sf org list to see available orgs.\nRun sf org login web --alias %s to authenticate a new org.`,
+        `The org '%s' isn't authenticated or doesn't exist.\n\nTo fix this:\nCheck available orgs:      sf org list\nAuthenticate the org:    sf org login web --alias %s\nUse a different org:                 sf config set target-org <alias>`,
 
     AuthNotInitialized:
         `Auth service not initialized. Call initialize() first.`,
