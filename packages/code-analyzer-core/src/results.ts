@@ -338,7 +338,7 @@ export class UninstantiableEngineErrorViolation extends AbstractLocationlessViol
     }
 
     override getMessage(): string {
-        const shouldOmitStackTrace = this.engineName === 'flow-analyzer' || this.engineName === 'apex-guru';
+        const shouldOmitStackTrace = this.engineName === 'flow-analyzer';
         const errorDetail = shouldOmitStackTrace
             ? this.error.message
             : (this.error.stack || this.error.message);
@@ -352,7 +352,7 @@ export class UnexpectedEngineErrorViolation extends AbstractLocationlessViolatio
     }
 
     override getMessage(): string {
-        const shouldOmitStackTrace = this.engineName === 'flow-analyzer' || this.engineName === 'apex-guru';
+        const shouldOmitStackTrace = this.engineName === 'flow-analyzer';
         const errorDetail = shouldOmitStackTrace
             ? this.error.message
             : (this.error.stack || this.error.message);
