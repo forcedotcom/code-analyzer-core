@@ -52,6 +52,9 @@ import globals from "globals";
  * disable_typescript_base_config), they disable the BASE RULES but NOT parsing capability.
  * We always configure parsers to ensure files can be analyzed, even with minimal rule sets.
  */
+// Aura components (ES5 with the $A API) are not LWC/modern JS, so the JS and LWC base configs must not apply to them
+const AURA_FILE_PATTERNS: string[] = ['**/aura/**'];
+
 export class BaseConfigFactory {
     private readonly engineConfig: ESLintEngineConfig;
 
@@ -151,6 +154,7 @@ export class BaseConfigFactory {
         const baseJsConfig: Linter.Config = {
             ...eslintJs.configs.all,
             files: allJsFilePatterns,
+            ignores: AURA_FILE_PATTERNS,
             languageOptions: {
                 ...configs[0].languageOptions  // Reuses Babel parser with @babel/preset-react
             }
@@ -174,7 +178,8 @@ export class BaseConfigFactory {
         // Then insert the base JS config at position 1
         const lwcConfigs: Linter.Config[] = configs.map(config => ({
             ...config,
-            files: lwcFilePatterns
+            files: lwcFilePatterns,
+            ignores: AURA_FILE_PATTERNS
         }));
         lwcConfigs[1] = baseJsConfig;
 
@@ -234,6 +239,7 @@ export class BaseConfigFactory {
             return [{
                 ...base,
                 files: allJsFilePatterns,
+                ignores: AURA_FILE_PATTERNS,
                 languageOptions: {
                     parser: babelParser,
                     parserOptions: enhancedParserOptions
@@ -245,6 +251,7 @@ export class BaseConfigFactory {
             return [{
                 ...base,
                 files: allJsFilePatterns,
+                ignores: AURA_FILE_PATTERNS,
                 languageOptions: {
                     parserOptions: {
                         ecmaFeatures: {
