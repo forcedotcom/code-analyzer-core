@@ -8,7 +8,7 @@ import net.sourceforge.pmd.lang.rule.RuleSetLoadException;
 import net.sourceforge.pmd.util.log.PmdReporter;
 import org.slf4j.event.Level;
 
-import javax.annotation.Nullable;
+import org.checkerframework.checker.nullness.qual.Nullable;
 import java.text.MessageFormat;
 import java.util.*;
 import java.util.regex.Pattern;
