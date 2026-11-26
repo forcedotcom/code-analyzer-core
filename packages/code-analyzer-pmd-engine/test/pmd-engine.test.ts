@@ -16,6 +16,7 @@ import {
 import {PmdEngine} from "../src/pmd-engine";
 import fs from "node:fs";
 import * as fsPromises from "node:fs/promises";
+import os from "node:os";
 import path from "node:path";
 import {Language, PMD_VERSION} from "../src/constants";
 import {DEFAULT_PMD_ENGINE_CONFIG, PMD_AVAILABLE_LANGUAGES, PmdEngineConfig} from "../src/config";
@@ -318,6 +319,31 @@ describe('Tests for the describeRules method of PmdEngine', () => {
         ]
         for (const expectedRuleName of expectedRuleNames) {
             expectContainsRuleWithName(ruleDescriptions, expectedRuleName);
+        }
+    });
+
+    it('When a custom ruleset references a rule using a path relative to the folder Code Analyzer is run from, then the rule is resolved', async () => {
+        const repoFolder: string = fs.mkdtempSync(path.join(os.tmpdir(), 'pmd-cwd-ref-test-'));
+        const originalCwd: string = process.cwd();
+        try {
+            await fsPromises.mkdir(path.join(repoFolder, 'scanner'));
+            await fsPromises.copyFile(path.join(TEST_DATA_FOLDER, 'custom rules', 'somecat3.xml'), path.join(repoFolder, 'scanner', 'full.xml'));
+            const wrapperRuleset: string = path.join(repoFolder, 'wrapper.xml');
+            await fsPromises.writeFile(wrapperRuleset, `<?xml version="1.0"?>\n` +
+                `<ruleset name="Wrapper" xmlns="http://pmd.sourceforge.net/ruleset/2.0.0">\n` +
+                `  <description>Wrapper</description>\n` +
+                `  <rule ref="scanner/full.xml/fakerule7"/>\n` +
+                `</ruleset>\n`, 'utf-8');
+            process.chdir(repoFolder);
+            const engine: PmdEngine = new PmdEngine({
+                ...DEFAULT_PMD_ENGINE_CONFIG,
+                custom_rulesets: [wrapperRuleset]
+            });
+            const ruleDescriptions: RuleDescription[] = await engine.describeRules(createDescribeOptions());
+            expectContainsRuleWithName(ruleDescriptions, 'fakerule7');
+        } finally {
+            process.chdir(originalCwd);
+            fs.rmSync(repoFolder, {recursive: true, force: true});
         }
     });
 
