@@ -181,6 +181,18 @@
     ]
   },
   {
+    "name": "ApexUnitTestClassShouldHaveRunRelevantTestsAnnotation",
+    "severityLevel": 4,
+    "tags": [
+      "BestPractices",
+      "Apex"
+    ],
+    "description": "Apex unit test classes should declare either `@IsTest(critical=true)` or `@IsTest(testFor='...')` (Beta, Salesforce API v66.0+), used together with the `RunRelevantTests` deployment test level. Without one of these modifiers, a test class relies entirely on Salesforce's automatic dependency detection to decide whether it runs during a `RunRelevantTests`... Learn more: https://docs.pmd-code.org/pmd-doc-{{PMD_VERSION}}/pmd_rules_apex_bestpractices.html#apexunittestclassshouldhaverunrelevanttestsannotation",
+    "resourceUrls": [
+      "https://docs.pmd-code.org/pmd-doc-{{PMD_VERSION}}/pmd_rules_apex_bestpractices.html#apexunittestclassshouldhaverunrelevanttestsannotation"
+    ]
+  },
+  {
     "name": "ApexUnitTestMethodShouldHaveIsTestAnnotation",
     "severityLevel": 2,
     "tags": [

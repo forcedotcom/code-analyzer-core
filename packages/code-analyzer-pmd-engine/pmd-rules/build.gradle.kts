@@ -30,6 +30,9 @@ dependencies {
         // Exclude JUnit 6.0.0 from pmd-test since it requires Java 17+ and we're targeting Java 11
         exclude(group = "org.junit.jupiter")
         exclude(group = "org.junit")
+        // Starting with PMD 7.29.0, pmd-test also pulls in org.junit.platform:junit-platform-launcher (6.x, Java 17+).
+        // We supply the launcher ourselves via testRuntimeOnly below (version aligned with our JUnit 5 BOM).
+        exclude(group = "org.junit.platform")
     }
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
 }

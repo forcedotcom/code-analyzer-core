@@ -155,21 +155,21 @@ describe('Tests for the runRules method of CpdEngine', () => {
 
         const expViolation1: Violation = {
             ruleName: "DetectCopyPasteForHtml",
-            message: "Duplicate code detected for language 'html'. Found 2 code locations containing the same block of code consisting of 123 tokens across 43 lines.",
+            message: "Duplicate code detected for language 'html'. Found 2 code locations containing the same block of code consisting of 164 tokens across 44 lines.",
             primaryLocationIndex: 0,
             codeLocations: [
                 {
                     file: path.join(TEST_DATA_FOLDER, 'sampleCpdWorkspace', 'someReplicatedFileWithOver100Tokens.html'),
                     startLine: 1,
                     startColumn: 1,
-                    endLine: 43, // This should be 44 - this might be a bug with CPD: https://github.com/pmd/pmd/issues/5313
+                    endLine: 44,
                     endColumn: 8
                 },
                 {
                     file: path.join(TEST_DATA_FOLDER, 'sampleCpdWorkspace', 'subFolder', 'someReplicatedFileWithOver100Tokens.html'),
                     startLine: 1,
                     startColumn: 1,
-                    endLine: 43, // This should be 44 - this might be a bug with CPD: https://github.com/pmd/pmd/issues/5313
+                    endLine: 44,
                     endColumn: 8
                 }
             ]
