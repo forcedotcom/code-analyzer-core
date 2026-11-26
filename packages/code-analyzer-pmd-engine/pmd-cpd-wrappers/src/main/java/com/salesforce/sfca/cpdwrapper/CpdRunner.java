@@ -15,7 +15,7 @@ import net.sourceforge.pmd.reporting.Report;
 import net.sourceforge.pmd.util.log.PmdReporter;
 import org.slf4j.event.Level;
 
-import javax.annotation.Nullable;
+import org.checkerframework.checker.nullness.qual.Nullable;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.StringWriter;
@@ -161,7 +161,7 @@ class CpdRunner {
 class CpdErrorListener implements PmdReporter {
     List<Exception> exceptionsCaught = new ArrayList<>();
     @Override
-    public void logEx(Level level, @javax.annotation.Nullable String s, Object[] objects, @Nullable Throwable throwable) {
+    public void logEx(Level level, @Nullable String s, Object[] objects, @Nullable Throwable throwable) {
         if (throwable != null) {
             if (throwable instanceof FileAnalysisException) {
                 // Note that if a single file can't be processed (like if it has syntax error) then a

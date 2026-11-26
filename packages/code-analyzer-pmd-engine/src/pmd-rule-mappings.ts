@@ -72,6 +72,10 @@ export const RULE_MAPPINGS: Record<string, {severity: SeverityLevel, tags: strin
         severity: SeverityLevel.Low,
         tags: [COMMON_TAGS.RECOMMENDED, COMMON_TAGS.CATEGORIES.BEST_PRACTICES, COMMON_TAGS.LANGUAGES.APEX]
     },
+    "ApexUnitTestClassShouldHaveRunRelevantTestsAnnotation": {
+        severity: SeverityLevel.Low,
+        tags: [/* NOT RECOMMENDED */    COMMON_TAGS.CATEGORIES.BEST_PRACTICES, COMMON_TAGS.LANGUAGES.APEX]
+    },
     "ApexUnitTestMethodShouldHaveIsTestAnnotation": {
         severity: SeverityLevel.High,
         tags: [COMMON_TAGS.RECOMMENDED, COMMON_TAGS.CATEGORIES.BEST_PRACTICES, COMMON_TAGS.LANGUAGES.APEX]
