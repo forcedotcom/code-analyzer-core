@@ -514,6 +514,18 @@
     ]
   },
   {
+    "description": "Disallow type operations that resolve to the \"empty object\" type",
+    "name": "@typescript-eslint/no-generated-empty-object-type",
+    "resourceUrls": [
+      "https://typescript-eslint.io/rules/no-generated-empty-object-type"
+    ],
+    "severityLevel": 3,
+    "tags": [
+      "BestPractices",
+      "TypeScript"
+    ]
+  },
+  {
     "description": "Disallow the use of `eval()`-like functions",
     "name": "@typescript-eslint/no-implied-eval",
     "resourceUrls": [
@@ -937,6 +949,18 @@
     ]
   },
   {
+    "description": "Disallow assigning non-instance values to class instance typed locations",
+    "name": "@typescript-eslint/no-unsafe-class-instance-assignment",
+    "resourceUrls": [
+      "https://typescript-eslint.io/rules/no-unsafe-class-instance-assignment"
+    ],
+    "severityLevel": 2,
+    "tags": [
+      "ErrorProne",
+      "TypeScript"
+    ]
+  },
+  {
     "description": "Disallow unsafe declaration merging",
     "name": "@typescript-eslint/no-unsafe-declaration-merging",
     "resourceUrls": [
@@ -946,6 +970,18 @@
     "tags": [
       "Recommended",
       "ErrorProne",
+      "TypeScript"
+    ]
+  },
+  {
+    "description": "Disallow assigning non-enum values to enum typed locations",
+    "name": "@typescript-eslint/no-unsafe-enum-assignment",
+    "resourceUrls": [
+      "https://typescript-eslint.io/rules/no-unsafe-enum-assignment"
+    ],
+    "severityLevel": 3,
+    "tags": [
+      "BestPractices",
       "TypeScript"
     ]
   },
@@ -1094,8 +1130,7 @@
     "severityLevel": 3,
     "tags": [
       "BestPractices",
-      "TypeScript",
-      "Fixable"
+      "TypeScript"
     ]
   },
   {
