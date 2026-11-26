@@ -1,6 +1,7 @@
 import {JavaCommandExecutor} from "@salesforce/code-analyzer-engine-api/utils";
 import path from "node:path";
 import fs from "node:fs";
+import {stageReferencedRulesets} from "./ruleset-staging";
 import {getMessageFromCatalog, LogLevel, SHARED_MESSAGE_CATALOG} from "@salesforce/code-analyzer-engine-api";
 
 const PMD_WRAPPER_JAVA_CLASS: string = "com.salesforce.sfca.pmdwrapper.PmdWrapper";
@@ -78,6 +79,26 @@ export class PmdWrapperInvoker {
         this.emitLogEvent = emitLogEvent;
     }
 
+    /**
+     * Creates the Java classpath. Note that the Java process is pinned to the engine's install folder (instead of the
+     * inherited, possibly untrusted, folder being scanned) to avoid CWE-427. But PMD resolves refs inside of custom
+     * rulesets (like <rule ref="path/in/repo.xml/Rule"/>) relative to the cwd or the classpath. To keep those refs
+     * resolving without exposing the entire repository to the JVM as classes/resources, we stage copies of only the
+     * referenced xml ruleset files into a dedicated folder that we place last on the classpath.
+     */
+    private async createJavaClassPaths(rulesets: string[], workingFolder: string): Promise<string[]> {
+        const classPaths: string[] = [
+            path.join(PMD_WRAPPER_LIB_FOLDER, '*'),
+            ...this.userProvidedJavaClasspathEntries.map(toJavaClasspathEntry)
+        ];
+        const stagingFolder: string | undefined = await stageReferencedRulesets(
+            rulesets, process.cwd(), path.join(workingFolder, 'stagedRulesets'));
+        if (stagingFolder) {
+            classPaths.push(stagingFolder + path.sep); // Last so that it has the lowest precedence
+        }
+        return classPaths;
+    }
+
     async invokeDescribeCommand(customRulesets: string[], pmdRuleLanguageIds: string[],
         workingFolder: string, emitProgress: (percComplete: number) => void): Promise<PmdRuleInfo[]> {
 
@@ -87,10 +108,7 @@ export class PmdWrapperInvoker {
         emitProgress(10);
 
         const javaCmdArgs: string[] = [PMD_WRAPPER_JAVA_CLASS, 'describe', pmdRulesOutputFile, customRulesetsListFile, pmdRuleLanguageIds.join(',')];
-        const javaClassPaths: string[] = [
-            path.join(PMD_WRAPPER_LIB_FOLDER, '*'),
-            ... this.userProvidedJavaClasspathEntries.map(toJavaClasspathEntry)
-        ];
+        const javaClassPaths: string[] = await this.createJavaClassPaths(customRulesets, workingFolder);
         await this.javaCommandExecutor.exec(javaCmdArgs, javaClassPaths, (stdOutMsg) => {
             if (stdOutMsg.startsWith(STDOUT_ERROR_MARKER)) {
                 const errorMessage: string = stdOutMsg.slice(STDOUT_ERROR_MARKER.length).replaceAll('{NEWLINE}','\n');
@@ -138,10 +156,8 @@ export class PmdWrapperInvoker {
 
         const resultsOutputFile: string = path.join(workingFolder, 'resultsFile.json');
         const javaCmdArgs: string[] = [PMD_WRAPPER_JAVA_CLASS, 'run', inputFile, resultsOutputFile];
-        const javaClassPaths: string[] = [
-            path.join(PMD_WRAPPER_LIB_FOLDER, '*'),
-            ... this.userProvidedJavaClasspathEntries.map(toJavaClasspathEntry)
-        ];
+        const javaClassPaths: string[] = await this.createJavaClassPaths(
+            [...new Set(pmdRuleInfoList.map(ruleInfo => ruleInfo.ruleSetFile))], workingFolder);
         this.emitLogEvent(LogLevel.Fine, `Calling JAVA command with class path containing ${JSON.stringify(javaClassPaths)} and arguments: ${JSON.stringify(javaCmdArgs)}`);
         await this.javaCommandExecutor.exec(javaCmdArgs, javaClassPaths, (stdOutMsg: string) => {
             if (stdOutMsg.startsWith(STDOUT_PROGRESS_MARKER)) {
@@ -189,10 +205,7 @@ export class PmdWrapperInvoker {
 
         const resultsOutputFile: string = path.join(workingFolder, 'astDumpResults.json');
         const javaCmdArgs: string[] = [PMD_WRAPPER_JAVA_CLASS, 'ast-dump', inputFile, resultsOutputFile];
-        const javaClassPaths: string[] = [
-            path.join(PMD_WRAPPER_LIB_FOLDER, '*'),
-            ...this.userProvidedJavaClasspathEntries.map(toJavaClasspathEntry)
-        ];
+        const javaClassPaths: string[] = await this.createJavaClassPaths([], workingFolder);
 
         this.emitLogEvent(LogLevel.Fine, `Calling AST dump for file: ${fileToDump}`);
 
