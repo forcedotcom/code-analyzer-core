@@ -104,6 +104,7 @@ export class FlowAnalyzerEngine extends Engine {
             return { violations: [] };
         }
 
+        let remediationMessageId = 'CatalogUnavailableRemediation';
         try {
             await this.ensureAuthenticated();
             this.emitRunRulesProgressEvent(20);
@@ -113,6 +114,7 @@ export class FlowAnalyzerEngine extends Engine {
             const selectedRules = new Set(ruleNames);
 
             this.emitRunRulesProgressEvent(40);
+            remediationMessageId = 'AnalyzeFailedRemediation';
             const findings = await this.apiClient.analyze(collected, { rules: ruleNames });
             this.emitRunRulesProgressEvent(80);
 
@@ -138,11 +140,11 @@ export class FlowAnalyzerEngine extends Engine {
             this.emitRunRulesProgressEvent(100);
             return { violations };
         } catch (err) {
-            return this.skipWithError(err);
+            return this.skipWithError(err, getMessage(remediationMessageId));
         }
     }
 
-    private skipWithError(error: unknown): EngineRunResults {
+    private skipWithError(error: unknown, remediation: string): EngineRunResults {
         const detail = error instanceof Error ? error.message : String(error);
         this.emitLogEvent(LogLevel.Error, detail);
         this.emitRunRulesProgressEvent(100);
@@ -153,7 +155,7 @@ export class FlowAnalyzerEngine extends Engine {
                 error: {
                     code: 'FLOW_ANALYZER_UNAVAILABLE',
                     message: detail,
-                    remediation: getMessage('CatalogUnavailableRemediation')
+                    remediation
                 }
             }
         };

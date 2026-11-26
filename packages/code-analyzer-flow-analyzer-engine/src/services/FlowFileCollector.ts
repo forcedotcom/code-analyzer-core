@@ -35,7 +35,6 @@ export class FlowFileCollector {
         for (const absolutePath of flowFiles) {
             this.rejectIfUnsafeAbsolutePath(absolutePath);
             const relativeFilePath = this.toRelativePath(absolutePath, workspaceRoot);
-            this.validateRelativePath(relativeFilePath);
 
             const normalized = relativeFilePath.toLowerCase();
             if (seenNormalized.has(normalized)) {
@@ -79,19 +78,6 @@ export class FlowFileCollector {
             throw new Error(getMessage('AbsolutePathRejected', absolutePath));
         }
         return relative;
-    }
-
-    private validateRelativePath(relativeFilePath: string): void {
-        if (path.isAbsolute(relativeFilePath) || relativeFilePath.startsWith('/')) {
-            throw new Error(getMessage('AbsolutePathRejected', relativeFilePath));
-        }
-        const segments = relativeFilePath.split('/');
-        if (segments.some(segment => segment === '..')) {
-            throw new Error(getMessage('TraversalPathRejected', relativeFilePath));
-        }
-        if (!this.isFlowFile(relativeFilePath)) {
-            throw new Error(getMessage('UnsupportedFileType', relativeFilePath));
-        }
     }
 
     private rejectIfUnsafeAbsolutePath(absolutePath: string): void {

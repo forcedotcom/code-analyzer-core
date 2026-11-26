@@ -76,6 +76,9 @@ const MESSAGE_CATALOG: { [key: string]: string } = {
     AnalyzeMalformed:
         `Flow Analyzer received a malformed analyze response from the target org.`,
 
+    FlowParseError:
+        `Flow Analyzer could not parse '%s'.\n%s`,
+
     UnknownRuleInFindings:
         `Flow Analyzer returned a finding for unknown rule '%s'. The engine won't silently drop unknown rules.`,
 
@@ -85,17 +88,11 @@ const MESSAGE_CATALOG: { [key: string]: string } = {
     AbsolutePathRejected:
         `Flow Analyzer rejected absolute path '%s'. Submit workspace-relative Flow paths only.`,
 
-    TraversalPathRejected:
-        `Flow Analyzer rejected path '%s' because it contains a parent-directory segment.`,
-
     SymlinkRejected:
         `Flow Analyzer rejected '%s' because symbolic links are not allowed.`,
 
     DuplicatePathRejected:
         `Flow Analyzer rejected duplicate or case-colliding path '%s'.`,
-
-    UnsupportedFileType:
-        `Flow Analyzer rejected unsupported file '%s'. Only .flow and .flow-meta.xml files are allowed.`,
 
     ExcessiveFileCount:
         `Flow Analyzer rejected the workspace because it contains %d Flow files, which exceeds the limit of %d.`,

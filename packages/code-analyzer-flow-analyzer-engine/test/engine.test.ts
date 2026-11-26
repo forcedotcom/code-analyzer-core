@@ -135,7 +135,10 @@ describe('FlowAnalyzerEngine', () => {
         expect(results.violations).toEqual([]);
         expect(results.insights).toEqual(expect.objectContaining({
             status: 'skipped',
-            error: expect.objectContaining({ code: 'FLOW_ANALYZER_UNAVAILABLE' })
+            error: expect.objectContaining({
+                code: 'FLOW_ANALYZER_UNAVAILABLE',
+                remediation: getMessage('AnalyzeFailedRemediation')
+            })
         }));
     });
 

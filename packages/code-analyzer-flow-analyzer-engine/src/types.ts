@@ -50,6 +50,7 @@ export type FlowAnalyzerFinding = {
 export type FlowAnalyzerFlowAnalysis = {
     relativeFilePath: string;
     findings: FlowAnalyzerFinding[];
+    parseError?: string | null;
 };
 
 export type FlowAnalyzerAnalyzeResponse = {

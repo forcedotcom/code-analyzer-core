@@ -66,13 +66,17 @@ export class FlowAnalyzerApiClient {
 
     private extractFindings(payload: FlowAnalyzerAnalyzeResponse): FlowAnalyzerFinding[] {
         if (payload.flowAnalyses && Array.isArray(payload.flowAnalyses)) {
-            return payload.flowAnalyses.flatMap(analysis =>
-                (analysis.findings ?? []).map(finding => ({
+            return payload.flowAnalyses.flatMap(analysis => {
+                if (typeof analysis.parseError === 'string' && analysis.parseError.trim()) {
+                    const message = analysis.parseError.replaceAll('&quot;', '"');
+                    this.emitLogEvent(LogLevel.Error, getMessage('FlowParseError', analysis.relativeFilePath, message));
+                }
+                return (analysis.findings ?? []).map(finding => ({
                     ...finding,
                     relativeFilePath: finding.relativeFilePath || analysis.relativeFilePath,
                     ruleName: finding.ruleName || finding.ruleId || ''
-                }))
-            );
+                }));
+            });
         }
         if (Array.isArray(payload.findings)) {
             return payload.findings;

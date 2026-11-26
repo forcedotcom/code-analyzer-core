@@ -1,4 +1,4 @@
-import { SeverityLevel } from '@salesforce/code-analyzer-engine-api';
+import { LogLevel, SeverityLevel } from '@salesforce/code-analyzer-engine-api';
 import { FlowAnalyzerApiClient } from '../src/services/FlowAnalyzerApiClient';
 import { FlowAnalyzerAuthService } from '../src/services/FlowAnalyzerAuthService';
 import { getMessage } from '../src/messages';
@@ -25,14 +25,14 @@ describe('FlowAnalyzerApiClient', () => {
         content: '<Flow></Flow>'
     }];
 
-    function createClient(fetchImpl: typeof fetch, apiVersion?: string): FlowAnalyzerApiClient {
+    function createClient(fetchImpl: typeof fetch, apiVersion?: string, emitLogEvent = jest.fn()): FlowAnalyzerApiClient {
         return new FlowAnalyzerApiClient(
             authService,
             1000,
             apiVersion,
             '/flowbuilder/flow-analyzer/rules',
             '/flowbuilder/flow-analyzer/analysis/metadata-archive',
-            jest.fn(),
+            emitLogEvent,
             fetchImpl
         );
     }
@@ -175,6 +175,29 @@ describe('FlowAnalyzerApiClient', () => {
         expect(options.method).toEqual('POST');
         expect(Buffer.isBuffer(options.body)).toBe(true);
         expect(options.headers['content-type']).toMatch(/multipart\/form-data/);
+    });
+
+    it('logs a flow parse error and returns findings from other flows', async () => {
+        const failedFile = sampleFiles[0];
+        const validFile = { ...failedFile, absolutePath: '/tmp/b.flow-meta.xml', relativeFilePath: 'b.flow-meta.xml' };
+        const parseError = 'The developer name &quot;Update_Triggering_Account&quot; is duplicated.';
+        const finding = { ruleId: 'R1', message: 'Valid finding', elementApiName: 'Example' };
+        const fetchImpl: typeof fetch = async () => Response.json({
+            flowAnalyses: [
+                { relativeFilePath: failedFile.relativeFilePath, parseError },
+                { relativeFilePath: validFile.relativeFilePath, parseError: null, findings: [finding] }
+            ]
+        });
+        const emitLogEvent = jest.fn();
+        const client = createClient(fetchImpl, undefined, emitLogEvent);
+
+        expect(await client.analyze([failedFile, validFile])).toEqual([
+            { ...finding, ruleName: 'R1', relativeFilePath: validFile.relativeFilePath }
+        ]);
+        expect(emitLogEvent.mock.calls.filter(([level]) => level === LogLevel.Error)).toEqual([[
+            LogLevel.Error,
+            `Flow Analyzer could not parse '${failedFile.relativeFilePath}'.\nThe developer name "Update_Triggering_Account" is duplicated.`
+        ]]);
     });
 
     it('includes ruleSelection.rules when provided and omits categories', async () => {
