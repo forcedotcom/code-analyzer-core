@@ -170,6 +170,10 @@ export const RULE_MAPPINGS_TYPESCRIPT_ESLINT: Record<string, {severity: Severity
         severity: SeverityLevel.High,
         tags: [/* NOT RECOMMENDED */    COMMON_TAGS.CATEGORIES.ERROR_PRONE,    COMMON_TAGS.LANGUAGES.TYPESCRIPT]
     },
+    "@typescript-eslint/no-generated-empty-object-type": {
+        severity: SeverityLevel.Moderate,
+        tags: [/* NOT RECOMMENDED */    COMMON_TAGS.CATEGORIES.BEST_PRACTICES, COMMON_TAGS.LANGUAGES.TYPESCRIPT]
+    },
     "@typescript-eslint/no-implied-eval": {
         severity: SeverityLevel.Moderate,
         tags: [/* NOT RECOMMENDED */    COMMON_TAGS.CATEGORIES.BEST_PRACTICES, COMMON_TAGS.LANGUAGES.TYPESCRIPT]
@@ -302,9 +306,17 @@ export const RULE_MAPPINGS_TYPESCRIPT_ESLINT: Record<string, {severity: Severity
         severity: SeverityLevel.High,
         tags: [/* NOT RECOMMENDED */    COMMON_TAGS.CATEGORIES.ERROR_PRONE,    COMMON_TAGS.LANGUAGES.TYPESCRIPT]
     },
+    "@typescript-eslint/no-unsafe-class-instance-assignment": {
+        severity: SeverityLevel.High,
+        tags: [/* NOT RECOMMENDED */    COMMON_TAGS.CATEGORIES.ERROR_PRONE,    COMMON_TAGS.LANGUAGES.TYPESCRIPT]
+    },
     "@typescript-eslint/no-unsafe-declaration-merging": {
         severity: SeverityLevel.High,
         tags: [COMMON_TAGS.RECOMMENDED, COMMON_TAGS.CATEGORIES.ERROR_PRONE,    COMMON_TAGS.LANGUAGES.TYPESCRIPT]
+    },
+    "@typescript-eslint/no-unsafe-enum-assignment": {
+        severity: SeverityLevel.Moderate,
+        tags: [/* NOT RECOMMENDED */    COMMON_TAGS.CATEGORIES.BEST_PRACTICES, COMMON_TAGS.LANGUAGES.TYPESCRIPT]
     },
     "@typescript-eslint/no-unsafe-enum-comparison": {
         severity: SeverityLevel.Moderate,
