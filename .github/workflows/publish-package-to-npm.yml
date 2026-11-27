@@ -190,6 +190,12 @@ jobs:
       - uses: actions/checkout@v4
         with:
           ref: ${{ needs.prepare-release-branch.outputs.branch-name }}
+      # The PMD and SFGE engines build with the Gradle wrapper (8.9), which cannot run on the JDK that ubuntu-latest
+      # now defaults to (Java 25). Pin a supported JDK instead of relying on the runner image's default.
+      - uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
       - uses: actions/setup-node@v4
         with:
           # Trusted Publishing requires Node >= 22.14.0.
