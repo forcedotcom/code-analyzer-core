@@ -338,9 +338,11 @@ export class UninstantiableEngineErrorViolation extends AbstractLocationlessViol
     }
 
     override getMessage(): string {
-        return getMessage('UninstantiableEngineErrorViolationMessage', this.engineName,
-            this.error.stack ? this.error.stack :  // Prefer to get the whole stack when possible
-                /* istanbul ignore next */ this.error.message);
+        const shouldOmitStackTrace = this.engineName === 'flow-analyzer';
+        const errorDetail = shouldOmitStackTrace
+            ? this.error.message
+            : (this.error.stack || this.error.message);
+        return getMessage('UninstantiableEngineErrorViolationMessage', this.engineName, errorDetail);
     }
 }
 
@@ -350,9 +352,11 @@ export class UnexpectedEngineErrorViolation extends AbstractLocationlessViolatio
     }
 
     override getMessage(): string {
-        return getMessage('UnexpectedEngineErrorViolationMessage', this.engineName,
-            this.error.stack ? this.error.stack :  // Prefer to get the whole stack when possible
-                /* istanbul ignore next */ this.error.message);
+        const shouldOmitStackTrace = this.engineName === 'flow-analyzer';
+        const errorDetail = shouldOmitStackTrace
+            ? this.error.message
+            : (this.error.stack || this.error.message);
+        return getMessage('UnexpectedEngineErrorViolationMessage', this.engineName, errorDetail);
     }
 }
 

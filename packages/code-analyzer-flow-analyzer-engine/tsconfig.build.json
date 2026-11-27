@@ -1,0 +1,17 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "composite": true,
+    "outDir": "./dist",
+    "rootDir": "./src",
+    "skipLibCheck": true
+  },
+  "include": [
+    "./src"
+  ],
+  "references": [
+    {
+      "path": "../code-analyzer-engine-api/tsconfig.build.json"
+    }
+  ]
+}
